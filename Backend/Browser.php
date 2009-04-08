@@ -243,7 +243,7 @@ class Browser {
 	}
 	
 	public static function getDir($dir){
-		$dir = realpath((!Utility::startsWith($dir, 'Files/') ? 'Files/' : '').$dir);
+		$dir = realpath('../Demos/'.(!Utility::startsWith($dir, 'Files/') ? 'Files/' : '').$dir);
 		return self::checkFile($dir) ? $dir : self::$basedir;
 	}
 	

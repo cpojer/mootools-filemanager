@@ -172,7 +172,7 @@ var FileBrowser = new Class({
 			],
 			onConfirm: function(){
 				new Request.JSON({
-					url: self.options.request+'create',
+					url: self.options.url+'?event=create',
 					onRequest: self.loading.pass(self.browser),
 					onSuccess: self.fill.bind(self),
 					data: {
@@ -285,7 +285,7 @@ var FileBrowser = new Class({
 			],
 			onConfirm: function(){
 				new Request.JSON({
-					url: self.options.request+'move',
+					url: self.options.url+'?event=move',
 					onSuccess: (function(j){
 						if(j && j.name){
 							self.fireEvent('modify', [$unlink(file)]);
@@ -415,7 +415,7 @@ var FileBrowser = new Class({
 					file = el.retrieve('file');
 
 				new Request.JSON({
-					url: self.options.request+'move',
+					url: self.options.url+'?event=move',
 					data: {
 						file: file.name,
 						dir: self.Directory,
