@@ -1,0 +1,411 @@
+div.filebrowser-container {
+	display: none;
+}
+
+div.filebrowser, div.filebrowser-gallery {
+	font-family: Tahoma, sans-serif;
+	border: 1px solid #000;
+	background: #F3F3F3;
+	position: absolute;
+}
+
+div.filebrowser {
+	z-index: 1001;
+	width: 801px;
+	height: 450px;
+
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+}
+
+div.filebrowser-gallery {
+	z-index: 1000;
+}
+
+div.filebrowser ul, div.filebrowser-gallery ul {
+	position: relative;
+	font-size: 11px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	border: 1px solid #000;
+	background: #FFF;
+	line-height: 1.8em;
+	overflow: auto;
+	overflow-x: hidden;
+}
+
+ul.filebrowser-browser {
+	left: 500px;
+	top: 12px;
+	height: 390px;
+	width: 298px;
+	margin: 0;
+}
+
+div.filebrowser ul.filebrowser-loading {
+	background: #FFF url(../Images/browser_loading.gif) no-repeat center;
+}
+
+div.filebrowser-loading {
+	background: url(../Images/browser_loading.gif) no-repeat center;
+}
+
+div.filebrowser ul li {
+	margin: 0;
+	padding: 0;
+	height: 21px;
+	list-style: none;
+}
+
+div.filebrowser ul li a, div.filebrowser ul li span.fi {
+	height: 21px;
+	padding-left: 5px;
+	color: #000;
+	text-decoration: none;
+	display: block;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+div.filebrowser ul li a span, div.filebrowser ul li span.fi span {
+	display: block;
+	width: 70%;
+	overflow: hidden;
+}
+
+div.filebrowser ul li span.dir {
+	color: #000;
+	background-color: #fff;
+}
+
+div.filebrowser ul li span.droppable {
+	background-color: #99b7e7;
+}
+
+ul.filebrowser-browser a, ul.filebrowser-browser span {
+	position: relative;
+}
+
+div.filebrowser ul li a.selected, div.filebrowser ul li span.selected {
+	background: #3370CF;
+	color: #FFF;
+	outline: none;
+}
+
+div.filebrowser ul li img {
+	display: block;
+	float: left;
+	margin: 2px 3px 0 0;
+}
+
+div.filebrowser ul li img.browser-icon {
+	float: right;
+}
+
+button.filebrowser-open, button.filebrowser-create, button.filebrowser-upload {
+	position: absolute;
+	right: 0;
+	bottom: -4px;
+}
+div.filebrowser span.notice {
+	position: absolute;
+	bottom: 16px;
+	left: 16px;
+}
+
+button.filebrowser-create {
+	right: 170px;
+}
+
+button.filebrowser-upload {
+	right: 340px;
+}
+
+a.filebrowser-close {
+	position: absolute;
+	right: -10px;
+	top: -10px;
+	background: url(../Images/browser_close.png) no-repeat left top;
+	text-indent: -1000em;
+	height: 26px;
+	width: 26px;
+	overflow: hidden;
+}
+
+div.filebrowser-infos {
+	position: absolute;
+	left: 0;
+	top: 12px;
+	width: 499px;
+	line-height: 1.6em;
+	overflow: auto;
+	height: 392px;
+}
+
+div.filebrowser-head {
+	height: 39px;
+	overflow: hidden;
+}
+
+img.filebrowser-icon {
+	float: left;
+	margin: 10px 12px;
+}
+
+div.filebrowser h1 {
+	margin: 0;
+	padding: 0;
+	height: 17px;
+	line-height: 17px;
+	background: url(../Images/h1.png) repeat-x 0 15px;
+
+	font-size: 15px;
+	width: 80%;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+span.filebrowser-date {
+	color: #818080;
+}
+
+div.filebrowser h2 {
+	margin: 0;
+	border-top: 1px solid #B1B1B1;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 2px 0 5px 5px;
+	clear: both;
+}
+
+div.filebrowser dl {
+	margin-bottom: 5px;
+	width: 100%;
+	clear: both;
+	overflow: auto;
+}
+
+div.filebrowser dt, div.filebrowser dd {
+	float: left;
+	line-height: 14px;
+	font-family: Tahoma, sans-serif;
+	font-size: 11px;
+}
+
+div.filebrowser dt {
+	clear: both;
+	width: 90px;
+	margin-left: 15px;
+	font-weight: bold;
+}
+
+div.filebrowser dd {
+	width: 360px;
+	white-space: nowrap;
+	overflow: auto;
+}
+
+div.filebrowser dd.margin {
+	margin-left: 15px;
+}
+
+div.filebrowser dd.filebrowser-dir {
+	line-height: 20px;
+}
+
+div.filebrowser dd.filebrowser-dir a.icon {
+	border: 1px solid #aaa;
+	padding: 2px 5px 2px 20px;
+	text-decoration: none;
+	background: #fff url(../Images/Icons/dir.png) 2px 0 no-repeat;
+	color: #000;
+
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+
+div.filebrowser dd.filebrowser-dir a.selected,
+div.filebrowser dd.filebrowser-dir a.icon:hover {
+	text-decoration: none;
+	border: 1px solid #333;
+	background-color: #eee;
+}
+
+div.filebrowser dd.filebrowser-dir a.selected {
+	cursor: default;
+}
+
+div.filebrowser-preview {
+	margin-top: 5px;
+	min-height: 66px;
+}
+
+div.filebrowser-preview img.prev {
+	margin: 0 auto 1em;
+	display: block;
+
+	min-height: 100px;
+	min-width: 100px;
+	background: url(../Images/browser_loading.gif) no-repeat top center;
+}
+
+div.filebrowser-preview ul {
+	width: 99%;
+	height: 95%;
+}
+
+div.filebrowser-preview textarea {
+	font: 9px Verdana, Arial, Helvetica, sans-serif;
+	width: 480px;
+	height: 190px;
+	border: 1px solid #868685;
+	background: #fff;
+	margin: 1em auto;
+	display: block;
+}
+
+div.filebrowser-preview .object {
+	width: 300px;
+	margin: 0 auto 1em;
+}
+
+div.filebrowser div.uploader {
+	margin: 0 10px 1em;
+}
+
+div.filebrowser div.uploader ul li span.file-info {
+	display: none;
+	padding-left: 20px;
+}
+
+div.filebrowser div.uploader ul li span.failed {
+	color: #b00;
+}
+
+div.filebrowser div.uploader ul li span.file-size {
+	display: none;
+}
+
+div.filebrowser div.uploader ul li.file a {
+	background-color: #fff;
+}
+
+div.filebrowser div.uploader button {
+	clear: none;
+	margin: 0;
+}
+
+a.file-success {
+	background-color: #80bb29;
+}
+
+div.filebrowser-container img.browser-add {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	z-index: 1010;
+}
+
+ul.uploader-list {
+	margin: 0;
+}
+
+div.filebrowser-gallery {
+	width: 180px;
+	height: 400px;
+	display: none;
+
+	border-left: 0;
+
+	-moz-border-radius-topright: 10px;
+	-webkit-border-radius-topright: 10px;
+	border-radius-topright: 10px;
+
+	-moz-border-radius-bottomright: 10px;
+	-webkit-border-radius-bottomright: 10px;
+	border-radius-bottomright: 10px;
+}
+
+div.filebrowser-gallery ul {
+	width: 88%;
+	height: 94%;
+
+	margin: 5% 0 0 4%;
+	padding: 1%;
+}
+
+div.filebrowser-gallery ul li {
+	float: left;
+	width: 49%;
+	overflow: hidden;
+	margin: 0;
+	list-style: none;
+
+	background: url(../Images/spinner.gif) center center no-repeat;
+}
+
+div.filebrowser-gallery ul li img {
+	padding: 2px;
+	width: 70px;
+	height: 52px;
+	cursor: pointer;
+}
+
+div.filebrowser-wrapper {
+	font-family: Tahoma, sans-serif;
+	border: 1px solid #000;
+	background: #F3F3F3;
+	position: absolute;
+	z-index: 1099;
+	width: 220px;
+	height: 250px;
+
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+}
+
+div.filebrowser-wrapper div.img {
+	width: 212px;
+	height: 162px;
+	margin: 5px 3px;
+
+	background: url(../Images/imgBG.png) no-repeat;
+}
+
+div.filebrowser-wrapper span {
+	margin: 3px 0 0 8px;
+	display: block;
+}
+
+div.filebrowser-wrapper input {
+	margin: 3px 0 0 7px;
+	width: 88%;
+}
+
+div.filebrowser-wrapper button {
+	margin: 3px;
+}
+
+div.filebrowser-wrapper img.filebrowser-delete {
+	position: absolute;
+
+	z-index: 1101;
+	right: -7px;
+	top: -7px;
+	width: 16px;
+	height: 16px;
+
+	cursor: pointer;
+}
+
+span.gallery-span {
+	float: left;
+	font-weight: bold;
+	margin: 9px;
+}
+
+img.filebrowser-clone {
+	cursor: pointer;
+}

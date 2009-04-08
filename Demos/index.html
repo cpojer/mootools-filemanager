@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Testground</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="shortcut icon" href="http://og5.net/christoph/favicon.png" />
+	<style type="text/css">
+	body {
+		font-size: 11px;
+		font-family: Tahoma, sans-serif;
+	}
+	
+	h1 {
+		margin: 0 0 10px 0;
+		padding: 0;
+		
+		color: #666;
+		font-weight: normal;
+		font-size: 24px;
+		letter-spacing: 1px;
+		word-spacing: 2px;
+		line-height: 22px;
+		min-height: 25px;
+		
+		text-shadow: #888 1px 1px 1px;
+	}
+
+	h1 span {
+		font-size: 11px;
+		letter-spacing: 0;
+		word-spacing: 0;
+		text-shadow: none;
+	}
+	
+	.blue { color: #1f52b0; }
+	
+	div.content {
+		width: 60%;
+		margin: 23px 34px;
+		padding: 10px 17px;
+		border: 1px solid #666;
+		background: #fff;
+		
+		-moz-border-radius: 10px;
+		-webkit-border-radius: 10px;
+		border-radius: 10px;
+	}
+	
+	</style>
+	
+	<link rel="stylesheet" media="all" type="text/css" href="../Css/Filebrowser.css" />
+
+	<script type="text/javascript" src="mootools-core.js"></script>
+	<script type="text/javascript" src="mootools-more.js"></script>
+	
+	<script type="text/javascript" src="../Source/Additions.js"></script>
+	<script type="text/javascript" src="../Source/Lang.js"></script>
+	<script type="text/javascript" src="../Source/Filebrowser.js"></script>
+	
+	<script type="text/javascript" src="demo.js"></script>
+	
+	<script type="text/javascript">
+		window.addEvent('domready', function(){
+			(function(){
+				$$('input.browser').each(function(el){
+					var span;
+					var complete = function(path, file){
+						el.set('value', path);
+						
+						if(span) span.destroy();
+						var icon = new Asset.image('BrowserIcons/Icons/cancel.png', {title: Lang.deselect}).addClass('file-cancel').addEvent('click', function(e){
+							e.stop();
+							el.set('value', '');
+							span.fade(0).get('tween').chain(function(){
+								span.destroy();
+							});
+						});
+						
+						span = new Element('span', {
+							'class': 'disabled',
+							styles: {float: 'right'}
+						}).adopt(
+							icon,
+							new Asset.image('BrowserIcons/'+file.icon+'.png', {'class': 'mime-icon'}),
+							new Element('span', {text: file.name})
+						).injectAfter(el);
+						
+						new Tips(icon);
+					};
+					
+					var browser = new FileBrowser({
+						url: '../Backend/Browser.php',
+						imageBasePath: '../Images/',
+						filter: el.get('title') || null,
+						onComplete: complete
+					});
+					
+					el.setStyle('display', 'none');
+					var val = el.get('value');
+					if(val) complete(val, {
+						name: val.split('/').getLast(),
+						icon: val.split('.').getLast()
+					});
+					
+					new Element('button', {'class': 'browser', text: Lang.upload}).addEvent('click', browser.show.bindWithEvent(browser, true)).injectBefore(el);
+					new Element('button', {'class': 'browser', text: Lang.filebrowser}).addEvent('click', browser.show.bindWithEvent(browser)).injectBefore(el);
+				});
+			})();
+		});
+	</script>
+</head>
+<body>
+<div id="content" class="content">
+	<h1>Filebrowser Demo</h1>
+	<input name="browser" type="text" class="browser" value=""/>
+</div>
+</body>
+</html>

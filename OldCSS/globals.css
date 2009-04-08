@@ -1,0 +1,147 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+.width50p {
+	width: 49%;
+}
+
+.width190 {
+	width: 190px;
+}
+
+.abs {
+	position: absolute;
+}
+
+.relative {
+	position: relative;
+}
+
+.block {
+	display: block;
+}
+
+.nodisplay {
+	display: none;
+}
+
+.rightm {
+	margin-right: 10px;
+}
+
+.leftm {
+	margin-left: 10px;
+}
+
+.leftm40 {
+	margin-left: 40px;
+}
+
+.bottomm {
+	margin-bottom: 10px;
+}
+
+.topm5 {
+	margin-top: 5px;
+}
+
+.topm {
+	margin-top: 10px;
+}
+
+.topm20 {
+	margin-top: 20px;
+}
+
+.topp {
+	padding-top: 10px;
+}
+
+.fleft {
+	float: left;
+}
+
+.fright {
+	float: right;
+}
+
+.clear {
+	clear: both;
+}
+
+a {
+	outline: 0;
+}
+
+a img, img {
+	border: 0;
+}
+
+a:hover {
+	text-decoration: none;
+}
+
+.f14 {
+	font-size: 14px;
+}
+
+img.bottom {
+	vertical-align: bottom;
+}
+
+.nobg {
+	background: none;
+}
+
+.icon16 {
+	width: 16px;
+	height: 16px;
+}
+
+.icon32 {
+	width: 32px;
+	height: 32px;
+}
+
+.hicon {
+	z-index: 20;
+	visibility: hidden;
+	position: absolute;
+	right: 15px;
+	top: 20px;
+}
+
+.hiconpos .hicon {
+	top: 0;
+	right: 0;
+}
+.hiconpos a.delete {
+	right: 33px;
+}
+
+.hiconpos a.repsedit {
+	top: 33px;
+	right: 0px;
+}
+
+.tree .hicon {
+	top: 0;
+}
+
+.tree a.delete {
+	right: 33px;
+}
+
+.tree a.repsedit {
+	right: 50px;
+}
+
+a.delete {
+	right: 47px;
+}
+
+.lineheight16 {
+	line-height: 16px;
+}
