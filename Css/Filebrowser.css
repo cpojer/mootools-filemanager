@@ -1,3 +1,14 @@
+div.filebrowser ul {
+	margin: 0;
+	padding: 0
+}
+
+div.filebrowser ul li, div.filebrowser-gallery ul li {
+	list-style-image: none;
+	list-style-type: none;
+	list-style: none;
+}
+
 div.filebrowser-container {
 	display: none;
 }
@@ -104,8 +115,8 @@ div.filebrowser ul li img.browser-icon {
 
 button.filebrowser-open, button.filebrowser-create, button.filebrowser-upload {
 	position: absolute;
-	right: 0;
-	bottom: -4px;
+	right: 4px;
+	bottom: 4px;
 }
 div.filebrowser span.notice {
 	position: absolute;

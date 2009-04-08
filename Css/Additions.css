@@ -1,0 +1,54 @@
+/* Overlay */
+div.overlay {
+	position: absolute;
+	left: 0;
+	top: 0;
+	display: none;
+	
+	z-index: 999;
+	background: #000;
+}
+
+/* Popup */
+div.popup {
+	position: absolute;
+	display: none;
+	
+	width: 320px;
+	height: 190px;
+	
+	z-index: 2000;
+	background: url(../Images/popup.png) no-repeat;
+}
+
+div.popup h1 {
+	cursor: move;
+	margin: 12px 20px 6px;
+	
+	color: #fff;
+	background: none;
+}
+
+div.popup div {
+	margin: 5px 25px;
+}
+
+div.popup button {
+	position: absolute;
+	bottom: 12px;
+	left: 30px;
+}
+
+div.popup button.popup-decline {
+	left: auto;
+	right: 30px;
+}
+
+div.popup input, div.popup select {
+	margin: 0 25px 2px;
+	width: 260px;
+}
+
+div.popup input.createDirectory {
+	margin-top: 20px;
+}

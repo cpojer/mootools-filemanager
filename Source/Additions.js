@@ -1,15 +1,7 @@
-(function(){
-	['visibility', 'display', 'position', 'opacity'].each(function(v){
-		Selectors.Pseudo[v] = function(input){
-			return Element.getStyle(this, v)==input;
-		}
-	});
-	
-	Selectors.Pseudo.identifier = function(identifier){
-		return Element.retrieve(this, 'identifier')==identifier;
-	};
-	
-})();
+/*
+ * TODO: Fix Popup Language-Stuff
+ *
+ */
 
 Tips = new Class({
 	
@@ -38,20 +30,23 @@ Tips = new Class({
 	
 });
 
-var Functions = {
-	center: function(el, offsets){
+Element.implement({
+	
+	center: function(offsets){
 		var scroll = document.getScroll(),
 			offset = document.getSize(),
-			size = el.getSize();
+			size = this.getSize(),
+			values = {left: 'x', top: 'y'};
 		
 		if(!offsets) offsets = {};
-		Hash.each({left: 'x', top: 'y'}, function(z, i){
-			el.setStyle(i, scroll[z]+(offset[z]-size[z])/2+(offsets[z] || 0));
-		});
 		
-		return el;
+		for(z in values) this.setStyle(z, scroll[values[z]]+(offset[values[z]]-size[values[z]])/2+(offsets[values[z]] || 0));
+		
+		return this;
 	}
-},
+	
+});
+
 Popup = new Class({
 	
 	Implements: [Options, Events],
@@ -61,7 +56,7 @@ Popup = new Class({
 		onDecline: $empty,*/
 		onClose: function(){
 			this.destroy();
-			this.Overlay.Hide();
+			this.overlay.hide();
 		},
 		request: null,
 		buttons: ['confirm', 'decline'],
@@ -75,25 +70,25 @@ Popup = new Class({
 			'class': 'popup',
 			opacity: 0,
 			tween: {duration: 250}
-		});
-		
-		this.el.adopt([
+		}).adopt([
 			new Element('h1', {text: title}),
 			new Element('div', {text: text})
 		]);
 		
+		this.el.makeDraggable({
+			handle: this.el.getElement('h1')
+		});
+		
 		if(this.options.content) this.el.adopt(this.options.content);
 		
-		Array.each(this.options.buttons || [], function(v){
-			new Element('button', {'class': 'small '+v, text: this.options.language[v] || Lang[v]}).addEvent('click', (function(e){
+		Array.each(this.options.buttons, function(v){
+			new Element('button', {'class': 'popup-'+v, text: this.options.language[v] || Lang[v]}).addEvent('click', (function(e){
 				e.stop();
-				
-				this.fireEvent(v);
-				this.fireEvent('close');
+				this.fireEvent(v).fireEvent('close');
 			}).bind(this)).inject(this.el);
 		}, this);
 		
-		this.Overlay = new Overlay({
+		this.overlay = new Overlay({
 			events: {
 				click: this.fireEvent.bind(this, ['close'])
 			},
@@ -102,37 +97,18 @@ Popup = new Class({
 				backgroundColor: '#fff'
 			},
 			tween: {duration: 250}
-		}).Show();
-		
-		this.el.makeDraggable({
-			handle: this.el.getElement('h1')
 		});
 		
-		if(this.options.request) this.options.request.bind(this)().addEvents({
-			request: this.load.bind(this),
-			success: this.show.bind(this)
-		}).post();
-		else this.show();
-	},
-	
-	load: function(){
-		this.loader = new Asset.image('Images/browser_loading.gif').set('opacity', 0).addClass('loading').inject(document.body);
-		
-		Functions.center(this.loader);
-		
-		this.loader.fade(1);
+		this.show();
 	},
 	
 	show: function(){
-		if(this.loader) this.loader.destroy();
-		
-		this.el.setStyle('display', 'block').inject(document.body);
-		
-		Functions.center(this.el).fade(1);
+		this.overlay.show();
+		this.el.setStyle('display', 'block').inject(document.body).center().fade(1);
 		
 		this.scroll = (function(){
 			if(!this.el) this.destroy();
-			else Functions.center(this.el);
+			else this.el.center();
 		}).bind(this);
 		
 		window.addEvents({
@@ -143,8 +119,7 @@ Popup = new Class({
 	
 	destroy: function(){
 		if(this.el) this.el.fade(0).get('tween').chain((function(){
-			if(this.loader) this.loader.destroy();
-			this.Overlay.Destroy();
+			this.overlay.destroy();
 			this.el.destroy();
 		}).bind(this));
 		
@@ -160,50 +135,45 @@ Overlay = new Class({
 		}, options || {})).inject(document.body);
 	},
 	
-	Show: function(){
-		this.el.get('tween').pause();
-		
+	show: function(){
 		this.objects = [];
-		if(Browser.Engine.trident)
-			$$('object, iframe, select').each(function(el){
-				if(el.style.visibility=='visible') return;
-				
-				this.objects.push(el);
-				el.style.visibility = 'hidden';
-			}, this);
-		else
-			this.objects = $$('object:visibility(visible)').setStyle('visibility', 'hidden');
+		['object', Browser.Engine.trident ? 'select' : 'embed'].each(function(tag){
+			this.objects = Array.filter(document.getElementsByTagName(tag), function(el){
+				return el.style.visibility=='hidden' ? false : el.style.visibility = 'hidden';
+			});
+		}, this);
 		
+		this.el.get('tween').pause();
 		this.el.setStyles({
 			opacity: 0,
 			display: 'block',
-			width: document.getScrollWidth()+'px',
-			height: document.getScrollHeight()+'px'
+			width: document.getScrollWidth(),
+			height: document.getScrollHeight()
 		}).fade(0.5);
 		
 		return this;
 	},
 	
-	Hide: function(){
-		if(this.objects)
-			Array.each(this.objects, function(el){
-				el.style.visibility = '';	
-			});
-		
-		this.el.fade(0).get('tween').chain(function(){
-			this.element.setStyle('display', 'none');
-		});
+	hide: function(){
+		this.el.fade(0).get('tween').chain((function(){
+			this.revertObjects();
+			this.el.setStyle('display', 'none');
+		}).bind(this));
 		
 		return this;
 	},
 	
-	Destroy: function(){
-		if(this.objects)
-			Array.each(this.objects, function(el){
-				el.style.visibility = '';	
+	destroy: function(){
+		this.revertObjects().el.destroy();
+	},
+	
+	revertObjects: function(){
+		if(this.objects && this.objects.length)
+			this.objects.each(function(el){
+				el.style.visibility = 'visible';	
 			});
 		
-		this.el.destroy();
+		return this;
 	}
 	
 });

@@ -89,7 +89,7 @@ var FileBrowser = new Class({
 			'class': 'browser-add'
 		}).set('opacity', 0).inject(this.container);
 
-		this.Overlay = new Overlay();
+		this.overlay = new Overlay();
 
 		this.keydown = (function(e){
 			if(e.control) this.imageadd.fade(1);
@@ -100,8 +100,7 @@ var FileBrowser = new Class({
 		}).bind(this);
 
 		this.scroll = (function(){
-			Functions.center(this.el, this.offsets);
-
+			this.el.center(this.offsets);
 			this.fireEvent('scroll');
 		}).bind(this);
 	},
@@ -111,7 +110,7 @@ var FileBrowser = new Class({
 
 		if(upload) this.showUpload = true;
 		this.load(this.Directory);
-		this.Overlay.Show();
+		this.overlay.show();
 
 		this.info.set('opacity', 0);
 
@@ -121,7 +120,7 @@ var FileBrowser = new Class({
 				display: 'block'
 			});
 
-			Functions.center(this.el, this.offsets);
+			this.el.center(this.offsets);
 
 			this.fireEvent('show');
 			this.fireEvent('open');
@@ -138,7 +137,7 @@ var FileBrowser = new Class({
 	hide: function(e){
 		if(e) e.stop();
 
-		this.Overlay.Hide();
+		this.overlay.hide();
 		this.browser.empty();
 		this.container.setStyle('display', 'none');
 

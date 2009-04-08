@@ -19,9 +19,9 @@ var Lang = {
 	dir: 'Ordner:',
 	modified: 'Bearbeitet:',
 	preview: 'Vorschau',
-	close: 'Schlie�en',
+	close: 'Schließen',
 	content: 'Inhalt:',
-	destroy: 'L�schen',
+	destroy: 'Löschen',
 	destroyfile: 'Möchtest du diese Datei/diesen Ordner löschen? Wenn diese Datei auf einer Seite eingebunden wurde, ist sie nach dem Löschen nicht mehr verfügbar.',
 	
 	rename: 'Umbenennen',

@@ -83,10 +83,6 @@ a:hover {
 	text-decoration: none;
 }
 
-.f14 {
-	font-size: 14px;
-}
-
 img.bottom {
 	vertical-align: bottom;
 }
@@ -111,37 +107,4 @@ img.bottom {
 	position: absolute;
 	right: 15px;
 	top: 20px;
-}
-
-.hiconpos .hicon {
-	top: 0;
-	right: 0;
-}
-.hiconpos a.delete {
-	right: 33px;
-}
-
-.hiconpos a.repsedit {
-	top: 33px;
-	right: 0px;
-}
-
-.tree .hicon {
-	top: 0;
-}
-
-.tree a.delete {
-	right: 33px;
-}
-
-.tree a.repsedit {
-	right: 50px;
-}
-
-a.delete {
-	right: 47px;
-}
-
-.lineheight16 {
-	line-height: 16px;
 }
