@@ -36,18 +36,18 @@ Element.implement({
 		var scroll = document.getScroll(),
 			offset = document.getSize(),
 			size = this.getSize(),
-			values = {left: 'x', top: 'y'};
+			values = {x: 'left', y: 'top'};
 		
 		if(!offsets) offsets = {};
 		
-		for(z in values) this.setStyle(z, scroll[values[z]]+(offset[values[z]]-size[values[z]])/2+(offsets[values[z]] || 0));
+		for(z in values) this.setStyle(values[z], scroll[z]+(offset[z]-size[z])/2+(offsets[z] || 0));
 		
 		return this;
 	}
 	
 });
 
-Popup = new Class({
+var Popup = new Class({
 	
 	Implements: [Options, Events],
 	
@@ -130,26 +130,32 @@ Popup = new Class({
 Overlay = new Class({
 	
 	initialize: function(options){
-		this.el = new Element('div', Hash.extend({
+		this.el = new Element('div', $extend({
 			'class': 'overlay'
-		}, options || {})).inject(document.body);
+		}, options)).inject(document.body);
 	},
 	
 	show: function(){
-		this.objects = [];
-		['object', Browser.Engine.trident ? 'select' : 'embed'].each(function(tag){
-			this.objects = Array.filter(document.getElementsByTagName(tag), function(el){
-				return el.style.visibility=='hidden' ? false : el.style.visibility = 'hidden';
-			});
-		}, this);
+		this.objects = $$('object, select, embed').filter(function(el){
+			return el.style.visibility=='hidden' ? false : el.style.visibility = 'hidden';
+		});
 		
-		this.el.get('tween').pause();
+		this.resize = (function(){
+			if(!this.el) this.destroy();
+			else this.el.setStyles({
+				width: document.getScrollWidth(),
+				height: document.getScrollHeight()
+			});
+		}).bind(this);
+		
+		this.resize();
+		
 		this.el.setStyles({
 			opacity: 0,
-			display: 'block',
-			width: document.getScrollWidth(),
-			height: document.getScrollHeight()
-		}).fade(0.5);
+			display: 'block'
+		}).get('tween').pause().start('opacity', 0.5);
+		
+		window.addEvent('resize', this.resize);
 		
 		return this;
 	},
@@ -159,6 +165,8 @@ Overlay = new Class({
 			this.revertObjects();
 			this.el.setStyle('display', 'none');
 		}).bind(this));
+		
+		window.removeEvent('resize', this.resize);
 		
 		return this;
 	},
