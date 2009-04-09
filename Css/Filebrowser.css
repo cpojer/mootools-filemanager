@@ -1,6 +1,17 @@
+div.filebrowser-container {
+	display: none;
+}
+
+div.filebrowser {
+	font-family: Tahoma, sans-serif;
+	border: 1px solid #bebebe;
+	background: #eee;
+	position: absolute;
+}
+
 div.filebrowser ul {
 	margin: 0;
-	padding: 0
+	padding: 0;
 }
 
 div.filebrowser ul li, div.filebrowser-gallery ul li {
@@ -9,35 +20,14 @@ div.filebrowser ul li, div.filebrowser-gallery ul li {
 	list-style: none;
 }
 
-div.filebrowser-container {
-	display: none;
-}
-
-div.filebrowser, div.filebrowser-gallery {
-	font-family: Tahoma, sans-serif;
-	border: 1px solid #000;
-	background: #F3F3F3;
-	position: absolute;
-}
-
 div.filebrowser {
 	z-index: 1001;
-	width: 801px;
+	width: 800px;
 	height: 450px;
-
-	-moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-	border-radius: 10px;
 }
 
-div.filebrowser-gallery {
-	z-index: 1000;
-}
-
-div.filebrowser ul, div.filebrowser-gallery ul {
+div.filebrowser ul {
 	position: relative;
-	font-size: 11px;
-	font-family: Verdana, Arial, Helvetica, sans-serif;
 	border: 1px solid #000;
 	background: #FFF;
 	line-height: 1.8em;
@@ -45,12 +35,16 @@ div.filebrowser ul, div.filebrowser-gallery ul {
 	overflow-x: hidden;
 }
 
-ul.filebrowser-browser {
-	left: 500px;
-	top: 12px;
-	height: 390px;
-	width: 298px;
+div.filebrowser ul.filebrowser-browser {
+	left: 0px;
+	top: 0px;
+	height: 100%;
+	width: 30%;
 	margin: 0;
+	
+	border: 0;
+	border-right: 1px solid #bebebe;
+	background: url('../Images/filelist.png') repeat-x #c1c7cf;
 }
 
 div.filebrowser ul.filebrowser-loading {
@@ -145,9 +139,9 @@ a.filebrowser-close {
 
 div.filebrowser-infos {
 	position: absolute;
-	left: 0;
-	top: 12px;
-	width: 499px;
+	left: 261px;
+	top: 0;
+	width: 60%;
 	line-height: 1.6em;
 	overflow: auto;
 	height: 392px;
@@ -199,7 +193,6 @@ div.filebrowser dl {
 div.filebrowser dt, div.filebrowser dd {
 	float: left;
 	line-height: 14px;
-	font-family: Tahoma, sans-serif;
 	font-size: 11px;
 }
 
@@ -281,142 +274,9 @@ div.filebrowser-preview .object {
 	margin: 0 auto 1em;
 }
 
-div.filebrowser div.uploader {
-	margin: 0 10px 1em;
-}
-
-div.filebrowser div.uploader ul li span.file-info {
-	display: none;
-	padding-left: 20px;
-}
-
-div.filebrowser div.uploader ul li span.failed {
-	color: #b00;
-}
-
-div.filebrowser div.uploader ul li span.file-size {
-	display: none;
-}
-
-div.filebrowser div.uploader ul li.file a {
-	background-color: #fff;
-}
-
-div.filebrowser div.uploader button {
-	clear: none;
-	margin: 0;
-}
-
-a.file-success {
-	background-color: #80bb29;
-}
-
 div.filebrowser-container img.browser-add {
 	position: absolute;
 	width: 16px;
 	height: 16px;
 	z-index: 1010;
-}
-
-ul.uploader-list {
-	margin: 0;
-}
-
-div.filebrowser-gallery {
-	width: 180px;
-	height: 400px;
-	display: none;
-
-	border-left: 0;
-
-	-moz-border-radius-topright: 10px;
-	-webkit-border-radius-topright: 10px;
-	border-radius-topright: 10px;
-
-	-moz-border-radius-bottomright: 10px;
-	-webkit-border-radius-bottomright: 10px;
-	border-radius-bottomright: 10px;
-}
-
-div.filebrowser-gallery ul {
-	width: 88%;
-	height: 94%;
-
-	margin: 5% 0 0 4%;
-	padding: 1%;
-}
-
-div.filebrowser-gallery ul li {
-	float: left;
-	width: 49%;
-	overflow: hidden;
-	margin: 0;
-	list-style: none;
-
-	background: url(../Images/spinner.gif) center center no-repeat;
-}
-
-div.filebrowser-gallery ul li img {
-	padding: 2px;
-	width: 70px;
-	height: 52px;
-	cursor: pointer;
-}
-
-div.filebrowser-wrapper {
-	font-family: Tahoma, sans-serif;
-	border: 1px solid #000;
-	background: #F3F3F3;
-	position: absolute;
-	z-index: 1099;
-	width: 220px;
-	height: 250px;
-
-	-moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-	border-radius: 10px;
-}
-
-div.filebrowser-wrapper div.img {
-	width: 212px;
-	height: 162px;
-	margin: 5px 3px;
-
-	background: url(../Images/imgBG.png) no-repeat;
-}
-
-div.filebrowser-wrapper span {
-	margin: 3px 0 0 8px;
-	display: block;
-}
-
-div.filebrowser-wrapper input {
-	margin: 3px 0 0 7px;
-	width: 88%;
-}
-
-div.filebrowser-wrapper button {
-	margin: 3px;
-}
-
-div.filebrowser-wrapper img.filebrowser-delete {
-	position: absolute;
-
-	z-index: 1101;
-	right: -7px;
-	top: -7px;
-	width: 16px;
-	height: 16px;
-
-	cursor: pointer;
-}
-
-span.gallery-span {
-	float: left;
-	font-weight: bold;
-	margin: 9px;
-}
-
-img.filebrowser-clone {
-	cursor: pointer;
 }

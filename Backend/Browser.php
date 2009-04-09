@@ -247,7 +247,7 @@ class Browser {
 
 }
 
-/* Stripped-down Styx PHP Framework-Functionality bundled with this FileBrowser. Styx is located at: http://styx.og5.net */
+/* Stripped-down version of some Styx PHP Framework-Functionality bundled with this FileBrowser. Styx is located at: http://styx.og5.net */
 class Utility {
 	
 	public static function endsWith($string, $look){
