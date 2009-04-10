@@ -52,13 +52,13 @@ var FileBrowser = new Class({
 					el.eliminate('block');
 					return;
 				}else if(file.mime=='text/directory'){
+					el.addClass('selected');
 					this.load(this.Directory+'/'+file.name);
 					return;
 				}
 	
 				this.fillInfo(file);
 				if(this.Current) this.Current.removeClass('selected');
-	
 				this.Current = el.addClass('selected');
 				
 				this.switchButton();
@@ -322,7 +322,7 @@ var FileBrowser = new Class({
 						name: this.el.getElement('input').get('value'),
 						dir: self.Directory
 					}
-				}, this).post();
+				}, self).post();
 			}
 		});
 	},
@@ -426,7 +426,7 @@ var FileBrowser = new Class({
 						ndir: dir.dir+'/'+dir.name,
 						copy: e.control ? 1 : 0
 					}
-				}, this).post();
+				}, self).post();
 
 				self.fireEvent('modify', [$unlink(file)]);
 
