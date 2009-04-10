@@ -1,3 +1,27 @@
+/* TIPS */
+.tip-filebrowser {
+	z-index: 1201;
+}
+.tip-filebrowser .tip {
+	background: #000;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+}
+ 
+.tip-filebrowser .tip-title {
+	color: #fff;
+	font-size: 11px;
+	padding: 1px 4px;
+	line-height: 21px;
+	text-align: center;
+	font-weight: bold;
+}
+ 
+.tip-filebrowser .tip-text {
+	display: none;
+}
+
 /* Overlay */
 div.overlay {
 	position: absolute;

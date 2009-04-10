@@ -6,6 +6,7 @@
  * TODO: Fix E_NOTICE and access of POST/GET
  * TODO: Fix access restrictions of methods
  * TODO: Fix "Images/" Folder
+ * TODO: Fix Filters
  * 
  * */
 

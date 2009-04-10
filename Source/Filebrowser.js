@@ -2,11 +2,11 @@
 
 TODO: Proper headers
 TODO: Images (!) + Fix ImageBasePath to always have an / at the end
+TODO: Add Scroller.js (maybe optional) for drag/drop in filelist
 
 Based on a Script by Yannick Croissant
 
 */
-
 
 var FileBrowser = new Class({
 
@@ -35,21 +35,45 @@ var FileBrowser = new Class({
 		this.droppables = [];
 		this.Directory = this.options.directory;
 
-		this.container = new Element('div', {'class': 'filebrowser-container'}).inject(document.body);
+		this.container = new Element('div', {'class': 'filebrowser-container'});
 		this.el = new Element('div', {'class': 'filebrowser'}).inject(this.container);
-		this.browser = new Element('ul', {'class': 'filebrowser-browser'}).addEvent('click', (function(e){
-			if(e.target.match('ul')) this.deselect();
-		}).bind(this)).inject(this.el);
-
-		['open', 'create', 'upload'].each(function(v){
-			new Element('button', {
+		this.menu = new Element('div', {'class': 'filebrowser-menu'}).inject(this.el);
+		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 200}}).inject(this.menu);
+		this.browser = new Element('ul', {'class': 'filebrowser-browser'}).addEvents({
+			click: (function(e){
+				if(e.target.match('ul')) return this.deselect();
+				
+				var el = e.target.getParent('li').getElement('span');
+				if(!el) return;
+				
+				e.stop();
+				var file = el.retrieve('file');
+				if(el.retrieve('block')){
+					el.eliminate('block');
+					return;
+				}else if(file.mime=='text/directory'){
+					this.load(this.Directory+'/'+file.name);
+					return;
+				}
+	
+				this.fillInfo(file);
+				if(this.Current) this.Current.removeClass('selected');
+	
+				this.Current = el.addClass('selected');
+				
+				this.switchButton();
+			}).bind(this)
+		}).inject(this.el);
+		
+		this.menu.adopt(['open', 'create', 'upload'].map(function(v){
+			return new Element('button', {
 				'class': 'filebrowser-'+v,
 				text: Lang[v]
-			}).addEvent('click', this[v].bind(this)).inject(this.el);
-		}, this);
-
-		if(this.options.filter=='image')
-			new Element('span', {'class': 'notice', html: Lang.onlyimg}).inject(this.el);
+			}).addEvent('click', this[v].bind(this));
+		}, this));
+		
+		/* TODO: Fix this */
+		if(this.options.filter=='image') new Element('span', {'class': 'notice', html: Lang.onlyimg}).inject(this.el);
 
 		this.info = new Element('div', {'class': 'filebrowser-infos', opacity: 0}).inject(this.el);
 
@@ -82,27 +106,28 @@ var FileBrowser = new Class({
 		new Element('a', {
 			'class': 'filebrowser-close',
 			href: '#',
-			text: Lang.close
-		}).addEvent('click', this.hide.bind(this)).inject(this.el);
+			text: Lang.close,
+			events: {click: this.hide.bind(this)}
+		}).inject(this.el);
 
 		this.imageadd = new Asset.image(this.options.imageBasePath+'add.png', {
 			'class': 'browser-add'
 		}).set('opacity', 0).inject(this.container);
-
+		
+		this.container.inject(document.body);
 		this.overlay = new Overlay();
-
-		this.keydown = (function(e){
-			if(e.control) this.imageadd.fade(1);
-		}).bind(this);
-
-		this.keyup = (function(e){
-			this.imageadd.fade(0);
-		}).bind(this);
-
-		this.scroll = (function(){
-			this.el.center(this.offsets);
-			this.fireEvent('scroll');
-		}).bind(this);
+		this.bound = {
+			keydown: (function(e){
+				if(e.control) this.imageadd.fade(1);
+			}).bind(this),
+			keyup: (function(){
+				this.imageadd.fade(0);
+			}).bind(this),
+			scroll: (function(){
+				this.el.center(this.offsets);
+				this.fireEvent('scroll');
+			}).bind(this)
+		};
 	},
 
 	show: function(e, upload){
@@ -128,8 +153,8 @@ var FileBrowser = new Class({
 			this.container.set('opacity', 1);
 
 			window.addEvents({
-				scroll: this.scroll,
-				resize: this.scroll
+				scroll: this.bound.scroll,
+				resize: this.bound.scroll
 			});
 		}).delay(500, this);
 	},
@@ -142,7 +167,7 @@ var FileBrowser = new Class({
 		this.container.setStyle('display', 'none');
 
 		this.fireEvent('hide');
-		window.removeEvent('scroll', this.scroll).removeEvent('resize', this.scroll);
+		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
 	},
 
 	open: function(e){
@@ -170,16 +195,15 @@ var FileBrowser = new Class({
 				new Element('input', {'class': 'createDirectory'})
 			],
 			onConfirm: function(){
-				new Request.JSON({
+				new FileBrowser.Request({
 					url: self.options.url+'?event=create',
-					onRequest: self.loading.pass(self.browser),
 					onSuccess: self.fill.bind(self),
 					data: {
 						filter: this.options.filter,
 						file: this.el.getElement('input').get('value'),
 						dir: self.Directory
 					}
-				}).post();
+				}, self).post();
 			}
 		});
 	},
@@ -228,9 +252,8 @@ var FileBrowser = new Class({
 
 		if(this.Request) this.Request.cancel();
 
-		this.Request = new Request.JSON({
+		this.Request = new FileBrowser.Request({
 			url: this.options.url,
-			onRequest: this.loading.pass(this.browser),
 			onSuccess: (function(j){
 				this.fill(j, nofade);
 				if(this.showUpload) this.upload();
@@ -239,7 +262,7 @@ var FileBrowser = new Class({
 				filter: this.options.filter,
 				dir: dir
 			}
-		}).post();
+		}, this).post();
 	},
 
 	destroy: function(e, file){
@@ -248,13 +271,13 @@ var FileBrowser = new Class({
 		new Popup(Lang.destroy, Lang.destroyfile, {
 			onConfirm: (function(){
 				var self = this;
-				new Request.JSON({
+				new FileBrowser.Request({
 					url: this.options.url+'?event=destroy',
 					data: {
 						file: file.name,
 						dir: this.Directory
 					}
-				}).post();
+				}, this).post();
 
 				this.fireEvent('modify', [$unlink(file)]);
 
@@ -283,7 +306,7 @@ var FileBrowser = new Class({
 				new Element('input', {'class': 'rename', value: name.join('')})
 			],
 			onConfirm: function(){
-				new Request.JSON({
+				new FileBrowser.Request({
 					url: self.options.url+'?event=move',
 					onSuccess: (function(j){
 						if(j && j.name){
@@ -299,20 +322,16 @@ var FileBrowser = new Class({
 						name: this.el.getElement('input').get('value'),
 						dir: self.Directory
 					}
-				}).post();
+				}, this).post();
 			}
 		});
-	},
-
-	loading: function(el){
-		el.empty().addClass('filebrowser-loading');
 	},
 
 	fill: function(j, nofade){
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
 		if(!nofade) this.fillInfo(j.dir);
-		this.browser.removeClass('filebrowser-loading');
+		this.browser.empty();
 
 		if(!j.files) return;
 
@@ -326,39 +345,26 @@ var FileBrowser = new Class({
 				new Element('li').inject(this.browser)
 			);
 
+			var icons = [];
 			if(file.mime!='text/directory')
-				new Asset.image(this.options.imageBasePath+'disk.png', {title: Lang.download}).addClass('browser-icon').addEvent('click', (function(e){
+				icons.push(new Asset.image(this.options.imageBasePath+'disk.png', {title: Lang.download}).addClass('browser-icon').addEvent('click', (function(e){
 					e.stop();
 
 					window.open(this.normalize(this.Directory+'/'+file.name));
-				}).bind(this)).injectTop(el);
+				}).bind(this)).injectTop(el));
 
 			if(file.name!='..')
 				['rename', 'destroy'].each(function(v){
-					new Asset.image(this.options.imageBasePath+v+'.png', {title: Lang[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el);
+					icons.push(new Asset.image(this.options.imageBasePath+v+'.png', {title: Lang[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el));
 				}, this);
 
+			icons = $$(icons).set({
+				opacity: 0,
+				tween: {duration: 200}	
+			});
 			els[file.mime=='text/directory' ? 1 : 0].push(el);
-
 			if(file.name=='..') el.set('opacity', 0.7);
-
-			el.addEvent('click', (function(e){
-				e.stop();
-				if(el.retrieve('block')){
-					el.eliminate('block');
-					return;
-				}else if(file.mime=='text/directory'){
-					this.load(this.Directory+'/'+file.name);
-					return;
-				}
-
-				this.fillInfo(file);
-				if(this.Current) this.Current.removeClass('selected');
-
-				this.Current = el.addClass('selected');
-				
-				this.switchButton();
-			}).bind(this));
+			icons.appearOn(el.getParent('li'));
 		}, this);
 
 
@@ -379,21 +385,21 @@ var FileBrowser = new Class({
 
 				el.set('opacity', 0.7);
 				document.addEvents({
-					keydown: self.keydown,
-					keyup: self.keyup
+					keydown: self.bound.keydown,
+					keyup: self.bound.keyup
 				});
 			},
 
 			onEnter: function(el, droppable){
-				droppable.morph('div.filebrowser ul li span.droppable');
+				droppable.addClass('droppable');
 			},
 
 			onLeave: function(el, droppable){
-				droppable.morph('div.filebrowser ul li span.dir');
+				droppable.removeClass('droppable');
 			},
 
 			onDrop: function(el, droppable, e){
-				document.removeEvents('keydown', self.keydown).removeEvents('keyup', self.keydown);
+				document.removeEvents('keydown', self.bound.keydown).removeEvents('keyup', self.bound.keydown);
 
 				self.imageadd.fade(0);
 				el.set('opacity', 1).store('block', true);
@@ -402,18 +408,17 @@ var FileBrowser = new Class({
 
 				if(!droppable)
 					return;
-
-				droppable.morph('ul.filebrowser-browser span.selected').get('morph').chain(function(){
-					droppable.morph('div.filebrowser ul li span.dir');
-				});
-
+				
+				droppable.addClass('selected');
+				(function(){ droppable.removeClass('droppable').removeClass('selected'); }).delay(300);
+				
 				if(self.onDragComplete(el, droppable))
 					return;
 
 				var dir = droppable.retrieve('file'),
 					file = el.retrieve('file');
 
-				new Request.JSON({
+				new FileBrowser.Request({
 					url: self.options.url+'?event=move',
 					data: {
 						file: file.name,
@@ -421,7 +426,7 @@ var FileBrowser = new Class({
 						ndir: dir.dir+'/'+dir.name,
 						copy: e.control ? 1 : 0
 					}
-				}).post();
+				}, this).post();
 
 				self.fireEvent('modify', [$unlink(file)]);
 
@@ -432,8 +437,8 @@ var FileBrowser = new Class({
 					});
 			}
 		});
-	$$(els).setStyles({left: '0', top: '0'});
-		var tips = new Tips(this.browser.getElements('img.browser-icon'));
+		$$(els).setStyles({left: '0', top: '0'});
+		var tips = new FilebrowserTips(this.browser.getElements('img.browser-icon'));
 
 		tips.tip.removeClass('tip-base');
 	},
@@ -455,7 +460,7 @@ var FileBrowser = new Class({
 		this.info.getElement('h1').set('text', file.name);
 		this.info.getElement('span.filebrowser-date').set('text', Lang.modified+' '+file.date);
 		this.info.getElement('dd.filebrowser-type').set('text', file.mime);
-		this.info.getElement('dd.filebrowser-size').set('text', !size[0] && size[1]=='Bytes' ? '-' : (size.join(' ')+(size[1]=='Bytes' ? ' ('+file.size+' Bytes)' : '')));
+		this.info.getElement('dd.filebrowser-size').set('text', !size[0] && size[1]=='Bytes' ? '-' : (size.join(' ')+(size[1]!='Bytes' ? ' ('+file.size+' Bytes)' : '')));
 		this.info.getElement('h2.filebrowser-headline').setStyle('display', file.mime=='text/directory' ? 'none' : 'block');
 
 		var text = [], pre = [];
@@ -486,9 +491,8 @@ var FileBrowser = new Class({
 
 		if(this.Request) this.Request.cancel();
 
-		this.Request = new Request.JSON({
+		this.Request = new FileBrowser.Request({
 			url: this.options.url+'?event=list',
-			onRequest: this.loading.pass(this.preview),
 			onSuccess: (function(j){
 				var prev = this.preview.removeClass('filebrowser-loading').set('html', j && j.content ? j.content : '').getElement('img.prev');
 				if(prev) prev.addEvent('load', function(){
@@ -506,7 +510,7 @@ var FileBrowser = new Class({
 				dir: this.Directory,
 				file: file.name
 			}
-		}).post();
+		}, this).post();
 	},
 
 	size: function(size){
@@ -524,10 +528,27 @@ var FileBrowser = new Class({
 	switchButton: function(){
 		var chk = !!this.Current;
 
-		this.el.getElement('button.filebrowser-open').set('disabled', !chk)[(chk ? 'remove' : 'add')+'Class']('disabled');
+		this.menu.getElement('button.filebrowser-open').set('disabled', !chk)[(chk ? 'remove' : 'add')+'Class']('disabled');
 	},
 
+	onRequest: function(){ this.loader.set('opacity', 1); },
+	onComplete: function(){ this.loader.fade(0); },
 	onDragStart: $empty,
 	onDragComplete: $lambda(false)
 
+});
+
+FileBrowser.Request = new Class({
+	
+	Extends: Request.JSON,
+	
+	initialize: function(options, filebrowser){
+		this.parent(options);
+		
+		if(filebrowser)	this.addEvents({
+			request: filebrowser.onRequest.bind(filebrowser),
+			complete: filebrowser.onComplete.bind(filebrowser)
+		});
+	}
+	
 });

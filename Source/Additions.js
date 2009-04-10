@@ -3,14 +3,14 @@
  *
  */
 
-Tips = new Class({
+var FilebrowserTips = new Class({
 	
 	Extends: Tips,
 	
 	options: {
 		offsets: {x: 15, y: 0},
 		onShow: function(tip, el){
-			if(tip.get('opacity')==1 && tip.getStyle('visibility')=='visible') return;
+			if(tip.get('opacity')==0.8 && tip.getStyle('visibility')=='visible') return;
 			
 			tip.set({
 				opacity: 0,
@@ -18,7 +18,7 @@ Tips = new Class({
 					duration: 300,
 					link: 'cancel'
 				}
-			}).tween('opacity', 1);
+			}).tween('opacity', 0.8);
 		},
 		
 		onHide: function(tip, el){
@@ -26,11 +26,30 @@ Tips = new Class({
 				tip.setStyle('left', 0);
 			});
 		}
+	},
+	
+	initialize: function(el, options){
+		this.parent(el, options);
+		this.tip.addClass('tip-filebrowser');
 	}
 	
 });
 
 Element.implement({
+	
+	appearOn: function(el, opacity, options){
+		opacity = $splat(opacity);
+	
+		this.set({
+			opacity: opacity[1] || 0,
+			tween: options || {duration: 200}
+		});
+		
+		$(el).addEvents({
+			mouseenter: this.fade.bind(this, opacity[0]!=undefined ? opacity[0] : 1),
+			mouseleave: this.fade.bind(this, opacity[1] || 0)
+		});
+	},
 	
 	center: function(offsets){
 		var scroll = document.getScroll(),

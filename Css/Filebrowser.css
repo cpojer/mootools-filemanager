@@ -4,29 +4,49 @@ div.filebrowser-container {
 
 div.filebrowser {
 	font-family: Tahoma, sans-serif;
+	font-size: 12px;
 	border: 1px solid #bebebe;
 	background: #eee;
+	
 	position: absolute;
-}
-
-div.filebrowser ul {
-	margin: 0;
-	padding: 0;
-}
-
-div.filebrowser ul li, div.filebrowser-gallery ul li {
-	list-style-image: none;
-	list-style-type: none;
-	list-style: none;
-}
-
-div.filebrowser {
 	z-index: 1001;
 	width: 800px;
 	height: 450px;
 }
 
+div.filebrowser * {
+	outline: 0;
+}
+
+div.filebrowser div.filebrowser-menu {
+	position: absolute;
+	height: 30px;
+	left: 30%;
+	width: 70%;
+	bottom: 0;
+	line-height: 30px;
+	
+	border-top: 1px solid #bebebe;
+	background: url(../Images/menu.png) repeat-x;
+}
+
+div.filebrowser-menu button {
+	float: right;
+	height: 22px;
+	margin: 4px 5px;
+}
+
+div.filebrowser-menu div.loader {
+	float: left;
+	width: 16px;
+	height: 16px;
+	margin: 8px 0;
+	background: url(../Images/loader.gif) no-repeat;
+}
+
 div.filebrowser ul {
+	margin: 0;
+	padding: 0;
 	position: relative;
 	border: 1px solid #000;
 	background: #FFF;
@@ -35,34 +55,27 @@ div.filebrowser ul {
 	overflow-x: hidden;
 }
 
+div.filebrowser ul li {
+	list-style-image: none;
+	list-style-type: none;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	height: 21px;
+}
+
 div.filebrowser ul.filebrowser-browser {
 	left: 0px;
 	top: 0px;
 	height: 100%;
 	width: 30%;
-	margin: 0;
 	
 	border: 0;
 	border-right: 1px solid #bebebe;
-	background: url('../Images/filelist.png') repeat-x #c1c7cf;
+	background: url(../Images/filelist.png) repeat-x #c1c7cf;
 }
 
-div.filebrowser ul.filebrowser-loading {
-	background: #FFF url(../Images/browser_loading.gif) no-repeat center;
-}
-
-div.filebrowser-loading {
-	background: url(../Images/browser_loading.gif) no-repeat center;
-}
-
-div.filebrowser ul li {
-	margin: 0;
-	padding: 0;
-	height: 21px;
-	list-style: none;
-}
-
-div.filebrowser ul li a, div.filebrowser ul li span.fi {
+div.filebrowser ul li span.fi {
 	height: 21px;
 	padding-left: 5px;
 	color: #000;
@@ -72,15 +85,17 @@ div.filebrowser ul li a, div.filebrowser ul li span.fi {
 	cursor: pointer;
 }
 
-div.filebrowser ul li a span, div.filebrowser ul li span.fi span {
+div.filebrowser ul li span.fi span {
 	display: block;
-	width: 70%;
+	width: 100%;
+}
+div.filebrowser ul li:hover span.fi span {
+	width: 68%;
 	overflow: hidden;
 }
 
 div.filebrowser ul li span.dir {
-	color: #000;
-	background-color: #fff;
+	background-color: transparent;
 }
 
 div.filebrowser ul li span.droppable {
@@ -92,7 +107,7 @@ ul.filebrowser-browser a, ul.filebrowser-browser span {
 }
 
 div.filebrowser ul li a.selected, div.filebrowser ul li span.selected {
-	background: #3370CF;
+	background: url(../Images/filelist_selected.png) repeat-x;
 	color: #FFF;
 	outline: none;
 }
@@ -100,30 +115,17 @@ div.filebrowser ul li a.selected, div.filebrowser ul li span.selected {
 div.filebrowser ul li img {
 	display: block;
 	float: left;
-	margin: 2px 3px 0 0;
+	margin: 3px 3px 0 0;
 }
 
 div.filebrowser ul li img.browser-icon {
 	float: right;
 }
 
-button.filebrowser-open, button.filebrowser-create, button.filebrowser-upload {
-	position: absolute;
-	right: 4px;
-	bottom: 4px;
-}
 div.filebrowser span.notice {
 	position: absolute;
 	bottom: 16px;
 	left: 16px;
-}
-
-button.filebrowser-create {
-	right: 170px;
-}
-
-button.filebrowser-upload {
-	right: 340px;
 }
 
 a.filebrowser-close {
@@ -139,9 +141,9 @@ a.filebrowser-close {
 
 div.filebrowser-infos {
 	position: absolute;
-	left: 261px;
+	left: 30%;
 	top: 0;
-	width: 60%;
+	width: 70%;
 	line-height: 1.6em;
 	overflow: auto;
 	height: 392px;
@@ -218,10 +220,10 @@ div.filebrowser dd.filebrowser-dir {
 }
 
 div.filebrowser dd.filebrowser-dir a.icon {
-	border: 1px solid #aaa;
+	border: 1px solid #bebebe;
 	padding: 2px 5px 2px 20px;
 	text-decoration: none;
-	background: #fff url(../Images/Icons/dir.png) 2px 0 no-repeat;
+	background: #eee url(../Images/Icons/dir.png) 2px 0 no-repeat;
 	color: #000;
 
 	-moz-border-radius: 3px;
@@ -232,8 +234,7 @@ div.filebrowser dd.filebrowser-dir a.icon {
 div.filebrowser dd.filebrowser-dir a.selected,
 div.filebrowser dd.filebrowser-dir a.icon:hover {
 	text-decoration: none;
-	border: 1px solid #333;
-	background-color: #eee;
+	background-color: #fff;
 }
 
 div.filebrowser dd.filebrowser-dir a.selected {
@@ -248,10 +249,6 @@ div.filebrowser-preview {
 div.filebrowser-preview img.prev {
 	margin: 0 auto 1em;
 	display: block;
-
-	min-height: 100px;
-	min-width: 100px;
-	background: url(../Images/browser_loading.gif) no-repeat top center;
 }
 
 div.filebrowser-preview ul {

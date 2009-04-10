@@ -1,25 +1,3 @@
-/* TIP */
-.tip-base {
-	width: 200px;
-}
-
-.tip {
-	z-index: 1201;
-}
- 
-.tip-title {
-	color: #fff;
-	font-size: 16px;
-	text-transform: uppercase;
-	padding-left: 12px;
-	line-height: 21px;
-	text-align: center;
-}
- 
-.tip-text {
-	display: none;
-}
-
 /* UPLOAD */
 .progress {
 	background: white url(../Assets/progress.gif) no-repeat;
@@ -72,6 +50,11 @@ a.file-success {
 
 
 /* GALLERY */
+div.filebrowser-gallery ul li {
+	list-style-image: none;
+	list-style-type: none;
+	list-style: none;
+}
 div.filebrowser-gallery ul {
 	position: relative;
 	font-size: 11px;
