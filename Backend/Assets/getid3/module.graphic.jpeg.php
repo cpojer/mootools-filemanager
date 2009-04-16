@@ -14,43 +14,49 @@
 // | Authors: James Heinrich <infoØgetid3*org>                            |
 // |          Allan Hansen <ahØartemis*dk>                                |
 // +----------------------------------------------------------------------+
-// | module.graphic.pcd.php                                               |
-// | Module for analyzing PhotoCD (PCD) Image files.                      |
-// | dependencies: NONE                                                   |
+// | module.graphic.jpeg.php                                              |
+// | Module for analyzing JPEG graphic files.                             |
+// | dependencies: exif support in PHP (optional)                         |
 // +----------------------------------------------------------------------+
 //
-// $Id: module.graphic.pcd.php,v 1.2 2006/11/02 10:48:02 ah Exp $
+// $Id: module.graphic.jpeg.php,v 1.4 2006/11/02 10:48:02 ah Exp $
 
         
         
-class getid3_pcd extends getid3_handler
+class getid3_jpeg extends getid3_handler
 {
-
 
     public function Analyze() {
         
         $getid3 = $this->getid3;
 
-        $getid3->info['fileformat']          = 'pcd';
-        $getid3->info['video']['dataformat'] = 'pcd';
-        $getid3->info['video']['lossless']   = false;
+        $getid3->info['fileformat']                  = 'jpg';
+        $getid3->info['video']['dataformat']         = 'jpg';
+        $getid3->info['video']['lossless']           = false;
+        $getid3->info['video']['bits_per_sample']    = 24;
+        $getid3->info['video']['pixel_aspect_ratio'] = (float)1;
 
-        fseek($getid3->fp, $getid3->info['avdataoffset'] + 72, SEEK_SET);
+        fseek($getid3->fp, $getid3->info['avdataoffset'], SEEK_SET);
 
-        $pcd_flags       = fread($getid3->fp, 1);
-        $pcd_is_vertical = ((ord($pcd_flags) & 0x01) ? true : false);
-
-        if ($pcd_is_vertical) {
-            $getid3->info['video']['resolution_x'] = 3072;
-            $getid3->info['video']['resolution_y'] = 2048;
-        } else {
-            $getid3->info['video']['resolution_x'] = 2048;
-            $getid3->info['video']['resolution_y'] = 3072;
+        list($getid3->info['video']['resolution_x'], $getid3->info['video']['resolution_y'], $type) = getimagesize($getid3->filename);
+        
+        if ($type != 2) {
+            throw new getid3_exception('File detected as JPEG, but is currupt.');
         }
 
+        if (function_exists('exif_read_data')) {
+
+            $getid3->info['jpg']['exif'] = exif_read_data($getid3->filename, '', true, false);
+
+        } else {
+
+            $getid3->warning('EXIF parsing only available when compiled with --enable-exif (or php_exif.dll enabled for Windows).');
+        }
+
+        return true;
     }
 
-
 }
+
 
 ?>
