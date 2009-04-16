@@ -30,7 +30,7 @@ div.overlay {
 	display: none;
 	
 	z-index: 999;
-	background: #000;
+	background: #aaa;
 }
 
 /* Popup */

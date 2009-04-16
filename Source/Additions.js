@@ -10,7 +10,7 @@ var FilebrowserTips = new Class({
 	options: {
 		offsets: {x: 15, y: 0},
 		onShow: function(tip, el){
-			if(tip.get('opacity')==0.8 && tip.getStyle('visibility')=='visible') return;
+			if(tip.get('opacity') == 0.8 && tip.getStyle('visibility') == 'visible') return;
 			
 			tip.set({
 				opacity: 0,
@@ -38,17 +38,19 @@ var FilebrowserTips = new Class({
 Element.implement({
 	
 	appearOn: function(el, opacity, options){
-		opacity = $splat(opacity);
-	
+		opacity = $type(opacity) == 'array' ? [opacity[0] || 1, opacity[1] || 0] : [opacity || 1, 0];
+		
 		this.set({
-			opacity: opacity[1] || 0,
+			opacity: opacity[1],
 			tween: options || {duration: 200}
 		});
 		
 		$(el).addEvents({
-			mouseenter: this.fade.bind(this, opacity[0]!=undefined ? opacity[0] : 1),
-			mouseleave: this.fade.bind(this, opacity[1] || 0)
+			mouseenter: this.fade.bind(this, opacity[0]),
+			mouseleave: this.fade.bind(this, opacity[1])
 		});
+		
+		return this;
 	},
 	
 	center: function(offsets){

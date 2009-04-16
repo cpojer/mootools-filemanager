@@ -102,13 +102,13 @@ var FileBrowser = new Class({
 			new Element('h2', {'class': 'filebrowser-headline', text: Lang.preview}),
 			this.preview
 		]);
-
-		new Element('a', {
+		
+		var close = new Element('div', {
 			'class': 'filebrowser-close',
-			href: '#',
-			text: Lang.close,
+			title: Lang.close,
 			events: {click: this.hide.bind(this)}
-		}).inject(this.el);
+		}).adopt(new Asset.image(this.options.imageBasePath+'destroy.png')).inject(this.el);
+		new FilebrowserTips(close.appearOn(close, [1, 0.8]).appearOn(this.el, 0.8));
 
 		this.imageadd = new Asset.image(this.options.imageBasePath+'add.png', {
 			'class': 'browser-add'
@@ -358,13 +358,9 @@ var FileBrowser = new Class({
 					icons.push(new Asset.image(this.options.imageBasePath+v+'.png', {title: Lang[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el));
 				}, this);
 
-			icons = $$(icons).set({
-				opacity: 0,
-				tween: {duration: 200}	
-			});
+			icons = $$(icons.map(function(icon){ return icon.appearOn(icon, [1, 0.7]); })).appearOn(el.getParent('li'), 0.7);
 			els[file.mime=='text/directory' ? 1 : 0].push(el);
 			if(file.name=='..') el.set('opacity', 0.7);
-			icons.appearOn(el.getParent('li'));
 		}, this);
 
 
