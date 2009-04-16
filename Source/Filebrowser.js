@@ -3,6 +3,7 @@
 TODO: Proper headers
 TODO: Images (!) + Fix ImageBasePath to always have an / at the end
 TODO: Add Scroller.js (maybe optional) for drag/drop in filelist
+TODO: Fix filters
 
 Based on a Script by Yannick Croissant
 
@@ -79,8 +80,7 @@ var FileBrowser = new Class({
 
 		var head = new Element('div', {'class': 'filebrowser-head'}).adopt([
 			new Element('img', {'class': 'filebrowser-icon'}),
-			new Element('h1'),
-			new Element('span', {'class': 'filebrowser-date', text: Lang.modified+' '})
+			new Element('h1')
 		]);
 
 		this.info.adopt([
@@ -89,6 +89,8 @@ var FileBrowser = new Class({
 		]);
 
 		var list = new Element('dl').adopt([
+			new Element('dt', {text: Lang.modified}),
+			new Element('dd', {'class': 'filebrowser-modified'}),
 			new Element('dt', {text: Lang.type}),
 			new Element('dd', {'class': 'filebrowser-type'}),
 			new Element('dt', {text: Lang.size}),
@@ -454,7 +456,7 @@ var FileBrowser = new Class({
 		this.preview.empty();
 
 		this.info.getElement('h1').set('text', file.name);
-		this.info.getElement('span.filebrowser-date').set('text', Lang.modified+' '+file.date);
+		this.info.getElement('dd.filebrowser-modified').set('text', file.date);
 		this.info.getElement('dd.filebrowser-type').set('text', file.mime);
 		this.info.getElement('dd.filebrowser-size').set('text', !size[0] && size[1]=='Bytes' ? '-' : (size.join(' ')+(size[1]!='Bytes' ? ' ('+file.size+' Bytes)' : '')));
 		this.info.getElement('h2.filebrowser-headline').setStyle('display', file.mime=='text/directory' ? 'none' : 'block');
@@ -490,7 +492,7 @@ var FileBrowser = new Class({
 		this.Request = new FileBrowser.Request({
 			url: this.options.url+'?event=list',
 			onSuccess: (function(j){
-				var prev = this.preview.removeClass('filebrowser-loading').set('html', j && j.content ? j.content : '').getElement('img.prev');
+				var prev = this.preview.removeClass('filebrowser-loading').set('html', j && j.content ? j.content.substitute(Lang, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.prev');
 				if(prev) prev.addEvent('load', function(){
 						this.setStyle('background', 'none');
 					});

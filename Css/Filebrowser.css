@@ -26,8 +26,7 @@ div.filebrowser div.filebrowser-menu {
 	background: url(../Images/menu.png) repeat-x;
 }
 
-div.filebrowser-menu button {
-	float: right;
+div.filebrowser button {
 	height: 22px;
 	margin: 4px 5px;
 	
@@ -39,6 +38,10 @@ div.filebrowser-menu button {
 	-moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
 	border-radius: 4px;
+}
+
+div.filebrowser-menu button {
+	float: right;
 }
 
 div.filebrowser-menu button.disabled {
@@ -60,8 +63,6 @@ div.filebrowser ul {
 	margin: 0;
 	padding: 0;
 	position: relative;
-	border: 1px solid #000;
-	background: #FFF;
 	line-height: 1.8em;
 	overflow: auto;
 	overflow-x: hidden;
@@ -165,7 +166,6 @@ div.filebrowser-infos {
 	width: 70%;
 	line-height: 1.6em;
 	overflow: auto;
-	height: 392px;
 }
 
 div.filebrowser-head {
@@ -192,13 +192,9 @@ div.filebrowser h1 {
 	white-space: nowrap;
 }
 
-span.filebrowser-date {
-	color: #818080; display: none;
-}
-
 div.filebrowser h2 {
 	margin: 0;
-	border-top: 1px solid #B1B1B1;
+	border-top: 1px solid #bebebe;
 	font-size: 14px;
 	font-weight: bold;
 	padding: 2px 0 5px 5px;
@@ -214,29 +210,24 @@ div.filebrowser dl {
 
 div.filebrowser dt, div.filebrowser dd {
 	float: left;
-	line-height: 14px;
+	line-height: 20px;
 	font-size: 11px;
 }
 
 div.filebrowser dt {
 	clear: both;
-	width: 90px;
-	margin-left: 15px;
+	width: 22%;
+	margin-left: 5%;
 	font-weight: bold;
 }
 
 div.filebrowser dd {
-	width: 360px;
 	white-space: nowrap;
 	overflow: auto;
 }
 
-div.filebrowser dd.margin {
+div.filebrowser div.margin {
 	margin-left: 15px;
-}
-
-div.filebrowser dd.filebrowser-dir {
-	line-height: 20px;
 }
 
 div.filebrowser dd.filebrowser-dir a.icon {
@@ -263,32 +254,33 @@ div.filebrowser dd.filebrowser-dir a.selected {
 
 div.filebrowser-preview {
 	margin-top: 5px;
-	min-height: 66px;
 }
 
-div.filebrowser-preview img.prev {
+div.filebrowser-preview img.preview {
 	margin: 0 auto 1em;
 	display: block;
+	max-height: 100px;
 }
 
-div.filebrowser-preview ul {
-	width: 99%;
-	height: 95%;
-}
-
-div.filebrowser-preview textarea {
-	font: 9px Verdana, Arial, Helvetica, sans-serif;
-	width: 480px;
-	height: 190px;
-	border: 1px solid #868685;
+div.filebrowser-preview ul, div.filebrowser-preview div.textpreview {
+	border: 1px solid #bebebe;
 	background: #fff;
+	
+	padding: 2px;
 	margin: 1em auto;
-	display: block;
+	
+	width: 490px;
+	height: 205px;
+	overflow: auto;
 }
 
-div.filebrowser-preview .object {
+div.filebrowser-preview div.textpreview {
+	font: 9px Verdana, Arial, Helvetica, sans-serif;
+}
+
+div.filebrowser-preview div.object {
 	width: 300px;
-	margin: 0 auto 1em;
+	margin: 0 0 1em 190px;
 }
 
 div.filebrowser-container img.browser-add {

@@ -1,5 +1,5 @@
 var Lang = {
-	more: 'Mehr Informationen',
+	more: 'Details',
 	width: 'Breite:',
 	height: 'Höhe:',
 	
@@ -7,7 +7,7 @@ var Lang = {
 	upload: 'Datei hochladen',
 	create: 'Ordner erstellen',
 	create1: 'Erstellen',
-	createdir: 'Welchen Namen soll der Ordner haben?',
+	createdir: 'Bitte gib einen Ordnernamen ein:',
 	browse: 'Durchsuchen...',
 	clear: 'Liste leeren',
 	startupload: 'Upload starten',
@@ -17,15 +17,14 @@ var Lang = {
 	type: 'Typ:',
 	size: 'Größe:',
 	dir: 'Ordner:',
-	modified: 'Bearbeitet:',
+	modified: 'Zuletzt bearbeitet:',
 	preview: 'Vorschau',
 	close: 'Schließen',
-	content: 'Inhalt:',
 	destroy: 'Löschen',
-	destroyfile: 'Möchtest du diese Datei/diesen Ordner löschen? Wenn diese Datei auf einer Seite eingebunden wurde, ist sie nach dem Löschen nicht mehr verfügbar.',
+	destroyfile: 'Bist du sicher, dass du diese Datei löschen möchtest?',
 	
 	rename: 'Umbenennen',
-	renamefile: 'Möchtest du diese Datei umbenennnen? Wenn diese Datei auf einer Seite eingebunden wurde, ist sie nach dem Umbenennen nicht mehr verlinkt.',
+	renamefile: 'Gib einen neuen Dateinamen ein:',
 	
 	download: 'Download',
 	nopreview: '<i>Keine Vorschau verfügbar</i>',
@@ -36,13 +35,13 @@ var Lang = {
 	length: 'Länge:',
 	bitrate: 'Bitrate:',
 	
+	filebrowser: 'Datei-Manager'
+};/*
 	overallprogress: 'Gesamtfortschritt',
 	currentprogress: 'Dateifortschritt',
 	complete: 'Dateiupload abgeschlossen!',
 	
 	speed: 'Upload mit {rate}/s. Zeit übrig: ~{timeLeft}',
-	
-	filebrowser: 'Datei-Manager',
 	
 	img: 'Bilder (*.jpg, *.jpeg, *.gif, *.png)',
 	onlyimg: '<span class="b">Hinweis:</span> <i>Es werden nur Bilder angezeigt</i>',
@@ -58,4 +57,4 @@ var Lang = {
 	subtext: 'Bildtext',
 	
 	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a class="black" href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" class="go icon">Flash downloaden</a>'
-};
+};*/

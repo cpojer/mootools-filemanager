@@ -87,14 +87,58 @@ class Browser {
 	
 	public function onList(){
 		$file = realpath($this->path.'/'.$this->post['dir'].'/'.$this->post['file']);
-		
 		if(!$this->checkFile($file)) return;
 		
-		Core::loadAsset('getid3/getid3');
-		Core::loadAsset('FileInfo');
+		require_once('Assets/getid3/getid3.php');
+		
+		$url = $this->normalize(substr($file, strlen($this->path)+1));
+		$mime = $this->getMimeType($file);
+		$content = null;
+		if(Utility::startsWith($mime, 'image/')){
+			$size = getimagesize($file);
+			$content = '<img src="'.$url.'" class="preview" alt="" />
+				<h2>${more}</h2>
+				<dl>
+					<dt>${width}</dt><dd>'.$size[0].'px</dd>
+					<dt>${height}</dt><dd>'.$size[1].'px</dd>
+				</dl>';
+		}elseif(Utility::startsWith($mime, 'text/') || $mime=='application/x-javascript'){
+			$filecontent = file_get_contents($file, null, null, 0, 300);
+			if(!Utility::isBinary($filecontent)) $content = '<div class="textpreview">'.nl2br(str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent))).'</div>';
+		}elseif($mime=='application/zip'){
+			$out = array(array(), array());
+			$getid3 = new getID3();
+			$getid3->Analyze($file);
+			foreach($getid3->info['zip']['files'] as $name => $size){
+				$icon = is_array($size) ? 'dir' : $this->getIcon($name);
+				$out[$icon=='dir' ? 0 : 1][$name] = '<li><a><img src="'.$this->options['images'].'/Icons/'.$icon.'.png" alt="" /> '.$name.'</a></li>';
+			}
+			natcasesort($out[0]);
+			natcasesort($out[1]);
+			$content = '<ul>'.implode(array_merge($out[0], $out[1])).'</ul>';
+		}elseif(Utility::startsWith($mime, 'audio/')){
+			$getid3 = new getID3();
+			$getid3->Analyze($file);
+			
+			$content = '<div class="object">
+					<object type="application/x-shockwave-flash" data="../Assets/dewplayer.swf?mp3='.rawurlencode($url).'&volume=30" width="200" height="20">
+						<param name="movie" value="../Assets/dewplayer.swf?mp3='.rawurlencode($url).'&volume=30" />
+					</object>
+				</div>
+				<h2>${more}</h2>
+				<dl>
+					<dt>${title}</dt><dd>'.$getid3->info['comments']['title'][0].'</dd>
+					<dt>${artist}</dt><dd>'.$getid3->info['comments']['artist'][0].'</dd>
+					<dt>${album}</dt><dd>'.$getid3->info['comments']['album'][0].'</dd>
+					<dt>${length}</dt><dd>'.$getid3->info['playtime_string'].'</dd>
+					<dt>${bitrate}</dt><dd>'.round($getid3->info['bitrate']/1000).'kbps</dd>
+				</dl>';
+		}
 		
 		echo json_encode(array(
-			'content' => FileInfo::get($file, $this->normalize(substr($file, strlen($this->path)+1)), $this->getMimeType($file))
+			'content' => $content ? $content : '<div class="margin">
+					${nopreview}<br/><button value="'.$url.'">${download}</button>
+				</div>',
 		));
 	}
 	
@@ -283,6 +327,14 @@ class Utility {
 				return self::checkTitle($data, $options, ++$i);
 		
 		return $data.($i ? '_'.$i : '');
+	}
+	
+	public static function isBinary($str){
+		$array = array(0, 255);
+		for($i = 0;$i < strlen($str); $i++)
+			if(in_array(ord($str[$i]), $array)) return true;
+		
+		return false;
 	}
 	
 }
