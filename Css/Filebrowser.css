@@ -197,12 +197,12 @@ div.filebrowser h2 {
 	border-top: 1px solid #bebebe;
 	font-size: 14px;
 	font-weight: bold;
-	padding: 2px 0 5px 5px;
+	padding: 2px 0 0 5px;
 	clear: both;
 }
 
 div.filebrowser dl {
-	margin-bottom: 5px;
+	margin: 5px 0;
 	width: 100%;
 	clear: both;
 	overflow: auto;
@@ -270,7 +270,7 @@ div.filebrowser-preview ul, div.filebrowser-preview div.textpreview {
 	margin: 1em auto;
 	
 	width: 490px;
-	height: 205px;
+	height: 220px;
 	overflow: auto;
 }
 
