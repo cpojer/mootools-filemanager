@@ -110,15 +110,16 @@ var FileGallery = new Class({
 		if(!droppable || droppable!=this.galleryUl)
 			return false;
 		
+		var file;
 		if($type(el)=='string'){
-			var split = el.split('/'),
-				file = {
+			var split = el.split('/');
+			file = {
 					name: split.pop(),
 					dir: split.join('/')
-				}
+				};
 		}else{
 			el.setStyles({left: '', top: ''});
-			var file = el.retrieve('file');
+			file = el.retrieve('file');
 		}
 		
 		var	img = this.normalize('thumb.php/'+file.dir+'/'+file.name),

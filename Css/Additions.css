@@ -33,8 +33,13 @@ div.overlay {
 	background: #aaa;
 }
 
-/* Popup */
-div.popup {
+/* Dialog */
+div.overlay-dialog {
+	z-index: 1999;
+	background: #fff;
+}
+
+div.dialog {
 	position: absolute;
 	display: none;
 	
@@ -45,7 +50,7 @@ div.popup {
 	background: url(../Images/popup.png) no-repeat;
 }
 
-div.popup h1 {
+div.dialog h1 {
 	cursor: move;
 	margin: 12px 20px 6px;
 	
@@ -53,26 +58,26 @@ div.popup h1 {
 	background: none;
 }
 
-div.popup div {
+div.dialog div {
 	margin: 5px 25px;
 }
 
-div.popup button {
+div.dialog button {
 	position: absolute;
 	bottom: 12px;
 	left: 30px;
 }
 
-div.popup button.popup-decline {
+div.dialog button.dialog-decline {
 	left: auto;
 	right: 30px;
 }
 
-div.popup input, div.popup select {
+div.dialog input, div.dialog select {
 	margin: 0 25px 2px;
 	width: 260px;
 }
 
-div.popup input.createDirectory {
+div.dialog input.createDirectory {
 	margin-top: 20px;
 }

@@ -3,26 +3,28 @@
  *
  */
 
-var FilebrowserTips = new Class({
+FileBrowser.Tips = new Class({
 	
 	Extends: Tips,
 	
 	options: {
 		offsets: {x: 15, y: 0},
+		text: null,
 		onShow: function(tip, el){
-			if(tip.get('opacity') == 0.8 && tip.getStyle('visibility') == 'visible') return;
+			if(tip.get('opacity')==0.8 && tip.getStyle('visibility')=='visible') return;
 			
+			tip.get('tween').pause();
 			tip.set({
 				opacity: 0,
 				tween: {
-					duration: 300,
+					duration: 200,
 					link: 'cancel'
 				}
-			}).tween('opacity', 0.8);
+			}).fade(0.8);
 		},
 		
 		onHide: function(tip, el){
-			tip.tween('opacity', 0).get('tween').chain(function(){
+			tip.get('tween').pause().start('opacity', 0).chain(function(){
 				tip.setStyle('left', 0);
 			});
 		}
@@ -31,6 +33,21 @@ var FilebrowserTips = new Class({
 	initialize: function(el, options){
 		this.parent(el, options);
 		this.tip.addClass('tip-filebrowser');
+	}
+	
+});
+
+FileBrowser.Request = new Class({
+	
+	Extends: Request.JSON,
+	
+	initialize: function(options, filebrowser){
+		this.parent(options);
+		
+		if(filebrowser)	this.addEvents({
+			request: filebrowser.onRequest.bind(filebrowser),
+			complete: filebrowser.onComplete.bind(filebrowser)
+		});
 	}
 	
 });
@@ -61,14 +78,17 @@ Element.implement({
 		
 		if(!offsets) offsets = {};
 		
-		for(z in values) this.setStyle(values[z], scroll[z]+(offset[z]-size[z])/2+(offsets[z] || 0));
+		for(var z in values){
+			var style = scroll[z]+(offset[z]-size[z])/2+(offsets[z] || 0);
+			this.setStyle(values[z], style < 10 ? 10 : style);
+		}
 		
 		return this;
 	}
 	
 });
 
-var Popup = new Class({
+var Dialog = new Class({
 	
 	Implements: [Options, Events],
 	
@@ -88,7 +108,7 @@ var Popup = new Class({
 		this.setOptions(options);
 		
 		this.el = new Element('div', {
-			'class': 'popup',
+			'class': 'dialog',
 			opacity: 0,
 			tween: {duration: 250}
 		}).adopt([
@@ -103,19 +123,16 @@ var Popup = new Class({
 		if(this.options.content) this.el.adopt(this.options.content);
 		
 		Array.each(this.options.buttons, function(v){
-			new Element('button', {'class': 'popup-'+v, text: this.options.language[v] || Lang[v]}).addEvent('click', (function(e){
+			new Element('button', {'class': 'dialog-'+v, text: this.options.language[v] || Lang[v]}).addEvent('click', (function(e){
 				e.stop();
 				this.fireEvent(v).fireEvent('close');
 			}).bind(this)).inject(this.el);
 		}, this);
 		
 		this.overlay = new Overlay({
+			'class': 'overlay overlay-dialog',
 			events: {
 				click: this.fireEvent.bind(this, ['close'])
-			},
-			styles: {
-				zIndex: 1999,
-				backgroundColor: '#fff'
 			},
 			tween: {duration: 250}
 		});

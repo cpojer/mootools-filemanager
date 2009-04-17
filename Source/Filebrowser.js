@@ -110,7 +110,7 @@ var FileBrowser = new Class({
 			title: Lang.close,
 			events: {click: this.hide.bind(this)}
 		}).adopt(new Asset.image(this.options.imageBasePath+'destroy.png')).inject(this.el);
-		new FilebrowserTips(close.appearOn(close, [1, 0.8]).appearOn(this.el, 0.8));
+		new FileBrowser.Tips(close.appearOn(close, [1, 0.8]).appearOn(this.el, 0.8));
 
 		this.imageadd = new Asset.image(this.options.imageBasePath+'add.png', {
 			'class': 'browser-add'
@@ -188,7 +188,7 @@ var FileBrowser = new Class({
 		e.stop();
 
 		var self = this;
-		new Popup(Lang.create, Lang.createdir, {
+		new Dialog(Lang.create, Lang.createdir, {
 			language: {
 				confirm: Lang.create1,
 				decline: Lang.cancel
@@ -270,7 +270,7 @@ var FileBrowser = new Class({
 	destroy: function(e, file){
 		e.stop();
 
-		new Popup(Lang.destroy, Lang.destroyfile, {
+		new Dialog(Lang.destroy, Lang.destroyfile, {
 			onConfirm: (function(){
 				var self = this;
 				new FileBrowser.Request({
@@ -299,7 +299,7 @@ var FileBrowser = new Class({
 		if(file.mime!='text/directory') name.pop();
 
 		var self = this;
-		new Popup(Lang.rename, Lang.renamefile, {
+		new Dialog(Lang.rename, Lang.renamefile, {
 			language: {
 				confirm: Lang.rename,
 				decline: Lang.cancel
@@ -436,7 +436,7 @@ var FileBrowser = new Class({
 			}
 		});
 		$$(els).setStyles({left: '0', top: '0'});
-		var tips = new FilebrowserTips(this.browser.getElements('img.browser-icon'));
+		var tips = new FileBrowser.Tips(this.browser.getElements('img.browser-icon'));
 
 		tips.tip.removeClass('tip-base');
 	},
@@ -534,19 +534,4 @@ var FileBrowser = new Class({
 	onDragStart: $empty,
 	onDragComplete: $lambda(false)
 
-});
-
-FileBrowser.Request = new Class({
-	
-	Extends: Request.JSON,
-	
-	initialize: function(options, filebrowser){
-		this.parent(options);
-		
-		if(filebrowser)	this.addEvents({
-			request: filebrowser.onRequest.bind(filebrowser),
-			complete: filebrowser.onComplete.bind(filebrowser)
-		});
-	}
-	
 });
