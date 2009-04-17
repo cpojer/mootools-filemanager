@@ -3,7 +3,7 @@
  *
  */
 
-FileBrowser.Tips = new Class({
+FileManager.Tips = new Class({
 	
 	Extends: Tips,
 	
@@ -37,7 +37,7 @@ FileBrowser.Tips = new Class({
 	
 });
 
-FileBrowser.Request = new Class({
+FileManager.Request = new Class({
 	
 	Extends: Request.JSON,
 	

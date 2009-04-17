@@ -1,6 +1,6 @@
-var FileGallery = new Class({
+FileManager.Gallery = new Class({
 	
-	Extends: FileBrowser,
+	Extends: FileManager,
 	
 	options: {
 		onShow: function(){

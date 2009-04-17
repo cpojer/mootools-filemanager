@@ -9,7 +9,7 @@ Based on a Script by Yannick Croissant
 
 */
 
-var FileBrowser = new Class({
+var FileManager = new Class({
 
 	Implements: [Options, Events],
 
@@ -110,7 +110,7 @@ var FileBrowser = new Class({
 			title: Lang.close,
 			events: {click: this.hide.bind(this)}
 		}).adopt(new Asset.image(this.options.imageBasePath+'destroy.png')).inject(this.el);
-		new FileBrowser.Tips(close.appearOn(close, [1, 0.8]).appearOn(this.el, 0.8));
+		new FileManager.Tips(close.appearOn(close, [1, 0.8]).appearOn(this.el, 0.8));
 
 		this.imageadd = new Asset.image(this.options.imageBasePath+'add.png', {
 			'class': 'browser-add'
@@ -197,7 +197,7 @@ var FileBrowser = new Class({
 				new Element('input', {'class': 'createDirectory'})
 			],
 			onConfirm: function(){
-				new FileBrowser.Request({
+				new FileManager.Request({
 					url: self.options.url+'?event=create',
 					onSuccess: self.fill.bind(self),
 					data: {
@@ -254,7 +254,7 @@ var FileBrowser = new Class({
 
 		if(this.Request) this.Request.cancel();
 
-		this.Request = new FileBrowser.Request({
+		this.Request = new FileManager.Request({
 			url: this.options.url,
 			onSuccess: (function(j){
 				this.fill(j, nofade);
@@ -273,7 +273,7 @@ var FileBrowser = new Class({
 		new Dialog(Lang.destroy, Lang.destroyfile, {
 			onConfirm: (function(){
 				var self = this;
-				new FileBrowser.Request({
+				new FileManager.Request({
 					url: this.options.url+'?event=destroy',
 					data: {
 						file: file.name,
@@ -308,7 +308,7 @@ var FileBrowser = new Class({
 				new Element('input', {'class': 'rename', value: name.join('')})
 			],
 			onConfirm: function(){
-				new FileBrowser.Request({
+				new FileManager.Request({
 					url: self.options.url+'?event=move',
 					onSuccess: (function(j){
 						if(j && j.name){
@@ -416,7 +416,7 @@ var FileBrowser = new Class({
 				var dir = droppable.retrieve('file'),
 					file = el.retrieve('file');
 
-				new FileBrowser.Request({
+				new FileManager.Request({
 					url: self.options.url+'?event=move',
 					data: {
 						file: file.name,
@@ -436,7 +436,7 @@ var FileBrowser = new Class({
 			}
 		});
 		$$(els).setStyles({left: '0', top: '0'});
-		var tips = new FileBrowser.Tips(this.browser.getElements('img.browser-icon'));
+		var tips = new FileManager.Tips(this.browser.getElements('img.browser-icon'));
 
 		tips.tip.removeClass('tip-base');
 	},
@@ -489,7 +489,7 @@ var FileBrowser = new Class({
 
 		if(this.Request) this.Request.cancel();
 
-		this.Request = new FileBrowser.Request({
+		this.Request = new FileManager.Request({
 			url: this.options.url+'?event=list',
 			onSuccess: (function(j){
 				var prev = this.preview.removeClass('filebrowser-loading').set('html', j && j.content ? j.content.substitute(Lang, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.prev');
