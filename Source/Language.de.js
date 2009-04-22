@@ -36,6 +36,8 @@ FileManager.Language.de = {
 	
 	filebrowser: 'Datei-Manager',
 	
+	deselect: 'Entfernen',
+	
 	'upload.path': 'Der angegebene Upload-Ordner existiert nicht. Bitte kontaktiere den Administrator dieser Website.',
 	'upload.exists': 'Der angegebene Upload-Speicherort existiert bereits. Bitte kontaktiere den Administrator dieser Website.',
 	'upload.mime': 'Der angegebene Dateityp ist nicht erlaubt.',
@@ -52,8 +54,6 @@ FileManager.Language.de = {
 	speed: 'Upload mit {rate}/s. Zeit übrig: ~{timeLeft}',
 	
 	img: 'Bilder (*.jpg, *.jpeg, *.gif, *.png)',
-	
-	deselect: 'Entfernen',
 	
 	resizePictures: 'Große Bilder automatisch verkleinern (~800x600 px) - empfohlen für Bildergalerien.',
 	
