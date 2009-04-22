@@ -27,6 +27,7 @@ var FileManager = new Class({
 		url: null,
 		imageBasePath: null,
 		autoDisable: true,
+		selectable: true,
 		upload: true,
 		uploadAuthData: {},
 		language: 'en'
@@ -70,7 +71,7 @@ var FileManager = new Class({
 			}).bind(this)
 		}).inject(this.el);
 		
-		var buttons = ['open', 'create'];
+		var buttons = this.options.selectable ? ['open', 'create'] : ['create'];
 		if(this.options.upload) buttons.push('upload');
 		this.menu.adopt(buttons.map(function(v){
 			return new Element('button', {
@@ -533,7 +534,8 @@ var FileManager = new Class({
 
 	switchButton: function(){
 		var chk = !!this.Current;
-		this.menu.getElement('button.filemanager-open').set('disabled', !chk)[(chk ? 'remove' : 'add')+'Class']('disabled');
+		var el = this.menu.getElement('button.filemanager-open');
+		if(el) el.set('disabled', !chk)[(chk ? 'remove' : 'add')+'Class']('disabled');
 	},
 
 	onRequest: function(){ this.loader.set('opacity', 1); },

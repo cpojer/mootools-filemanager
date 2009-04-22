@@ -68,7 +68,7 @@
 						el.set('value', path);
 						
 						if(span) span.destroy();
-						var icon = new Asset.image('BrowserIcons/Icons/cancel.png', {title: Lang.deselect}).addClass('file-cancel').addEvent('click', function(e){
+						var icon = new Asset.image(this.options.imageBasePath+'cancel.png', {title: this.language.deselect}).addClass('file-cancel').addEvent('click', function(e){
 							e.stop();
 							el.set('value', '');
 							span.fade(0).get('tween').chain(function(){
@@ -81,11 +81,11 @@
 							styles: {float: 'right'}
 						}).adopt(
 							icon,
-							new Asset.image('BrowserIcons/'+file.icon+'.png', {'class': 'mime-icon'}),
+							new Asset.image(this.options.imageBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
 							new Element('span', {text: file.name})
 						).injectAfter(el);
 						
-						new Tips(icon);
+						new FileManager.Tips(icon);
 					};
 					
 					var browser = new FileManager({
@@ -99,10 +99,10 @@
 					
 					el.setStyle('display', 'none');
 					var val = el.get('value');
-					if(val) complete(val, {
+					if(val) complete.apply(browser, [val, {
 						name: val.split('/').getLast(),
 						icon: val.split('.').getLast()
-					});
+					}]);
 					
 					new Element('button', {'class': 'browser', text: FileManager.Language.de.upload}).addEvent('click', browser.show.bind(browser, true)).injectBefore(el);
 					new Element('button', {'class': 'browser', text: FileManager.Language.de.filebrowser}).addEvent('click', browser.show.bind(browser)).injectBefore(el);
