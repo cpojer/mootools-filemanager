@@ -298,8 +298,8 @@ var FileManager = new Class({
 	rename: function(e, file){
 		e.stop();
 
-		var name = file.name.split('.');
-		if(file.mime!='text/directory') name.pop();
+		var name = file.name;
+		if(file.mime!='text/directory') name.replace(/\..*$/, '');
 
 		var self = this;
 		new Dialog(this.language.renamefile, {
@@ -308,7 +308,7 @@ var FileManager = new Class({
 				decline: this.language.cancel
 			},
 			content: [
-				new Element('input', {'class': 'rename', value: name.join('')})
+				new Element('input', {'class': 'rename', value: name})
 			],
 			onConfirm: function(){
 				new FileManager.Request({
@@ -368,7 +368,7 @@ var FileManager = new Class({
 
 		var self = this;
 		$$(els[0]).makeDraggable({
-			droppables: $$(this.droppables, els[1], this.browser),
+			droppables: $$(this.droppables, els[1]),
 
 			onDrag: function(el, e){
 				self.imageadd.setStyles(Hash.getValues(e.page).map(function(v){ return v+15; }).associate(['left', 'top']));
@@ -404,17 +404,20 @@ var FileManager = new Class({
 				if(e.control || !droppable)
 					el.setStyles({left: '0', top: '0'});
 
-				if(!droppable || (droppable==self.browser && !e.control))
+				if(!droppable && !e.control)
 					return;
 				
-				droppable.addClass('selected');
-				(function(){ droppable.removeClass('droppable').removeClass('selected'); }).delay(300);
-				
-				if(self.onDragComplete(el, droppable))
-					return;
+				var dir;
+				if(droppable){
+					droppable.addClass('selected');
+					(function(){ droppable.removeClass('droppable').removeClass('selected'); }).delay(300);
+					
+					if(self.onDragComplete(el, droppable))
+						return;
 
-				var dir = droppable.retrieve('file'),
-					file = el.retrieve('file');
+					dir = droppable.retrieve('file');
+				}
+				var file = el.retrieve('file');
 
 				new FileManager.Request({
 					url: self.options.url+'?event=move',
@@ -503,7 +506,6 @@ var FileManager = new Class({
 				var els = this.preview.getElements('button');
 				if(els) els.addEvent('click', function(e){
 					e.stop();
-
 					window.open(this.get('value'));
 				});
 			}).bind(this),
@@ -515,7 +517,7 @@ var FileManager = new Class({
 	},
 
 	size: function(size){
-		var tab = ['Bytes' ,'KB' ,'MB' ,'GB' ,'TB' ,'PB'];
+		var tab = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
 		for(var i = 0; size > 1024; i++)
 			size = size/1024;
 
@@ -528,7 +530,6 @@ var FileManager = new Class({
 
 	switchButton: function(){
 		var chk = !!this.Current;
-
 		this.menu.getElement('button.filemanager-open').set('disabled', !chk)[(chk ? 'remove' : 'add')+'Class']('disabled');
 	},
 

@@ -1,21 +1,16 @@
 <?php
 /**
- * 
- * TODO: Clean this UP!
- * TODO: Fix "Files/" Folder
  * TODO: Fix E_NOTICE and access of POST/GET
- * TODO: Fix access restrictions of methods
- * TODO: Fix "Images/" Folder
  * TODO: Fix Filters
- * 
  * */
 
 require_once('./Upload.php');
 require_once('./Image.php');
 
+// Please add your own authentication here
 $browser = new FileManager(array(
-	'folder' => '../Demos/Files',
-	'images' => '../Images',
+	'directory' => '../Demos/Files',
+	'imageBasePath' => '../Images',
 	'dateformat' => 'd.m.y - h:i',
 ));
 
@@ -34,14 +29,14 @@ class FileManager {
 	
 	public function __construct($options){
 		$this->options = array_merge(array(
-			'folder' => '../Demos/Files',
-			'images' => '../Images',
+			'directory' => '../Demos/Files',
+			'imageBasePath' => '../Images',
 			'dateformat' => 'd.m.y - h:i',
 		), $options);
 		
-		$this->basedir = realpath($this->options['folder']);
+		$this->basedir = realpath($this->options['directory']);
 		$this->basename = pathinfo($this->basedir, PATHINFO_BASENAME).'/';
-		$this->path = realpath($this->options['folder'].'/../');
+		$this->path = realpath($this->options['directory'].'/../');
 		$this->length = strlen($this->path);
 		
 		/* TODO: Clean this up and fix it! */
@@ -50,7 +45,7 @@ class FileManager {
 	}
 	
 	public function fireEvent($event){
-		$event = $event ? 'on'.ucfirst($_GET['event']) : null;
+		$event = $event ? 'on'.ucfirst($event) : null;
 		if(!$event || !method_exists($this, $event)) $event = 'onView';
 		
 		$this->{$event}();
@@ -116,7 +111,7 @@ class FileManager {
 			$getid3->Analyze($file);
 			foreach($getid3->info['zip']['files'] as $name => $size){
 				$icon = is_array($size) ? 'dir' : $this->getIcon($name);
-				$out[$icon=='dir' ? 0 : 1][$name] = '<li><a><img src="'.$this->options['images'].'/Icons/'.$icon.'.png" alt="" /> '.$name.'</a></li>';
+				$out[$icon=='dir' ? 0 : 1][$name] = '<li><a><img src="'.$this->options['imageBasePath'].'/Icons/'.$icon.'.png" alt="" /> '.$name.'</a></li>';
 			}
 			natcasesort($out[0]);
 			natcasesort($out[1]);
@@ -270,7 +265,7 @@ class FileManager {
 		else if(is_dir($file)) return 'dir';
 		
 		$ext = pathinfo($file, PATHINFO_EXTENSION);
-		return ($ext && file_exists(realpath($this->options['images'].'/Icons/'.$ext.'.png'))) ? $ext : 'default';
+		return ($ext && file_exists(realpath($this->options['imageBasePath'].'/Icons/'.$ext.'.png'))) ? $ext : 'default';
 	}
 
 	protected function getMimeType($file){
