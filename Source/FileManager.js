@@ -26,6 +26,7 @@ var FileManager = new Class({
 		url: null,
 		imageBasePath: null,
 		autoDisable: true,
+		upload: true,
 		language: 'en'
 	},
 
@@ -67,7 +68,9 @@ var FileManager = new Class({
 			}).bind(this)
 		}).inject(this.el);
 		
-		this.menu.adopt(['open', 'create', 'upload'].map(function(v){
+		var buttons = ['open', 'create'];
+		if(this.options.upload) buttons.push('upload');
+		this.menu.adopt(buttons.map(function(v){
 			return new Element('button', {
 				'class': 'filemanager-'+v,
 				text: this.language[v]
@@ -206,6 +209,7 @@ var FileManager = new Class({
 
 	upload: function(e){
 		if(e) e.stop();
+		if(!this.upload) return;
 
 		var fallback = new Element('span', {'class': 'leftm topm', html: this.language.flash}),
 			self = this;

@@ -33,6 +33,7 @@ class FileManager {
 			'directory' => '../Demos/Files',
 			'imageBasePath' => '../Images',
 			'dateformat' => 'd.m.y - h:i',
+			'maxUploadSize' => 1024*1024*3,
 			'filter' => null,
 		), $options);
 		
@@ -90,7 +91,7 @@ class FileManager {
 		$file = realpath($this->path.'/'.$this->post['dir'].'/'.$this->post['file']);
 		if(!$this->checkFile($file)) return;
 		
-		require_once('Assets/getid3/getid3.php');
+		require_once(pathinfo(__FILE__, PATHINFO_DIRNAME).'/Assets/getid3/getid3.php');
 		
 		$url = $this->normalize(substr($file, strlen($this->path)+1));
 		$mime = $this->getMimeType($file);
@@ -167,9 +168,7 @@ class FileManager {
 	
 	protected function onUpload(){
 		$dir = $this->get['n'];
-		array_shift($dir); // Layername
-		array_shift($dir); // Actionname
-		
+		// Fix Auth!!
 		if($this->get['session'] && $this->get['name'] && $this->get['id']){
 			$user = db::select('users')->where(array(
 				'name' => $this->get['name'],
@@ -181,27 +180,28 @@ class FileManager {
 				return;
 			
 			$dir = $this->getDir(implode('\\', $dir));
-			/*$u = new Upload($_FILES['Filedata']);
-			
-			if($this->get['resize'] && $u->file_is_image && ($u->image_src_x>800 || $u->image_src_y>600)){
-				$u->image_resize = true;
-				$u->image_ratio_crop = true;
+			try{
+				$file = Upload::move('Filedata', $dir.'/', array(
+					'name' => (self::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null,
+					'size' => $this->options['maxUploadSize'],
+					'mimes' => $this->getAllowedMimeTypes(),
+				));
 				
-				if($u->image_src_x>800){
-					$u->image_x = 800;
-					$u->image_ratio_y = true;
-				}elseif($u->image_src_y>600){
-					$u->image_y = 600;
-					$u->image_ratio_x = true;
+				if(Utility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
+					$img = new Image($file);
+					$size = $img->getSize();
+					if($size['width']>800) $img->resize(800)->save();
+					elseif($size['height']>600) $img->resize(null, 600)->save();
 				}
+				echo json_encode(array(
+					'result' => 'success',
+				));
+			}catch(UploadException $e){
+				echo json_encode(array(
+					'result' => false,
+					'error' => '${upload.'.$e->getMessage().'}',
+				));
 			}
-			
-			$u->process($dir);*/
-			
-			echo json_encode(array(
-				'result' => $u->processed ? 'success' : 'false',
-				'error' => $u->error,
-			));
 		}
 	}
 	
@@ -289,6 +289,22 @@ class FileManager {
 	
 	protected function normalize($file){
 		return preg_replace('/\\\|\/{2,}/', '/', $file);
+	}
+	
+	protected function getAllowedMimeTypes(){
+		$filter = $this->options['filter'];
+		
+		if(!$filter) return null;
+		if(!Utility::endsWidth($filter, '/')) return array($filter);
+		
+		static $mimes;
+		if(!$mimes) $mimes = parse_ini_file(pathinfo(__FILE__, PATHINFO_DIRNAME).'/MimeTypes.ini');
+		
+		foreach($mimes as $mime)
+			if(Utility::startsWith($mime, $filer))
+				$mimeTypes[] = strtolower($mime);
+		
+		return $mimeTypes;
 	}
 
 }

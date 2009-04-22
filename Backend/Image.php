@@ -70,6 +70,18 @@ class Image {
 	}
 	
 	/**
+	 * Returns the size of the image
+	 *
+	 * @return array
+	 */
+	public function getSize(){
+		return array(
+			'width' => $this->meta['width'],
+			'height' => $this->meta['height'],
+		);
+	}
+	
+	/**
 	 * Creates a new, empty image with the desired size
 	 *
 	 * @param int $x

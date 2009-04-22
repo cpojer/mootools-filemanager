@@ -34,7 +34,16 @@ FileManager.Language.de = {
 	length: 'Länge:',
 	bitrate: 'Bitrate:',
 	
-	filebrowser: 'Datei-Manager'
+	filebrowser: 'Datei-Manager',
+	
+	'upload.path': 'Der angegebene Upload-Ordner existiert nicht. Bitte kontaktiere den Administrator dieser Website.',
+	'upload.exists': 'Der angegebene Upload-Speicherort existiert bereits. Bitte kontaktiere den Administrator dieser Website.',
+	'upload.mime': 'Der angegebene Dateityp ist nicht erlaubt.',
+	'upload.extension': 'Die Datei hat eine unbekannte oder unerlaubte Datei-Erweiterung.',
+	'upload.size': 'Die Datei, die du hochgeladen hast, ist zu groß um sie auf diesem Server zu verarbeiten. Bitte lade eine kleinere Datei hoch.',
+	'upload.partial': 'Die Datei wurde nur teilweise hochgeladen. Bitte lade sie erneut hoch.',
+	'upload.nofile': 'Es wurde keine Datei hochgeladen.',
+	'upload.default': 'Der Datei-Upload ist fehlgeschlagen.'
 };/*
 	overallprogress: 'Gesamtfortschritt',
 	currentprogress: 'Dateifortschritt',
