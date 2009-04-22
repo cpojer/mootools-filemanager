@@ -13,17 +13,15 @@
 require_once('./Upload.php');
 require_once('./Image.php');
 
-$browser = new Browser(array(
+$browser = new FileManager(array(
 	'folder' => '../Demos/Files',
 	'images' => '../Images',
 	'dateformat' => 'd.m.y - h:i',
 ));
 
-$event = !empty($_GET['event']) ? 'on'.ucfirst($_GET['event']) : null;
-if(!$event || !method_exists($browser, $event)) $event = 'onView';
-$browser->{$event}();
+$browser->fireEvent(!empty($_GET['event']) ? $_GET['event'] : null);
 
-class Browser {
+class FileManager {
 	
 	private $path = null,
 		$length = null,
@@ -51,7 +49,14 @@ class Browser {
 		$this->post = $_POST;
 	}
 	
-	public function onView(){
+	public function fireEvent($event){
+		$event = $event ? 'on'.ucfirst($_GET['event']) : null;
+		if(!$event || !method_exists($this, $event)) $event = 'onView';
+		
+		$this->{$event}();
+	}
+	
+	protected function onView(){
 		$filter = !empty($this->post['filter']) && in_array($this->post['filter'], $this->filters) ? $this->post['filter'].'/' : null;
 		$dir = $this->getDir($this->post['dir']);
 		$files = glob($dir.'/*');
@@ -85,7 +90,7 @@ class Browser {
 		));
 	}
 	
-	public function onList(){
+	protected function onDetail(){
 		$file = realpath($this->path.'/'.$this->post['dir'].'/'.$this->post['file']);
 		if(!$this->checkFile($file)) return;
 		
@@ -142,7 +147,7 @@ class Browser {
 		));
 	}
 	
-	public function onDestroy(){
+	protected function onDestroy(){
 		$file = realpath($this->path.'/'.$this->post['dir'].'/'.$this->post['file']);
 		
 		if(!$this->checkFile($file)) return;
@@ -154,7 +159,7 @@ class Browser {
 		));
 	}
 	
-	public function onCreate(){
+	protected function onCreate(){
 		$file = $this->getName($this->post['file'], $this->getDir($this->post['dir']));
 		
 		if(!$file) return;
@@ -164,7 +169,7 @@ class Browser {
 		$this->onView();
 	}
 	
-	public function onUpload(){
+	protected function onUpload(){
 		$dir = $this->get['n'];
 		array_shift($dir); // Layername
 		array_shift($dir); // Actionname
@@ -205,7 +210,7 @@ class Browser {
 	}
 	
 	/* This method is used by both move and rename */
-	public function onMove(){
+	protected function onMove(){
 		$rename = empty($this->post['ndir']) && !empty($this->post['name']);
 		$dir = $this->getDir($this->post['dir']);
 		$file = realpath($dir.'/'.$this->post['file']);
@@ -233,7 +238,7 @@ class Browser {
 		));
 	}
 	
-	private function unlink($file){
+	protected function unlink($file){
 		$file = realpath($file);
 		if($this->basedir==$file || strlen($this->basedir)>=strlen($file))
 			return;
@@ -250,7 +255,7 @@ class Browser {
 		}
 	}
 	
-	public function getName($file, $dir){
+	protected function getName($file, $dir){
 		foreach(glob($dir.'/*') as $f)
 			$files[] = pathinfo($f, PATHINFO_FILENAME);
 		
@@ -260,7 +265,7 @@ class Browser {
 		return file_exists($file) ? null : $file;
 	}
 	
-	private function getIcon($file){
+	protected function getIcon($file){
 		if(Utility::endsWith($file, '/..')) return 'dir_up';
 		else if(is_dir($file)) return 'dir';
 		
@@ -268,25 +273,25 @@ class Browser {
 		return ($ext && file_exists(realpath($this->options['images'].'/Icons/'.$ext.'.png'))) ? $ext : 'default';
 	}
 
-	private function getMimeType($file){
+	protected function getMimeType($file){
 		return is_dir($file) ? 'text/directory' : Upload::mime($file);
 	}
 	
-	private function getDir($dir){
+	protected function getDir($dir){
 		$dir = realpath($this->path.'/'.(Utility::startsWith($dir, $this->basename) ? $dir : $this->basename));
 		return $this->checkFile($dir) ? $dir : $this->basedir;
 	}
 	
-	private function getPath($file){
+	protected function getPath($file){
 		$file = $this->normalize(substr($file, $this->length));
 		return substr($file, Utility::startsWith($file, '/') ? 1 : 0);
 	}
 	
-	private function checkFile($file){
+	protected function checkFile($file){
 		return !(!$file || !Utility::startsWith($file, $this->basedir) || !file_exists($file));
 	}
 	
-	private function normalize($file){
+	protected function normalize($file){
 		return preg_replace('/\\\|\/{2,}/', '/', $file);
 	}
 
