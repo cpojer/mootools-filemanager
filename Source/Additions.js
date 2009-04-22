@@ -1,8 +1,3 @@
-/*
- * TODO: Fix Popup Language-Stuff
- *
- */
-
 FileManager.Tips = new Class({
 	
 	Extends: Tips,

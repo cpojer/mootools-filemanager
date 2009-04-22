@@ -314,13 +314,13 @@ var FileManager = new Class({
 				new FileManager.Request({
 					url: self.options.url+'?event=move',
 					onSuccess: (function(j){
-						if(j && j.name){
-							self.fireEvent('modify', [$unlink(file)]);
+						if(!j || !j.name) return;
 
-							file.element.getElement('span').set('text', j.name);
-							file.name = j.name;
-							self.fillInfo(file);
-						}
+						self.fireEvent('modify', [$unlink(file)]);
+
+						file.element.getElement('span').set('text', j.name);
+						file.name = j.name;
+						self.fillInfo(file);
 					}).bind(this),
 					data: {
 						file: file.name,
@@ -346,15 +346,12 @@ var FileManager = new Class({
 			var el = file.element = new Element('span', {'class': 'fi', href: '#'}).adopt(
 				new Asset.image(this.options.imageBasePath+'Icons/'+file.icon+'.png'),
 				new Element('span', {text: file.name})
-			).store('file', file).inject(
-				new Element('li').inject(this.browser)
-			);
+			).store('file', file);
 
 			var icons = [];
 			if(file.mime!='text/directory')
 				icons.push(new Asset.image(this.options.imageBasePath+'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
 					e.stop();
-
 					window.open(this.normalize(this.Directory+'/'+file.name));
 				}).bind(this)).injectTop(el));
 
@@ -363,15 +360,15 @@ var FileManager = new Class({
 					icons.push(new Asset.image(this.options.imageBasePath+v+'.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el));
 				}, this);
 
-			icons = $$(icons.map(function(icon){ return icon.appearOn(icon, [1, 0.7]); })).appearOn(el.getParent('li'), 0.7);
 			els[file.mime=='text/directory' ? 1 : 0].push(el);
 			if(file.name=='..') el.set('opacity', 0.7);
+			el.inject(new Element('li').inject(this.browser));
+			icons = $$(icons.map(function(icon){ return icon.appearOn(icon, [1, 0.7]); })).appearOn(el.getParent('li'), 0.7);
 		}, this);
-
 
 		var self = this;
 		$$(els[0]).makeDraggable({
-			droppables: $$(this.droppables, els[1]),
+			droppables: $$(this.droppables, els[1], this.browser),
 
 			onDrag: function(el, e){
 				self.imageadd.setStyles(Hash.getValues(e.page).map(function(v){ return v+15; }).associate(['left', 'top']));
@@ -380,7 +377,7 @@ var FileManager = new Class({
 			onBeforeStart: function(el){
 				el.setStyles({left: '0', top: '0'});
 			},
-			
+
 			onStart: function(el){
 				self.onDragStart(el, this);
 
@@ -407,7 +404,7 @@ var FileManager = new Class({
 				if(e.control || !droppable)
 					el.setStyles({left: '0', top: '0'});
 
-				if(!droppable)
+				if(!droppable || (droppable==self.browser && !e.control))
 					return;
 				
 				droppable.addClass('selected');
@@ -424,8 +421,11 @@ var FileManager = new Class({
 					data: {
 						file: file.name,
 						dir: self.Directory,
-						ndir: dir.dir+'/'+dir.name,
+						ndir: dir ? dir.dir+'/'+dir.name : self.Directory,
 						copy: e.control ? 1 : 0
+					},
+					onSuccess: function(){
+						if(!dir) self.load(self.Directory);
 					}
 				}, self).post();
 

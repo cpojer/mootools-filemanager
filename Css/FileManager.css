@@ -29,6 +29,7 @@ div.filemanager div.filemanager-menu {
 div.filemanager button {
 	height: 22px;
 	margin: 4px 5px;
+	padding: 2px;
 	
 	color: #333;
 	text-shadow: #eee 1px 1px 1px;
