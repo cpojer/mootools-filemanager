@@ -1,9 +1,7 @@
 /* 
 
 TODO: Proper headers
-TODO: Images (!) + Fix ImageBasePath to always have an / at the end
 TODO: Add Scroller.js (maybe optional) for drag/drop in filelist
-TODO: Fix filters
 
 Based on a Script by Yannick Croissant
 
@@ -33,7 +31,7 @@ var FileManager = new Class({
 
 	initialize: function(options){
 		this.setOptions(options);
-
+		this.options.imageBasePath = this.options.imageBasePath.replace(/(\/|\\)*$/, '/');
 		this.droppables = [];
 		this.Directory = this.options.directory;
 		
@@ -46,6 +44,7 @@ var FileManager = new Class({
 			click: (function(e){
 				if(e.target.match('ul')) return this.deselect();
 				
+				if(!e.target || !e.target.getParent('li')) return;
 				var el = e.target.getParent('li').getElement('span');
 				if(!el) return;
 				
@@ -74,9 +73,6 @@ var FileManager = new Class({
 				text: this.language[v]
 			}).addEvent('click', this[v].bind(this));
 		}, this));
-		
-		/* TODO: Fix this */
-		if(this.options.filter=='image') new Element('span', {'class': 'notice', html: this.language.onlyimg}).inject(this.el);
 
 		this.info = new Element('div', {'class': 'filemanager-infos', opacity: 0}).inject(this.el);
 
@@ -200,7 +196,6 @@ var FileManager = new Class({
 					url: self.options.url+'?event=create',
 					onSuccess: self.fill.bind(self),
 					data: {
-						filter: this.options.filter,
 						file: this.el.getElement('input').get('value'),
 						dir: self.Directory
 					}
@@ -222,7 +217,8 @@ var FileManager = new Class({
 			new Element('h2', {text: this.language.upload}),
 			fallback,
 			FancyUpload2.Start({
-				filter: this.options.filter,
+				// TODO FIX THIS!
+				/*filter: this.options.filter,*/
 				url: this.options.url+'?event=upload&n='+this.normalize(this.Directory)+'?name='+User.name+'&session='+User.session+'&id='+User.id,
 				onAllComplete: function(){
 					self.load(self.Directory, true);
@@ -260,7 +256,6 @@ var FileManager = new Class({
 				if(this.showUpload) this.upload();
 			}).bind(this),
 			data: {
-				filter: this.options.filter,
 				dir: dir
 			}
 		}, this).post();

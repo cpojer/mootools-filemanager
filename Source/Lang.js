@@ -43,7 +43,6 @@ FileManager.Language.de = {
 	speed: 'Upload mit {rate}/s. Zeit übrig: ~{timeLeft}',
 	
 	img: 'Bilder (*.jpg, *.jpeg, *.gif, *.png)',
-	onlyimg: '<span class="b">Hinweis:</span> <i>Es werden nur Bilder angezeigt</i>',
 	
 	deselect: 'Entfernen',
 	

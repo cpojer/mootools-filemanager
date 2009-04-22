@@ -12,6 +12,7 @@ $browser = new FileManager(array(
 	'directory' => '../Demos/Files',
 	'imageBasePath' => '../Images',
 	'dateformat' => 'd.m.y - h:i',
+	'filter' => 'image/',
 ));
 
 $browser->fireEvent(!empty($_GET['event']) ? $_GET['event'] : null);
@@ -32,6 +33,7 @@ class FileManager {
 			'directory' => '../Demos/Files',
 			'imageBasePath' => '../Images',
 			'dateformat' => 'd.m.y - h:i',
+			'filter' => null,
 		), $options);
 		
 		$this->basedir = realpath($this->options['directory']);
@@ -52,7 +54,6 @@ class FileManager {
 	}
 	
 	protected function onView(){
-		$filter = !empty($this->post['filter']) && in_array($this->post['filter'], $this->filters) ? $this->post['filter'].'/' : null;
 		$dir = $this->getDir($this->post['dir']);
 		$files = glob($dir.'/*');
 		
@@ -61,7 +62,7 @@ class FileManager {
 		natcasesort($files);
 		foreach($files as $file){
 			$mime = $this->getMimeType($file);
-			if($filter && $mime!='text/directory' && !Utility::startsWith($mime, $filter))
+			if($this->options['filter'] && $mime!='text/directory' && !Utility::startsWith($mime, $this->options['filter']))
 				continue;
 			
 			$out[is_dir($file) ? 0 : 1][] = array(
