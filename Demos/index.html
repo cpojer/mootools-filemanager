@@ -89,10 +89,11 @@
 					};
 					
 					var browser = new FileManager({
-						url: '../Backend/FileManager.php',
+						url: 'manager.php',
 						imageBasePath: '../Images',
 						filter: el.get('title') || null,
 						language: 'de',
+						uploadAuthData: {session: 'MySessionId'},
 						onComplete: complete
 					});
 					

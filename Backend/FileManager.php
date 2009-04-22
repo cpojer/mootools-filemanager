@@ -1,21 +1,8 @@
 <?php
-/**
- * TODO: Fix E_NOTICE and access of POST/GET
- * TODO: Fix Filters
- * */
+/* Add proper header */
 
-require_once('./Upload.php');
-require_once('./Image.php');
-
-// Please add your own authentication here
-$browser = new FileManager(array(
-	'directory' => '../Demos/Files',
-	'imageBasePath' => '../Images',
-	'dateformat' => 'd.m.y - h:i',
-	'filter' => 'image/',
-));
-
-$browser->fireEvent(!empty($_GET['event']) ? $_GET['event'] : null);
+require_once(Utility::getPath().'/Upload.php');
+require_once(Utility::getPath().'./Image.php');
 
 class FileManager {
 	
@@ -55,7 +42,7 @@ class FileManager {
 	}
 	
 	protected function onView(){
-		$dir = $this->getDir($this->post['dir']);
+		$dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
 		$files = glob($dir.'/*');
 		
 		if($dir!=$this->basedir) array_unshift($files, $dir.'/..');
@@ -88,10 +75,12 @@ class FileManager {
 	}
 	
 	protected function onDetail(){
-		$file = realpath($this->path.'/'.$this->post['dir'].'/'.$this->post['file']);
+		if(empty($this->post['directory']) || empty($this->post['file'])) return;
+		
+		$file = realpath($this->path.'/'.$this->post['directory'].'/'.$this->post['file']);
 		if(!$this->checkFile($file)) return;
 		
-		require_once(pathinfo(__FILE__, PATHINFO_DIRNAME).'/Assets/getid3/getid3.php');
+		require_once(Utility::getPath().'/Assets/getid3/getid3.php');
 		
 		$url = $this->normalize(substr($file, strlen($this->path)+1));
 		$mime = $this->getMimeType($file);
@@ -145,8 +134,9 @@ class FileManager {
 	}
 	
 	protected function onDestroy(){
-		$file = realpath($this->path.'/'.$this->post['dir'].'/'.$this->post['file']);
+		if(empty($this->post['directory']) || empty($this->post['file'])) return;
 		
+		$file = realpath($this->path.'/'.$this->post['directory'].'/'.$this->post['file']);
 		if(!$this->checkFile($file)) return;
 		
 		$this->unlink($file);
@@ -157,8 +147,9 @@ class FileManager {
 	}
 	
 	protected function onCreate(){
-		$file = $this->getName($this->post['file'], $this->getDir($this->post['dir']));
+		if(empty($this->post['directory']) || empty($this->post['file'])) return;
 		
+		$file = $this->getName($this->post['file'], $this->getDir($this->post['directory']));
 		if(!$file) return;
 		
 		mkdir($file);
@@ -167,48 +158,39 @@ class FileManager {
 	}
 	
 	protected function onUpload(){
-		$dir = $this->get['n'];
-		// Fix Auth!!
-		if($this->get['session'] && $this->get['name'] && $this->get['id']){
-			$user = db::select('users')->where(array(
-				'name' => $this->get['name'],
-				'AND',
-				'id' => array($this->get['id'], 'id'),
-			))->fetch();
+		if(empty($this->get['directory']) || (function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this->get))) return;
+		
+		$dir = $this->getDir(implode('\\', $this->get['directory']));
+		try{
+			$file = Upload::move('Filedata', $dir.'/', array(
+				'name' => (self::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null,
+				'size' => $this->options['maxUploadSize'],
+				'mimes' => $this->getAllowedMimeTypes(),
+			));
 			
-			if(!$user['id'] || md5($user['id'].' '.$user['session'].' '.Core::retrieve('secure'))!=$this->get['session'])
-				return;
-			
-			$dir = $this->getDir(implode('\\', $dir));
-			try{
-				$file = Upload::move('Filedata', $dir.'/', array(
-					'name' => (self::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null,
-					'size' => $this->options['maxUploadSize'],
-					'mimes' => $this->getAllowedMimeTypes(),
-				));
-				
-				if(Utility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
-					$img = new Image($file);
-					$size = $img->getSize();
-					if($size['width']>800) $img->resize(800)->save();
-					elseif($size['height']>600) $img->resize(null, 600)->save();
-				}
-				echo json_encode(array(
-					'result' => 'success',
-				));
-			}catch(UploadException $e){
-				echo json_encode(array(
-					'result' => false,
-					'error' => '${upload.'.$e->getMessage().'}',
-				));
+			if(Utility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
+				$img = new Image($file);
+				$size = $img->getSize();
+				if($size['width']>800) $img->resize(800)->save();
+				elseif($size['height']>600) $img->resize(null, 600)->save();
 			}
+			echo json_encode(array(
+				'result' => 'success',
+			));
+		}catch(UploadException $e){
+			echo json_encode(array(
+				'result' => false,
+				'error' => '${upload.'.$e->getMessage().'}',
+			));
 		}
 	}
 	
 	/* This method is used by both move and rename */
 	protected function onMove(){
-		$rename = empty($this->post['ndir']) && !empty($this->post['name']);
-		$dir = $this->getDir($this->post['dir']);
+		if(empty($this->post['directory']) || empty($this->post['file'])) return;
+		
+		$rename = empty($this->post['newDirectory']) && !empty($this->post['name']);
+		$dir = $this->getDir($this->post['directory']);
 		$file = realpath($dir.'/'.$this->post['file']);
 		
 		$is_dir = is_dir($file);
@@ -216,10 +198,11 @@ class FileManager {
 			return;
 		
 		if($rename || $is_dir){
+			if(empty($this->post['name'])) return;
 			$newname = $this->getName($this->post['name'], $dir);
 			$fn = 'rename';
 		}else{
-			$newname = $this->getName(pathinfo($file, PATHINFO_FILENAME), $this->getDir($this->post['ndir']));
+			$newname = $this->getName(pathinfo($file, PATHINFO_FILENAME), $this->getDir($this->post['newDirectory']));
 			$fn = !empty($this->post['copy']) ? 'copy' : 'rename';
 		}
 		
@@ -298,7 +281,7 @@ class FileManager {
 		if(!Utility::endsWidth($filter, '/')) return array($filter);
 		
 		static $mimes;
-		if(!$mimes) $mimes = parse_ini_file(pathinfo(__FILE__, PATHINFO_DIRNAME).'/MimeTypes.ini');
+		if(!$mimes) $mimes = parse_ini_file(Utility::getPath().'/MimeTypes.ini');
 		
 		foreach($mimes as $mime)
 			if(Utility::startsWith($mime, $filer))
@@ -348,10 +331,15 @@ class Utility {
 	
 	public static function isBinary($str){
 		$array = array(0, 255);
-		for($i = 0;$i < strlen($str); $i++)
+		for($i = 0; $i < strlen($str); $i++)
 			if(in_array(ord($str[$i]), $array)) return true;
 		
 		return false;
+	}
+	
+	public static function getPath(){
+		static $path;
+		return $path ? $path : $path = pathinfo(__FILE__, PATHINFO_DIRNAME);
 	}
 	
 }

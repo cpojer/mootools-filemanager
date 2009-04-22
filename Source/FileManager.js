@@ -2,6 +2,7 @@
 
 TODO: Proper headers
 TODO: Add Scroller.js (maybe optional) for drag/drop in filelist
+TODO: Add License
 
 Based on a Script by Yannick Croissant
 
@@ -27,6 +28,7 @@ var FileManager = new Class({
 		imageBasePath: null,
 		autoDisable: true,
 		upload: true,
+		uploadAuthData: {},
 		language: 'en'
 	},
 
@@ -200,7 +202,7 @@ var FileManager = new Class({
 					onSuccess: self.fill.bind(self),
 					data: {
 						file: this.el.getElement('input').get('value'),
-						dir: self.Directory
+						directory: self.Directory
 					}
 				}, self).post();
 			}
@@ -221,9 +223,11 @@ var FileManager = new Class({
 			new Element('h2', {text: this.language.upload}),
 			fallback,
 			FancyUpload2.Start({
-				// TODO FIX THIS!
 				/*filter: this.options.filter,*/
-				url: this.options.url+'?event=upload&n='+this.normalize(this.Directory)+'?name='+User.name+'&session='+User.session+'&id='+User.id,
+				url: this.options.url+Hash.toQueryString($merge({}, this.options.uploadAuthData, {
+					event: 'upload',
+					directory: this.normalize(this.Directory)
+				})),
 				onAllComplete: function(){
 					self.load(self.Directory, true);
 					(function(){
@@ -260,7 +264,7 @@ var FileManager = new Class({
 				if(this.showUpload) this.upload();
 			}).bind(this),
 			data: {
-				dir: dir
+				directory: dir
 			}
 		}, this).post();
 	},
@@ -279,7 +283,7 @@ var FileManager = new Class({
 					url: this.options.url+'?event=destroy',
 					data: {
 						file: file.name,
-						dir: this.Directory
+						directory: this.Directory
 					}
 				}, this).post();
 
@@ -298,7 +302,7 @@ var FileManager = new Class({
 		e.stop();
 
 		var name = file.name;
-		if(file.mime!='text/directory') name.replace(/\..*$/, '');
+		if(file.mime!='text/directory') name = name.replace(/\..*$/, '');
 
 		var self = this;
 		new Dialog(this.language.renamefile, {
@@ -324,7 +328,7 @@ var FileManager = new Class({
 					data: {
 						file: file.name,
 						name: this.el.getElement('input').get('value'),
-						dir: self.Directory
+						directory: self.Directory
 					}
 				}, self).post();
 			}
@@ -422,8 +426,8 @@ var FileManager = new Class({
 					url: self.options.url+'?event=move',
 					data: {
 						file: file.name,
-						dir: self.Directory,
-						ndir: dir ? dir.dir+'/'+dir.name : self.Directory,
+						directory: self.Directory,
+						newDirectory: dir ? dir.dir+'/'+dir.name : self.Directory,
 						copy: e.control ? 1 : 0
 					},
 					onSuccess: function(){
@@ -509,7 +513,7 @@ var FileManager = new Class({
 				});
 			}).bind(this),
 			data: {
-				dir: this.Directory,
+				directory: this.Directory,
 				file: file.name
 			}
 		}, this).post();
