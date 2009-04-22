@@ -1,12 +1,11 @@
-var Lang = {
+FileManager.Language.de = {
 	more: 'Details',
 	width: 'Breite:',
 	height: 'Höhe:',
 	
 	open: 'Datei wählen',
 	upload: 'Datei hochladen',
-	create: 'Ordner erstellen',
-	create1: 'Erstellen',
+	create: 'Erstellen',
 	createdir: 'Bitte gib einen Ordnernamen ein:',
 	browse: 'Durchsuchen...',
 	clear: 'Liste leeren',

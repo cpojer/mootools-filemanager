@@ -104,7 +104,7 @@ var Dialog = new Class({
 		language: {}
 	},
 	
-	initialize: function(title, text, options){
+	initialize: function(text, options){
 		this.setOptions(options);
 		
 		this.el = new Element('div', {
@@ -112,18 +112,13 @@ var Dialog = new Class({
 			opacity: 0,
 			tween: {duration: 250}
 		}).adopt([
-			new Element('h1', {text: title}),
 			new Element('div', {text: text})
 		]);
 		
-		this.el.makeDraggable({
-			handle: this.el.getElement('h1')
-		});
-		
-		if(this.options.content) this.el.adopt(this.options.content);
+		if(this.options.content) this.el.getElement('div').adopt(this.options.content);
 		
 		Array.each(this.options.buttons, function(v){
-			new Element('button', {'class': 'dialog-'+v, text: this.options.language[v] || Lang[v]}).addEvent('click', (function(e){
+			new Element('button', {'class': 'dialog-'+v, text: this.options.language[v]}).addEvent('click', (function(e){
 				e.stop();
 				this.fireEvent(v).fireEvent('close');
 			}).bind(this)).inject(this.el);

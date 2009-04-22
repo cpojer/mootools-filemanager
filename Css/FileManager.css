@@ -1,8 +1,8 @@
-div.filebrowser-container { display: none; }
-div.filebrowser * { outline: 0; }
-div.filebrowser a img { border: 0 }
+div.filemanager-container { display: none; }
+div.filemanager * { outline: 0; }
+div.filemanager a img { border: 0 }
 
-div.filebrowser {
+div.filemanager {
 	font-family: Tahoma, sans-serif;
 	font-size: 12px;
 	border: 1px solid #bebebe;
@@ -14,7 +14,7 @@ div.filebrowser {
 	height: 450px;
 }
 
-div.filebrowser div.filebrowser-menu {
+div.filemanager div.filemanager-menu {
 	position: absolute;
 	height: 30px;
 	left: 30%;
@@ -26,7 +26,7 @@ div.filebrowser div.filebrowser-menu {
 	background: url(../Images/menu.png) repeat-x;
 }
 
-div.filebrowser button {
+div.filemanager button {
 	height: 22px;
 	margin: 4px 5px;
 	
@@ -40,18 +40,18 @@ div.filebrowser button {
 	border-radius: 4px;
 }
 
-div.filebrowser-menu button {
+div.filemanager-menu button {
 	float: right;
 }
 
-div.filebrowser-menu button.disabled {
+div.filemanager-menu button.disabled {
 	color: #666;
 	text-shadow: none;
 	background: url(../Images/button_disabled.png) repeat-x;
 	border-color: #bababa;
 }
 
-div.filebrowser-menu div.loader {
+div.filemanager-menu div.loader {
 	float: left;
 	width: 16px;
 	height: 16px;
@@ -59,7 +59,7 @@ div.filebrowser-menu div.loader {
 	background: url(../Images/loader.gif) no-repeat;
 }
 
-div.filebrowser ul {
+div.filemanager ul {
 	margin: 0;
 	padding: 0;
 	position: relative;
@@ -68,7 +68,7 @@ div.filebrowser ul {
 	overflow-x: hidden;
 }
 
-div.filebrowser ul li {
+div.filemanager ul li {
 	list-style-image: none;
 	list-style-type: none;
 	list-style: none;
@@ -77,7 +77,7 @@ div.filebrowser ul li {
 	height: 21px;
 }
 
-div.filebrowser ul.filebrowser-browser {
+div.filemanager ul.filemanager-browser {
 	left: 0px;
 	top: 0px;
 	height: 100%;
@@ -88,7 +88,7 @@ div.filebrowser ul.filebrowser-browser {
 	background: url(../Images/filelist.png) repeat-x #c1c7cf;
 }
 
-div.filebrowser ul li span.fi {
+div.filemanager ul li span.fi {
 	height: 21px;
 	padding-left: 5px;
 	color: #000;
@@ -98,50 +98,50 @@ div.filebrowser ul li span.fi {
 	cursor: pointer;
 }
 
-div.filebrowser ul li span.fi span {
+div.filemanager ul li span.fi span {
 	display: block;
 	width: 100%;
 }
-div.filebrowser ul li:hover span.fi span {
+div.filemanager ul li:hover span.fi span {
 	width: 68%;
 	overflow: hidden;
 }
 
-div.filebrowser ul li span.dir {
+div.filemanager ul li span.dir {
 	background-color: transparent;
 }
 
-div.filebrowser ul li span.droppable {
+div.filemanager ul li span.droppable {
 	background-color: #99b7e7;
 }
 
-ul.filebrowser-browser a, ul.filebrowser-browser span {
+ul.filemanager-browser a, ul.filemanager-browser span {
 	position: relative;
 }
 
-div.filebrowser ul li a.selected, div.filebrowser ul li span.selected {
+div.filemanager ul li a.selected, div.filemanager ul li span.selected {
 	background: url(../Images/filelist_selected.png) repeat-x;
 	color: #eee;
 	outline: none;
 }
 
-div.filebrowser ul li img {
+div.filemanager ul li img {
 	display: block;
 	float: left;
 	margin: 3px 3px 0 0;
 }
 
-div.filebrowser ul li img.browser-icon {
+div.filemanager ul li img.browser-icon {
 	float: right;
 }
 
-div.filebrowser span.notice {
+div.filemanager span.notice {
 	position: absolute;
 	bottom: 16px;
 	left: 16px;
 }
 
-div.filebrowser div.filebrowser-close {
+div.filemanager div.filemanager-close {
 	position: absolute;
 	right: -10px;
 	top: -10px;
@@ -155,11 +155,11 @@ div.filebrowser div.filebrowser-close {
 	-webkit-border-radius: 10px;
 	border-radius: 10px;
 }
-div.filebrowser div.filebrowser-close img {
+div.filemanager div.filemanager-close img {
 	padding: 2px;
 }
 
-div.filebrowser-infos {
+div.filemanager-infos {
 	position: absolute;
 	left: 30%;
 	top: 0;
@@ -168,17 +168,17 @@ div.filebrowser-infos {
 	overflow: auto;
 }
 
-div.filebrowser-head {
+div.filemanager-head {
 	height: 32px;
 	overflow: hidden;
 }
 
-img.filebrowser-icon {
+img.filemanager-icon {
 	float: left;
 	margin: 10px 12px;
 }
 
-div.filebrowser h1 {
+div.filemanager h1 {
 	margin: 0;
 	padding: 0;
 	height: 32px;
@@ -192,7 +192,7 @@ div.filebrowser h1 {
 	white-space: nowrap;
 }
 
-div.filebrowser h2 {
+div.filemanager h2 {
 	margin: 0;
 	border-top: 1px solid #bebebe;
 	font-size: 14px;
@@ -201,36 +201,36 @@ div.filebrowser h2 {
 	clear: both;
 }
 
-div.filebrowser dl {
+div.filemanager dl {
 	margin: 5px 0;
 	width: 100%;
 	clear: both;
 	overflow: auto;
 }
 
-div.filebrowser dt, div.filebrowser dd {
+div.filemanager dt, div.filemanager dd {
 	float: left;
 	line-height: 20px;
 	font-size: 11px;
 }
 
-div.filebrowser dt {
+div.filemanager dt {
 	clear: both;
 	width: 22%;
 	margin-left: 5%;
 	font-weight: bold;
 }
 
-div.filebrowser dd {
+div.filemanager dd {
 	white-space: nowrap;
 	overflow: auto;
 }
 
-div.filebrowser div.margin {
+div.filemanager div.margin {
 	margin-left: 15px;
 }
 
-div.filebrowser dd.filebrowser-dir a.icon {
+div.filemanager dd.filemanager-dir a.icon {
 	border: 1px solid #bebebe;
 	padding: 2px 5px 2px 20px;
 	text-decoration: none;
@@ -242,27 +242,27 @@ div.filebrowser dd.filebrowser-dir a.icon {
 	border-radius: 3px;
 }
 
-div.filebrowser dd.filebrowser-dir a.selected,
-div.filebrowser dd.filebrowser-dir a.icon:hover {
+div.filemanager dd.filemanager-dir a.selected,
+div.filemanager dd.filemanager-dir a.icon:hover {
 	text-decoration: none;
 	background-color: #fff;
 }
 
-div.filebrowser dd.filebrowser-dir a.selected {
+div.filemanager dd.filemanager-dir a.selected {
 	cursor: default;
 }
 
-div.filebrowser-preview {
+div.filemanager-preview {
 	margin-top: 5px;
 }
 
-div.filebrowser-preview img.preview {
+div.filemanager-preview img.preview {
 	margin: 0 auto 1em;
 	display: block;
 	max-height: 100px;
 }
 
-div.filebrowser-preview ul, div.filebrowser-preview div.textpreview {
+div.filemanager-preview ul, div.filemanager-preview div.textpreview {
 	border: 1px solid #bebebe;
 	background: #fff;
 	
@@ -274,16 +274,19 @@ div.filebrowser-preview ul, div.filebrowser-preview div.textpreview {
 	overflow: auto;
 }
 
-div.filebrowser-preview div.textpreview {
+div.filemanager-preview div.textpreview {
 	font: 9px Verdana, Arial, Helvetica, sans-serif;
 }
 
-div.filebrowser-preview div.object {
-	width: 300px;
+div.filemanager-preview div.object {
+	width: 200px;
+	height: 20px;
+	border: 1px solid #bebebe;
 	margin: 0 0 1em 190px;
+	overflow: hidden;
 }
 
-div.filebrowser-container img.browser-add {
+div.filemanager-container img.browser-add {
 	position: absolute;
 	width: 16px;
 	height: 16px;

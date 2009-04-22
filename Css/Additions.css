@@ -42,42 +42,50 @@ div.overlay-dialog {
 div.dialog {
 	position: absolute;
 	display: none;
-	
-	width: 320px;
-	height: 190px;
-	
 	z-index: 2000;
-	background: url(../Images/popup.png) no-repeat;
-}
-
-div.dialog h1 {
-	cursor: move;
-	margin: 12px 20px 6px;
 	
-	color: #fff;
-	background: none;
+	width: 229px;
+	height: 121px;
+	
+	color: #bebebe;
+	font-family: Tahoma, sans-serif;
+	font-size: 12px;
+	background: url(../Images/dialog.png) no-repeat;
 }
 
 div.dialog div {
-	margin: 5px 25px;
+	margin: 10px;
+}
+
+div.dialog input, div.dialog select {
+	width: 94%;
+	margin: 20px 2%;
+	padding: 2px 1%;
+	border: 1px solid #bebebe;
+	
+	color: #333;
+	font-family: Tahoma, sans-serif;
+	font-size: 12px;
 }
 
 div.dialog button {
 	position: absolute;
-	bottom: 12px;
-	left: 30px;
+	bottom: 15px;
+	left: 15px;
+	
+	height: 22px;
+	border: 1px solid #bebebe;
+	
+	color: #333;
+	text-shadow: #eee 1px 1px 1px;
+	
+	background: url(../Images/button.png) repeat-x;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
 }
 
 div.dialog button.dialog-decline {
 	left: auto;
-	right: 30px;
-}
-
-div.dialog input, div.dialog select {
-	margin: 0 25px 2px;
-	width: 260px;
-}
-
-div.dialog input.createDirectory {
-	margin-top: 20px;
+	right: 15px;
 }
