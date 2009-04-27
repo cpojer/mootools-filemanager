@@ -82,7 +82,7 @@ class Upload {
 	 * Returns (if possible) the mimetype of the given file
 	 *
 	 * @param string $file
-	 * @param sring $default The default mimetype to return if none is found. If application/octet-stream is passed it tries to guess the mimetype (Flash-Upload maybe?)
+	 * @param array $options
 	 */
 	public function mime($file, $options = array()){
 		$file = realpath($file);

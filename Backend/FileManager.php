@@ -1,8 +1,8 @@
 <?php
 /* Add proper header */
 
-require_once(Utility::getPath().'/Upload.php');
-require_once(Utility::getPath().'./Image.php');
+require_once(FileManagerUtility::getPath().'/Upload.php');
+require_once(FileManagerUtility::getPath().'./Image.php');
 
 class FileManager {
 	
@@ -56,7 +56,7 @@ class FileManager {
 		natcasesort($files);
 		foreach($files as $file){
 			$mime = $this->getMimeType($file);
-			if($this->options['filter'] && $mime!='text/directory' && !Utility::startsWith($mime, $this->options['filter']))
+			if($this->options['filter'] && $mime!='text/directory' && !FileManagerUtility::startsWith($mime, $this->options['filter']))
 				continue;
 			
 			$out[is_dir($file) ? 0 : 1][] = array(
@@ -86,12 +86,12 @@ class FileManager {
 		$file = realpath($this->path.'/'.$this->post['directory'].'/'.$this->post['file']);
 		if(!$this->checkFile($file)) return;
 		
-		require_once(Utility::getPath().'/Assets/getid3/getid3.php');
+		require_once(FileManagerUtility::getPath().'/Assets/getid3/getid3.php');
 		
 		$url = $this->normalize(substr($file, strlen($this->path)+1));
 		$mime = $this->getMimeType($file);
 		$content = null;
-		if(Utility::startsWith($mime, 'image/')){
+		if(FileManagerUtility::startsWith($mime, 'image/')){
 			$size = getimagesize($file);
 			$content = '<img src="'.$url.'" class="preview" alt="" />
 				<h2>${more}</h2>
@@ -99,9 +99,9 @@ class FileManager {
 					<dt>${width}</dt><dd>'.$size[0].'px</dd>
 					<dt>${height}</dt><dd>'.$size[1].'px</dd>
 				</dl>';
-		}elseif(Utility::startsWith($mime, 'text/') || $mime=='application/x-javascript'){
+		}elseif(FileManagerUtility::startsWith($mime, 'text/') || $mime=='application/x-javascript'){
 			$filecontent = file_get_contents($file, null, null, 0, 300);
-			if(!Utility::isBinary($filecontent)) $content = '<div class="textpreview">'.nl2br(str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent))).'</div>';
+			if(!FileManagerUtility::isBinary($filecontent)) $content = '<div class="textpreview">'.nl2br(str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent))).'</div>';
 		}elseif($mime=='application/zip'){
 			$out = array(array(), array());
 			$getid3 = new getID3();
@@ -113,7 +113,7 @@ class FileManager {
 			natcasesort($out[0]);
 			natcasesort($out[1]);
 			$content = '<ul>'.implode(array_merge($out[0], $out[1])).'</ul>';
-		}elseif(Utility::startsWith($mime, 'audio/')){
+		}elseif(FileManagerUtility::startsWith($mime, 'audio/')){
 			$getid3 = new getID3();
 			$getid3->Analyze($file);
 			
@@ -174,7 +174,7 @@ class FileManager {
 				'mimes' => $this->getAllowedMimeTypes(),
 			));
 			
-			if(Utility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
+			if(FileManagerUtility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
 				$img = new Image($file);
 				$size = $img->getSize();
 				if($size['width']>800) $img->resize(800)->save();
@@ -188,7 +188,7 @@ class FileManager {
 		}catch(UploadException $e){
 			echo json_encode(array(
 				'status' => 0,
-				'error' => '${upload.'.$e->getMessage().'}',
+				'error' => class_exists('ValidatorException') ? $e->getMessage() : '${upload.'.$e->getMessage().'}', // This is for Styx :)
 			));
 		}
 	}
@@ -247,13 +247,13 @@ class FileManager {
 			$files[] = pathinfo($f, PATHINFO_FILENAME);
 		
 		$pathinfo = pathinfo($file);
-		$file = $dir.'/'.Utility::pagetitle($pathinfo['filename'], $files).'.'.$pathinfo['extension'];
+		$file = $dir.'/'.FileManagerUtility::pagetitle($pathinfo['filename'], $files).'.'.$pathinfo['extension'];
 		
-		return !$file || !Utility::startsWith($file, $this->basedir) || file_exists($file) ? null : $file;
+		return !$file || !FileManagerUtility::startsWith($file, $this->basedir) || file_exists($file) ? null : $file;
 	}
 	
 	protected function getIcon($file){
-		if(Utility::endsWith($file, '/..')) return 'dir_up';
+		if(FileManagerUtility::endsWith($file, '/..')) return 'dir_up';
 		else if(is_dir($file)) return 'dir';
 		
 		$ext = pathinfo($file, PATHINFO_EXTENSION);
@@ -265,17 +265,17 @@ class FileManager {
 	}
 	
 	protected function getDir($dir){
-		$dir = realpath($this->path.'/'.(Utility::startsWith($dir, $this->basename) ? $dir : $this->basename));
+		$dir = realpath($this->path.'/'.(FileManagerUtility::startsWith($dir, $this->basename) ? $dir : $this->basename));
 		return $this->checkFile($dir) ? $dir : $this->basedir;
 	}
 	
 	protected function getPath($file){
 		$file = $this->normalize(substr($file, $this->length));
-		return substr($file, Utility::startsWith($file, '/') ? 1 : 0);
+		return substr($file, FileManagerUtility::startsWith($file, '/') ? 1 : 0);
 	}
 	
 	protected function checkFile($file){
-		return !(!$file || !Utility::startsWith($file, $this->basedir) || !file_exists($file));
+		return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file));
 	}
 	
 	protected function normalize($file){
@@ -286,13 +286,13 @@ class FileManager {
 		$filter = $this->options['filter'];
 		
 		if(!$filter) return null;
-		if(!Utility::endsWith($filter, '/')) return array($filter);
+		if(!FileManagerUtility::endsWith($filter, '/')) return array($filter);
 		
 		static $mimes;
-		if(!$mimes) $mimes = parse_ini_file(Utility::getPath().'/MimeTypes.ini');
+		if(!$mimes) $mimes = parse_ini_file(FileManagerUtility::getPath().'/MimeTypes.ini');
 		
 		foreach($mimes as $mime)
-			if(Utility::startsWith($mime, $filter))
+			if(FileManagerUtility::startsWith($mime, $filter))
 				$mimeTypes[] = strtolower($mime);
 		
 		return $mimeTypes;
@@ -301,7 +301,7 @@ class FileManager {
 }
 
 /* Stripped-down version of some Styx PHP Framework-Functionality bundled with this FileBrowser. Styx is located at: http://styx.og5.net */
-class Utility {
+class FileManagerUtility {
 	
 	public static function endsWith($string, $look){
 		return strrpos($string, $look)===strlen($string)-strlen($look);
