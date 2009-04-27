@@ -48,50 +48,28 @@ FileManager.implement({
 			text: this.language.browse
 		}).inject(this.menu, 'top');
 		
-		/* Fix this */
-		var alertStatus = function(message, cls){
-			new Element('div', {
-				'class': cls,
-				html: message,
-				events: {
-					click: function(){
-						this.destroy();
-					}
-				}
-			}).inject(this.button, 'after');
-		}
-		
 		var File = new Class({
 
 			Extends: Swiff.Uploader.File,
 
-			initialize: function(uploader, data){
-				this.parent(uploader, data);
-			},
-
 			render: function(){
-				if (this.invalid){
-					var message = 'Unknown Error', sub = {
+				if(this.invalid){
+					var message = self.language.uploader.unknown, sub = {
 						name: this.name,
 						size: Swiff.Uploader.formatUnit(this.size, 'b')
 					};
 					
-					switch (this.validationError){
-						case 'duplicate':
-							message = 'You can not attach "<em>{name}</em>" ({size}), it is already added!';
-							sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
-							break;
-						case 'sizeLimitMin':
-							message = 'You can not attach "<em>{name}</em>" ({size}), the file size minimum is <strong>{size_min}</strong>!';
+					if(self.language.uploader[this.validationError])
+						message = self.language.uploader[this.validationError];
+					
+					if(this.validationError=='duplicate')
+						sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
+					else if(this.validationError=='sizeLimitMin')
 							sub.size_min = Swiff.Uploader.formatUnit(this.base.options.fileSizeMin, 'b');
-							break;
-						case 'sizeLimitMax':
-							message = 'You can not attach "<em>{name}</em>" ({size}), the file size limit is <strong>{size_max}</strong>!';
+					else if(this.validationError=='sizeLimitMax')
 							sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
-							break;
-					}
-
-					alertStatus(message.substitute(sub), 'error');
+					
+					new Dialog(new Element('div', {html: message.substitute(sub, /\\?\$\{([^{}]+)\}/g)}) , {language: {decline: self.language.ok}, buttons: ['decline']});
 					return this;
 				}
 				
@@ -149,12 +127,16 @@ FileManager.implement({
 				this.remove();
 			},
 
-			onComplete: function(){console.log(this.response);
+			onComplete: function(){
 				this.ui.progress = this.ui.progress.cancel().element.destroy();
 				this.ui.cancel = this.ui.cancel.destroy();
 				
 				new Element('input', {type: 'checkbox', 'checked': true}).inject(this.ui.element, 'top');
 				this.ui.element.highlight('#e6efc2');
+				console.log(this.response.text);
+				var response = JSON.decode(this.response.text);
+				if(!response.status)
+					new Dialog((''+response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {decline: self.language.ok}, buttons: ['decline']});
 			}
 
 		});

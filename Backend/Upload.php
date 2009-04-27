@@ -23,29 +23,30 @@ class Upload {
 	public static function move($file, $to, $options = null){
 		if(!self::exists($file)) return false;
 		
-		$default = array(
+		$options = array_merge(array(
 			'name' => null,
 			'size' => null,
 			'chmod' => 0777,
 			'overwrite' => false,
 			'mimes' => array(),
-		);
-		
-		$default = array_merge($default, $options);
+		), $options);
 		
 		$file = $_FILES[$file];
 		
-		if($default['size'] && $file['size']>$default['size'])
+		if($options['size'] && $file['size']>$options['size'])
 			throw new UploadException('size');
 		
 		$pathinfo = pathinfo($file['name']);
 		if(!$pathinfo['extension'])
 			throw new UploadException('extension');
 		
-		if(count($default['mimes'])){
-			$mime = self::mime($file['tmp_name'], $file['type']);
+		if(count($options['mimes'])){
+			$mime = self::mime($file['tmp_name'], array(
+				'default' => $file['type'],
+				'extension' => $pathinfo['extension'],
+			));
 			
-			if(!$mime || !in_array($mime, $default['mimes']))
+			if(!$mime || !in_array($mime, $options['mimes']))
 				throw new UploadException('extension');
 		}
 		
@@ -54,17 +55,15 @@ class Upload {
 		
 		$real = realpath($to);
 		if(!$real) throw new UploadException('path');
+		if(is_dir($real)) $to = $real.'/'.($options['name'] ? $options['name'] : $file['base']).'.'.$file['ext'];
 		
-		if(is_dir($real))
-			$to = $real.'/'.($default['name'] ? $default['name'] : $file['base']).'.'.$file['ext'];
-		
-		if(!$default['overwrite'] && file_exists($to))
+		if(!$options['overwrite'] && file_exists($to))
 			throw new UploadException('exists');
 		
 		if(!move_uploaded_file($file['tmp_name'], $to))
 			throw new UploadException(strtolower($_FILES[$file]['error']<=2 ? 'size' : ($_FILES[$file]['error']==3 ? 'partial' : 'nofile')));
 		
-		chmod($to, $default['chmod']);
+		chmod($to, $options['chmod']);
 		
 		return realpath($to);
 	}
@@ -85,9 +84,12 @@ class Upload {
 	 * @param string $file
 	 * @param sring $default The default mimetype to return if none is found. If application/octet-stream is passed it tries to guess the mimetype (Flash-Upload maybe?)
 	 */
-	public function mime($file, $default = null){
+	public function mime($file, $options = array()){
 		$file = realpath($file);
-		$ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+		$options = array_merge(array(
+			'default' => null,
+			'extension' => strtolower(pathinfo($file, PATHINFO_EXTENSION)),
+		), $options);
 		
 		$mime = null;
 		if(function_exists('finfo_open') && $f = finfo_open(FILEINFO_MIME, getenv('MAGIC'))){
@@ -95,19 +97,19 @@ class Upload {
 			finfo_close($f);
 		}
 		
-		if(!$mime && in_array($ext, array('gif', 'jpg', 'jpeg', 'png'))){
+		if(!$mime && in_array($options['extension'], array('gif', 'jpg', 'jpeg', 'png'))){
 			$image = getimagesize($file);
 			if(!empty($image['mime']))
 				$mime = $image['mime'];
 		}
 		
-		if(!$mime && $default) $mime = $default;
+		if(!$mime && $options['default']) $mime = $options['default'];
 		
-		if((!$mime || $mime=='application/octet-stream') && $ext){
+		if((!$mime || $mime=='application/octet-stream') && $options['extension']){
 			static $mimes;
 			if(!$mimes) $mimes = parse_ini_file(pathinfo(__FILE__, PATHINFO_DIRNAME).'/MimeTypes.ini');
 			
-			if(!empty($mimes[$ext])) return $mimes[$ext];
+			if(!empty($mimes[$options['extension']])) return $mimes[$options['extension']];
 		}
 		
 		return $mime;

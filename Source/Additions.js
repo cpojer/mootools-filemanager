@@ -107,7 +107,7 @@ var Dialog = new Class({
 			opacity: 0,
 			tween: {duration: 250}
 		}).adopt([
-			new Element('div', {text: text})
+			$type(text)=='string' ? new Element('div', {text: text}) : text
 		]);
 		
 		if(this.options.content) this.el.getElement('div').adopt(this.options.content);

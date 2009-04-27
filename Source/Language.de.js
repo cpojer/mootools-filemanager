@@ -3,6 +3,7 @@ FileManager.Language.de = {
 	width: 'Breite:',
 	height: 'Höhe:',
 	
+	ok: 'Ok',
 	open: 'Datei wählen',
 	upload: 'Datei hochladen',
 	create: 'Ordner erstellen',
@@ -47,6 +48,12 @@ FileManager.Language.de = {
 	'upload.nofile': 'Es wurde keine Datei hochgeladen.',
 	'upload.default': 'Der Datei-Upload ist fehlgeschlagen.',
 	
+	uploader: {
+		unknown: 'Unbekannter Fehler',
+		duplicate: 'Die Datei "<em>${name}</em>" (${size}), wird oder wurde bereits geuploaded!',
+		sizeLimitMin: 'Die Datei "<em>${name}</em>" (${size}), ist zu klein. Minimaldateigröße: <strong>${size_min}</strong>!',
+		sizeLimitMax: 'Die Datei "<em>${name}</em>" (${size}), ist zu groß. Dateigrößen-Limit: <strong>${size_max}</strong>!'
+	},
 	/* FU */
 	overallprogress: 'Gesamtfortschritt',
 	currentprogress: 'Dateifortschritt',

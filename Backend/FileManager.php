@@ -169,7 +169,7 @@ class FileManager {
 		$dir = $this->getDir($this->get['directory']);
 		try{
 			$file = Upload::move('Filedata', $dir.'/', array(
-				'name' => (Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null,
+				'name' => pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_BASENAME),
 				'size' => $this->options['maxUploadSize'],
 				'mimes' => $this->getAllowedMimeTypes(),
 			));
@@ -180,6 +180,7 @@ class FileManager {
 				if($size['width']>800) $img->resize(800)->save();
 				elseif($size['height']>600) $img->resize(null, 600)->save();
 			}
+			
 			echo json_encode(array(
 				'status' => 1,
 				'name' => pathinfo($file, PATHINFO_BASENAME),
@@ -245,10 +246,10 @@ class FileManager {
 		foreach(glob($dir.'/*') as $f)
 			$files[] = pathinfo($f, PATHINFO_FILENAME);
 		
-		$file = $dir.'/'.Utility::pagetitle($file, $files);
+		$pathinfo = pathinfo($file);
+		$file = $dir.'/'.Utility::pagetitle($pathinfo['filename'], $files).'.'.$pathinfo['extension'];
 		
-		if(!$file || !Utility::startsWith($file, $this->basedir)) return null;
-		return file_exists($file) ? null : $file;
+		return !$file || !Utility::startsWith($file, $this->basedir) || file_exists($file) ? null : $file;
 	}
 	
 	protected function getIcon($file){
