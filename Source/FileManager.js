@@ -1,11 +1,18 @@
-/* 
+/*
+Script: FileManager.js
+	MooTools FileManager
 
-TODO: Proper headers
-TODO: Add Scroller.js (maybe optional) for drag/drop in filelist
-TODO: Add License
+License:
+	MIT-style license.
 
-Based on a Script by Yannick Croissant
+Copyright:
+	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
 
+Todo:
+	- Add Scroller.js (optional) for Drag&Drop in the Filelist
+
+Inspiration:
+	- Based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
 */
 
 var FileManager = new Class({

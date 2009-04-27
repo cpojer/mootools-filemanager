@@ -1,8 +1,17 @@
 <?php
-/* Add proper header */
+/*
+Script: FileManager.php
+	MooTools FileManager - Backend for the FileManager Script
+
+License:
+	MIT-style license.
+
+Copyright:
+	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+*/
 
 require_once(FileManagerUtility::getPath().'/Upload.php');
-require_once(FileManagerUtility::getPath().'./Image.php');
+require_once(FileManagerUtility::getPath().'/Image.php');
 
 class FileManager {
 	
@@ -35,7 +44,6 @@ class FileManager {
 		) as $key => $value)
 			header($key, $value);
 		
-		/* TODO: Clean this up and fix it! */
 		$this->get = $_GET;
 		$this->post = $_POST;
 	}

@@ -1,3 +1,14 @@
+/*
+Script: Uploader.js
+	MooTools FileManager - Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
+
+License:
+	MIT-style license.
+
+Copyright:
+	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+*/
+
 FileManager.implement({
 	
 	options: {
@@ -45,8 +56,9 @@ FileManager.implement({
 		var list = new Element('ul', {'class': 'filemanager-uploader-list', opacity: 0}).inject(container);
 		this.button = new Element('button', {
 			'class': 'filemanager-browse',
+			opacity: 0,
 			text: this.language.browse
-		}).inject(this.menu, 'top');
+		}).inject(this.menu, 'top').fade(1);
 		
 		var File = new Class({
 
@@ -176,8 +188,7 @@ FileManager.implement({
 		});
 		
 		if(!swf){
-			// TODO Test this
-			this.preview.adopt(new Element('span', {html: this.language.flash}));
+			this.preview.adopt(new Element('div', {'class': 'margin', html: this.language.flash}));
 			return;
 		}
 		

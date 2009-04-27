@@ -1,3 +1,8 @@
+/*
+Script: Language.de.js
+	MooTools FileManager - Language Strings in German
+*/
+
 FileManager.Language.de = {
 	more: 'Details',
 	width: 'Breite:',

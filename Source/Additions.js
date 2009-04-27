@@ -1,3 +1,14 @@
+/*
+Script: Additions.js
+	MooTools Additions - Various Helpers, Overlay-Class, Dialog-Class
+
+License:
+	MIT-style license.
+
+Copyright:
+	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+*/
+
 FileManager.Tips = new Class({
 	
 	Extends: Tips,
