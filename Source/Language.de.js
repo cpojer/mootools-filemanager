@@ -14,8 +14,6 @@ FileManager.Language.de = {
 	create: 'Ordner erstellen',
 	createdir: 'Bitte gib einen Ordnernamen ein:',
 	browse: 'Dateien auswählen',
-	clear: 'Liste leeren',
-	startupload: 'Upload starten',
 	cancel: 'Abbrechen',
 	
 	information: 'Information',
@@ -53,19 +51,14 @@ FileManager.Language.de = {
 	'upload.nofile': 'Es wurde keine Datei hochgeladen.',
 	'upload.default': 'Der Datei-Upload ist fehlgeschlagen.',
 	
+	/* FU */
 	uploader: {
 		unknown: 'Unbekannter Fehler',
 		duplicate: 'Die Datei "<em>${name}</em>" (${size}), wird oder wurde bereits geuploaded!',
 		sizeLimitMin: 'Die Datei "<em>${name}</em>" (${size}), ist zu klein. Minimaldateigröße: <strong>${size_min}</strong>!',
 		sizeLimitMax: 'Die Datei "<em>${name}</em>" (${size}), ist zu groß. Dateigrößen-Limit: <strong>${size_max}</strong>!'
 	},
-	/* FU */
-	img: 'Bilder (*.jpg, *.jpeg, *.gif, *.png)',
 	
-	resizePictures: 'Große Bilder automatisch verkleinern (~800x600 px) - empfohlen für Bildergalerien.',
-	
-	resize: 'verkleinern',
-	process: 'verarbeiten',
-	
-	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a class="black" href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" class="go icon">Flash downloaden</a>'
+	resizePictures: 'Große Bilder automatisch verkleinern (~800x600 px)',
+	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash downloaden</a>'
 };
