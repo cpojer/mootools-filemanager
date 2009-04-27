@@ -83,6 +83,10 @@ FileManager.implement({
 				});
 				
 				this.ui = {};
+				
+				this.ui.icon = new Asset.image(self.options.assetBasePath+'Icons/'+this.extension+'.png', {
+					onerror: function(){ new Asset.image(self.options.assetBasePath+'Icons/default.png').replaces(this); }
+				});
 				this.ui.element = new Element('li', {'class': 'file', id: 'file-' + this.id});
 				this.ui.title = new Element('span', {'class': 'file-title', text: this.name});
 				this.ui.size = new Element('span', {'class': 'file-size', text: Swiff.Uploader.formatUnit(this.size, 'b')});
@@ -96,6 +100,7 @@ FileManager.implement({
 				var progress = new Element('img', {'class': 'file-progress', src: self.options.assetBasePath+'bar.gif'});
 
 				this.ui.element.adopt(
+					this.ui.icon,
 					this.ui.title,
 					this.ui.size,
 					progress,
@@ -131,12 +136,19 @@ FileManager.implement({
 				this.ui.progress = this.ui.progress.cancel().element.destroy();
 				this.ui.cancel = this.ui.cancel.destroy();
 				
-				new Element('input', {type: 'checkbox', 'checked': true}).inject(this.ui.element, 'top');
-				this.ui.element.highlight('#e6efc2');
-				console.log(this.response.text);
 				var response = JSON.decode(this.response.text);
 				if(!response.status)
 					new Dialog((''+response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {decline: self.language.ok}, buttons: ['decline']});
+			
+				this.ui.element.set('tween', {duration: 2000}).highlight(response.status ? '#e6efc2' : '#f0c2c2');
+				(function(){
+					this.ui.element.setStyle('overflow', 'hidden').morph({
+						opacity: 0,
+						height: 0
+					}).get('morph').chain(function(){
+						this.element.destroy();
+					});
+				}).delay(5000, this);
 			}
 
 		});
@@ -158,7 +170,9 @@ FileManager.implement({
 			onSelectSuccess: function(){
 				list.fade(1);
 			},
-			onFileRemove: function(){}
+			onComplete: function(){
+				self.load(self.Directory, true);
+			}
 		});
 		
 		if(!swf){

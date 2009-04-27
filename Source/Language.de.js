@@ -55,21 +55,12 @@ FileManager.Language.de = {
 		sizeLimitMax: 'Die Datei "<em>${name}</em>" (${size}), ist zu groß. Dateigrößen-Limit: <strong>${size_max}</strong>!'
 	},
 	/* FU */
-	overallprogress: 'Gesamtfortschritt',
-	currentprogress: 'Dateifortschritt',
-	complete: 'Dateiupload abgeschlossen!',
-	
-	speed: 'Upload mit {rate}/s. Zeit übrig: ~{timeLeft}',
-	
 	img: 'Bilder (*.jpg, *.jpeg, *.gif, *.png)',
 	
 	resizePictures: 'Große Bilder automatisch verkleinern (~800x600 px) - empfohlen für Bildergalerien.',
 	
 	resize: 'verkleinern',
 	process: 'verarbeiten',
-	
-	bgallery: 'Galerie speichern',
-	subtext: 'Bildtext',
 	
 	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a class="black" href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" class="go icon">Flash downloaden</a>'
 };

@@ -169,7 +169,7 @@ class FileManager {
 		$dir = $this->getDir($this->get['directory']);
 		try{
 			$file = Upload::move('Filedata', $dir.'/', array(
-				'name' => pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_BASENAME),
+				'name' => pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_FILENAME),
 				'size' => $this->options['maxUploadSize'],
 				'mimes' => $this->getAllowedMimeTypes(),
 			));
@@ -247,7 +247,7 @@ class FileManager {
 			$files[] = pathinfo($f, PATHINFO_FILENAME);
 		
 		$pathinfo = pathinfo($file);
-		$file = $dir.'/'.FileManagerUtility::pagetitle($pathinfo['filename'], $files).'.'.$pathinfo['extension'];
+		$file = $dir.'/'.FileManagerUtility::pagetitle($pathinfo['filename'], $files).(!empty($pathinfo['extension']) ? '.'.$pathinfo['extension'] : null);
 		
 		return !$file || !FileManagerUtility::startsWith($file, $this->basedir) || file_exists($file) ? null : $file;
 	}

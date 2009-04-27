@@ -327,7 +327,7 @@ var FileManager = new Class({
 				icons.push(new Asset.image(this.options.assetBasePath+'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
 					e.stop();
 					window.open(this.normalize(this.Directory+'/'+file.name));
-				}).bind(this)).injectTop(el));
+				}).bind(this)).inject(el, 'top'));
 
 			if(file.name!='..')
 				['rename', 'destroy'].each(function(v){

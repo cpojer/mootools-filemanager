@@ -68,6 +68,7 @@ div.filemanager ul {
 	line-height: 1.8em;
 	overflow: auto;
 	overflow-x: hidden;
+	zoom: 1;
 }
 
 div.filemanager ul li {
@@ -102,7 +103,7 @@ div.filemanager ul li span.fi {
 
 div.filemanager ul li span.fi span {
 	display: block;
-	width: 100%;
+	width: 98%;
 }
 div.filemanager ul li:hover span.fi span {
 	width: 68%;
