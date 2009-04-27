@@ -166,10 +166,10 @@ class FileManager {
 	protected function onUpload(){
 		if(empty($this->get['directory']) || (function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this->get))) return;
 		
-		$dir = $this->getDir(implode('\\', $this->get['directory']));
+		$dir = $this->getDir($this->get['directory']);
 		try{
 			$file = Upload::move('Filedata', $dir.'/', array(
-				'name' => (self::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null,
+				'name' => (Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null,
 				'size' => $this->options['maxUploadSize'],
 				'mimes' => $this->getAllowedMimeTypes(),
 			));
@@ -181,11 +181,12 @@ class FileManager {
 				elseif($size['height']>600) $img->resize(null, 600)->save();
 			}
 			echo json_encode(array(
-				'result' => 'success',
+				'status' => 1,
+				'name' => pathinfo($file, PATHINFO_BASENAME),
 			));
 		}catch(UploadException $e){
 			echo json_encode(array(
-				'result' => false,
+				'status' => 0,
 				'error' => '${upload.'.$e->getMessage().'}',
 			));
 		}
@@ -284,13 +285,13 @@ class FileManager {
 		$filter = $this->options['filter'];
 		
 		if(!$filter) return null;
-		if(!Utility::endsWidth($filter, '/')) return array($filter);
+		if(!Utility::endsWith($filter, '/')) return array($filter);
 		
 		static $mimes;
 		if(!$mimes) $mimes = parse_ini_file(Utility::getPath().'/MimeTypes.ini');
 		
 		foreach($mimes as $mime)
-			if(Utility::startsWith($mime, $filer))
+			if(Utility::startsWith($mime, $filter))
 				$mimeTypes[] = strtolower($mime);
 		
 		return $mimeTypes;

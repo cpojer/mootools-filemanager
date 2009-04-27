@@ -70,13 +70,13 @@ FileManager.implement({
 			},
 
 			render: function(){
-				if (this.invalid) {
+				if (this.invalid){
 					var message = 'Unknown Error', sub = {
 						name: this.name,
 						size: Swiff.Uploader.formatUnit(this.size, 'b')
 					};
 					
-					switch (this.validationError) {
+					switch (this.validationError){
 						case 'duplicate':
 							message = 'You can not attach "<em>{name}</em>" ({size}), it is already added!';
 							sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
@@ -110,7 +110,7 @@ FileManager.implement({
 				this.ui.size = new Element('span', {'class': 'file-size', text: Swiff.Uploader.formatUnit(this.size, 'b')});
 				
 				this.ui.cancel = new Element('a', {'class': 'file-cancel', text: 'Cancel', href: '#'});
-				this.ui.cancel.addEvent('click', function() {
+				this.ui.cancel.addEvent('click', function(){
 					this.remove();
 					return false;
 				}.bind(this));
@@ -133,23 +133,23 @@ FileManager.implement({
 				return this.parent();
 			},
 
-			onOpen: function() {
+			onOpen: function(){
 				this.ui.element.addClass('file-running');
 			},
 
-			onRemove: function() {
+			onRemove: function(){
 				this.ui = this.ui.element.destroy();
 			},
 
-			onProgress: function() {
+			onProgress: function(){
 				this.ui.progress.start(this.progress.percentLoaded);
 			},
 
-			onStop: function() {
+			onStop: function(){
 				this.remove();
 			},
 
-			onComplete: function() {
+			onComplete: function(){console.log(this.response);
 				this.ui.progress = this.ui.progress.cancel().element.destroy();
 				this.ui.cancel = this.ui.cancel.destroy();
 				
@@ -186,18 +186,18 @@ FileManager.implement({
 		}
 		
 		this.button.addEvents({
-			click: function() {
+			click: function(){
 				return false;
 			},
-			mouseenter: function() {
+			mouseenter: function(){
 				this.addClass('hover');
 				swf.reposition();
 			},
-			mouseleave: function() {
+			mouseleave: function(){
 				this.removeClass('hover');
 				this.blur();
 			},
-			mousedown: function() {
+			mousedown: function(){
 				this.focus();
 			}
 		});
