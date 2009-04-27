@@ -42,6 +42,11 @@ div.filemanager button {
 	-webkit-border-radius: 4px;
 	border-radius: 4px;
 }
+div.filemanager-engine-trident4 button {
+	padding: 0 .25em;
+    width: 0;
+    overflow: visible;
+}
 
 div.filemanager-menu button {
 	float: right;
@@ -105,11 +110,12 @@ div.filemanager ul li span.fi {
 }
 
 div.filemanager ul li span.fi span {
+	white-space: nowrap;
 	display: block;
 	width: 97%;
 }
 
-div.filemanager-engine-trident4 ul li span.fi span, div.filemanager ul li:hover span.fi span {
+div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
 	width: 65%;
 	overflow: hidden;
 }
@@ -228,6 +234,7 @@ div.filemanager dt {
 }
 
 div.filemanager dd {
+	width: 60%;
 	white-space: nowrap;
 	overflow: auto;
 }

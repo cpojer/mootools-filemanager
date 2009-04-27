@@ -39,6 +39,8 @@ div.overlay-dialog {
 	background: #fff;
 }
 
+div.dialog-engine-trident4 { width: 249px; }
+
 div.dialog {
 	position: absolute;
 	display: none;
@@ -68,6 +70,10 @@ div.dialog input, div.dialog select {
 	font-size: 12px;
 }
 
+div.dialog-engine-trident4 input {
+	width: 80%;
+}
+
 div.dialog button {
 	position: absolute;
 	bottom: 15px;
@@ -84,6 +90,11 @@ div.dialog button {
 	-moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
 	border-radius: 4px;
+}
+div.dialog-engine-trident4 button {
+	padding: 0 .25em;
+    width: 0;
+    overflow: visible;
 }
 
 div.dialog button.dialog-decline {

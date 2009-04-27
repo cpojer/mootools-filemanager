@@ -114,7 +114,7 @@ var Dialog = new Class({
 		this.setOptions(options);
 		
 		this.el = new Element('div', {
-			'class': 'dialog',
+			'class': 'dialog dialog-engine-'+Browser.Engine.name+(Browser.Engine.trident ? Browser.Engine.version : ''),
 			opacity: 0,
 			tween: {duration: 250}
 		}).adopt([
