@@ -1,5 +1,7 @@
+//MooTools More, <http://mootools.net/more>. Copyright (c) 2006-2009 Aaron Newton <http://clientcide.com/>, Valerio Proietti <http://mad4milk.net> & the MooTools team <http://mootools.net/developers>, MIT Style License.
+
 MooTools.More = {
-	'version': 'rc01'
+	'version': '1.2.2.1'
 };
 
 /*
@@ -120,7 +122,7 @@ var Drag = new Class({
 					this.value.now[z] = this.limit[z][0];
 				}
 			}
-			if (this.options.grid[z]) this.value.now[z] -= (this.value.now[z] % this.options.grid[z]);
+			if (this.options.grid[z]) this.value.now[z] -= ((this.value.now[z] - this.limit[z][0]) % this.options.grid[z]);
 			if (this.options.style) this.element.setStyle(this.options.modifiers[z], this.value.now[z] + this.options.unit);
 			else this.element[this.options.modifiers[z]] = this.value.now[z];
 		}
@@ -148,7 +150,11 @@ var Drag = new Class({
 Element.implement({
 
 	makeResizable: function(options){
-		return new Drag(this, $merge({modifiers: {x: 'width', y: 'height'}}, options));
+		var drag = new Drag(this, $merge({modifiers: {x: 'width', y: 'height'}}, options));
+		this.store('resizer', drag);
+		return drag.addEvent('drag', function(){
+			this.fireEvent('resize', drag);
+		}.bind(this));
 	}
 
 });
@@ -176,7 +182,9 @@ Drag.Move = new Class({
 		onDrop: $empty(thisElement, overed, event),*/
 		droppables: [],
 		container: false,
-		precalculate: false
+		precalculate: false,
+		includeMargins: true,
+		checkDroppables: true
 	},
 
 	initialize: function(element, options){
@@ -197,20 +205,33 @@ Drag.Move = new Class({
 
 	start: function(event){
 		if (this.container){
-			var ccoo = this.container.getCoordinates(this.element.offsetParent), cps = {}, ems = {};
+			var ccoo = this.container.getCoordinates(this.element.getOffsetParent()), cbs = {}, ems = {};
 
 			['top', 'right', 'bottom', 'left'].each(function(pad){
-				cps[pad] = this.container.getStyle('padding-' + pad).toInt();
+				cbs[pad] = this.container.getStyle('border-' + pad).toInt();
 				ems[pad] = this.element.getStyle('margin-' + pad).toInt();
 			}, this);
 
 			var width = this.element.offsetWidth + ems.left + ems.right;
 			var height = this.element.offsetHeight + ems.top + ems.bottom;
-			
-			this.options.limit = {
-				x: [ccoo.left + cps.left, ccoo.right - cps.right - width],
-				y: [ccoo.top + cps.top, ccoo.bottom - cps.bottom - height]
-			};
+
+			if (this.options.includeMargins) {
+				$each(ems, function(value, key) {
+					ems[key] = 0;
+				});
+			}
+			if (this.container == this.element.getOffsetParent()) {
+				this.options.limit = {
+					x: [0 - ems.left, ccoo.right - cbs.left - cbs.right - width + ems.right],
+					y: [0 - ems.top, ccoo.bottom - cbs.top - cbs.bottom - height + ems.bottom]
+				};
+			} else {
+				this.options.limit = {
+					x: [ccoo.left + cbs.left - ems.left, ccoo.right - cbs.right - width + ems.right],
+					y: [ccoo.top + cbs.top - ems.top, ccoo.bottom - cbs.bottom - height + ems.bottom]
+				};
+			}
+
 		}
 		if (this.options.precalculate){
 			this.positions = this.droppables.map(function(el) {
@@ -237,7 +258,7 @@ Drag.Move = new Class({
 
 	drag: function(event){
 		this.parent(event);
-		if (this.droppables.length) this.checkDroppables();
+		if (this.options.checkDroppables && this.droppables.length) this.checkDroppables();
 	},
 
 	stop: function(event){
@@ -252,10 +273,13 @@ Drag.Move = new Class({
 Element.implement({
 
 	makeDraggable: function(options){
-		return new Drag.Move(this, options);
+		var drag = new Drag.Move(this, options);
+		this.store('dragger', drag);
+		return drag;
 	}
 
 });
+
 
 /*
 Script: Assets.js
@@ -268,7 +292,7 @@ Script: Assets.js
 		Valerio Proietti
 */
 
-var Asset = new Hash({
+var Asset = {
 
 	javascript: function(source, properties){
 		properties = $extend({
@@ -351,7 +375,7 @@ var Asset = new Hash({
 		}));
 	}
 
-});
+};
 
 /*
 Script: Tips.js
@@ -389,13 +413,14 @@ var Tips = new Class({
 
 	initialize: function(){
 		var params = Array.link(arguments, {options: Object.type, elements: $defined});
+		if (params.options && params.options.offsets) params.options.offset = params.options.offsets;
 		this.setOptions(params.options);
 		this.container = new Element('div', {'class': 'tip'});
 		this.tip = this.getTip();
 		
 		if (params.elements) this.attach(params.elements);
 	},
-	
+
 	getTip: function(){
 		return new Element('div', {
 			'class': this.options.className,
@@ -412,7 +437,7 @@ var Tips = new Class({
 			new Element('div', {'class': 'tip-bottom'})
 		).inject(document.body);
 	},
-	
+
 	attach: function(elements){
 		var read = function(option, element){
 			if (option == null) return '';
@@ -433,7 +458,7 @@ var Tips = new Class({
 		
 		return this;
 	},
-	
+
 	detach: function(elements){
 		$$(elements).each(function(element){
 			['enter', 'leave', 'move'].each(function(value){
@@ -450,7 +475,7 @@ var Tips = new Class({
 		
 		return this;
 	},
-	
+
 	elementEnter: function(event, element){
 		$A(this.container.childNodes).each(Element.dispose);
 		
@@ -467,17 +492,17 @@ var Tips = new Class({
 		this.tip.setStyle('display', 'block');
 		this.position((!this.options.fixed) ? event : {page: element.getPosition()});
 	},
-	
+
 	elementLeave: function(event, element){
 		$clear(this.timer);
 		this.tip.setStyle('display', 'none');
 		this.timer = this.hide.delay(this.options.hideDelay, this, element);
 	},
-	
+
 	elementMove: function(event){
 		this.position(event);
 	},
-	
+
 	position: function(event){
 		var size = window.getSize(), scroll = window.getScroll(),
 			tip = {x: this.tip.offsetWidth, y: this.tip.offsetHeight},
@@ -491,7 +516,7 @@ var Tips = new Class({
 		
 		this.tip.setStyles(obj);
 	},
-	
+
 	fill: function(element, contents){
 		if(typeof contents == 'string') element.set('html', contents);
 		else element.adopt(contents);
