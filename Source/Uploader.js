@@ -9,6 +9,21 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
 */
 
+/*
+	TODO: (From old uploader)
+	new Element('label', {'class': 'uploadLabel'}).adopt(
+		new Element('input', {'class': 'resizePictures', name: 'resizePictures1', type: 'checkbox', checked: 'checked'}).addClass('checkbox'),
+		new Element('span', {text: Lang.resizePictures})
+	),
+
+	new Element('button', {text: Lang.startupload}).addEvent('click', function(e){
+		e.stop();
+		swiffy.upload({
+			addUrl: '&resize='+(el.getElement('input.resizePictures').get('checked') ? 1 : 0)
+		});
+	}),
+*/
+
 FileManager.implement({
 	
 	options: {
@@ -25,6 +40,7 @@ FileManager.implement({
 		
 		show: {
 			upload: function(options){
+				if($type(options)=='array') options = options[0];
 				if(options.upload) this.showUpload = true;
 			}
 		},
@@ -213,17 +229,3 @@ FileManager.implement({
 	}
 	
 });
-
-/*
-		new Element('label', {'class': 'uploadLabel'}).adopt(
-			new Element('input', {'class': 'resizePictures', name: 'resizePictures1', type: 'checkbox', checked: 'checked'}).addClass('checkbox'),
-			new Element('span', {text: Lang.resizePictures})
-		),
-
-		new Element('button', {text: Lang.startupload}).addEvent('click', function(e){
-			e.stop();
-			swiffy.upload({
-				addUrl: '&resize='+(el.getElement('input.resizePictures').get('checked') ? 1 : 0)
-			});
-		}),
-*/

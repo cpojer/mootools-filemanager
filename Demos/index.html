@@ -54,6 +54,7 @@
 	<script type="text/javascript" src="mootools-more.js"></script>
 	
 	<script type="text/javascript" src="../Source/FileManager.js"></script>
+	<script type="text/javascript" src="../Source/Language.en.js"></script>
 	<script type="text/javascript" src="../Source/Language.de.js"></script>
 	<script type="text/javascript" src="../Source/Additions.js"></script>
 	
@@ -91,11 +92,11 @@
 						new FileManager.Tips(icon);
 					};
 					
-					var browser = new FileManager({
+					var manager = new FileManager({
 						url: 'manager.php',
 						assetBasePath: '../Assets',
 						filter: el.get('title') || null,
-						language: 'de',
+						language: 'en',
 						uploadAuthData: {session: 'MySessionId'},
 						onComplete: complete
 					});
@@ -107,8 +108,8 @@
 						icon: val.split('.').getLast()
 					}]);
 					
-					new Element('button', {'class': 'browser', text: FileManager.Language.de.upload}).addEvent('click', browser.show.bindWithEvent(browser, {upload: true})).injectBefore(el);
-					new Element('button', {'class': 'browser', text: FileManager.Language.de.filebrowser}).addEvent('click', browser.show.bind(browser)).injectBefore(el);
+					new Element('button', {'class': 'browser', text: manager.language.upload}).addEvent('click', manager.show.bindWithEvent(manager, {upload: true})).injectBefore(el);
+					new Element('button', {'class': 'browser', text: manager.language.filebrowser}).addEvent('click', manager.show.bind(manager)).injectBefore(el);
 				});
 			})();
 		});
