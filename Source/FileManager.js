@@ -28,9 +28,11 @@ var FileManager = new Class({
 		imageBasePath: null,
 		autoDisable: true,
 		selectable: true,
-		upload: true,
-		uploadAuthData: {},
 		language: 'en'
+	},
+	
+	hooks: {
+		initialize: {}
 	},
 
 	initialize: function(options){
@@ -71,15 +73,10 @@ var FileManager = new Class({
 			}).bind(this)
 		}).inject(this.el);
 		
-		var buttons = this.options.selectable ? ['open', 'create'] : ['create'];
-		if(this.options.upload) buttons.push('upload');
-		this.menu.adopt(buttons.map(function(v){
-			return new Element('button', {
-				'class': 'filemanager-'+v,
-				text: this.language[v]
-			}).addEvent('click', this[v].bind(this));
-		}, this));
-
+		
+		if(this.options.selectable) this.addMenuButton('open');
+		this.addMenuButton('create');
+		
 		this.info = new Element('div', {'class': 'filemanager-infos', opacity: 0}).inject(this.el);
 
 		var head = new Element('div', {'class': 'filemanager-head'}).adopt([
@@ -131,6 +128,8 @@ var FileManager = new Class({
 				this.fireEvent('scroll');
 			}).bind(this)
 		};
+		
+		this.fireHooks('initialize');
 	},
 
 	show: function(e, upload){
@@ -150,8 +149,7 @@ var FileManager = new Class({
 
 			this.el.center(this.offsets);
 
-			this.fireEvent('show');
-			this.fireEvent('open');
+			this.fireEvent('show').fireEvent('open');
 
 			this.container.set('opacity', 1);
 
@@ -208,38 +206,6 @@ var FileManager = new Class({
 				}, self).post();
 			}
 		});
-	},
-
-	upload: function(e){
-		if(e) e.stop();
-		if(!this.upload) return;
-
-		var fallback = new Element('span', {'class': 'leftm topm', html: this.language.flash}),
-			self = this;
-
-		this.showUpload = false;
-		this.fillInfo();
-		this.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
-		this.preview.empty().adopt([
-			new Element('h2', {text: this.language.upload}),
-			fallback,
-			FancyUpload2.Start({
-				/*filter: this.options.filter,*/
-				url: this.options.url+Hash.toQueryString($merge({}, this.options.uploadAuthData, {
-					event: 'upload',
-					directory: this.normalize(this.Directory)
-				})),
-				onAllComplete: function(){
-					self.load(self.Directory, true);
-					(function(){
-						this.removeFile();
-					}).delay(5000, this);
-				},
-				onLoad: function(){
-					fallback.destroy();
-				}
-			})
-		]);
 	},
 
 	deselect: function(el){
@@ -538,8 +504,21 @@ var FileManager = new Class({
 		if(el) el.set('disabled', !chk)[(chk ? 'remove' : 'add')+'Class']('disabled');
 	},
 
+	addMenuButton: function(name){
+		this.menu.adopt(new Element('button', {
+			'class': 'filemanager-'+name,
+			text: this.language[name]
+		}).addEvent('click', this[name].bind(this)));
+	},
+	
+	fireHooks: function(hook){
+		for(var key in this.hooks[hook]) this.hooks[hook][key].apply(this);
+	},
+	
 	onRequest: function(){ this.loader.set('opacity', 1); },
 	onComplete: function(){ this.loader.fade(0); },
+	
+	upload: $empty,
 	onDragStart: $empty,
 	onDragComplete: $lambda(false)
 

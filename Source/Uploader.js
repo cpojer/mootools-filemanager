@@ -1,3 +1,53 @@
+FileManager.implement({
+	
+	options: {
+		upload: true,
+		uploadAuthData: {}
+	},
+	
+	hooks: {
+		initialize: {
+			upload: function(){
+				if(this.options.upload) this.addMenuButton('upload');
+			}
+		}
+	},
+	
+	upload: function(e){
+		if(e) e.stop();
+		if(!this.upload) return;
+
+		var fallback = new Element('span', {'class': 'leftm topm', html: this.language.flash}),
+			self = this;
+
+		this.showUpload = false;
+		this.fillInfo();
+		this.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
+		this.preview.empty().adopt([
+			new Element('h2', {text: this.language.upload}),
+			fallback,
+			FancyUpload2.Start({
+				/*filter: this.options.filter,*/
+				url: this.options.url+Hash.toQueryString($merge({}, this.options.uploadAuthData, {
+					event: 'upload',
+					directory: this.normalize(this.Directory)
+				})),
+				onAllComplete: function(){
+					self.load(self.Directory, true);
+					(function(){
+						this.removeFile();
+					}).delay(5000, this);
+				},
+				onLoad: function(){
+					fallback.destroy();
+				}
+			})
+		]);
+	}
+	
+});
+
+/*
 FancyUpload2.Start = function(options){
 	var container = new Element('div', {'class': 'uploader'}),
 		el = new Element('div');
@@ -50,4 +100,4 @@ FancyUpload2.Start = function(options){
 	).injectTop(el);
 
 	return container.adopt(el, list);
-};
+};*/
