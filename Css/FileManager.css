@@ -27,6 +27,7 @@ div.filemanager div.filemanager-menu {
 }
 
 div.filemanager button {
+	cursor: pointer;
 	height: 22px;
 	margin: 4px 5px;
 	padding: 2px;
@@ -45,7 +46,7 @@ div.filemanager-menu button {
 	float: right;
 }
 
-div.filemanager-menu button.disabled {
+div.filemanager button.disabled {
 	color: #666;
 	text-shadow: none;
 	background: url(../Assets/button_disabled.png) repeat-x;
@@ -291,4 +292,27 @@ div.filemanager-container img.browser-add {
 	width: 16px;
 	height: 16px;
 	z-index: 1010;
+}
+
+/* UPLOAD */
+div.filemanager-menu button.filemanager-browse {
+	float: left;
+}
+
+div.filemanager-container .file span {
+	padding: 0 5px 0 0;
+}
+div.filemanager-container .file a {
+	padding: 0 0 0 5px;
+}
+
+div.filemanager-container .file .file-size {
+	color: #666;
+}
+
+div.filemanager-container .file .file-progress {
+	width: 125px;
+	height: 12px;
+	vertical-align: middle;
+	background-image: url(../Assets/progress.gif);
 }

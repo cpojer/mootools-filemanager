@@ -34,7 +34,8 @@ var FileManager = new Class({
 	hooks: {
 		initialize: {},
 		show: {},
-		load: {}
+		load: {},
+		cleanup: {}
 	},
 
 	initialize: function(options){
@@ -168,7 +169,8 @@ var FileManager = new Class({
 		this.overlay.hide();
 		this.browser.empty();
 		this.container.setStyle('display', 'none');
-
+		
+		this.fireHooks('cleanup');
 		this.fireEvent('hide');
 		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
 	},
@@ -430,7 +432,8 @@ var FileManager = new Class({
 			src: this.options.assetBasePath+'Icons/'+file.icon+'.png',
 			alt: file.mime
 		});
-
+		
+		this.fireHooks('cleanup');
 		this.preview.empty();
 
 		this.info.getElement('h1').set('text', file.name);

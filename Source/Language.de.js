@@ -7,7 +7,7 @@ FileManager.Language.de = {
 	upload: 'Datei hochladen',
 	create: 'Ordner erstellen',
 	createdir: 'Bitte gib einen Ordnernamen ein:',
-	browse: 'Durchsuchen...',
+	browse: 'Dateien auswählen',
 	clear: 'Liste leeren',
 	startupload: 'Upload starten',
 	cancel: 'Abbrechen',

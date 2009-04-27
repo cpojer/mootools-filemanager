@@ -17,38 +17,6 @@
 }
 
 
-
-div.filebrowser div.uploader {
-	margin: 0 10px 1em;
-}
-
-div.filebrowser div.uploader ul li span.file-info {
-	display: none;
-	padding-left: 20px;
-}
-
-div.filebrowser div.uploader ul li span.failed {
-	color: #b00;
-}
-
-div.filebrowser div.uploader ul li span.file-size {
-	display: none;
-}
-
-div.filebrowser div.uploader ul li.file a {
-	background-color: #fff;
-}
-
-div.filebrowser div.uploader button {
-	clear: none;
-	margin: 0;
-}
-
-a.file-success {
-	background-color: #80bb29;
-}
-
-
 /* GALLERY */
 div.filebrowser-gallery ul li {
 	list-style-image: none;
