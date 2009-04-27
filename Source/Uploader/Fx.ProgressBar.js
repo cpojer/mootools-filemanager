@@ -17,7 +17,6 @@ Fx.ProgressBar = new Class({
 		text: null,
 		url: null,
 		transition: Fx.Transitions.Circ.easeOut,
-		fit: false,
 		link: 'cancel'
 	},
 
@@ -33,22 +32,7 @@ Fx.ProgressBar = new Class({
 			});
 		}
 		
-		// experimental
-		if (this.options.fit) {
-			url = url || this.element.getStyle('background-image').replace(/^url\(["']?|["']?\)$/g, '');
-			if (url) {
-				var fill = new Image();
-				fill.onload = function() {
-					this.fill = fill.width;
-					fill = fill.onload = null;
-					this.set(this.now || 0);
-				}.bind(this);
-				fill.src = url;
-				if (!this.fill && fill.width) fill.onload();
-			}
-		} else {
-			this.set(0);
-		}
+		this.set(0);
 	},
 
 	start: function(to, total) {

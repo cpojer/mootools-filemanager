@@ -25,19 +25,21 @@ var FileManager = new Class({
 		directory: '',
 		filter: null,
 		url: null,
-		imageBasePath: null,
+		assetBasePath: null,
 		autoDisable: true,
 		selectable: true,
 		language: 'en'
 	},
 	
 	hooks: {
-		initialize: {}
+		initialize: {},
+		show: {},
+		load: {}
 	},
 
 	initialize: function(options){
 		this.setOptions(options);
-		this.options.imageBasePath = this.options.imageBasePath.replace(/(\/|\\)*$/, '/');
+		this.options.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
 		this.droppables = [];
 		this.Directory = this.options.directory;
 		
@@ -107,10 +109,10 @@ var FileManager = new Class({
 			'class': 'filemanager-close',
 			title: this.language.close,
 			events: {click: this.hide.bind(this)}
-		}).adopt(new Asset.image(this.options.imageBasePath+'destroy.png')).inject(this.el);
+		}).adopt(new Asset.image(this.options.assetBasePath+'destroy.png')).inject(this.el);
 		new FileManager.Tips(close.appearOn(close, [1, 0.8]).appearOn(this.el, 0.8));
 
-		this.imageadd = new Asset.image(this.options.imageBasePath+'add.png', {
+		this.imageadd = new Asset.image(this.options.assetBasePath+'add.png', {
 			'class': 'browser-add'
 		}).set('opacity', 0).inject(this.container);
 		
@@ -132,10 +134,10 @@ var FileManager = new Class({
 		this.fireHooks('initialize');
 	},
 
-	show: function(e, upload){
+	show: function(e, options){
 		if(e) e.stop();
 
-		if(upload) this.showUpload = true;
+		this.fireHooks('show', [options || {}]);
 		this.load(this.Directory);
 		this.overlay.show();
 
@@ -228,7 +230,7 @@ var FileManager = new Class({
 			url: this.options.url,
 			onSuccess: (function(j){
 				this.fill(j, nofade);
-				if(this.showUpload) this.upload();
+				this.fireHooks('load');
 			}).bind(this),
 			data: {
 				directory: dir
@@ -314,20 +316,20 @@ var FileManager = new Class({
 		$each(j.files, function(file){
 			file.dir = j.path;
 			var el = file.element = new Element('span', {'class': 'fi', href: '#'}).adopt(
-				new Asset.image(this.options.imageBasePath+'Icons/'+file.icon+'.png'),
+				new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png'),
 				new Element('span', {text: file.name})
 			).store('file', file);
 
 			var icons = [];
 			if(file.mime!='text/directory')
-				icons.push(new Asset.image(this.options.imageBasePath+'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
+				icons.push(new Asset.image(this.options.assetBasePath+'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
 					e.stop();
 					window.open(this.normalize(this.Directory+'/'+file.name));
 				}).bind(this)).injectTop(el));
 
 			if(file.name!='..')
 				['rename', 'destroy'].each(function(v){
-					icons.push(new Asset.image(this.options.imageBasePath+v+'.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el));
+					icons.push(new Asset.image(this.options.assetBasePath+v+'.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el));
 				}, this);
 
 			els[file.mime=='text/directory' ? 1 : 0].push(el);
@@ -425,7 +427,7 @@ var FileManager = new Class({
 		var size = this.size(file.size);
 
 		this.info.fade(1).getElement('img').set({
-			src: this.options.imageBasePath+'Icons/'+file.icon+'.png',
+			src: this.options.assetBasePath+'Icons/'+file.icon+'.png',
 			alt: file.mime
 		});
 
@@ -512,16 +514,16 @@ var FileManager = new Class({
 	},
 	
 	fireHooks: function(hook){
-		for(var key in this.hooks[hook]) this.hooks[hook][key].apply(this);
+		var args = Array.slice(arguments, 1);
+		for(var key in this.hooks[hook]) this.hooks[hook][key].apply(this, args);
 	},
 	
 	onRequest: function(){ this.loader.set('opacity', 1); },
 	onComplete: function(){ this.loader.fade(0); },
 	
-	upload: $empty,
 	onDragStart: $empty,
 	onDragComplete: $lambda(false)
-
+	
 });
 
 FileManager.Language = {};

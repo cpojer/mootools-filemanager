@@ -18,7 +18,7 @@ class FileManager {
 	public function __construct($options){
 		$this->options = array_merge(array(
 			'directory' => '../Demos/Files',
-			'imageBasePath' => '../Images',
+			'assetBasePath' => '../Assets',
 			'dateformat' => 'd.m.y - h:i',
 			'maxUploadSize' => 1024*1024*3,
 			'filter' => null,
@@ -108,7 +108,7 @@ class FileManager {
 			$getid3->Analyze($file);
 			foreach($getid3->info['zip']['files'] as $name => $size){
 				$icon = is_array($size) ? 'dir' : $this->getIcon($name);
-				$out[$icon=='dir' ? 0 : 1][$name] = '<li><a><img src="'.$this->options['imageBasePath'].'/Icons/'.$icon.'.png" alt="" /> '.$name.'</a></li>';
+				$out[$icon=='dir' ? 0 : 1][$name] = '<li><a><img src="'.$this->options['assetBasePath'].'/Icons/'.$icon.'.png" alt="" /> '.$name.'</a></li>';
 			}
 			natcasesort($out[0]);
 			natcasesort($out[1]);
@@ -118,8 +118,8 @@ class FileManager {
 			$getid3->Analyze($file);
 			
 			$content = '<div class="object">
-					<object type="application/x-shockwave-flash" data="../Assets/dewplayer.swf?mp3='.rawurlencode($url).'&volume=30" width="200" height="20">
-						<param name="movie" value="../Assets/dewplayer.swf?mp3='.rawurlencode($url).'&volume=30" />
+					<object type="application/x-shockwave-flash" data="'.$this->options['assetBasePath'].'/dewplayer.swf?mp3='.rawurlencode($url).'&volume=30" width="200" height="20">
+						<param name="movie" value="'.$this->options['assetBasePath'].'/dewplayer.swf?mp3='.rawurlencode($url).'&volume=30" />
 					</object>
 				</div>
 				<h2>${more}</h2>
@@ -255,7 +255,7 @@ class FileManager {
 		else if(is_dir($file)) return 'dir';
 		
 		$ext = pathinfo($file, PATHINFO_EXTENSION);
-		return ($ext && file_exists(realpath($this->options['imageBasePath'].'/Icons/'.$ext.'.png'))) ? $ext : 'default';
+		return ($ext && file_exists(realpath($this->options['assetBasePath'].'/Icons/'.$ext.'.png'))) ? $ext : 'default';
 	}
 
 	protected function getMimeType($file){

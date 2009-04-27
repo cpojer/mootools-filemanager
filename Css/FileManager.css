@@ -23,7 +23,7 @@ div.filemanager div.filemanager-menu {
 	line-height: 30px;
 	
 	border-top: 1px solid #bebebe;
-	background: url(../Images/menu.png) repeat-x;
+	background: url(../Assets/menu.png) repeat-x;
 }
 
 div.filemanager button {
@@ -34,7 +34,7 @@ div.filemanager button {
 	color: #333;
 	text-shadow: #eee 1px 1px 1px;
 	
-	background: url(../Images/button.png) repeat-x;
+	background: url(../Assets/button.png) repeat-x;
 	border: 1px solid #a1aeb9;
 	-moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
@@ -48,7 +48,7 @@ div.filemanager-menu button {
 div.filemanager-menu button.disabled {
 	color: #666;
 	text-shadow: none;
-	background: url(../Images/button_disabled.png) repeat-x;
+	background: url(../Assets/button_disabled.png) repeat-x;
 	border-color: #bababa;
 }
 
@@ -57,7 +57,7 @@ div.filemanager-menu div.loader {
 	width: 16px;
 	height: 16px;
 	margin: 8px 0;
-	background: url(../Images/loader.gif) no-repeat;
+	background: url(../Assets/loader.gif) no-repeat;
 }
 
 div.filemanager ul {
@@ -86,7 +86,7 @@ div.filemanager ul.filemanager-browser {
 	
 	border: 0;
 	border-right: 1px solid #bebebe;
-	background: url(../Images/filelist.png) repeat-x #c1c7cf;
+	background: url(../Assets/filelist.png) repeat-x #c1c7cf;
 }
 
 div.filemanager ul li span.fi {
@@ -121,7 +121,7 @@ ul.filemanager-browser a, ul.filemanager-browser span {
 }
 
 div.filemanager ul li a.selected, div.filemanager ul li span.selected {
-	background: url(../Images/filelist_selected.png) repeat-x;
+	background: url(../Assets/filelist_selected.png) repeat-x;
 	color: #eee;
 	outline: none;
 }
@@ -150,7 +150,7 @@ div.filemanager div.filemanager-close {
 	width: 20px;
 	
 	cursor: pointer;
-	background: url(../Images/button.png) repeat-x;
+	background: url(../Assets/button.png) repeat-x;
 	border: 1px solid #a1aeb9;
 	-moz-border-radius: 10px;
 	-webkit-border-radius: 10px;
@@ -234,7 +234,7 @@ div.filemanager dd.filemanager-dir a.icon {
 	border: 1px solid #bebebe;
 	padding: 2px 5px 2px 20px;
 	text-decoration: none;
-	background: #eee url(../Images/Icons/dir.png) 2px 0 no-repeat;
+	background: #eee url(../Assets/Icons/dir.png) 2px 0 no-repeat;
 	color: #000;
 
 	-moz-border-radius: 3px;

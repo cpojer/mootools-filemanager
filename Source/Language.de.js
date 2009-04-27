@@ -45,8 +45,9 @@ FileManager.Language.de = {
 	'upload.size': 'Die Datei, die du hochgeladen hast, ist zu groß um sie auf diesem Server zu verarbeiten. Bitte lade eine kleinere Datei hoch.',
 	'upload.partial': 'Die Datei wurde nur teilweise hochgeladen. Bitte lade sie erneut hoch.',
 	'upload.nofile': 'Es wurde keine Datei hochgeladen.',
-	'upload.default': 'Der Datei-Upload ist fehlgeschlagen.'
-};/*
+	'upload.default': 'Der Datei-Upload ist fehlgeschlagen.',
+	
+	/* FU */
 	overallprogress: 'Gesamtfortschritt',
 	currentprogress: 'Dateifortschritt',
 	complete: 'Dateiupload abgeschlossen!',
@@ -64,4 +65,4 @@ FileManager.Language.de = {
 	subtext: 'Bildtext',
 	
 	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a class="black" href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" class="go icon">Flash downloaden</a>'
-};*/
+};

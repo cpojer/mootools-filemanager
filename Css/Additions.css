@@ -50,7 +50,7 @@ div.dialog {
 	color: #bebebe;
 	font-family: Tahoma, sans-serif;
 	font-size: 12px;
-	background: url(../Images/dialog.png) no-repeat;
+	background: url(../Assets/dialog.png) no-repeat;
 }
 
 div.dialog div {
@@ -80,7 +80,7 @@ div.dialog button {
 	color: #333;
 	text-shadow: #eee 1px 1px 1px;
 	
-	background: url(../Images/button.png) repeat-x;
+	background: url(../Assets/button.png) repeat-x;
 	-moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
 	border-radius: 4px;

@@ -56,6 +56,11 @@
 	<script type="text/javascript" src="../Source/FileManager.js"></script>
 	<script type="text/javascript" src="../Source/Language.de.js"></script>
 	<script type="text/javascript" src="../Source/Additions.js"></script>
+	
+	<script type="text/javascript" src="../Source/Uploader/Fx.Progressbar.js"></script>
+	<script type="text/javascript" src="../Source/Uploader/Swiff.Uploader.js"></script>
+	<script type="text/javascript" src="../Source/Uploader/Uploader.js"></script>
+	
 	<script type="text/javascript" src="../Source/Uploader.js"></script>
 	
 	<script type="text/javascript">
@@ -89,7 +94,7 @@
 					
 					var browser = new FileManager({
 						url: 'manager.php',
-						imageBasePath: '../Images',
+						assetBasePath: '../Assets',
 						filter: el.get('title') || null,
 						language: 'de',
 						uploadAuthData: {session: 'MySessionId'},
@@ -103,7 +108,7 @@
 						icon: val.split('.').getLast()
 					}]);
 					
-					new Element('button', {'class': 'browser', text: FileManager.Language.de.upload}).addEvent('click', browser.show.bind(browser, true)).injectBefore(el);
+					new Element('button', {'class': 'browser', text: FileManager.Language.de.upload}).addEvent('click', browser.show.bindWithEvent(browser, {upload: true})).injectBefore(el);
 					new Element('button', {'class': 'browser', text: FileManager.Language.de.filebrowser}).addEvent('click', browser.show.bind(browser)).injectBefore(el);
 				});
 			})();

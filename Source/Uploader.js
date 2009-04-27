@@ -10,12 +10,24 @@ FileManager.implement({
 			upload: function(){
 				if(this.options.upload) this.addMenuButton('upload');
 			}
+		},
+		
+		show: {
+			upload: function(options){
+				if(options.upload) this.showUpload = true;
+			}
+		},
+		
+		load: {
+			upload: function(){
+				if(this.showUpload) this.upload();
+			}
 		}
 	},
 	
 	upload: function(e){
 		if(e) e.stop();
-		if(!this.upload) return;
+		if(!this.options.upload) return;
 
 		var fallback = new Element('span', {'class': 'leftm topm', html: this.language.flash}),
 			self = this;
