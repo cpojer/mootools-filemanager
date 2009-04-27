@@ -30,7 +30,6 @@ var FileManager = new Class({
 		onOpen: $empty,
 		onHide: $empty,*/
 		directory: '',
-		filter: null,
 		url: null,
 		assetBasePath: null,
 		autoDisable: true,
@@ -52,7 +51,7 @@ var FileManager = new Class({
 		this.Directory = this.options.directory;
 		
 		this.language = FileManager.Language[this.options.language] || FileManager.Language.en;
-		this.container = new Element('div', {'class': 'filemanager-container'});
+		this.container = new Element('div', {'class': 'filemanager-container filemanager-engine-'+Browser.Engine.name+(Browser.Engine.trident ? Browser.Engine.version : '')});
 		this.el = new Element('div', {'class': 'filemanager'}).inject(this.container);
 		this.menu = new Element('div', {'class': 'filemanager-menu'}).inject(this.el);
 		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 200}}).inject(this.menu);

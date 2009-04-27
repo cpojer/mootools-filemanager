@@ -29,8 +29,9 @@ div.filemanager div.filemanager-menu {
 div.filemanager button {
 	cursor: pointer;
 	height: 22px;
+	line-height: 22px;
 	margin: 4px 5px;
-	padding: 2px;
+	padding: 0 2px;
 	
 	color: #333;
 	text-shadow: #eee 1px 1px 1px;
@@ -78,6 +79,8 @@ div.filemanager ul li {
 	margin: 0;
 	padding: 0;
 	height: 21px;
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 div.filemanager ul.filemanager-browser {
@@ -103,10 +106,11 @@ div.filemanager ul li span.fi {
 
 div.filemanager ul li span.fi span {
 	display: block;
-	width: 98%;
+	width: 97%;
 }
-div.filemanager ul li:hover span.fi span {
-	width: 68%;
+
+div.filemanager-engine-trident4 ul li span.fi span, div.filemanager ul li:hover span.fi span {
+	width: 65%;
 	overflow: hidden;
 }
 
@@ -262,6 +266,10 @@ div.filemanager-preview img.preview {
 	margin: 0 auto 1em;
 	display: block;
 	max-height: 100px;
+}
+
+div.filemanager-engine-trident4 div.filemanager-preview img.preview {
+	height: 100px;
 }
 
 div.filemanager-preview ul, div.filemanager-preview div.textpreview {

@@ -71,7 +71,7 @@
 						el.set('value', path);
 						
 						if(span) span.destroy();
-						var icon = new Asset.image(this.options.imageBasePath+'cancel.png', {title: this.language.deselect}).addClass('file-cancel').addEvent('click', function(e){
+						var icon = new Asset.image(this.options.assetBasePath+'cancel.png', {title: this.language.deselect}).addClass('file-cancel').addEvent('click', function(e){
 							e.stop();
 							el.set('value', '');
 							span.fade(0).get('tween').chain(function(){
@@ -84,7 +84,7 @@
 							styles: {float: 'right'}
 						}).adopt(
 							icon,
-							new Asset.image(this.options.imageBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
+							new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
 							new Element('span', {text: file.name})
 						).injectAfter(el);
 						

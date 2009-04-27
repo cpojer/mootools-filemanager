@@ -215,9 +215,6 @@ FileManager.implement({
 });
 
 /*
-	var filter = {};
-	if(options.filter) filter[Lang.img] = '*.jpg; *.jpeg; *.gif; *.png';
-	
 		new Element('label', {'class': 'uploadLabel'}).adopt(
 			new Element('input', {'class': 'resizePictures', name: 'resizePictures1', type: 'checkbox', checked: 'checked'}).addClass('checkbox'),
 			new Element('span', {text: Lang.resizePictures})

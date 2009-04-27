@@ -13,7 +13,7 @@ $browser = new FileManager(array(
 	'directory' => 'Files/',
 	'imageBasePath' => '../Images',
 	'dateformat' => 'd.m.y - h:i',
-	'filter' => 'image/',
+	/*'filter' => 'image/',*/
 ));
 
 $browser->fireEvent(!empty($_GET['event']) ? $_GET['event'] : null);
