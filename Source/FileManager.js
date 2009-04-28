@@ -10,10 +10,8 @@ Copyright:
 
 Todo:
 	- Add Scroller.js (optional) for Drag&Drop in the Filelist
-	- Add ESC key to exit a Dialog/FileManager
-	- Demos: Simple Input, FileManager only, TinyMCE Integration
+	- Demos: Simple Input, FileManager only, TinyMCE Integration, Image Filter
 	- Fix Upload + ProgressBar
-	- Time format
 
 Inspiration:
 	- Based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
@@ -42,9 +40,7 @@ var FileManager = new Class({
 	},
 	
 	hooks: {
-		initialize: {},
 		show: {},
-		load: {},
 		cleanup: {}
 	},
 
@@ -116,13 +112,13 @@ var FileManager = new Class({
 			this.preview
 		]);
 		
-		var close = new Element('div', {
+		this.closeIcon = new Element('div', {
 			'class': 'filemanager-close',
 			title: this.language.close,
 			events: {click: this.hide.bind(this)}
 		}).adopt(new Asset.image(this.options.assetBasePath+'destroy.png')).inject(this.el);
-		new FileManager.Tips(close.appearOn(close, [1, 0.8]).appearOn(this.el, 0.8));
-
+		new FileManager.Tips(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.el, 0.8));
+		
 		this.imageadd = new Asset.image(this.options.assetBasePath+'add.png', {
 			'class': 'browser-add'
 		}).set('opacity', 0).inject(this.container);
@@ -136,19 +132,19 @@ var FileManager = new Class({
 			keyup: (function(){
 				this.imageadd.fade(0);
 			}).bind(this),
+			keyesc: (function(e){
+				if(e.key=='esc') this.hide();
+			}).bind(this),
 			scroll: (function(){
 				this.el.center(this.offsets);
 				this.fireEvent('scroll');
 			}).bind(this)
 		};
-		
-		this.fireHooks('initialize');
 	},
 
-	show: function(e, options){
+	show: function(e){
 		if(e) e.stop();
 
-		this.fireHooks('show', [options || {}]);
 		this.load(this.Directory);
 		this.overlay.show();
 
@@ -165,10 +161,12 @@ var FileManager = new Class({
 			this.fireEvent('show').fireEvent('open');
 
 			this.container.set('opacity', 1);
+			this.fireHooks('show');
 
 			window.addEvents({
 				scroll: this.bound.scroll,
-				resize: this.bound.scroll
+				resize: this.bound.scroll,
+				keyup: this.bound.keyesc
 			});
 		}).delay(500, this);
 	},
@@ -182,7 +180,7 @@ var FileManager = new Class({
 		
 		this.fireHooks('cleanup');
 		this.fireEvent('hide');
-		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
+		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
 	},
 
 	open: function(e){
@@ -209,6 +207,9 @@ var FileManager = new Class({
 			content: [
 				new Element('input', {'class': 'createDirectory'})
 			],
+			onShow: function(){
+				this.el.getElement('input').focus();
+			},
 			onConfirm: function(){
 				new FileManager.Request({
 					url: self.options.url+'?event=create',
@@ -242,7 +243,6 @@ var FileManager = new Class({
 			url: this.options.url,
 			onSuccess: (function(j){
 				this.fill(j, nofade);
-				this.fireHooks('load');
 			}).bind(this),
 			data: {
 				directory: dir
@@ -520,10 +520,12 @@ var FileManager = new Class({
 	},
 
 	addMenuButton: function(name){
-		this.menu.adopt(new Element('button', {
+		var el = new Element('button', {
 			'class': 'filemanager-'+name,
 			text: this.language[name]
-		}).addEvent('click', this[name].bind(this)));
+		}).inject(this.menu);
+		if(this[name]) el.addEvent('click', this[name].bind(this));
+		return el;
 	},
 	
 	fireHooks: function(hook){

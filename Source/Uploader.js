@@ -32,54 +32,56 @@ FileManager.implement({
 	},
 	
 	hooks: {
-		initialize: {
-			upload: function(){
-				if(this.options.upload) this.addMenuButton('upload');
-			}
-		},
-		
 		show: {
-			upload: function(options){
-				if($type(options)=='array') options = options[0];
-				if(options.upload) this.showUpload = true;
+			upload: function(){
+				this.startUpload();
+				if(this.swf) this.swf.reposition();
 			}
 		},
 		
-		load: {
-			upload: function(){
-				if(this.showUpload) this.upload();
-			}
-		},
 		cleanup: {
 			upload: function(){
-				if(this.button) this.button.destroy();
+				if(!this.options.upload || !this.upload) return;
+				
+				if(this.upload.uploader) this.upload.uploader.dispose();
+				if(this.upload.list) this.upload.list.set('opacity', 0);
 			}
 		}
 	},
 	
-	upload: function(e){
-		if(e) e.stop();
-		if(!this.options.upload) return;
+	startUpload: function(){
+		if(!this.options.upload || this.swf) return;
 		
 		var self = this;
-		
-		this.showUpload = false;
 		this.fillInfo();
 		this.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
-		this.preview.empty().adopt([new Element('h2', {text: this.language.upload})]);
+		this.preview.empty();
 		
-		var container = new Element('div', {'class': 'filemanager-uploader'});
-		var list = new Element('ul', {'class': 'filemanager-uploader-list', opacity: 0}).inject(container);
-		this.button = new Element('button', {
-			'class': 'filemanager-browse',
-			opacity: 0,
-			text: this.language.browse
-		}).inject(this.menu, 'top').fade(1);
+		this.upload = {
+			button: this.addMenuButton('upload'),
+			list: new Element('ul', {'class': 'filemanager-uploader-list', opacity: 0}),
+			uploader: new Element('div').adopt(
+				new Element('h2', {text: this.language.upload}),
+				new Element('div', {'class': 'filemanager-uploader'})
+			)
+		};
+		this.upload.uploader.getElement('div').adopt(this.upload.list);
+		this.closeIcon.appearOn(this.upload.button, 0.8);
 		
 		var File = new Class({
 
 			Extends: Swiff.Uploader.File,
-
+			
+			initialize: function(base, data){
+				this.parent(base, data);
+				this.setOptions({
+					url: self.options.url+'?'+Hash.toQueryString($merge({}, self.options.uploadAuthData, {
+						event: 'upload',
+						directory: self.normalize(self.Directory)
+					}))
+				});
+			},
+			
 			render: function(){
 				if(this.invalid){
 					var message = self.language.uploader.unknown, sub = {
@@ -133,7 +135,7 @@ FileManager.implement({
 					this.ui.size,
 					progress,
 					this.ui.cancel
-				).inject(list).highlight();
+				).inject(self.upload.list).highlight();
 				
 				this.ui.progress = new Fx.ProgressBar(progress, {
 					fit: true
@@ -181,22 +183,18 @@ FileManager.implement({
 
 		});
 
-		var swf = new Swiff.Uploader({
+		var swf = this.swf = new Swiff.Uploader({
 			path: this.options.assetBasePath+'Swiff.Uploader.swf',
-			url: this.options.url+'?'+Hash.toQueryString($merge({}, this.options.uploadAuthData, {
-				event: 'upload',
-				directory: this.normalize(this.Directory)
-			})),
-			verbose: true,
 			queued: false,
-			target: this.button,
+			target: this.upload.button,
 			instantStart: true,
 			fileClass: File,
 			fileSizeMax: 25 * 1024 * 1024,
 			onBrowse: function(){},
 			onCancel: function(){},
 			onSelectSuccess: function(){
-				list.fade(1);
+				self.preview.adopt(self.upload.uploader);
+				self.upload.list.fade(1);
 			},
 			onComplete: function(){
 				self.load(self.Directory, true);
@@ -208,7 +206,7 @@ FileManager.implement({
 			return;
 		}
 		
-		this.button.addEvents({
+		this.upload.button.addEvents({
 			click: function(){
 				return false;
 			},
@@ -224,8 +222,6 @@ FileManager.implement({
 				this.focus();
 			}
 		});
-		
-		this.preview.adopt(container);
 	}
 	
 });
