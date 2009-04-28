@@ -143,7 +143,10 @@ var Dialog = new Class({
 	
 	show: function(){
 		this.overlay.show();
-		this.el.setStyle('display', 'block').inject(document.body).center().fade(1);
+		var self = this;
+		this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
+			self.fireEvent('show');
+		});
 		
 		this.scroll = (function(){
 			if(!this.el) this.destroy();
@@ -176,7 +179,7 @@ Overlay = new Class({
 	
 	show: function(){
 		this.objects = $$('object, select, embed').filter(function(el){
-			return el.style.visibility=='hidden' ? false : el.style.visibility = 'hidden';
+			return el.id=='SwiffUploader' || el.style.visibility=='hidden' ? false : !!(el.style.visibility = 'hidden');
 		});
 		
 		this.resize = (function(){

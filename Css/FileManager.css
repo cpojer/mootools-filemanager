@@ -52,7 +52,11 @@ div.filemanager-menu button {
 	float: right;
 }
 
-div.filemanager button.disabled {
+div.filemanager button:hover, div.filemanager button.hover, div.filemanager button:focus {
+	border: 1px solid #5f676e;
+}
+
+div.filemanager button.disabled, div.filemanager button.disabled:hover, div.filemanager button.disabled:focus {
 	color: #666;
 	text-shadow: none;
 	background: url(../Assets/button_disabled.png) repeat-x;
@@ -313,10 +317,6 @@ div.filemanager-container img.browser-add {
 }
 
 /* UPLOAD */
-div.filemanager-menu button.filemanager-browse {
-	float: left;
-}
-
 div.filemanager-container .file span {
 	padding: 0 5px 0 0;
 }

@@ -108,7 +108,6 @@
 						icon: val.split('.').getLast()
 					}]);
 					
-					new Element('button', {'class': 'browser', text: manager.language.upload}).addEvent('click', manager.show.bindWithEvent(manager, {upload: true})).injectBefore(el);
 					new Element('button', {'class': 'browser', text: manager.language.filebrowser}).addEvent('click', manager.show.bind(manager)).injectBefore(el);
 				});
 			})();

@@ -11,8 +11,7 @@ function UploadIsAuthenticated($get){
 
 $browser = new FileManager(array(
 	'directory' => 'Files/',
-	'imageBasePath' => '../Images',
-	'dateformat' => 'd.m.y - h:i',
+	'assetBasePath' => '../Assets',
 	/*'filter' => 'image/',*/
 ));
 

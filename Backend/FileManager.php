@@ -28,7 +28,7 @@ class FileManager {
 		$this->options = array_merge(array(
 			'directory' => '../Demos/Files',
 			'assetBasePath' => '../Assets',
-			'dateformat' => 'd.m.y - h:i',
+			'dateformat' => 'j M Y - H:i',
 			'maxUploadSize' => 1024*1024*3,
 			'safe' => true,
 			'filter' => null,
@@ -254,6 +254,7 @@ class FileManager {
 	}
 	
 	protected function getName($file, $dir){
+		$files = array();
 		foreach(glob($dir.'/*') as $f)
 			$files[] = pathinfo($f, PATHINFO_FILENAME);
 		
