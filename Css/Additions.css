@@ -83,6 +83,7 @@ div.dialog button {
 	padding: 2px;
 	border: 1px solid #bebebe;
 	
+	cursor: pointer;
 	color: #333;
 	text-shadow: #eee 1px 1px 1px;
 	
