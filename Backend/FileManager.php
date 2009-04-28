@@ -30,6 +30,7 @@ class FileManager {
 			'assetBasePath' => '../Assets',
 			'dateformat' => 'd.m.y - h:i',
 			'maxUploadSize' => 1024*1024*3,
+			'safe' => true,
 			'filter' => null,
 		), $options);
 		
@@ -176,8 +177,10 @@ class FileManager {
 		
 		$dir = $this->getDir($this->get['directory']);
 		try{
+			$name = pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_FILENAME);
 			$file = Upload::move('Filedata', $dir.'/', array(
-				'name' => pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_FILENAME),
+				'name' => $name,
+				'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
 				'size' => $this->options['maxUploadSize'],
 				'mimes' => $this->getAllowedMimeTypes(),
 			));
