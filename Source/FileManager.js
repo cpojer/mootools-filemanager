@@ -470,7 +470,7 @@ var FileManager = new Class({
 		text.pop();
 		text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e){ e.stop(); });
 
-		this.info.getElement('dd.filemanager-dir').empty().adopt(text);
+		this.info.getElement('dd.filemanager-dir').empty().adopt(new Element('span', {text: '/ '}), text);
 
 		if(file.mime=='text/directory') return;
 

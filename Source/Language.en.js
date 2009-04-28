@@ -19,7 +19,7 @@ FileManager.Language.en = {
 	information: 'Information',
 	type: 'Type:',
 	size: 'Size:',
-	dir: 'Folder:',
+	dir: 'Path:',
 	modified: 'Last modified:',
 	preview: 'Preview',
 	close: 'Close',

@@ -19,7 +19,7 @@ FileManager.Language.de = {
 	information: 'Information',
 	type: 'Typ:',
 	size: 'Größe:',
-	dir: 'Ordner:',
+	dir: 'Verzeichnis:',
 	modified: 'Zuletzt bearbeitet:',
 	preview: 'Vorschau',
 	close: 'Schließen',

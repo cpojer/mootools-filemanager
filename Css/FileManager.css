@@ -111,7 +111,8 @@ div.filemanager ul li span.fi {
 div.filemanager ul li span.fi span {
 	white-space: nowrap;
 	display: block;
-	width: 97%;
+	width: 90%;
+	overflow: hidden;
 }
 
 div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
@@ -254,14 +255,16 @@ div.filemanager dd.filemanager-dir a.icon {
 	border-radius: 3px;
 }
 
-div.filemanager dd.filemanager-dir a.selected,
 div.filemanager dd.filemanager-dir a.icon:hover {
 	text-decoration: none;
 	background-color: #fff;
 }
 
-div.filemanager dd.filemanager-dir a.selected {
-	cursor: default;
+div.filemanager dd.filemanager-dir a.selected, div.filemanager dd.filemanager-dir a.selected:hover {
+	margin: 0 1px;
+	background-color: transparent;
+	border: none;
+	cursor: auto;
 }
 
 div.filemanager-preview {
