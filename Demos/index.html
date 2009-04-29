@@ -85,7 +85,7 @@
 
 			/* Select a file */
 			var el = $('example2');
-			var div;
+			var div, tips;
 			var complete = function(path, file){
 				el.set('value', path);
 				
@@ -93,11 +93,14 @@
 				var icon = new Asset.image(this.options.assetBasePath+'cancel.png', {'class': 'file-cancel', title: this.language.deselect}).addEvent('click', function(e){
 					e.stop();
 					el.set('value', '');
+					var self = this;
 					div.fade(0).get('tween').chain(function(){
 						div.destroy();
+						tips.hide();
+						tips.detach(self);
 					});
 				});
-				new FileManager.Tips(icon);
+				tips = new FileManager.Tips(icon);
 				
 				div = new Element('div', {'class': 'selected-file', text: 'Selected file: '}).adopt(
 					new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),

@@ -140,11 +140,13 @@ FileManager.implement({
 				this.ui.title = new Element('span', {'class': 'file-title', text: this.name});
 				this.ui.size = new Element('span', {'class': 'file-size', text: Swiff.Uploader.formatUnit(this.size, 'b')});
 				
-				this.ui.cancel = new Asset.image(self.options.assetBasePath+'cancel.png', {'class': 'file-cancel', title: self.language.cancel}).addEvent('click', (function(){
-					this.remove();
-					return false;
-				}).bind(this));
-				new FileManager.Tips(this.ui.cancel);
+				var tips, file = this;
+				this.ui.cancel = new Asset.image(self.options.assetBasePath+'cancel.png', {'class': 'file-cancel', title: self.language.cancel}).addEvent('click', function(){
+					file.remove();
+					tips.hide();
+					tips.detach(this);
+				});
+				tips = new FileManager.Tips(this.ui.cancel);
 				
 				var progress = new Element('img', {'class': 'file-progress', src: self.options.assetBasePath+'bar.gif'});
 
