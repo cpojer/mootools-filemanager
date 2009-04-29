@@ -52,6 +52,8 @@
 	
 	<link rel="stylesheet" media="all" type="text/css" href="../Css/FileManager.css" />
 	<link rel="stylesheet" media="all" type="text/css" href="../Css/Additions.css" />
+	
+	<script type="text/javascript" src="tinyMCE/tiny_mce.js"></script>
 
 	<script type="text/javascript" src="mootools-core.js"></script>
 	<script type="text/javascript" src="mootools-more.js"></script>
@@ -67,56 +69,46 @@
 	<script type="text/javascript" src="../Source/Uploader.js"></script>
 	
 	<script type="text/javascript">
-		window.addEvent('domready', function(){
-			/* Simple Example */
-			var manager = new FileManager({
-				url: 'manager.php',
-				assetBasePath: '../Assets',
-				language: 'en',
-				uploadAuthData: {session: 'MySessionId'}
-			});
-			$('example1').addEvent('click', manager.show.bind(manager));
-
-			/* Select a file */
-			var el = $('example2');
-			var div;
-			var complete = function(path, file){
-				el.set('value', path);
-				
-				if(div) div.destroy();
-				var icon = new Asset.image(this.options.assetBasePath+'cancel.png', {'class': 'file-cancel', title: this.language.deselect}).addEvent('click', function(e){
-					e.stop();
-					el.set('value', '');
-					div.fade(0).get('tween').chain(function(){
-						div.destroy();
-					});
+		tinyMCE.init({
+			mode: 'textareas',
+			language: 'en',
+			theme: 'advanced',
+			skin: 'o2k7',
+			skin_variant: 'silver',
+			plugins: 'safari,advimage,advlink,inlinepopups',
+			theme_advanced_toolbar_location: 'top',
+			theme_advanced_buttons1: 'link,unlink,image,forecolor,backcolor,|,sub,sup,|,hr,charmap,|,undo,redo,|,bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,outdent,indent,blockquote,bullist,numlist',
+			theme_advanced_buttons2: '',
+			theme_advanced_buttons3: '',
+			
+			width: '100%',
+			height: '300px',
+			
+			file_browser_callback: function(field, url, type, win){
+				var manager = new FileManager({
+					url: type=='image' ? 'selectImage.php' : 'manager.php',
+					assetBasePath: '../Assets',
+					language: 'de',
+					selectable: true,
+					uploadAuthData: {session: 'MySessionId'},
+					onComplete: function(path){
+						if(!win.document) return;
+						win.document.getElementById(field).value = path;
+						if(win.ImageDialog) win.ImageDialog.showPreviewImage(path, 1);
+						this.container.destroy();
+					}
 				});
-				new FileManager.Tips(icon);
-				
-				div = new Element('div', {'class': 'selected-file'}).adopt(
-					new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
-					new Element('span', {text: file.name}),
-					icon
-				).inject(el, 'after');
-			};
-			
-			var manager = new FileManager({
-				url: 'selectImage.php',
-				assetBasePath: '../Assets',
-				language: 'en',
-				selectable: true,
-				uploadAuthData: {session: 'MySessionId'},
-				onComplete: complete
+				manager.el.setStyle('zIndex', 400001);
+				manager.overlay.el.setStyle('zIndex', 400000);
+				manager.show();
+			}
+		});
+
+		window.addEvent('domready', function(){
+			$('getEditorText').addEvent('click', function(e){
+				e.stop();
+				$('editorContent').set('html', tinyMCE.activeEditor.getContent());
 			});
-			
-			el.setStyle('display', 'none');
-			var val = el.get('value');
-			if(val) complete.apply(manager, [val, {
-				name: val.split('/').getLast(),
-				icon: val.split('.').getLast()
-			}]);
-			
-			new Element('button', {'class': 'browser', styles: {float: 'left'}, text: 'Select an image'}).addEvent('click', manager.show.bind(manager)).injectBefore(el);
 		});
 	</script>
 </head>
@@ -124,9 +116,10 @@
 <div id="content" class="content">
 	<h1>FileManager Demo</h1>
 	<div>
-		<button id="example1" class="BrowseExample1">Open File-Manager</button>
+	<textarea>Add an image or a link to a file!</textarea>
+	<button id="getEditorText" name="getEditorTextButton">Get editor content</button>
 	</div>
-	<input name="BrowseExample2" type="text" id="example2" value="Smile.gif" />
+	<div id="editorContent"></div>
 </div>
 </body>
 </html>
