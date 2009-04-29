@@ -556,6 +556,7 @@ var FileManager = new Class({
 	fireHooks: function(hook){
 		var args = Array.slice(arguments, 1);
 		for(var key in this.hooks[hook]) this.hooks[hook][key].apply(this, args);
+		return this;
 	},
 	
 	onRequest: function(){ this.loader.set('opacity', 1); },
