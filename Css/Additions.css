@@ -76,7 +76,7 @@ div.dialog input, div.dialog select {
 	font-size: 12px;
 }
 
-div.dialog-engine-trident4 input {
+div.dialog-engine-trident4 input, div.dialog-engine-trident5 input {
 	width: 80%;
 }
 
@@ -98,10 +98,10 @@ div.dialog button {
 	-webkit-border-radius: 4px;
 	border-radius: 4px;
 }
-div.dialog-engine-trident4 button {
+div.dialog-engine-trident4 button, div.dialog-engine-trident5 button {
 	padding: 0 .25em;
-    width: 0;
-    overflow: visible;
+	width: auto;
+	overflow: visible;
 }
 
 div.dialog button.dialog-decline {
