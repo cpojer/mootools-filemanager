@@ -68,6 +68,8 @@
 	
 	<script type="text/javascript" src="../Source/Uploader.js"></script>
 	
+	<script type="text/javascript" src="../Source/FileManager.TinyMCE.js"></script>
+	
 	<script type="text/javascript">
 		tinyMCE.init({
 			mode: 'textareas',
@@ -84,24 +86,15 @@
 			width: '100%',
 			height: '300px',
 			
-			file_browser_callback: function(field, url, type, win){
-				var manager = new FileManager({
+			file_browser_callback: FileManager.TinyMCE(function(type){
+				return {
 					url: type=='image' ? 'selectImage.php' : 'manager.php',
 					assetBasePath: '../Assets',
 					language: 'de',
 					selectable: true,
-					uploadAuthData: {session: 'MySessionId'},
-					onComplete: function(path){
-						if(!win.document) return;
-						win.document.getElementById(field).value = path;
-						if(win.ImageDialog) win.ImageDialog.showPreviewImage(path, 1);
-						this.container.destroy();
-					}
-				});
-				manager.el.setStyle('zIndex', 400001);
-				manager.overlay.el.setStyle('zIndex', 400000);
-				manager.show();
-			}
+					uploadAuthData: {session: 'MySessionId'}
+				};
+			})
 		});
 
 		window.addEvent('domready', function(){

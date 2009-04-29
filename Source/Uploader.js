@@ -213,7 +213,8 @@ FileManager.implement({
 			},
 			onComplete: function(){
 				self.load(self.Directory, true);
-			}
+			},
+			zIndex: this.SwiffZIndex || 9999
 		});
 
 		if(!this.swf || !this.swf.box){
