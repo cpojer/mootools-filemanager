@@ -187,6 +187,8 @@ FileManager.implement({
 						height: 0
 					}).get('morph').chain(function(){
 						this.element.destroy();
+						if(!self.upload.list.getElements('li').length)
+							self.upload.list.fade(0).get('tween');
 					});
 				}).delay(5000, this);
 			}
