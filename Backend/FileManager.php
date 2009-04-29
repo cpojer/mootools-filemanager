@@ -31,6 +31,7 @@ class FileManager {
 			'dateformat' => 'j M Y - H:i',
 			'maxUploadSize' => 1024*1024*3,
 			'upload' => false,
+			'destroy' => false,
 			'safe' => true,
 			'filter' => null,
 		), $options);
@@ -150,7 +151,7 @@ class FileManager {
 	}
 	
 	protected function onDestroy(){
-		if(empty($this->post['directory']) || empty($this->post['file'])) return;
+		if(!$this->options['destroy'] || empty($this->post['directory']) || empty($this->post['file'])) return;
 		
 		$file = realpath($this->path.'/'.$this->post['directory'].'/'.$this->post['file']);
 		if(!$this->checkFile($file)) return;

@@ -37,9 +37,9 @@ FileManager.Language.en = {
 	length: 'Length:',
 	bitrate: 'Bitrate:',
 	
-	filebrowser: 'File-Manager',
-	
 	deselect: 'Deselect',
+	
+	nodestroy: 'Deleting files has been disabled on this Server.',
 	
 	'upload.disabled': 'Uploading has been disabled on this Server.',
 	'upload.authenticated': 'You are not authenticated to upload files.',

@@ -2,12 +2,19 @@
 
 include('../Backend/FileManager.php');
 
+// Please add your own authentication here
+function UploadIsAuthenticated($get){
+	if(!empty($get['session'])) return true;
+	
+	return false;
+}
+
 $browser = new FileManager(array(
 	'directory' => 'Files/',
 	'assetBasePath' => '../Assets',
-	'upload' => false,
-	'destroy' => false,
-	/*'filter' => 'image/',*/
+	'upload' => true,
+	'destroy' => true,
+	'filter' => 'image/',
 ));
 
 $browser->fireEvent(!empty($_GET['event']) ? $_GET['event'] : null);

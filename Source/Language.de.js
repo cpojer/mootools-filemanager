@@ -37,9 +37,9 @@ FileManager.Language.de = {
 	length: 'Länge:',
 	bitrate: 'Bitrate:',
 	
-	filebrowser: 'Datei-Manager',
-	
 	deselect: 'Entfernen',
+	
+	nodestroy: 'Dateien löschen wurde auf diesem Server deaktiviert.',
 	
 	'upload.disabled': 'Der Datei-Upload wurde auf diesem Server deaktiviert.',
 	'upload.authenticated': 'Upload fehlgeschlagen: Du bist nicht authentifiziert.',

@@ -37,7 +37,7 @@ var FileManager = new Class({
 		url: null,
 		assetBasePath: null,
 		autoDisable: true,
-		selectable: true,
+		selectable: false,
 		language: 'en'
 	},
 	
@@ -254,7 +254,8 @@ var FileManager = new Class({
 
 	destroy: function(e, file){
 		e.stop();
-
+		
+		var self = this;
 		new Dialog(this.language.destroyfile, {
 			language: {
 				confirm: this.language.destroy,
@@ -262,23 +263,27 @@ var FileManager = new Class({
 			},
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
-			onConfirm: (function(){
-				var self = this;
+			onConfirm: function(){
 				new FileManager.Request({
-					url: this.options.url+'?event=destroy',
+					url: self.options.url+'?event=destroy',
 					data: {
 						file: file.name,
-						directory: this.Directory
+						directory: self.Directory
+					},
+					onSuccess: function(j){
+						if(!j || j.content!='destroyed'){
+							new Dialog(self.language.nodestroy, {language: {decline: self.language.ok}, buttons: ['decline']});
+							return;
+						}
+
+						self.fireEvent('modify', [$unlink(file)]);
+						file.element.getParent().fade(0).get('tween').chain(function(){
+							self.deselect(file.element);
+							this.element.destroy();
+						});
 					}
-				}, this).post();
-
-				this.fireEvent('modify', [$unlink(file)]);
-
-				file.element.getParent().fade(0).get('tween').chain(function(){
-					self.deselect(file.element);
-					this.element.destroy();
-				});
-			}).bind(this)
+				}, self).post();
+			}
 		});
 
 	},
