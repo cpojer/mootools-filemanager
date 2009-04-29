@@ -197,6 +197,7 @@ FileManager.implement({
 		});
 
 		this.swf = new Swiff.Uploader({
+			id: 'SwiffFileManagerUpload',
 			path: this.options.assetBasePath+'Swiff.Uploader.swf',
 			queued: false,
 			target: this.upload.button,
@@ -205,6 +206,7 @@ FileManager.implement({
 			fileSizeMax: 25 * 1024 * 1024,
 			onBrowse: function(){},
 			onCancel: function(){},
+			zIndex: this.SwiffZIndex || 9999,
 			onSelectSuccess: function(){
 				self.fillInfo();
 				self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
@@ -214,14 +216,11 @@ FileManager.implement({
 			onComplete: function(){
 				self.load(self.Directory, true);
 			},
-			zIndex: this.SwiffZIndex || 9999
+			onFail: function(){
+				$$(self.upload.button, self.upload.label).dispose();
+				new Dialog(new Element('div', {html: self.language.flash}), {language: {decline: self.language.ok}, buttons: ['decline']});
+			}
 		});
-
-		if(!this.swf || !this.swf.box){
-			$$(this.upload.button, this.upload.label).dispose();
-			new Dialog(new Element('div', {html: this.language.flash}), {language: {decline: this.language.ok}, buttons: ['decline']});
-			return;
-		}
 	}
 	
 });

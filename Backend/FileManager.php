@@ -297,7 +297,8 @@ class FileManager {
 	}
 	
 	protected function checkFile($file){
-		return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file));
+		$mimes = $this->getAllowedMimeTypes();
+		return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file) || (count($mimes) && !in_array($this->getMimeType($file), $mimes)));
 	}
 	
 	protected function normalize($file){

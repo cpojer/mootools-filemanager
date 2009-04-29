@@ -45,8 +45,14 @@
 		border-radius: 10px;
 	}
 	
-	div.content div {
+	div.content div.example {
+		float: left;
+		clear: both;
 		margin: 10px 0;
+	}
+	
+	button {
+		margin: 5px 0;
 	}
 	</style>
 	
@@ -93,7 +99,7 @@
 				});
 				new FileManager.Tips(icon);
 				
-				div = new Element('div', {'class': 'selected-file'}).adopt(
+				div = new Element('div', {'class': 'selected-file', text: 'Selected file: '}).adopt(
 					new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
 					new Element('span', {text: file.name}),
 					icon
@@ -116,17 +122,33 @@
 				icon: val.split('.').getLast()
 			}]);
 			
-			new Element('button', {'class': 'browser', styles: {float: 'left'}, text: 'Select an image'}).addEvent('click', manager.show.bind(manager)).injectBefore(el);
+			new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager.show.bind(manager)).inject(el, 'before');
+
+			/* Simple Example */
+			var manager = new FileManager({
+				url: 'manager.php',
+				assetBasePath: '../Assets',
+				language: 'de',
+				uploadAuthData: {session: 'MySessionId'}
+			});
+			$('example3').addEvent('click', manager.show.bind(manager));
+
 		});
 	</script>
 </head>
 <body>
 <div id="content" class="content">
 	<h1>FileManager Demo</h1>
-	<div>
-		<button id="example1" class="BrowseExample1">Open File-Manager</button>
+	<div class="example">
+		<button id="example1" class="BrowseExample">Open File-Manager</button>
 	</div>
-	<input name="BrowseExample2" type="text" id="example2" value="Smile.gif" />
+	<div class="example">
+		<input name="BrowseExample2" type="text" id="example2" value="Smile.gif" />
+	</div>
+	<div class="example">
+		<button id="example3" class="BrowseExample">Open File-Manager (German)</button>
+	</div>
+	<div style="clear: both;"></div>
 </div>
 </body>
 </html>

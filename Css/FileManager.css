@@ -358,9 +358,6 @@ div.filemanager div.checkboxChecked {
 }
 
 /* SELECTED FILE */
-div.selected-file {
-	float: left;
-}
 div.selected-file img {
 	vertical-align: bottom;
 	padding: 0 3px 0 0;

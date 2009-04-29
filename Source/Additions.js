@@ -180,7 +180,7 @@ Overlay = new Class({
 	
 	show: function(){
 		this.objects = $$('object, select, embed').filter(function(el){
-			return el.id=='SwiffUploader' || el.style.visibility=='hidden' ? false : !!(el.style.visibility = 'hidden');
+			return el.id=='SwiffFileManagerUpload' || el.style.visibility=='hidden' ? false : !!(el.style.visibility = 'hidden');
 		});
 		
 		this.resize = (function(){
