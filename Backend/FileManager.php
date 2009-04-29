@@ -298,7 +298,9 @@ class FileManager {
 	
 	protected function checkFile($file){
 		$mimes = $this->getAllowedMimeTypes();
-		return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file) || (count($mimes) && !in_array($this->getMimeType($file), $mimes)));
+		$hasFilter = $this->options['filter'] && count($mimes);
+		if($hasFilter) array_push($mimes, 'text/directory');
+		return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file) || ($hasFilter && !in_array($this->getMimeType($file), $mimes)));
 	}
 	
 	protected function normalize($file){
