@@ -17,7 +17,7 @@ Dependencies:
 Options:
 	- directory: (string) The base directory to be used for the FileManger
 	- assetBasePath: (string) The path to all images and swf files
-	- dateformat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
+	- dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
 	- upload: (boolean, defaults to *false*) Whether to allow uploads or not
 	- destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
 	- maxUploadSize: (integeter, defaults to *3145728* bytes) The maximum file size for upload in bytes
@@ -43,7 +43,7 @@ class FileManager {
 		$this->options = array_merge(array(
 			'directory' => '../Demos/Files',
 			'assetBasePath' => '../Assets',
-			'dateformat' => 'j M Y - H:i',
+			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 1024*1024*3,
 			'upload' => false,
 			'destroy' => false,
@@ -87,7 +87,7 @@ class FileManager {
 			
 			$out[is_dir($file) ? 0 : 1][] = array(
 				'name' => pathinfo($file, PATHINFO_BASENAME),
-				'date' => date($this->options['dateformat'], filemtime($file)),
+				'date' => date($this->options['dateFormat'], filemtime($file)),
 				'mime' => $this->getMimeType($file),
 				'icon' => $this->getIcon($this->normalize($file)),
 				'size' => filesize($file),
@@ -98,7 +98,7 @@ class FileManager {
 			'path' => $this->getPath($dir),
 			'dir' => array(
 				'name' => pathinfo($dir, PATHINFO_BASENAME),
-				'date' => date($this->options['dateformat'], filemtime($dir)),
+				'date' => date($this->options['dateFormat'], filemtime($dir)),
 				'mime' => 'text/directory',
 				'icon' => 'dir',
 			),

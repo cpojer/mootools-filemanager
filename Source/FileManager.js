@@ -20,7 +20,7 @@ Todo:
 	- Add Scroller.js (optional) for Drag&Drop in the Filelist
 
 Inspiration:
-	- Based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
+	- Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
 
 Options:
 	- url: (string) The base url to the Backend FileManager, without QueryString
