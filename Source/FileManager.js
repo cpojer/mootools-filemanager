@@ -11,7 +11,6 @@ Copyright:
 Todo:
 	- Add Scroller.js (optional) for Drag&Drop in the Filelist
 	- Demos: Simple Input, FileManager only, TinyMCE Integration, Image Filter
-	- Fix Upload + ProgressBar
 
 Inspiration:
 	- Based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
