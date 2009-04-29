@@ -41,6 +41,8 @@ FileManager.Language.en = {
 	
 	deselect: 'Deselect',
 	
+	'upload.disabled': 'Uploading has been disabled on this Server.',
+	'upload.authenticated': 'You are not authenticated to upload files.',
 	'upload.path': 'The specified Upload-Folder does not exist. Please contact the administrator of this Website.',
 	'upload.exists': 'The specified Upload-Location does already exist. Please contact the administrator of this Website.',
 	'upload.mime': 'The specified file-type is not allowed.',
@@ -59,5 +61,5 @@ FileManager.Language.en = {
 	},
 	
 	resizeImages: 'Resize big images on upload',
-	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Download Adobe Flash</a>'
+	flash: 'In order to upload files you need to install <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
 };

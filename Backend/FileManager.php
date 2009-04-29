@@ -30,6 +30,7 @@ class FileManager {
 			'assetBasePath' => '../Assets',
 			'dateformat' => 'j M Y - H:i',
 			'maxUploadSize' => 1024*1024*3,
+			'upload' => false,
 			'safe' => true,
 			'filter' => null,
 		), $options);
@@ -173,10 +174,13 @@ class FileManager {
 	}
 	
 	protected function onUpload(){
-		if(empty($this->get['directory']) || (function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this->get))) return;
-		
-		$dir = $this->getDir($this->get['directory']);
 		try{
+			if(!$this->options['upload'])
+				throw new FileManagerException('disabled');
+			if(empty($this->get['directory']) || (function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this->get)))
+				throw new FileManagerException('authenticated');
+			
+			$dir = $this->getDir($this->get['directory']);
 			$name = pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_FILENAME);
 			$file = Upload::move('Filedata', $dir.'/', array(
 				'name' => $name,
@@ -200,6 +204,11 @@ class FileManager {
 			echo json_encode(array(
 				'status' => 0,
 				'error' => class_exists('ValidatorException') ? $e->getMessage() : '${upload.'.$e->getMessage().'}', // This is for Styx :)
+			));
+		}catch(FileManagerException $e){
+			echo json_encode(array(
+				'status' => 0,
+				'error' => '${upload.'.$e->getMessage().'}',
 			));
 		}
 	}
@@ -311,6 +320,8 @@ class FileManager {
 	}
 
 }
+
+class FileManagerException extends Exception {}
 
 /* Stripped-down version of some Styx PHP Framework-Functionality bundled with this FileBrowser. Styx is located at: http://styx.og5.net */
 class FileManagerUtility {

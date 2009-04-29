@@ -54,6 +54,12 @@ div.dialog {
 	font-size: 12px;
 	background: url(../Assets/dialog.png) no-repeat;
 }
+div.dialog a {
+	color: #aaa;
+}
+div.dialog a:hover {
+	text-decoration: none;
+}
 
 div.dialog div {
 	margin: 10px;

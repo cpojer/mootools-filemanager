@@ -41,6 +41,8 @@ FileManager.Language.de = {
 	
 	deselect: 'Entfernen',
 	
+	'upload.disabled': 'Der Datei-Upload wurde auf diesem Server deaktiviert.',
+	'upload.authenticated': 'Upload fehlgeschlagen: Du bist nicht authentifiziert.',
 	'upload.path': 'Der angegebene Upload-Ordner existiert nicht. Bitte kontaktiere den Administrator dieser Website.',
 	'upload.exists': 'Der angegebene Upload-Speicherort existiert bereits. Bitte kontaktiere den Administrator dieser Website.',
 	'upload.mime': 'Der angegebene Dateityp ist nicht erlaubt.',
@@ -59,5 +61,5 @@ FileManager.Language.de = {
 	},
 	
 	resizeImages: 'Große Bilder bei Upload verkleinern',
-	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash downloaden</a>'
+	flash: 'Um Dateien hochzuladen muss <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a> installiert werden.'
 };
