@@ -59,10 +59,12 @@ FileManager.implement({
 		this.closeIcon.appearOn(this.upload.button, 0.8);
 		
 		if(this.options.resizeImages){
-			var resizeImages = new Element('input', {'class': 'checkbox', type: 'checkbox', checked: true});
+			var resizer = new Element('div', {'class': 'checkbox'}),
+				check = (function(){ this.toggleClass('checkboxChecked'); }).bind(resizer);
+			check();
 			new Element('label').adopt(
-				resizeImages, new Element('span', {text: this.language.resizeImages})
-			).inject(this.menu);
+				resizer, new Element('span', {text: this.language.resizeImages})
+			).addEvent('click', check).inject(this.menu);
 		}
 		
 		var File = new Class({
@@ -75,7 +77,7 @@ FileManager.implement({
 					url: self.options.url+'?'+Hash.toQueryString($merge({}, self.options.uploadAuthData, {
 						event: 'upload',
 						directory: self.normalize(self.Directory),
-						resize: self.options.resizeImages && resizeImages.get('checked') ? 1 : 0
+						resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0
 					}))
 				});
 			},

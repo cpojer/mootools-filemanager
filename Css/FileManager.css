@@ -341,3 +341,15 @@ div.filemanager-container .file .file-progress {
 	vertical-align: middle;
 	background-image: url(../Assets/progress.gif);
 }
+
+div.filemanager div.checkbox {
+	float: left;
+	height: 12px;
+	width: 16px;
+	margin: 10px 3px 0;
+	background: url(../Assets/checkbox.png) no-repeat;
+}
+
+div.filemanager div.checkboxChecked {
+	background-position: 0 -12px;
+}
