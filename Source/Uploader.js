@@ -21,7 +21,6 @@ FileManager.implement({
 		show: {
 			upload: function(){
 				this.startUpload();
-				if(this.swf) this.swf.reposition();
 			}
 		},
 		
@@ -36,11 +35,11 @@ FileManager.implement({
 	},
 	
 	onDialogOpen: function(){
-		if(this.options.upload) this.swf.box.setStyle('visibility', 'hidden');
+		if(this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'hidden');
 	},
 	
 	onDialogClose: function(){
-		if(this.options.upload) this.swf.box.setStyle('visibility', 'visible');
+		if(this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'visible');
 	},
 	
 	startUpload: function(){
@@ -48,7 +47,21 @@ FileManager.implement({
 		
 		var self = this;
 		this.upload = {
-			button: this.addMenuButton('upload'),
+			button: this.addMenuButton('upload').addEvents({
+				click: function(){
+					return false;
+				},
+				mouseenter: function(){
+					this.addClass('hover');
+				},
+				mouseleave: function(){
+					this.removeClass('hover');
+					this.blur();
+				},
+				mousedown: function(){
+					this.focus();
+				}
+			}),
 			list: new Element('ul', {'class': 'filemanager-uploader-list', opacity: 0}),
 			uploader: new Element('div').adopt(
 				new Element('h2', {text: this.language.upload}),
@@ -62,7 +75,7 @@ FileManager.implement({
 			var resizer = new Element('div', {'class': 'checkbox'}),
 				check = (function(){ this.toggleClass('checkboxChecked'); }).bind(resizer);
 			check();
-			new Element('label').adopt(
+			this.upload.label = new Element('label').adopt(
 				resizer, new Element('span', {text: this.language.resizeImages})
 			).addEvent('click', check).inject(this.menu);
 		}
@@ -166,7 +179,7 @@ FileManager.implement({
 				var response = JSON.decode(this.response.text);
 				if(!response.status)
 					new Dialog((''+response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {decline: self.language.ok}, buttons: ['decline']});
-			
+				
 				this.ui.element.set('tween', {duration: 2000}).highlight(response.status ? '#e6efc2' : '#f0c2c2');
 				(function(){
 					this.ui.element.setStyle('overflow', 'hidden').morph({
@@ -180,7 +193,7 @@ FileManager.implement({
 
 		});
 
-		var swf = this.swf = new Swiff.Uploader({
+		this.swf = new Swiff.Uploader({
 			path: this.options.assetBasePath+'Swiff.Uploader.swf',
 			queued: false,
 			target: this.upload.button,
@@ -199,28 +212,12 @@ FileManager.implement({
 				self.load(self.Directory, true);
 			}
 		});
-		
-		if(!swf){
-			this.preview.adopt(new Element('div', {'class': 'margin', html: this.language.flash}));
+
+		if(!this.swf || !this.swf.box){
+			$$(this.upload.button, this.upload.label).dispose();
+			new Dialog(new Element('div', {html: this.language.flash}), {language: {decline: this.language.ok}, buttons: ['decline']});
 			return;
 		}
-		
-		this.upload.button.addEvents({
-			click: function(){
-				return false;
-			},
-			mouseenter: function(){
-				this.addClass('hover');
-				swf.reposition();
-			},
-			mouseleave: function(){
-				this.removeClass('hover');
-				this.blur();
-			},
-			mousedown: function(){
-				this.focus();
-			}
-		});
 	}
 	
 });
