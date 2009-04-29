@@ -327,18 +327,21 @@ div.filemanager-container img.browser-add {
 div.filemanager-container .file span {
 	padding: 0 5px 0 0;
 }
-div.filemanager-container .file a {
-	padding: 0 0 0 5px;
-}
 
 div.filemanager-container .file .file-size {
 	color: #666;
 }
 
+div.filemanager-container .file .file-cancel {
+	cursor: pointer;
+	padding-left: 5px;
+	float: right;
+}
 div.filemanager-container .file .file-progress {
+	margin-top: 6px;
+	float: right;
 	width: 125px;
 	height: 12px;
-	vertical-align: middle;
 	background-image: url(../Assets/progress.gif);
 }
 
@@ -352,4 +355,20 @@ div.filemanager div.checkbox {
 
 div.filemanager div.checkboxChecked {
 	background-position: 0 -12px;
+}
+
+/* SELECTED FILE */
+div.selected-file {
+	float: left;
+}
+div.selected-file img {
+	vertical-align: bottom;
+	padding: 0 3px 0 0;
+}
+div.selected-file span {
+	line-height: 16px;
+}
+div.selected-file .file-cancel {
+	cursor: pointer;
+	padding: 0 0 0 5px;
 }

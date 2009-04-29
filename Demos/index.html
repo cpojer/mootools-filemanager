@@ -67,29 +67,25 @@
 		window.addEvent('domready', function(){
 			(function(){
 				$$('input.browser').each(function(el){
-					var span;
+					var div;
 					var complete = function(path, file){
 						el.set('value', path);
 						
-						if(span) span.destroy();
-						var icon = new Asset.image(this.options.assetBasePath+'cancel.png', {title: this.language.deselect}).addClass('file-cancel').addEvent('click', function(e){
+						if(div) div.destroy();
+						var icon = new Asset.image(this.options.assetBasePath+'cancel.png', {'class': 'file-cancel', title: this.language.deselect}).addEvent('click', function(e){
 							e.stop();
 							el.set('value', '');
-							span.fade(0).get('tween').chain(function(){
-								span.destroy();
+							div.fade(0).get('tween').chain(function(){
+								div.destroy();
 							});
 						});
-						
-						span = new Element('span', {
-							'class': 'disabled',
-							styles: {float: 'right'}
-						}).adopt(
-							icon,
-							new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
-							new Element('span', {text: file.name})
-						).injectAfter(el);
-						
 						new FileManager.Tips(icon);
+						
+						div = new Element('div', {'class': 'selected-file'}).adopt(
+							new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
+							new Element('span', {text: file.name}),
+							icon
+						).inject(el, 'after');
 					};
 					
 					var manager = new FileManager({
@@ -108,7 +104,7 @@
 						icon: val.split('.').getLast()
 					}]);
 					
-					new Element('button', {'class': 'browser', text: manager.language.filebrowser}).addEvent('click', manager.show.bind(manager)).injectBefore(el);
+					new Element('button', {'class': 'browser', styles: {float: 'left'}, text: manager.language.filebrowser}).addEvent('click', manager.show.bind(manager)).injectBefore(el);
 				});
 			})();
 		});
