@@ -58,6 +58,6 @@ FileManager.Language.de = {
 		sizeLimitMax: 'Die Datei "<em>${name}</em>" (${size}), ist zu groß. Dateigrößen-Limit: <strong>${size_max}</strong>!'
 	},
 	
-	resizePictures: 'Große Bilder automatisch verkleinern (~800x600 px)',
+	resizeImages: 'Große Bilder bei Upload verkleinern',
 	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash downloaden</a>'
 };

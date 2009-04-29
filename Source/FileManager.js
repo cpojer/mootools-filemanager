@@ -157,9 +157,7 @@ var FileManager = new Class({
 			});
 
 			this.el.center(this.offsets);
-
 			this.fireEvent('show').fireEvent('open');
-
 			this.container.set('opacity', 1);
 			this.fireHooks('show');
 
@@ -207,6 +205,8 @@ var FileManager = new Class({
 			content: [
 				new Element('input', {'class': 'createDirectory'})
 			],
+			onOpen: this.onDialogOpen.bind(this),
+			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
 				this.el.getElement('input').focus();
 			},
@@ -258,6 +258,8 @@ var FileManager = new Class({
 				confirm: this.language.destroy,
 				decline: this.language.cancel
 			},
+			onOpen: this.onDialogOpen.bind(this),
+			onClose: this.onDialogClose.bind(this),
 			onConfirm: (function(){
 				var self = this;
 				new FileManager.Request({
@@ -294,6 +296,8 @@ var FileManager = new Class({
 			content: [
 				new Element('input', {'class': 'rename', value: name})
 			],
+			onOpen: this.onDialogOpen.bind(this),
+			onClose: this.onDialogClose.bind(this),
 			onConfirm: function(){
 				new FileManager.Request({
 					url: self.options.url+'?event=move',
@@ -535,6 +539,8 @@ var FileManager = new Class({
 	
 	onRequest: function(){ this.loader.set('opacity', 1); },
 	onComplete: function(){ this.loader.fade(0); },
+	onDialogOpen: $empty,
+	onDialogClose: $empty,
 	
 	onDragStart: $empty,
 	onDragComplete: $lambda(false)

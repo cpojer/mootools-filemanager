@@ -57,10 +57,17 @@ div.filemanager button:hover, div.filemanager button.hover, div.filemanager butt
 }
 
 div.filemanager button.disabled, div.filemanager button.disabled:hover, div.filemanager button.disabled:focus {
+	cursor: default;
 	color: #666;
 	text-shadow: none;
 	background: url(../Assets/button_disabled.png) repeat-x;
 	border-color: #bababa;
+}
+
+div.filemanager-menu label {
+	cursor: pointer;
+	float: right;
+	font-size: 11px;
 }
 
 div.filemanager-menu div.loader {

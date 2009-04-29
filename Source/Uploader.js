@@ -9,24 +9,10 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
 */
 
-/*
-	TODO: (From old uploader)
-	new Element('label', {'class': 'uploadLabel'}).adopt(
-		new Element('input', {'class': 'resizePictures', name: 'resizePictures1', type: 'checkbox', checked: 'checked'}).addClass('checkbox'),
-		new Element('span', {text: Lang.resizePictures})
-	),
-
-	new Element('button', {text: Lang.startupload}).addEvent('click', function(e){
-		e.stop();
-		swiffy.upload({
-			addUrl: '&resize='+(el.getElement('input.resizePictures').get('checked') ? 1 : 0)
-		});
-	}),
-*/
-
 FileManager.implement({
 	
 	options: {
+		resizeImages: true,
 		upload: true,
 		uploadAuthData: {}
 	},
@@ -49,14 +35,18 @@ FileManager.implement({
 		}
 	},
 	
+	onDialogOpen: function(){
+		if(this.options.upload) this.swf.box.setStyle('visibility', 'hidden');
+	},
+	
+	onDialogClose: function(){
+		if(this.options.upload) this.swf.box.setStyle('visibility', 'visible');
+	},
+	
 	startUpload: function(){
 		if(!this.options.upload || this.swf) return;
 		
 		var self = this;
-		this.fillInfo();
-		this.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
-		this.preview.empty();
-		
 		this.upload = {
 			button: this.addMenuButton('upload'),
 			list: new Element('ul', {'class': 'filemanager-uploader-list', opacity: 0}),
@@ -68,6 +58,13 @@ FileManager.implement({
 		this.upload.uploader.getElement('div').adopt(this.upload.list);
 		this.closeIcon.appearOn(this.upload.button, 0.8);
 		
+		if(this.options.resizeImages){
+			var resizeImages = new Element('input', {'class': 'checkbox', type: 'checkbox', checked: true});
+			new Element('label').adopt(
+				resizeImages, new Element('span', {text: this.language.resizeImages})
+			).inject(this.menu);
+		}
+		
 		var File = new Class({
 
 			Extends: Swiff.Uploader.File,
@@ -77,7 +74,8 @@ FileManager.implement({
 				this.setOptions({
 					url: self.options.url+'?'+Hash.toQueryString($merge({}, self.options.uploadAuthData, {
 						event: 'upload',
-						directory: self.normalize(self.Directory)
+						directory: self.normalize(self.Directory),
+						resize: self.options.resizeImages && resizeImages.get('checked') ? 1 : 0
 					}))
 				});
 			},
@@ -193,6 +191,8 @@ FileManager.implement({
 			onBrowse: function(){},
 			onCancel: function(){},
 			onSelectSuccess: function(){
+				self.fillInfo();
+				self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
 				self.preview.adopt(self.upload.uploader);
 				self.upload.list.fade(1);
 			},

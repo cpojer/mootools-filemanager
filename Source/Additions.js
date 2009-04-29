@@ -99,12 +99,11 @@ var Dialog = new Class({
 	Implements: [Options, Events],
 	
 	options: {
-		/*onConfirm: $empty,
-		onDecline: $empty,*/
-		onClose: function(){
-			this.destroy();
-			this.overlay.hide();
-		},
+		/*onShow: $empty,
+		onOpen: $empty,
+		onConfirm: $empty,
+		onDecline: $empty,
+		onClose: $empty,*/
 		request: null,
 		buttons: ['confirm', 'decline'],
 		language: {}
@@ -127,6 +126,8 @@ var Dialog = new Class({
 			new Element('button', {'class': 'dialog-'+v, text: this.options.language[v]}).addEvent('click', (function(e){
 				e.stop();
 				this.fireEvent(v).fireEvent('close');
+				this.destroy();
+				this.overlay.hide();
 			}).bind(this)).inject(this.el);
 		}, this);
 		
@@ -143,7 +144,7 @@ var Dialog = new Class({
 	
 	show: function(){
 		this.overlay.show();
-		var self = this;
+		var self = this.fireEvent('open');
 		this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
 			self.fireEvent('show');
 		});

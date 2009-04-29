@@ -58,6 +58,6 @@ FileManager.Language.en = {
 		sizeLimitMax: 'You can not attach "<em>${name}</em>" (${size}), the file size limit is <strong>${size_max}</strong>!'
 	},
 	
-	resizePictures: 'Resize big images (~800x600 px)',
+	resizeImages: 'Resize big images on upload',
 	flash: 'Um Dateien hochzuladen muss Adobe Flash installiert werden. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Download Adobe Flash</a>'
 };
