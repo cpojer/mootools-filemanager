@@ -5,6 +5,9 @@ Script: FileManager.js
 License:
 	MIT-style license.
 
+Version:
+	1.0rc1
+
 Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
 

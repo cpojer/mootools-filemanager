@@ -338,7 +338,7 @@ div.filemanager-container .file .file-cancel {
 	float: right;
 }
 div.filemanager-container .file .file-progress {
-	margin-top: 6px;
+	margin-top: 5px;
 	float: right;
 	width: 125px;
 	height: 12px;
