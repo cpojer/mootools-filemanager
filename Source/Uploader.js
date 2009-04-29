@@ -28,8 +28,7 @@ FileManager.implement({
 			upload: function(){
 				if(!this.options.upload || !this.upload) return;
 				
-				if(this.upload.uploader) this.upload.uploader.dispose();
-				if(this.upload.list) this.upload.list.set('opacity', 0);
+				if(this.upload.uploader) this.upload.uploader.set('opacity', 0).dispose();
 			}
 		}
 	},
@@ -62,8 +61,8 @@ FileManager.implement({
 					this.focus();
 				}
 			}),
-			list: new Element('ul', {'class': 'filemanager-uploader-list', opacity: 0}),
-			uploader: new Element('div').adopt(
+			list: new Element('ul', {'class': 'filemanager-uploader-list'}),
+			uploader: new Element('div', {opacity: 0}).adopt(
 				new Element('h2', {text: this.language.upload}),
 				new Element('div', {'class': 'filemanager-uploader'})
 			)
@@ -188,7 +187,9 @@ FileManager.implement({
 					}).get('morph').chain(function(){
 						this.element.destroy();
 						if(!self.upload.list.getElements('li').length)
-							self.upload.list.fade(0).get('tween');
+							self.upload.uploader.fade(0).get('tween').chain(function(){
+								self.fillInfo();
+							});
 					});
 				}).delay(5000, this);
 			}
@@ -208,7 +209,7 @@ FileManager.implement({
 				self.fillInfo();
 				self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
 				self.preview.adopt(self.upload.uploader);
-				self.upload.list.fade(1);
+				self.upload.uploader.fade(1);
 			},
 			onComplete: function(){
 				self.load(self.Directory, true);
