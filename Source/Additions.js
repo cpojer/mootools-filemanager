@@ -7,7 +7,20 @@ License:
 
 Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+
+Dependencies:
+	- MooTools Core 1.2.2
+	- MooTools More 1.2.2.1 or newer: Tips.js
+
+Contains:
+	- FileManager.Tips: Augmented version of Tips for use within the FileManager
+	- FileManager.Request: Simple extension to request to always use the loader-icon specified by the FileManager instance
+	- Element.appearOn: Can be used to show an element when another is hovered: $(myElement).appearOn(myWrapper)
+	- Element.center: Centers an element
+	- Dialog, Overlay: Nice Classes used by the FileManager
 */
+
+if(!window.FileManager) var FileManager = {};
 
 FileManager.Tips = new Class({
 	

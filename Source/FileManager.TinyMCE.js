@@ -5,16 +5,16 @@ Script: FileManager.js
 License:
 	MIT-style license.
 
-Version:
-	1.0rc1
-
 Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
 
+Dependencies:
+	- FileManager.js
+
 Usage:
-	Pass this to the "file_browser_callback"-option of TinyMCE:
+	- Pass this to the "file_browser_callback"-option of TinyMCE:
 		FileManager.TinyMCE(function(){ return {FileManagerOptions}; });
-	See the Demo for an example.
+	- See the Demo for an example.
 */
 
 FileManager.TinyMCE = function(options){

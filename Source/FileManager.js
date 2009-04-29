@@ -11,11 +11,29 @@ Version:
 Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
 
+Dependencies:
+	- MooTools Core 1.2.2
+	- MooTools More 1.2.2.1 or newer: Drag.js, Drag.Move.js, Tips.js, Asset.js
+	- Additions.js
+
 Todo:
 	- Add Scroller.js (optional) for Drag&Drop in the Filelist
 
 Inspiration:
 	- Based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
+
+Options:
+	- url: (string) The base url to the Backend FileManager, without QueryString
+	- assetBasePath: (string) The path to all images and swf files
+	- selectable: (boolean, defaults to *false*) If true, provides a button to select a file
+	- language: (string, defaults to *en*) The language used for the FileManager
+	- directory: (string) Can be used to load a subfolder instead of the base folder
+
+Events:
+	- onComplete(path, file): fired when a file gets selected via the "Select file" button
+	- onModify(file): fired when a file gets renamed/deleted or modified in another way
+	- onShow: fired when the FileManager opens
+	- onHide: event fired when FileManager closes
 */
 
 var FileManager = new Class({
@@ -30,12 +48,10 @@ var FileManager = new Class({
 		/*onComplete: $empty,
 		onModify: $empty,
 		onShow: $empty,
-		onOpen: $empty,
 		onHide: $empty,*/
 		directory: '',
 		url: null,
 		assetBasePath: null,
-		autoDisable: true,
 		selectable: false,
 		language: 'en'
 	},
@@ -158,7 +174,7 @@ var FileManager = new Class({
 			});
 
 			this.el.center(this.offsets);
-			this.fireEvent('show').fireEvent('open');
+			this.fireEvent('show');
 			this.container.set('opacity', 1);
 			this.fireHooks('show');
 
@@ -177,8 +193,7 @@ var FileManager = new Class({
 		this.browser.empty();
 		this.container.setStyle('display', 'none');
 		
-		this.fireHooks('cleanup');
-		this.fireEvent('hide');
+		this.fireHooks('cleanup').fireEvent('hide');
 		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
 	},
 
@@ -271,7 +286,7 @@ var FileManager = new Class({
 					},
 					onSuccess: function(j){
 						if(!j || j.content!='destroyed'){
-							new Dialog(self.language.nodestroy, {language: {decline: self.language.ok}, buttons: ['decline']});
+							new Dialog(self.language.nodestroy, {language: {confirm: self.language.ok}, buttons: ['confirm']});
 							return;
 						}
 

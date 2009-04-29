@@ -8,6 +8,22 @@ License:
 
 Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+
+Dependencies:
+	- Upload.php
+	- Image.php
+	- getId3 Library
+
+Options:
+	- directory: (string) The base directory to be used for the FileManger
+	- assetBasePath: (string) The path to all images and swf files
+	- dateformat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
+	- upload: (boolean, defaults to *false*) Whether to allow uploads or not
+	- destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
+	- maxUploadSize: (integeter, defaults to *3145728* bytes) The maximum file size for upload in bytes
+	- safe: (string, defaults to *true*) If true, disallows 
+	- filter: (string) If specified, the mimetypes to be allowed (for display and upload).
+		Example: image/ allows all Image Mimetypes
 */
 
 require_once(FileManagerUtility::getPath().'/Upload.php');
@@ -20,7 +36,6 @@ class FileManager {
 		$basedir = null,
 		$basename = null,
 		$options,
-		$filters = array('image'),
 		$post,
 		$get;
 	

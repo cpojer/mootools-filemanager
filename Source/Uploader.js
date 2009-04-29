@@ -7,6 +7,14 @@ License:
 
 Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+
+Dependencies:
+	- FileManager.js
+
+Options:
+	- upload: (boolean, defaults to *true*) 
+	- uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
+	- resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
 */
 
 FileManager.implement({
@@ -111,7 +119,7 @@ FileManager.implement({
 					else if(this.validationError=='sizeLimitMax')
 							sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
 					
-					new Dialog(new Element('div', {html: message.substitute(sub, /\\?\$\{([^{}]+)\}/g)}) , {language: {decline: self.language.ok}, buttons: ['decline']});
+					new Dialog(new Element('div', {html: message.substitute(sub, /\\?\$\{([^{}]+)\}/g)}) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
 					return this;
 				}
 				
@@ -177,7 +185,7 @@ FileManager.implement({
 				
 				var response = JSON.decode(this.response.text);
 				if(!response.status)
-					new Dialog((''+response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {decline: self.language.ok}, buttons: ['decline']});
+					new Dialog((''+response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
 				
 				this.ui.element.set('tween', {duration: 2000}).highlight(response.status ? '#e6efc2' : '#f0c2c2');
 				(function(){
@@ -218,7 +226,7 @@ FileManager.implement({
 			},
 			onFail: function(){
 				$$(self.upload.button, self.upload.label).dispose();
-				new Dialog(new Element('div', {html: self.language.flash}), {language: {decline: self.language.ok}, buttons: ['decline']});
+				new Dialog(new Element('div', {html: self.language.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
 			}
 		});
 	}
