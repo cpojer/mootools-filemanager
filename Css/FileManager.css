@@ -2,9 +2,16 @@ div.filemanager-container { display: none; }
 div.filemanager * { outline: 0; }
 div.filemanager a img { border: 0 }
 
-div.filemanager {
+div.filemanager, div.filemanager button, div.filemanager label {
 	font-family: Tahoma, sans-serif;
+	letter-spacing: 0;
 	font-size: 12px;
+	font-weight: normal;
+	width: auto;
+	margin: 0;
+	
+}
+div.filemanager {
 	border: 1px solid #bebebe;
 	background: #eee;
 	
@@ -36,6 +43,7 @@ div.filemanager button {
 	color: #333;
 	text-shadow: #eee 1px 1px 1px;
 	
+	clear: none;
 	background: url(../Assets/button.png) repeat-x;
 	border: 1px solid #a1aeb9;
 	-moz-border-radius: 4px;
@@ -44,7 +52,6 @@ div.filemanager button {
 }
 div.filemanager-engine-trident4 button, div.filemanager-engine-trident5 button {
 	padding: 0 .25em;
-	width: auto;
 	overflow: visible;
 }
 
@@ -68,6 +75,7 @@ div.filemanager-menu label {
 	cursor: pointer;
 	float: right;
 	font-size: 11px;
+	width: auto;
 }
 
 div.filemanager-menu div.loader {
@@ -89,9 +97,11 @@ div.filemanager ul {
 }
 
 div.filemanager ul li {
+	background: none;
 	list-style-image: none;
 	list-style-type: none;
 	list-style: none;
+	line-height: 1.8em;
 	margin: 0;
 	padding: 0;
 	height: 21px;
