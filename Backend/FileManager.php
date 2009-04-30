@@ -75,10 +75,9 @@ class FileManager {
 	
 	protected function onView(){
 		$dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-		$files = glob($dir.'/*');
+		$files = ($files = glob($dir.'/*')) ? $files : array();
 		
 		if($dir!=$this->basedir) array_unshift($files, $dir.'/..');
-		
 		natcasesort($files);
 		foreach($files as $file){
 			$mime = $this->getMimeType($file);
@@ -280,7 +279,7 @@ class FileManager {
 	
 	protected function getName($file, $dir){
 		$files = array();
-		foreach(glob($dir.'/*') as $f)
+		foreach((array)glob($dir.'/*') as $f)
 			$files[] = pathinfo($f, PATHINFO_FILENAME);
 		
 		$pathinfo = pathinfo($file);
