@@ -1,7 +1,7 @@
 /**
  * Fx.ProgressBar
  *
- * @version		1.0
+ * @version		1.1
  *
  * @license		MIT License
  *
@@ -17,6 +17,7 @@ Fx.ProgressBar = new Class({
 		text: null,
 		url: null,
 		transition: Fx.Transitions.Circ.easeOut,
+		fit: true,
 		link: 'cancel'
 	},
 
@@ -32,7 +33,21 @@ Fx.ProgressBar = new Class({
 			});
 		}
 		
-		this.set(0);
+		if (this.options.fit) {
+			url = url || this.element.getStyle('background-image').replace(/^url\(["']?|["']?\)$/g, '');
+			if (url) {
+				var fill = new Image();
+				fill.onload = function() {
+					this.fill = fill.width;
+					fill = fill.onload = null;
+					this.set(this.now || 0);
+				}.bind(this);
+				fill.src = url;
+				if (!this.fill && fill.width) fill.onload();
+			}
+		} else {
+			this.set(0);
+		}
 	},
 
 	start: function(to, total) {
