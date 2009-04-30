@@ -60,6 +60,11 @@ FileManager.Language.en = {
 		sizeLimitMax: 'You can not attach "<em>${name}</em>" (${size}), the file size limit is <strong>${size_max}</strong>!'
 	},
 	
-	resizeImages: 'Resize big images on upload',
-	flash: 'In order to upload files you need to install <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	flash: {
+		hidden: 'To enable the embedded uploader, unblock it in your browser and refresh (see Adblock).',
+		disabled: 'To enable the embedded uploader, enable the blocked Flash movie  and refresh (see Flashblock).',
+		flash: 'In order to upload files you need to install <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	},
+	
+	resizeImages: 'Resize big images on upload'
 };

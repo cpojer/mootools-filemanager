@@ -226,9 +226,9 @@ FileManager.implement({
 			onComplete: function(){
 				self.load(self.Directory, true);
 			},
-			onFail: function(){
+			onFail: function(error){console.log(error);
 				$$(self.upload.button, self.upload.label).dispose();
-				new Dialog(new Element('div', {html: self.language.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
+				new Dialog(new Element('div', {html: self.language.flash[error] || self.language.flash.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
 			}
 		});
 	}

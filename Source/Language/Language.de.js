@@ -60,6 +60,11 @@ FileManager.Language.de = {
 		sizeLimitMax: 'Die Datei "<em>${name}</em>" (${size}), ist zu groß. Dateigrößen-Limit: <strong>${size_max}</strong>!'
 	},
 	
-	resizeImages: 'Große Bilder bei Upload verkleinern',
-	flash: 'Um Dateien hochzuladen muss <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a> installiert werden.'
+	flash: {
+		hidden: 'Um den Uploader benutzen zu können, muss er im Browser freigegeben werden und die Seite muss neu geladen werden (Adblock).',
+		disabled: 'Um den Uploader benutzen zu können, muss die geblockte Flash Datei freigegeben werden und die Seite muss neu geladen werden (Flashblock).',
+		flash: 'Um Dateien hochzuladen muss <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a> installiert werden.'
+	},
+	
+	resizeImages: 'Große Bilder bei Upload verkleinern'
 };
