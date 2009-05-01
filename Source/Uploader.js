@@ -112,9 +112,7 @@ FileManager.implement({
 					if(self.language.uploader[this.validationError])
 						message = self.language.uploader[this.validationError];
 					
-					if(this.validationError=='duplicate')
-						sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
-					else if(this.validationError=='sizeLimitMin')
+					if(this.validationError=='sizeLimitMin')
 							sub.size_min = Swiff.Uploader.formatUnit(this.base.options.fileSizeMin, 'b');
 					else if(this.validationError=='sizeLimitMax')
 							sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
@@ -211,6 +209,7 @@ FileManager.implement({
 			path: this.options.assetBasePath+'Swiff.Uploader.swf',
 			queued: false,
 			target: this.upload.button,
+			allowDuplicates: true,
 			instantStart: true,
 			fileClass: File,
 			fileSizeMax: 25 * 1024 * 1024,

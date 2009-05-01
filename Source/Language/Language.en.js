@@ -55,7 +55,6 @@ FileManager.Language.en = {
 	/* FU */
 	uploader: {
 		unknown: 'Unknown Error',
-		duplicate: 'You can not attach "<em>${name}</em>" (${size}), it is already added!',
 		sizeLimitMin: 'You can not attach "<em>${name}</em>" (${size}), the file size minimum is <strong>${size_min}</strong>!',
 		sizeLimitMax: 'You can not attach "<em>${name}</em>" (${size}), the file size limit is <strong>${size_max}</strong>!'
 	},

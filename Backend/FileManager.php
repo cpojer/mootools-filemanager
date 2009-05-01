@@ -56,11 +56,8 @@ class FileManager {
 		$this->path = realpath($this->options['directory'].'/../');
 		$this->length = strlen($this->path);
 		
-		foreach(array(
-			'Expires' => 'Fri, 01 Jan 1990 00:00:00 GMT',
-			'Cache-Control' => 'no-cache, no-store, max-age=0, must-revalidate',
-		) as $key => $value)
-			header($key.': '.$value);
+		header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
+		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
 		
 		$this->get = $_GET;
 		$this->post = $_POST;

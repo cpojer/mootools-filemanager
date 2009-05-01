@@ -55,7 +55,6 @@ FileManager.Language.de = {
 	/* FU */
 	uploader: {
 		unknown: 'Unbekannter Fehler',
-		duplicate: 'Die Datei "<em>${name}</em>" (${size}), wird oder wurde bereits geuploaded!',
 		sizeLimitMin: 'Die Datei "<em>${name}</em>" (${size}), ist zu klein. Minimaldateigröße: <strong>${size_min}</strong>!',
 		sizeLimitMax: 'Die Datei "<em>${name}</em>" (${size}), ist zu groß. Dateigrößen-Limit: <strong>${size_max}</strong>!'
 	},
