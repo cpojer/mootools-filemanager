@@ -146,9 +146,7 @@ var Dialog = new Class({
 		
 		this.overlay = new Overlay({
 			'class': 'overlay overlay-dialog',
-			events: {
-				click: this.fireEvent.bind(this, ['close'])
-			},
+			events: {click: this.fireEvent.bind(this, ['close'])},
 			tween: {duration: 250}
 		});
 		

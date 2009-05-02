@@ -27,6 +27,7 @@ Options:
 	- assetBasePath: (string) The path to all images and swf files
 	- selectable: (boolean, defaults to *false*) If true, provides a button to select a file
 	- language: (string, defaults to *en*) The language used for the FileManager
+	- hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
 	- directory: (string) Can be used to load a subfolder instead of the base folder
 
 Events:
@@ -53,6 +54,7 @@ var FileManager = new Class({
 		url: null,
 		assetBasePath: null,
 		selectable: false,
+		hideOnClick: false,
 		language: 'en'
 	},
 	
@@ -141,7 +143,9 @@ var FileManager = new Class({
 		}).set('opacity', 0).inject(this.container);
 		
 		this.container.inject(document.body);
-		this.overlay = new Overlay();
+		this.overlay = new Overlay(this.options.hideOnClick ? {
+			events: {click: this.hide.bind(this)}
+		} : null);
 		this.bound = {
 			keydown: (function(e){
 				if(e.control) this.imageadd.fade(1);
