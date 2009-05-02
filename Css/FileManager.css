@@ -2,15 +2,17 @@ div.filemanager-container { display: none; }
 div.filemanager * { outline: 0; }
 div.filemanager a img { border: 0 }
 
-div.filemanager, div.filemanager button, div.filemanager label {
-	font-family: Tahoma, sans-serif;
-	letter-spacing: 0;
-	font-size: 12px;
-	font-weight: normal;
+div.filemanager, div.filemanager button, div.filemanager label, div.filemanager h1 {
 	width: auto;
 	margin: 0;
 	
+	font-family: Tahoma, sans-serif;
+	font-size: 12px;
+	font-weight: normal;
+	text-transform: none;
+	letter-spacing: 0;
 }
+
 div.filemanager {
 	border: 1px solid #bebebe;
 	background: #eee;
@@ -215,12 +217,13 @@ img.filemanager-icon {
 div.filemanager h1 {
 	margin: 0;
 	padding: 0;
+	width: 80%;
 	height: 32px;
 	line-height: 32px;
 	
 	color: #333;
 	font-size: 20px;
-	width: 80%;
+	letter-spacing: 1px;
 	overflow: hidden;
 	white-space: nowrap;
 }
