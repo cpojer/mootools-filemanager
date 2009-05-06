@@ -139,8 +139,8 @@ var Dialog = new Class({
 			new Element('button', {'class': 'dialog-'+v, text: this.options.language[v]}).addEvent('click', (function(e){
 				e.stop();
 				this.fireEvent(v).fireEvent('close');
-				this.destroy();
 				this.overlay.hide();
+				this.destroy();
 			}).bind(this)).inject(this.el);
 		}, this);
 		
@@ -149,6 +149,16 @@ var Dialog = new Class({
 			events: {click: this.fireEvent.bind(this, ['close'])},
 			tween: {duration: 250}
 		});
+		
+		this.bound = {
+			scroll: (function(){
+				if(!this.el) this.destroy();
+				else this.el.center();
+			}).bind(this),
+			keyesc: (function(e){
+				if(e.key=='esc') this.fireEvent('close').destroy();
+			}).bind(this)
+		};
 		
 		this.show();
 	},
@@ -160,14 +170,10 @@ var Dialog = new Class({
 			self.fireEvent('show');
 		});
 		
-		this.scroll = (function(){
-			if(!this.el) this.destroy();
-			else this.el.center();
-		}).bind(this);
-		
 		window.addEvents({
-			scroll: this.scroll,
-			resize: this.scroll
+			scroll: this.bound.scroll,
+			resize: this.bound.scroll,
+			keyup: this.bound.keyesc
 		});
 	},
 	
@@ -177,7 +183,7 @@ var Dialog = new Class({
 			this.el.destroy();
 		}).bind(this));
 		
-		window.removeEvent('scroll', this.scroll).removeEvent('resize', this.scroll);
+		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
 	}
 	
 }),

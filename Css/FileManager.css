@@ -71,6 +71,10 @@ div.filemanager button.disabled, div.filemanager button.disabled:hover, div.file
 	border-color: #bababa;
 }
 
+div.filemanager button.filemanager-open {
+	font-weight: bold;
+}
+
 div.filemanager-menu label {
 	cursor: pointer;
 	float: right;
