@@ -137,7 +137,7 @@ var Dialog = new Class({
 		
 		Array.each(this.options.buttons, function(v){
 			new Element('button', {'class': 'dialog-'+v, text: this.options.language[v]}).addEvent('click', (function(e){
-				e.stop();
+				if(e) e.stop();
 				this.fireEvent(v).fireEvent('close');
 				this.overlay.hide();
 				this.destroy();

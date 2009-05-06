@@ -228,7 +228,10 @@ var FileManager = new Class({
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
-				this.el.getElement('input').focus();
+				var self = this;
+				this.el.getElement('input').addEvent('keyup', function(e){
+					if(e.key=='enter') self.el.getElement('button-confirm').fireEvent('click');
+				}).focus();
 			},
 			onConfirm: function(){
 				new FileManager.Request({
@@ -323,6 +326,12 @@ var FileManager = new Class({
 			],
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
+			onShow: function(){
+				var self = this;
+				this.el.getElement('input').addEvent('keyup', function(e){
+					if(e.key=='enter') self.el.getElement('button-confirm').fireEvent('click');
+				}).focus();
+			},
 			onConfirm: function(){
 				new FileManager.Request({
 					url: self.options.url+'?event=move',
