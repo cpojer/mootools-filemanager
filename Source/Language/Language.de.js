@@ -1,6 +1,9 @@
 /*
 Script: Language.de.js
 	MooTools FileManager - Language Strings in German
+
+Translation:
+	[Christoph Pojer](http://og5.net/christoph)
 */
 
 FileManager.Language.de = {
