@@ -63,6 +63,11 @@ FileManager.Language.fr = {
 		sizeLimitMax: 'Vous ne pouvez pas ajouter "<em>${name}</em>" (${size}), la taille maximale des fichiers est de <strong>${size_max}</strong>!'
 	},
 	
-	resizeImages: 'Redimensionner les images pendant le téléversement',
-	flash: 'Dans le but de téléverser des fichiers, vous devez installer <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	flash: {
+		hidden: null,
+		disabled: null,
+		flash: 'Dans le but de téléverser des fichiers, vous devez installer <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	},
+	
+	resizeImages: 'Redimensionner les images pendant le téléversement'
 };

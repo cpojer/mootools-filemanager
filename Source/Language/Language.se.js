@@ -63,6 +63,11 @@ FileManager.Language.se = {
 		sizeLimitMax: 'Du kan inte ladda upp "<em>${name}</em>" (${size}), filens storlek får inte överstiga <strong>${size_max}</strong>!'
 	},
 	
-	resizeImages: 'Ändra storleken på bilden under uppladdningen',
-	flash: 'För att kunna ladda upp filer behöver du ha <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a> installerat.'
+	flash: {
+		hidden: null,
+		disabled: null,
+		flash: 'För att kunna ladda upp filer behöver du ha <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a> installerat.'
+	},
+	
+	resizeImages: 'Ändra storleken på bilden under uppladdningen'
 };

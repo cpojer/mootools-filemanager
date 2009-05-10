@@ -63,6 +63,11 @@ FileManager.Language.cs = {
 		sizeLimitMax: 'Nelze přidat soubor „<em>${name}</em>“ (${size}), maximální povolená velikost souboru je <strong>${size_max}</strong>!'
 	},
 	
-	resizeImages: 'Změnšit velké obrázky při nahrávání',
-	flash: 'Pokud chcete nahrávat soubory, musíte mít nainstalovaný <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	flash: {
+		hidden: null,
+		disabled: null,
+		flash: 'Pokud chcete nahrávat soubory, musíte mít nainstalovaný <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>'
+	},
+	
+	resizeImages: 'Změnšit velké obrázky při nahrávání'
 };

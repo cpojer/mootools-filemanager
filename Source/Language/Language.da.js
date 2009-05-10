@@ -63,6 +63,11 @@ FileManager.Language.da = {
 		sizeLimitMax: 'Du kan ikke tilføje "<em>${name}</em>" (${size}), højst tilladte filstørrelse er <strong>${size_max}</strong>!'
 	},
 	
-	resizeImages: 'Scaler store billeder ved upload',
-	flash: 'For at uploade filer skal du installere <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	flash: {
+		hidden: null,
+		disabled: null,
+		flash: 'For at uploade filer skal du installere <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	},
+	
+	resizeImages: 'Scaler store billeder ved upload'
 };

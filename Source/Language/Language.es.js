@@ -63,6 +63,11 @@ FileManager.Language.es = {
 		sizeLimitMax: 'No se puede subir "<em>${name}</em>" (${size}), el tamaño máximo de fichero es <strong>${size_max}</strong>!'
 	},
 	
-	resizeImages: 'Redimensionar las imágenes grandes al subirlas',
-	flash: 'Para poder subir ficheros necesitas instalar <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	flash: {
+		hidden: null,
+		disabled: null,
+		flash: 'Para poder subir ficheros necesitas instalar <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
+	},
+	
+	resizeImages: 'Redimensionar las imágenes grandes al subirlas'
 };

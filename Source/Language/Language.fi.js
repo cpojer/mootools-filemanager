@@ -63,6 +63,11 @@ FileManager.Language.fi = {
 		sizeLimitMax: 'Et voi lisätä seuraavaa tiedostoa: "<em>${name}</em>" (${size}). Tiedostojen maksimikoko on <strong>${size_max}</strong>!'
 	},
 	
-	resizeImages: 'Pienennä liian suuret kuvat automaattisesti siirron yhteydessä',
-	flash: 'Käyttääksesi FileManageria, tarvitset Adobe Flash Playerin. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Lataa tästä</a>.'
+	flash: {
+		hidden: null,
+		disabled: null,
+		flash: 'Käyttääksesi FileManageria, tarvitset Adobe Flash Playerin. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Lataa tästä</a>.'
+	},
+	
+	resizeImages: 'Pienennä liian suuret kuvat automaattisesti siirron yhteydessä'
 };
