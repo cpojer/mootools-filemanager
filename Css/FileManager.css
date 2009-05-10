@@ -230,6 +230,7 @@ div.filemanager h1 {
 	letter-spacing: 1px;
 	overflow: hidden;
 	white-space: nowrap;
+	background-color: transparent;
 }
 
 div.filemanager h2 {
