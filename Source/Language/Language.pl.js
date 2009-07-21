@@ -6,7 +6,7 @@ Translation:
 	[Marek Kalucki](http://www.webdeco.pl)
 */
 
-FileManager.Language.en = {
+FileManager.Language.pl = {
 	more: 'Szczegóły',
 	width: 'Szerokość:',
 	height: 'Wysokość:',
