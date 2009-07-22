@@ -3,7 +3,7 @@ Script: Language.ru.js
 	MooTools FileManager - Language Strings in Russian
 
 Translation:
-	[Jaunty](jjobaj@gmail.com)
+	[Ilya V. Goryachev](http://cok-studio.ru/)
 */
 
 FileManager.Language.ru = {
