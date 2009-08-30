@@ -70,39 +70,39 @@ var FileManager = new Class({
 		this.Directory = this.options.directory;
 		
 		this.language = FileManager.Language[this.options.language] || FileManager.Language.en;
-		this.container = new Element('div', {'class': 'filemanager-container filemanager-engine-'+Browser.Engine.name+(Browser.Engine.trident ? Browser.Engine.version : '')});
+		this.container = new Element('div', {'class': 'filemanager-container filemanager-engine-' + Browser.Engine.name + (Browser.Engine.trident ? Browser.Engine.version : '')});
 		this.el = new Element('div', {'class': 'filemanager'}).inject(this.container);
 		this.menu = new Element('div', {'class': 'filemanager-menu'}).inject(this.el);
 		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 200}}).inject(this.menu);
+
+		var self = this;
 		this.browser = new Element('ul', {'class': 'filemanager-browser'}).addEvents({
-			click: (function(e){
-				if(e.target.match('ul')) return this.deselect();
-				
-				if(!e.target || !e.target.getParent('li')) return;
-				var el = e.target.getParent('li').getElement('span');
-				if(!el) return;
-				
+			click: (function(){
+				return self.deselect();
+			}),
+			'click:relay(li span.fi)': function(e){
 				e.stop();
-				var file = el.retrieve('file');
-				if(el.retrieve('block')){
-					el.eliminate('block');
+				var file = this.retrieve('file');
+				if (this.retrieve('block')){
+					this.eliminate('block');
 					return;
-				}else if(file.mime=='text/directory'){
-					el.addClass('selected');
-					this.load(this.Directory+'/'+file.name);
+				}
+
+				if (file.mime == 'text/directory'){
+					this.addClass('selected');
+					self.load(self.Directory + '/' + file.name);
 					return;
 				}
 	
-				this.fillInfo(file);
-				if(this.Current) this.Current.removeClass('selected');
-				this.Current = el.addClass('selected');
+				self.fillInfo(file);
+				if (self.Current) self.Current.removeClass('selected');
+				self.Current = this.addClass('selected');
 				
-				this.switchButton();
-			}).bind(this)
+				self.switchButton();
+			}
 		}).inject(this.el);
 		
-		
-		if(this.options.selectable) this.addMenuButton('open');
+		if (this.options.selectable) this.addMenuButton('open');
 		this.addMenuButton('create');
 		
 		this.info = new Element('div', {'class': 'filemanager-infos', opacity: 0}).inject(this.el);
@@ -114,7 +114,7 @@ var FileManager = new Class({
 
 		this.info.adopt([head, new Element('h2', {text: this.language.information})]);
 
-		var list = new Element('dl').adopt([
+		new Element('dl').adopt([
 			new Element('dt', {text: this.language.modified}),
 			new Element('dd', {'class': 'filemanager-modified'}),
 			new Element('dt', {text: this.language.type}),
@@ -135,10 +135,10 @@ var FileManager = new Class({
 			'class': 'filemanager-close',
 			title: this.language.close,
 			events: {click: this.hide.bind(this)}
-		}).adopt(new Asset.image(this.options.assetBasePath+'destroy.png')).inject(this.el);
+		}).adopt(new Asset.image(this.options.assetBasePath + 'destroy.png')).inject(this.el);
 		new FileManager.Tips(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.el, 0.8));
 		
-		this.imageadd = new Asset.image(this.options.assetBasePath+'add.png', {
+		this.imageadd = new Asset.image(this.options.assetBasePath + 'add.png', {
 			'class': 'browser-add'
 		}).set('opacity', 0).inject(this.container);
 		
@@ -148,13 +148,13 @@ var FileManager = new Class({
 		} : null);
 		this.bound = {
 			keydown: (function(e){
-				if(e.control) this.imageadd.fade(1);
+				if (e.control || e.meta) this.imageadd.fade(1);
 			}).bind(this),
 			keyup: (function(){
 				this.imageadd.fade(0);
 			}).bind(this),
 			keyesc: (function(e){
-				if(e.key=='esc') this.hide();
+				if (e.key=='esc') this.hide();
 			}).bind(this),
 			scroll: (function(){
 				this.el.center(this.offsets);
@@ -164,7 +164,7 @@ var FileManager = new Class({
 	},
 
 	show: function(e){
-		if(e) e.stop();
+		if (e) e.stop();
 
 		this.load(this.Directory);
 		this.overlay.show();
@@ -191,7 +191,7 @@ var FileManager = new Class({
 	},
 
 	hide: function(e){
-		if(e) e.stop();
+		if (e) e.stop();
 
 		this.overlay.hide();
 		this.browser.empty();
@@ -204,10 +204,10 @@ var FileManager = new Class({
 	open: function(e){
 		e.stop();
 
-		if(!this.Current) return false;
+		if (!this.Current) return false;
 		
 		this.fireEvent('complete', [
-			this.normalize(this.Directory+'/'+this.Current.retrieve('file').name),
+			this.normalize(this.Directory + '/' + this.Current.retrieve('file').name),
 			this.Current.retrieve('file')
 		]);
 		this.hide();
@@ -230,12 +230,12 @@ var FileManager = new Class({
 			onShow: function(){
 				var self = this;
 				this.el.getElement('input').addEvent('keyup', function(e){
-					if(e.key=='enter') self.el.getElement('button-confirm').fireEvent('click');
+					if (e.key == 'enter') self.el.getElement('button-confirm').fireEvent('click');
 				}).focus();
 			},
 			onConfirm: function(){
 				new FileManager.Request({
-					url: self.options.url+'?event=create',
+					url: self.options.url + '?event=create',
 					onSuccess: self.fill.bind(self),
 					data: {
 						file: this.el.getElement('input').get('value'),
@@ -247,10 +247,10 @@ var FileManager = new Class({
 	},
 
 	deselect: function(el){
-		if(el && this.Current!=el) return;
+		if (el && this.Current!=el) return;
 
-		if(el) this.fillInfo();
-		if(this.Current) this.Current.removeClass('selected');
+		if (el) this.fillInfo();
+		if (this.Current) this.Current.removeClass('selected');
 		this.Current = null;
 
 		this.switchButton();
@@ -258,9 +258,9 @@ var FileManager = new Class({
 
 	load: function(dir, nofade){
 		this.deselect();
-		if(!nofade) this.info.fade(0);
+		if (!nofade) this.info.fade(0);
 
-		if(this.Request) this.Request.cancel();
+		if (this.Request) this.Request.cancel();
 
 		this.Request = new FileManager.Request({
 			url: this.options.url,
@@ -286,13 +286,13 @@ var FileManager = new Class({
 			onClose: this.onDialogClose.bind(this),
 			onConfirm: function(){
 				new FileManager.Request({
-					url: self.options.url+'?event=destroy',
+					url: self.options.url + '?event=destroy',
 					data: {
 						file: file.name,
 						directory: self.Directory
 					},
 					onSuccess: function(j){
-						if(!j || j.content!='destroyed'){
+						if (!j || j.content!='destroyed'){
 							new Dialog(self.language.nodestroy, {language: {confirm: self.language.ok}, buttons: ['confirm']});
 							return;
 						}
@@ -313,7 +313,7 @@ var FileManager = new Class({
 		e.stop();
 
 		var name = file.name;
-		if(file.mime!='text/directory') name = name.replace(/\..*$/, '');
+		if (file.mime != 'text/directory') name = name.replace(/\..*$/, '');
 
 		var self = this;
 		new Dialog(this.language.renamefile, {
@@ -329,14 +329,14 @@ var FileManager = new Class({
 			onShow: function(){
 				var self = this;
 				this.el.getElement('input').addEvent('keyup', function(e){
-					if(e.key=='enter') self.el.getElement('button-confirm').fireEvent('click');
+					if (e.key=='enter') self.el.getElement('button-confirm').fireEvent('click');
 				}).focus();
 			},
 			onConfirm: function(){
 				new FileManager.Request({
-					url: self.options.url+'?event=move',
+					url: self.options.url + '?event=move',
 					onSuccess: (function(j){
-						if(!j || !j.name) return;
+						if (!j || !j.name) return;
 
 						self.fireEvent('modify', [$unlink(file)]);
 
@@ -357,33 +357,33 @@ var FileManager = new Class({
 	fill: function(j, nofade){
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
-		if(!nofade) this.fillInfo(j.dir);
+		if (!nofade) this.fillInfo(j.dir);
 		this.browser.empty();
 
-		if(!j.files) return;
+		if (!j.files) return;
 
 		var els = [[], []];
 		$each(j.files, function(file){
 			file.dir = j.path;
 			var el = file.element = new Element('span', {'class': 'fi', href: '#'}).adopt(
-				new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png'),
+				new Asset.image(this.options.assetBasePath + 'Icons/' + file.icon + '.png'),
 				new Element('span', {text: file.name})
 			).store('file', file);
 
 			var icons = [];
-			if(file.mime!='text/directory')
-				icons.push(new Asset.image(this.options.assetBasePath+'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
+			if (file.mime!='text/directory')
+				icons.push(new Asset.image(this.options.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
 					e.stop();
-					window.open(this.normalize(this.Directory+'/'+file.name));
+					window.open(this.normalize(this.Directory + '/' + file.name));
 				}).bind(this)).inject(el, 'top'));
 
-			if(file.name!='..')
+			if (file.name != '..')
 				['rename', 'destroy'].each(function(v){
-					icons.push(new Asset.image(this.options.assetBasePath+v+'.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el));
+					icons.push(new Asset.image(this.options.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el));
 				}, this);
 
-			els[file.mime=='text/directory' ? 1 : 0].push(el);
-			if(file.name=='..') el.set('opacity', 0.7);
+			els[file.mime == 'text/directory' ? 1 : 0].push(el);
+			if (file.name == '..') el.set('opacity', 0.7);
 			el.inject(new Element('li').inject(this.browser));
 			icons = $$(icons.map(function(icon){ return icon.appearOn(icon, [1, 0.7]); })).appearOn(el.getParent('li'), 0.7);
 		}, this);
@@ -397,7 +397,7 @@ var FileManager = new Class({
 			},
 
 			onBeforeStart: function(el){
-				el.setStyles({left: '0', top: '0'});
+				el.setStyles({left: 0, top: 0});
 			},
 
 			onStart: function(el){
@@ -423,18 +423,18 @@ var FileManager = new Class({
 
 				self.imageadd.fade(0);
 				el.set('opacity', 1).store('block', true);
-				if(e.control || !droppable)
-					el.setStyles({left: '0', top: '0'});
+				if (e.control || e.meta || !droppable)
+					el.setStyles({left: 0, top: 0});
 
-				if(!droppable && !e.control)
+				if (!droppable && !e.control && !e.meta)
 					return;
 				
 				var dir;
-				if(droppable){
+				if (droppable){
 					droppable.addClass('selected');
 					(function(){ droppable.removeClass('droppable').removeClass('selected'); }).delay(300);
 					
-					if(self.onDragComplete(el, droppable))
+					if (self.onDragComplete(el, droppable))
 						return;
 
 					dir = droppable.retrieve('file');
@@ -442,42 +442,42 @@ var FileManager = new Class({
 				var file = el.retrieve('file');
 
 				new FileManager.Request({
-					url: self.options.url+'?event=move',
+					url: self.options.url + '?event=move',
 					data: {
 						file: file.name,
 						directory: self.Directory,
-						newDirectory: dir ? dir.dir+'/'+dir.name : self.Directory,
-						copy: e.control ? 1 : 0
+						newDirectory: dir ? dir.dir + '/' + dir.name : self.Directory,
+						copy: e.control || e.meta ? 1 : 0
 					},
 					onSuccess: function(){
-						if(!dir) self.load(self.Directory);
+						if (!dir) self.load(self.Directory);
 					}
 				}, self).post();
 
 				self.fireEvent('modify', [$unlink(file)]);
 
-				if(!e.control)
+				if (!e.control && !e.meta)
 					el.fade(0).get('tween').chain(function(){
 						self.deselect(el);
 						el.getParent().destroy();
 					});
 			}
 		});
-		$$(els).setStyles({left: '0', top: '0'});
+		$$(els).setStyles({left: 0, top: 0});
 		var tips = new FileManager.Tips(this.browser.getElements('img.browser-icon'));
 
 		tips.tip.removeClass('tip-base');
 	},
 
 	fillInfo: function(file, path){
-		if(!file) file = this.CurrentDir;
-		if(!path) path = this.Directory;
+		if (!file) file = this.CurrentDir;
+		if (!path) path = this.Directory;
 
-		if(!file) return;
+		if (!file) return;
 		var size = this.size(file.size);
 
 		this.info.fade(1).getElement('img').set({
-			src: this.options.assetBasePath+'Icons/'+file.icon+'.png',
+			src: this.options.assetBasePath + 'Icons/' + file.icon + '.png',
 			alt: file.mime
 		});
 		
@@ -487,13 +487,13 @@ var FileManager = new Class({
 		this.info.getElement('h1').set('text', file.name);
 		this.info.getElement('dd.filemanager-modified').set('text', file.date);
 		this.info.getElement('dd.filemanager-type').set('text', file.mime);
-		this.info.getElement('dd.filemanager-size').set('text', !size[0] && size[1]=='Bytes' ? '-' : (size.join(' ')+(size[1]!='Bytes' ? ' ('+file.size+' Bytes)' : '')));
-		this.info.getElement('h2.filemanager-headline').setStyle('display', file.mime=='text/directory' ? 'none' : 'block');
+		this.info.getElement('dd.filemanager-size').set('text', !size[0] && size[1] == 'Bytes' ? '-' : (size.join(' ') + (size[1] != 'Bytes' ? ' (' + file.size + ' Bytes)' : '')));
+		this.info.getElement('h2.filemanager-headline').setStyle('display', file.mime == 'text/directory' ? 'none' : 'block');
 
 		var text = [], pre = [];
 
 		path.split('/').each(function(v){
-			if(!v) return;
+			if (!v) return;
 
 			pre.push(v);
 			text.push(new Element('a', {
@@ -514,20 +514,20 @@ var FileManager = new Class({
 
 		this.info.getElement('dd.filemanager-dir').empty().adopt(new Element('span', {text: '/ '}), text);
 
-		if(file.mime=='text/directory') return;
+		if (file.mime=='text/directory') return;
 
-		if(this.Request) this.Request.cancel();
+		if (this.Request) this.Request.cancel();
 
 		this.Request = new FileManager.Request({
-			url: this.options.url+'?event=detail',
+			url: this.options.url + '?event=detail',
 			onSuccess: (function(j){
 				var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.prev');
-				if(prev) prev.addEvent('load', function(){
-						this.setStyle('background', 'none');
-					});
+				if (prev) prev.addEvent('load', function(){
+					this.setStyle('background', 'none');
+				});
 
 				var els = this.preview.getElements('button');
-				if(els) els.addEvent('click', function(e){
+				if (els) els.addEvent('click', function(e){
 					e.stop();
 					window.open(this.get('value'));
 				});
@@ -554,15 +554,15 @@ var FileManager = new Class({
 	switchButton: function(){
 		var chk = !!this.Current;
 		var el = this.menu.getElement('button.filemanager-open');
-		if(el) el.set('disabled', !chk)[(chk ? 'remove' : 'add')+'Class']('disabled');
+		if (el) el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
 	},
 
 	addMenuButton: function(name){
 		var el = new Element('button', {
-			'class': 'filemanager-'+name,
+			'class': 'filemanager-' + name,
 			text: this.language[name]
 		}).inject(this.menu);
-		if(this[name]) el.addEvent('click', this[name].bind(this));
+		if (this[name]) el.addEvent('click', this[name].bind(this));
 		return el;
 	},
 	

@@ -34,23 +34,23 @@ FileManager.implement({
 		
 		cleanup: {
 			upload: function(){
-				if(!this.options.upload || !this.upload) return;
+				if (!this.options.upload || !this.upload) return;
 				
-				if(this.upload.uploader) this.upload.uploader.set('opacity', 0).dispose();
+				if (this.upload.uploader) this.upload.uploader.set('opacity', 0).dispose();
 			}
 		}
 	},
 	
 	onDialogOpen: function(){
-		if(this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'hidden');
+		if (this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'hidden');
 	},
 	
 	onDialogClose: function(){
-		if(this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'visible');
+		if (this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'visible');
 	},
 	
 	startUpload: function(){
-		if(!this.options.upload || this.swf) return;
+		if (!this.options.upload || this.swf) return;
 		
 		var self = this;
 		this.upload = {
@@ -78,7 +78,7 @@ FileManager.implement({
 		this.upload.uploader.getElement('div').adopt(this.upload.list);
 		this.closeIcon.appearOn(this.upload.button, 0.8);
 		
-		if(this.options.resizeImages){
+		if (this.options.resizeImages){
 			var resizer = new Element('div', {'class': 'checkbox'}),
 				check = (function(){ this.toggleClass('checkboxChecked'); }).bind(resizer);
 			check();
@@ -94,7 +94,7 @@ FileManager.implement({
 			initialize: function(base, data){
 				this.parent(base, data);
 				this.setOptions({
-					url: self.options.url+'?'+Hash.toQueryString($merge({}, self.options.uploadAuthData, {
+					url: self.options.url + '?' + Hash.toQueryString($merge({}, self.options.uploadAuthData, {
 						event: 'upload',
 						directory: self.normalize(self.Directory),
 						resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0
@@ -103,18 +103,18 @@ FileManager.implement({
 			},
 			
 			render: function(){
-				if(this.invalid){
+				if (this.invalid){
 					var message = self.language.uploader.unknown, sub = {
 						name: this.name,
 						size: Swiff.Uploader.formatUnit(this.size, 'b')
 					};
 					
-					if(self.language.uploader[this.validationError])
+					if (self.language.uploader[this.validationError])
 						message = self.language.uploader[this.validationError];
 					
-					if(this.validationError=='sizeLimitMin')
+					if (this.validationError == 'sizeLimitMin')
 							sub.size_min = Swiff.Uploader.formatUnit(this.base.options.fileSizeMin, 'b');
-					else if(this.validationError=='sizeLimitMax')
+					else if (this.validationError == 'sizeLimitMax')
 							sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
 					
 					new Dialog(new Element('div', {html: message.substitute(sub, /\\?\$\{([^{}]+)\}/g)}) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
@@ -131,8 +131,8 @@ FileManager.implement({
 				});
 				
 				this.ui = {};
-				this.ui.icon = new Asset.image(self.options.assetBasePath+'Icons/'+this.extension+'.png', {
-					onerror: function(){ new Asset.image(self.options.assetBasePath+'Icons/default.png').replaces(this); }
+				this.ui.icon = new Asset.image(self.options.assetBasePath+'Icons/' + this.extension + '.png', {
+					onerror: function(){ new Asset.image(self.options.assetBasePath + 'Icons/default.png').replaces(this); }
 				});
 				this.ui.element = new Element('li', {'class': 'file', id: 'file-' + this.id});
 				this.ui.title = new Element('span', {'class': 'file-title', text: this.name});
@@ -184,8 +184,8 @@ FileManager.implement({
 				this.ui.cancel = this.ui.cancel.destroy();
 				
 				var response = JSON.decode(this.response.text);
-				if(!response.status)
-					new Dialog((''+response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+				if (!response.status)
+					new Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
 				
 				this.ui.element.set('tween', {duration: 2000}).highlight(response.status ? '#e6efc2' : '#f0c2c2');
 				(function(){
@@ -194,7 +194,7 @@ FileManager.implement({
 						height: 0
 					}).get('morph').chain(function(){
 						this.element.destroy();
-						if(!self.upload.list.getElements('li').length)
+						if (!self.upload.list.getElements('li').length)
 							self.upload.uploader.fade(0).get('tween').chain(function(){
 								self.fillInfo();
 							});
@@ -206,7 +206,7 @@ FileManager.implement({
 
 		this.swf = new Swiff.Uploader({
 			id: 'SwiffFileManagerUpload',
-			path: this.options.assetBasePath+'Swiff.Uploader.swf',
+			path: this.options.assetBasePath + 'Swiff.Uploader.swf',
 			queued: false,
 			target: this.upload.button,
 			allowDuplicates: true,

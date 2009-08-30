@@ -53,7 +53,7 @@ FileManager.Request = new Class({
 	initialize: function(options, filebrowser){
 		this.parent(options);
 		
-		if(filebrowser)	this.addEvents({
+		if (filebrowser)	this.addEvents({
 			request: filebrowser.onRequest.bind(filebrowser),
 			complete: filebrowser.onComplete.bind(filebrowser)
 		});
@@ -85,10 +85,10 @@ Element.implement({
 			size = this.getSize(),
 			values = {x: 'left', y: 'top'};
 		
-		if(!offsets) offsets = {};
+		if (!offsets) offsets = {};
 		
-		for(var z in values){
-			var style = scroll[z]+(offset[z]-size[z])/2+(offsets[z] || 0);
+		for (var z in values){
+			var style = scroll[z] + (offset[z] - size[z]) / 2 + (offsets[z] || 0);
 			this.setStyle(values[z], style < 10 ? 10 : style);
 		}
 		
@@ -116,18 +116,18 @@ this.Dialog = new Class({
 		this.setOptions(options);
 		
 		this.el = new Element('div', {
-			'class': 'dialog dialog-engine-'+Browser.Engine.name+(Browser.Engine.trident ? Browser.Engine.version : ''),
+			'class': 'dialog dialog-engine-' + Browser.Engine.name + (Browser.Engine.trident ? Browser.Engine.version : ''),
 			opacity: 0,
 			tween: {duration: 250}
 		}).adopt([
-			$type(text)=='string' ? new Element('div', {text: text}) : text
+			$type(text) == 'string' ? new Element('div', {text: text}) : text
 		]);
 		
-		if(this.options.content) this.el.getElement('div').adopt(this.options.content);
+		if (this.options.content) this.el.getElement('div').adopt(this.options.content);
 		
 		Array.each(this.options.buttons, function(v){
-			new Element('button', {'class': 'dialog-'+v, text: this.options.language[v]}).addEvent('click', (function(e){
-				if(e) e.stop();
+			new Element('button', {'class': 'dialog-' + v, text: this.options.language[v]}).addEvent('click', (function(e){
+				if (e) e.stop();
 				this.fireEvent(v).fireEvent('close');
 				this.overlay.hide();
 				this.destroy();
@@ -142,11 +142,11 @@ this.Dialog = new Class({
 		
 		this.bound = {
 			scroll: (function(){
-				if(!this.el) this.destroy();
+				if (!this.el) this.destroy();
 				else this.el.center();
 			}).bind(this),
 			keyesc: (function(e){
-				if(e.key=='esc') this.fireEvent('close').destroy();
+				if (e.key == 'esc') this.fireEvent('close').destroy();
 			}).bind(this)
 		};
 		
@@ -168,7 +168,7 @@ this.Dialog = new Class({
 	},
 	
 	destroy: function(){
-		if(this.el) this.el.fade(0).get('tween').chain((function(){
+		if (this.el) this.el.fade(0).get('tween').chain((function(){
 			this.overlay.destroy();
 			this.el.destroy();
 		}).bind(this));
@@ -188,11 +188,11 @@ this.Overlay = new Class({
 	
 	show: function(){
 		this.objects = $$('object, select, embed').filter(function(el){
-			return el.id=='SwiffFileManagerUpload' || el.style.visibility=='hidden' ? false : !!(el.style.visibility = 'hidden');
+			return el.id == 'SwiffFileManagerUpload' || el.style.visibility == 'hidden' ? false : !!(el.style.visibility = 'hidden');
 		});
 		
 		this.resize = (function(){
-			if(!this.el) this.destroy();
+			if (!this.el) this.destroy();
 			else this.el.setStyles({
 				width: document.getScrollWidth(),
 				height: document.getScrollHeight()
@@ -227,7 +227,7 @@ this.Overlay = new Class({
 	},
 	
 	revertObjects: function(){
-		if(this.objects && this.objects.length)
+		if (this.objects && this.objects.length)
 			this.objects.each(function(el){
 				el.style.visibility = 'visible';	
 			});
