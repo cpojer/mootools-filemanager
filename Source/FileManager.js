@@ -294,6 +294,7 @@ var FileManager = new Class({
 
 	destroy: function(e, file){
 		e.stop();
+		this.tips.hide();
 		
 		var self = this;
 		new Dialog(this.language.destroyfile, {
@@ -330,7 +331,8 @@ var FileManager = new Class({
 
 	rename: function(e, file){
 		e.stop();
-
+		this.tips.hide();
+		
 		var name = file.name;
 		if (file.mime != 'text/directory') name = name.replace(/\..*$/, '');
 
@@ -392,6 +394,7 @@ var FileManager = new Class({
 			var icons = [];
 			if (file.mime!='text/directory')
 				icons.push(new Asset.image(this.options.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
+					this.tips.hide();
 					e.stop();
 					window.open(this.normalize(this.Directory + '/' + file.name));
 				}).bind(this)).inject(el, 'top'));
@@ -403,26 +406,49 @@ var FileManager = new Class({
 
 			els[file.mime == 'text/directory' ? 1 : 0].push(el);
 			if (file.name == '..') el.set('opacity', 0.7);
-			el.inject(new Element('li').inject(this.browser));
+			el.inject(new Element('li').inject(this.browser)).store('parent', el.getParent());
 			icons = $$(icons.map(function(icon){ return icon.appearOn(icon, [1, 0.7]); })).appearOn(el.getParent('li'), 0.7);
 		}, this);
 
-		var self = this;
+		var self = this, revert = function(el){
+			el.set('opacity', 1).store('block', true).removeClass('drag').removeClass('move').setStyles({
+				opacity: 1,
+				position: 'relative',
+				width: 'auto',
+				left: 0,
+				top: 0
+			}).inject(el.retrieve('parent'));
+			el.getElements('img.browser-icon').set('opacity', 0);
+			
+			document.removeEvents('keydown', self.bound.keydown).removeEvents('keyup', self.bound.keydown);
+			self.imageadd.fade(0);
+		};
 		$$(els[0]).makeDraggable({
 			droppables: $$(this.droppables, els[1]),
 
 			onDrag: function(el, e){
-				self.imageadd.setStyles(Hash.getValues(e.page).map(function(v){ return v+15; }).associate(['left', 'top']));
+				self.imageadd.setStyles({
+					left: e.page.x + 15,
+					top: e.page.y + 15
+				});
 			},
 
 			onBeforeStart: function(el){
-				el.setStyles({left: 0, top: 0});
+				self.tips.hide();
+				var position = el.getPosition();
+				el.addClass('drag').setStyles({
+					opacity: 0.7,
+					position: 'absolute',
+					width: el.getWidth() - el.getStyle('paddingLeft').toInt(),
+					left: position.x,
+					top: position.y
+				}).inject(self.container);
 			},
 
-			onStart: function(el){
-				self.onDragStart(el, this);
+			onCancel: revert,
 
-				el.set('opacity', 0.7);
+			onStart: function(el){
+				el.addClass('move');
 				document.addEvents({
 					keydown: self.bound.keydown,
 					keyup: self.bound.keyup
@@ -438,23 +464,16 @@ var FileManager = new Class({
 			},
 
 			onDrop: function(el, droppable, e){
-				document.removeEvents('keydown', self.bound.keydown).removeEvents('keyup', self.bound.keydown);
+				revert(el);
 
-				self.imageadd.fade(0);
-				el.set('opacity', 1).store('block', true);
-				if (e.control || e.meta || !droppable)
-					el.setStyles({left: 0, top: 0});
-
-				if (!droppable && !e.control && !e.meta)
-					return;
+				if (e.control || e.meta || !droppable) el.setStyles({left: 0, top: 0});
+				if (!droppable && !e.control && !e.meta) return;
 				
 				var dir;
 				if (droppable){
-					droppable.addClass('selected');
-					(function(){ droppable.removeClass('droppable').removeClass('selected'); }).delay(300);
-					
-					if (self.onDragComplete(el, droppable))
-						return;
+					droppable.addClass('selected').removeClass('droppable');
+					(function(){ droppable.removeClass('selected'); }).delay(300);
+					if (self.onDragComplete(el, droppable)) return;
 
 					dir = droppable.retrieve('file');
 				}
@@ -482,7 +501,9 @@ var FileManager = new Class({
 					});
 			}
 		});
+
 		$$(els).setStyles({left: 0, top: 0});
+
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
 	},
 
@@ -593,8 +614,6 @@ var FileManager = new Class({
 	onComplete: function(){ this.loader.fade(0); },
 	onDialogOpen: $empty,
 	onDialogClose: $empty,
-	
-	onDragStart: $empty,
 	onDragComplete: $lambda(false)
 	
 });

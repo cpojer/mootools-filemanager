@@ -131,16 +131,7 @@ FileManager.Gallery = new Class({
 		this.switchButton();
 	},
 	
-	onDragStart: function(el, drag){
-		this.browser.setStyle('overflow', 'hidden');
-	},
-	
 	onDragComplete: function(el, droppable){
-		this.browser.setStyles({
-			overflow: 'auto',
-			overflowX: 'hidden'
-		});
-		
 		if (!droppable || droppable != this.gallery) return false;
 		
 		var file;

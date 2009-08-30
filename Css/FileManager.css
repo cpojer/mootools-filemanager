@@ -2,7 +2,7 @@ div.filemanager-container { display: none; }
 div.filemanager * { outline: 0; }
 div.filemanager a img { border: 0 }
 
-div.filemanager, div.filemanager button, div.filemanager label, div.filemanager h1 {
+div.filemanager-container, div.filemanager, div.filemanager button, div.filemanager label, div.filemanager h1 {
 	width: auto;
 	margin: 0;
 	
@@ -125,8 +125,9 @@ div.filemanager ul.filemanager-browser {
 	background: url(../Assets/filelist.png) repeat-x #c1c7cf;
 }
 
-div.filemanager ul li span.fi {
+div.filemanager-container span.fi {
 	height: 21px;
+	line-height: 1.8em;
 	padding-left: 5px;
 	color: #000;
 	text-decoration: none;
@@ -135,14 +136,14 @@ div.filemanager ul li span.fi {
 	cursor: pointer;
 }
 
-div.filemanager ul li span.fi span {
+div.filemanager-container span.fi span {
 	white-space: nowrap;
 	display: block;
 	width: 90%;
 	overflow: hidden;
 }
 
-div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-trident5 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
+div.filemanager-container span.drag span, div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-trident5 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
 	width: 65%;
 	overflow: hidden;
 }
@@ -165,14 +166,22 @@ div.filemanager ul li a.selected, div.filemanager ul li span.selected {
 	outline: none;
 }
 
-div.filemanager ul li img {
+div.filemanager-container span.fi img {
 	display: block;
 	float: left;
 	margin: 3px 3px 0 0;
 }
 
-div.filemanager ul li img.browser-icon {
+div.filemanager-container span.fi img.browser-icon {
 	float: right;
+}
+
+div.filemanager-container span.drag {
+	z-index: 1300;
+}
+
+div.filemanager-container span.move img.browser-icon {
+	display: none;
 }
 
 div.filemanager span.notice {
@@ -438,6 +447,10 @@ div.filemanager-gallery ul {
 	overflow-x: hidden;
 	border: 1px solid #bebebe;
 	background: #f2f2f2;
+}
+
+div.filemanager-gallery ul.droppable {
+	background-color: #99b7e7;
 }
 
 div.filemanager-gallery ul li {
