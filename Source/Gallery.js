@@ -262,7 +262,7 @@ FileManager.Gallery = new Class({
 		this.tips.hide();
 
 		var self = this;
-		element.removeEvents('click').fade(0).get('tween').chain(function(){
+		element.set('tween', {duration: 250}).removeEvents('click').fade(0).get('tween').chain(function(){
 			this.element.destroy();
 			self.switchButton();
 		});
