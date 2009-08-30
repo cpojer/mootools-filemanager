@@ -6,52 +6,42 @@ License:
 	MIT-style license.
 
 Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
 
 Dependencies:
-	- MooTools Core 1.2.2
-	- MooTools More 1.2.2.1 or newer: Tips.js
+	- MooTools Core 1.2.3
+	- MooTools More 1.2.3.1 or newer: Tips.js
 
 Contains:
 	- FileManager.Tips: Augmented version of Tips for use within the FileManager
 	- FileManager.Request: Simple extension to request to always use the loader-icon specified by the FileManager instance
-	- Element.appearOn: Can be used to show an element when another is hovered: $(myElement).appearOn(myWrapper)
+	- Element.appearOn: Can be used to show an element when another one is hovered: $(myElement).appearOn(myWrapper)
 	- Element.center: Centers an element
-	- Dialog, Overlay: Nice Classes used by the FileManager
+	- Dialog, Overlay: Classes used by the FileManager
 */
 
-if(!window.FileManager) var FileManager = {};
+(function(){
+
+var FileManager = this.FileManager || (this.FileManager = {});
 
 FileManager.Tips = new Class({
 	
 	Extends: Tips,
 	
 	options: {
+		className: 'tip-filebrowser',
 		offsets: {x: 15, y: 0},
 		text: null,
-		onShow: function(tip, el){
-			if(tip.get('opacity')==0.8 && tip.getStyle('visibility')=='visible') return;
-			
-			tip.get('tween').pause();
-			tip.set({
-				opacity: 0,
-				tween: {
-					duration: 200,
-					link: 'cancel'
-				}
-			}).fade(0.8);
+		showDelay: 50,
+		hideDelay: 50,
+		onShow: function(){
+			this.tip.set('tween', {duration: 250}).setStyle('display', 'block').fade(1);
 		},
-		
-		onHide: function(tip, el){
-			tip.get('tween').pause().start('opacity', 0).chain(function(){
-				tip.setStyle('left', 0);
+		onHide: function(){
+			this.tip.fade(0).get('tween').chain(function(){
+				this.element.setStyle('display', 'none');
 			});
 		}
-	},
-	
-	initialize: function(el, options){
-		this.parent(el, options);
-		this.tip.addClass('tip-filebrowser');
 	}
 	
 });
@@ -107,7 +97,7 @@ Element.implement({
 	
 });
 
-var Dialog = new Class({
+this.Dialog = new Class({
 	
 	Implements: [Options, Events],
 	
@@ -186,8 +176,9 @@ var Dialog = new Class({
 		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
 	}
 	
-}),
-Overlay = new Class({
+});
+
+this.Overlay = new Class({
 	
 	initialize: function(options){
 		this.el = new Element('div', $extend({
@@ -245,3 +236,5 @@ Overlay = new Class({
 	}
 	
 });
+
+})();

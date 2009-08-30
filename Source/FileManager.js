@@ -6,14 +6,14 @@ License:
 	MIT-style license.
 
 Version:
-	1.0rc1
+	1.0
 
 Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
 
 Dependencies:
-	- MooTools Core 1.2.2
-	- MooTools More 1.2.2.1 or newer: Drag.js, Drag.Move.js, Tips.js, Asset.js
+	- MooTools Core 1.2.3
+	- MooTools More 1.2.3.1 or newer: Drag.js, Drag.Move.js, Tips.js, Assets.js
 	- Additions.js
 
 Todo:

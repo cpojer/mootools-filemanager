@@ -6,7 +6,7 @@ License:
 	MIT-style license.
 
 Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph).
+	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
 
 Dependencies:
 	- FileManager.js
