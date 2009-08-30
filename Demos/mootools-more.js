@@ -1,7 +1,7 @@
 //MooTools More, <http://mootools.net/more>. Copyright (c) 2006-2009 Aaron Newton <http://clientcide.com/>, Valerio Proietti <http://mad4milk.net> & the MooTools team <http://mootools.net/developers>, MIT Style License.
 
 MooTools.More = {
-	'version': '1.2.2.1'
+	'version': '1.2.3.1'
 };
 
 /*
@@ -41,11 +41,11 @@ var Drag = new Class({
 
 	initialize: function(){
 		var params = Array.link(arguments, {'options': Object.type, 'element': $defined});
-		this.element = $(params.element);
+		this.element = document.id(params.element);
 		this.document = this.element.getDocument();
 		this.setOptions(params.options || {});
 		var htype = $type(this.options.handle);
-		this.handles = ((htype == 'array' || htype == 'collection') ? $$(this.options.handle) : $(this.options.handle)) || this.element;
+		this.handles = ((htype == 'array' || htype == 'collection') ? $$(this.options.handle) : document.id(this.options.handle)) || this.element;
 		this.mouse = {'now': {}, 'pos': {}};
 		this.value = {'start': {}, 'now': {}};
 
@@ -122,7 +122,7 @@ var Drag = new Class({
 					this.value.now[z] = this.limit[z][0];
 				}
 			}
-			if (this.options.grid[z]) this.value.now[z] -= ((this.value.now[z] - this.limit[z][0]) % this.options.grid[z]);
+			if (this.options.grid[z]) this.value.now[z] -= ((this.value.now[z] - (this.limit[z][0]||0)) % this.options.grid[z]);
 			if (this.options.style) this.element.setStyle(this.options.modifiers[z], this.value.now[z] + this.options.unit);
 			else this.element[this.options.modifiers[z]] = this.value.now[z];
 		}
@@ -190,8 +190,8 @@ Drag.Move = new Class({
 	initialize: function(element, options){
 		this.parent(element, options);
 		this.droppables = $$(this.options.droppables);
-		this.container = $(this.options.container);
-		if (this.container && $type(this.container) != 'element') this.container = $(this.container.getDocument().body);
+		this.container = document.id(this.options.container);
+		if (this.container && $type(this.container) != 'element') this.container = document.id(this.container.getDocument().body);
 
 		var position = this.element.getStyle('position');
 		if (position=='static') position = 'absolute';
@@ -335,7 +335,7 @@ var Asset = {
 			onerror: $empty
 		}, properties);
 		var image = new Image();
-		var element = $(image) || new Element('img');
+		var element = document.id(image) || new Element('img');
 		['load', 'abort', 'error'].each(function(name){
 			var type = 'on' + name;
 			var event = properties[type];
@@ -359,19 +359,26 @@ var Asset = {
 	images: function(sources, options){
 		options = $merge({
 			onComplete: $empty,
-			onProgress: $empty
+			onProgress: $empty,
+			onError: $empty,
+			properties: {}
 		}, options);
 		sources = $splat(sources);
 		var images = [];
 		var counter = 0;
 		return new Elements(sources.map(function(source){
-			return Asset.image(source, {
+			return Asset.image(source, $extend(options.properties, {
 				onload: function(){
 					options.onProgress.call(this, counter, sources.indexOf(source));
 					counter++;
 					if (counter == sources.length) options.onComplete();
+				},
+				onerror: function(){
+					options.onError.call(this, counter, sources.indexOf(source));
+					counter++;
+					if (counter == sources.length) options.onComplete();
 				}
-			});
+			}));
 		}));
 	}
 
@@ -389,43 +396,53 @@ Script: Tips.js
 		Christoph Pojer
 */
 
-var Tips = new Class({
+(function(){
+
+var read = function(option, element){
+	return (option) ? ($type(option) == 'function' ? option(element) : element.get(option)) : '';
+};
+
+this.Tips = new Class({
 
 	Implements: [Events, Options],
 
 	options: {
-		onShow: function(tip){
-			tip.setStyle('visibility', 'visible');
+		/*
+		onAttach: $empty(element),
+		onDetach: $empty(element),
+		*/
+		onShow: function(){
+			this.tip.setStyle('display', 'block');
 		},
-		onHide: function(tip){
-			tip.setStyle('visibility', 'hidden');
+		onHide: function(){
+			this.tip.setStyle('display', 'none');
 		},
 		title: 'title',
-		text: function(el){
-			return el.get('rel') || el.get('href');
+		text: function(element){
+			return element.get('rel') || element.get('href');
 		},
 		showDelay: 100,
 		hideDelay: 100,
-		className: null,
+		className: 'tip-wrap',
 		offset: {x: 16, y: 16},
 		fixed: false
 	},
 
 	initialize: function(){
 		var params = Array.link(arguments, {options: Object.type, elements: $defined});
-		if (params.options && params.options.offsets) params.options.offset = params.options.offsets;
 		this.setOptions(params.options);
-		this.container = new Element('div', {'class': 'tip'});
-		this.tip = this.getTip();
-		
+		document.id(this);
+
 		if (params.elements) this.attach(params.elements);
 	},
 
-	getTip: function(){
-		return new Element('div', {
+	toElement: function(){
+		if (this.tip) return this.tip;
+
+		this.container = new Element('div', {'class': 'tip'});
+		return this.tip = new Element('div', {
 			'class': this.options.className,
 			styles: {
-				visibility: 'hidden',
 				display: 'none',
 				position: 'absolute',
 				top: 0,
@@ -439,67 +456,64 @@ var Tips = new Class({
 	},
 
 	attach: function(elements){
-		var read = function(option, element){
-			if (option == null) return '';
-			return $type(option) == 'function' ? option(element) : element.get(option);
-		};
 		$$(elements).each(function(element){
-			var title = read(this.options.title, element);
+			var title = read(this.options.title, element),
+				text = read(this.options.text, element);
+
 			element.erase('title').store('tip:native', title).retrieve('tip:title', title);
-			element.retrieve('tip:text', read(this.options.text, element));
-			
+			element.retrieve('tip:text', text);
+			this.fireEvent('attach', [element]);
+
 			var events = ['enter', 'leave'];
 			if (!this.options.fixed) events.push('move');
-			
+
 			events.each(function(value){
-				element.addEvent('mouse' + value, element.retrieve('tip:' + value, this['element' + value.capitalize()].bindWithEvent(this, element)));
+				var event = element.retrieve('tip:' + value);
+				if (!event) event = this['element' + value.capitalize()].bindWithEvent(this, element);
+
+				element.store('tip:' + value, event).addEvent('mouse' + value, event);
 			}, this);
 		}, this);
-		
+
 		return this;
 	},
 
 	detach: function(elements){
 		$$(elements).each(function(element){
 			['enter', 'leave', 'move'].each(function(value){
-				element.removeEvent('mouse' + value, element.retrieve('tip:' + value) || $empty);
+				element.removeEvent('mouse' + value, element.retrieve('tip:' + value)).eliminate('tip:' + value);
 			});
-			
-			element.eliminate('tip:enter').eliminate('tip:leave').eliminate('tip:move');
-			
-			if ($type(this.options.title) == 'string' && this.options.title == 'title'){
+
+			this.fireEvent('detach', [element]);
+
+			if (this.options.title == 'title'){ // This is necessary to check if we can revert the title
 				var original = element.retrieve('tip:native');
 				if (original) element.set('title', original);
 			}
 		}, this);
-		
+
 		return this;
 	},
 
 	elementEnter: function(event, element){
-		$A(this.container.childNodes).each(Element.dispose);
-		
+		this.container.empty();
+
 		['title', 'text'].each(function(value){
 			var content = element.retrieve('tip:' + value);
-			if (!content) return;
-			
-			this[value + 'Element'] = new Element('div', {'class': 'tip-' + value}).inject(this.container);
-			this.fill(this[value + 'Element'], content);
+			if (content) this.fill(new Element('div', {'class': 'tip-' + value}).inject(this.container), content);
 		}, this);
-		
-		this.timer = $clear(this.timer);
+
+		$clear(this.timer);
 		this.timer = this.show.delay(this.options.showDelay, this, element);
-		this.tip.setStyle('display', 'block');
-		this.position((!this.options.fixed) ? event : {page: element.getPosition()});
+		this.position((this.options.fixed) ? {page: element.getPosition()} : event);
 	},
 
 	elementLeave: function(event, element){
 		$clear(this.timer);
-		this.tip.setStyle('display', 'none');
 		this.timer = this.hide.delay(this.options.hideDelay, this, element);
 	},
 
-	elementMove: function(event){
+	elementMove: function(event, element){
 		this.position(event);
 	},
 
@@ -508,12 +522,12 @@ var Tips = new Class({
 			tip = {x: this.tip.offsetWidth, y: this.tip.offsetHeight},
 			props = {x: 'left', y: 'top'},
 			obj = {};
-		
+
 		for (var z in props){
 			obj[props[z]] = event.page[z] + this.options.offset[z];
 			if ((obj[props[z]] + tip[z] - scroll[z]) > size[z]) obj[props[z]] = event.page[z] - this.options.offset[z] - tip[z];
 		}
-		
+
 		this.tip.setStyles(obj);
 	},
 
@@ -522,12 +536,112 @@ var Tips = new Class({
 		else element.adopt(contents);
 	},
 
-	show: function(el){
-		this.fireEvent('show', [this.tip, el]);
+	show: function(element){
+		this.fireEvent('show', [element]);
 	},
 
-	hide: function(el){
-		this.fireEvent('hide', [this.tip, el]);
+	hide: function(element){
+		this.fireEvent('hide', [element]);
 	}
 
 });
+
+})();
+
+/*
+Script: Element.Delegation.js
+	Extends the Element native object to include the delegate method for more efficient event management.
+
+	Event checking based on the work of Daniel Steigerwald.
+	License: MIT-style license.
+	Copyright: Copyright (c) 2008 Daniel Steigerwald, daniel.steigerwald.cz
+
+	License:
+		MIT-style license.
+
+	Authors:
+		Aaron Newton
+		Daniel Steigerwald
+
+*/
+(function(){
+
+	var match = /(.*?):relay\(([^)]+)\)$/,
+		combinators = /[+>~\s]/,
+		splitType = function(type){
+			var bits = type.match(match);
+			return !bits ? {event: type } : {
+				event: bits[1],
+				selector: bits[2]
+			};
+		},
+		check = function(e, selector){
+			var t = e.target;
+			if (combinators.test(selector = selector.trim())){
+				var els = this.getElements(selector);
+				for (var i = els.length; i--; ){
+					var el = els[i];
+					if (t == el || el.hasChild(t)) return el;
+				}
+			} else {
+				for ( ; t && t != this; t = t.parentNode){
+					if (Element.match(t, selector)) return document.id(t);
+				}
+			}
+			return null;
+		};
+
+	var oldAddEvent = Element.prototype.addEvent,
+		oldRemoveEvent = Element.prototype.removeEvent;
+
+	Element.implement({
+
+		addEvent: function(type, fn){
+			var splitted = splitType(type);
+			if (splitted.selector){
+				var monitors = this.retrieve('$moo:delegateMonitors', {});
+				if (!monitors[type]){
+					var monitor = function(e){
+						var el = check.call(this, e, splitted.selector);
+						if (el) this.fireEvent(type, [e, el], 0, el);
+					}.bind(this);
+					monitors[type] = monitor;
+					oldAddEvent.call(this, splitted.event, monitor);
+				}
+			}
+			return oldAddEvent.apply(this, arguments);
+		},
+
+		removeEvent: function(type, fn){
+			var splitted = splitType(type);
+			if (splitted.selector){
+				var events = this.retrieve('events');
+				if (!events || !events[type] || (fn && !events[type].keys.contains(fn))) return this;
+
+				if (fn) oldRemoveEvent.apply(this, [type, fn]);
+				else oldRemoveEvent.apply(this, type);
+
+				events = this.retrieve('events');
+				if (events && events[type] && events[type].length == 0){
+					var monitors = this.retrieve('$moo:delegateMonitors', {});
+					oldRemoveEvent.apply(this, [splitted.event, monitors[type]]);
+					delete monitors[type];
+				}
+				return this;
+			}
+
+			return oldRemoveEvent.apply(this, arguments);
+		},
+
+		fireEvent: function(type, args, delay, bind){
+			var events = this.retrieve('events');
+			if (!events || !events[type]) return this;
+			events[type].keys.each(function(fn){
+				fn.create({bind: bind || this, delay: delay, arguments: args})();
+			}, this);
+			return this;
+		}
+
+	});
+
+})();
