@@ -54,7 +54,7 @@ FileManager.implement({
 		
 		var self = this;
 		this.upload = {
-			button: this.addMenuButton('upload').addEvents({
+			button: this.addMenuButton('upload').inject(this.menu, 'bottom').addEvents({
 				click: function(){
 					return false;
 				},

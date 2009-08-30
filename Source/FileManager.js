@@ -102,8 +102,8 @@ var FileManager = new Class({
 			}
 		}).inject(this.el);
 		
-		if (this.options.selectable) this.addMenuButton('open');
 		this.addMenuButton('create');
+		if (this.options.selectable) this.addMenuButton('open');
 		
 		this.info = new Element('div', {'class': 'filemanager-infos', opacity: 0}).inject(this.el);
 
@@ -464,9 +464,7 @@ var FileManager = new Class({
 			}
 		});
 		$$(els).setStyles({left: 0, top: 0});
-		var tips = new FileManager.Tips(this.browser.getElements('img.browser-icon'));
-
-		tips.tip.removeClass('tip-base');
+		new FileManager.Tips(this.browser.getElements('img.browser-icon'));
 	},
 
 	fillInfo: function(file, path){
@@ -561,7 +559,7 @@ var FileManager = new Class({
 		var el = new Element('button', {
 			'class': 'filemanager-' + name,
 			text: this.language[name]
-		}).inject(this.menu);
+		}).inject(this.menu, 'top');
 		if (this[name]) el.addEvent('click', this[name].bind(this));
 		return el;
 	},

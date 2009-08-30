@@ -66,19 +66,20 @@
 	
 	<script type="text/javascript" src="../Source/Uploader/Fx.ProgressBar.js"></script>
 	<script type="text/javascript" src="../Source/Uploader/Swiff.Uploader.js"></script>
-	
+
 	<script type="text/javascript" src="../Source/Uploader.js"></script>
+	<script type="text/javascript" src="../Source/Gallery.js"></script>
 	
 	<script type="text/javascript">
 		window.addEvent('domready', function(){
 			/* Simple Example */
-			var manager = new FileManager({
+			var manager1 = new FileManager({
 				url: 'manager.php',
 				assetBasePath: '../Assets',
 				language: 'en',
 				uploadAuthData: {session: 'MySessionId'}
 			});
-			$('example1').addEvent('click', manager.show.bind(manager));
+			$('example1').addEvent('click', manager1.show.bind(manager1));
 
 			/* Select a file */
 			var el = $('example2');
@@ -106,7 +107,7 @@
 				).inject(el, 'after');
 			};
 			
-			var manager = new FileManager({
+			var manager2 = new FileManager({
 				url: 'selectImage.php',
 				assetBasePath: '../Assets',
 				language: 'en',
@@ -117,23 +118,32 @@
 			
 			el.setStyle('display', 'none');
 			var val = el.get('value');
-			if(val) complete.apply(manager, [val, {
+			if(val) complete.apply(manager2, [val, {
 				name: val.split('/').getLast(),
 				icon: val.split('.').getLast()
 			}]);
 			
-			new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager.show.bind(manager)).inject(el, 'before');
+			new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager2.show.bind(manager2)).inject(el, 'before');
 
-			/* Simple Example */
-			var manager = new FileManager({
+			/* Localized Example */
+			var manager3 = new FileManager({
 				url: 'manager.php',
 				assetBasePath: '../Assets',
 				language: 'de',
 				hideOnClick: true,
 				uploadAuthData: {session: 'MySessionId'}
 			});
-			$('example3').addEvent('click', manager.show.bind(manager));
+			$('example3').addEvent('click', manager3.show.bind(manager3));
 
+
+			/* Gallery Example */
+			var manager4 = new FileManager.Gallery({
+				url: 'selectImage.php',
+				assetBasePath: '../Assets',
+				hideOnClick: true,
+				uploadAuthData: {session: 'MySessionId'}
+			});
+			$('example4').addEvent('click', manager4.show.bind(manager4));
 		});
 	</script>
 </head>
@@ -148,6 +158,10 @@
 	</div>
 	<div class="example">
 		<button id="example3" class="BrowseExample">Open File-Manager (German)</button>
+	</div>
+
+	<div class="example">
+		<button id="example4">Create a Gallery</button>
 	</div>
 	<div style="clear: both;"></div>
 </div>

@@ -387,3 +387,130 @@ div.selected-file .file-cancel {
 	cursor: pointer;
 	padding: 0 0 0 5px;
 }
+
+
+/* GALLERY */
+div.filemanager button.filemanager-serialize {
+	font-weight: bold;
+}
+
+div.filemanager-gallery {
+	position: absolute;
+	z-index: 1000;
+	width: 750px;
+	height: 144px;
+	display: none;
+
+	font-family: Tahoma, sans-serif;
+	font-size: 12px;
+
+	border: 1px solid #bebebe;
+	border-top: 0;
+	background: #eee;
+
+	border-radius-bottomleft: 5px;
+	-moz-border-radius-bottomleft: 5px;
+	-webkit-border-radius-bottomleft: 5px;
+
+	border-radius-bottomright: 5px;
+	-moz-border-radius-bottomright: 5px;
+	-webkit-border-radius-bottomright: 5px;
+}
+
+div.filemanager-gallery div.howto {
+	position: absolute;
+	z-index: 1002;
+	left: 50px;
+	top: 60px;
+	
+	color: #666;
+	font-size: 18px;
+	font-style: italic;
+}
+
+div.filemanager-gallery ul {
+	height: 121px;
+
+	margin: 7px 6px;
+	padding: 4px;
+
+	overflow: auto;
+	overflow-x: hidden;
+	border: 1px solid #bebebe;
+	background: #f2f2f2;
+}
+
+div.filemanager-gallery ul li {
+	position: relative;
+	float: left;
+	margin: 0;
+	width: 79px;
+	height: 60px;
+
+	list-style: none;
+	
+	background: url(../Assets/loader.gif) center center no-repeat;
+}
+
+div.filemanager-gallery ul li img {
+	padding: 2px;
+	width: 75px;
+	height: 56px;
+	cursor: pointer;
+}
+
+div.filemanager-gallery ul li img.filemanager-remove {
+	position: absolute;
+	right: -7px;
+	top: -7px;
+	width: 16px;
+	height: 16px;
+}
+
+div.filemanager-wrapper {
+	position: absolute;
+	z-index: 1020;
+	width: 222px;
+	height: 250px;
+
+	font-family: Tahoma, sans-serif;
+	font-size: 12px;
+	
+	border: 1px solid #bebebe;
+	background: #eee;
+	
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+}
+
+div.filemanager-wrapper div.img {
+	width: 210px;
+	height: 160px;
+	margin: 5px;
+
+	border: 1px solid #bebebe;
+	background: #fff;
+}
+
+div.filemanager-wrapper span {
+	display: block;
+	margin: 3px 8px 1px;
+	font-weight: bold;
+}
+
+div.filemanager-wrapper input {
+	width: 210px;
+	margin: 3px 5px 0;
+
+	border: 1px solid #bebebe;
+	background: #fff;
+}
+
+div.filemanager-wrapper button {
+	margin: 3px 7px;
+}
+
+img.filemanager-clone {
+	cursor: pointer;
+}
