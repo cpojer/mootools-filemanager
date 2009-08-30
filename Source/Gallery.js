@@ -13,6 +13,9 @@ Copyright:
 
 Dependencies:
 	- FileManager.js
+
+Options:
+	- baseURL: (string) Absolute URL to the FileManager files
 */
 
 (function(){
@@ -24,7 +27,7 @@ FileManager.Gallery = new Class({
 	Extends: FileManager,
 	
 	options: {
-		selectable: false
+		baseURL: ''
 	},
 	
 	initialize: function(options){
@@ -94,7 +97,6 @@ FileManager.Gallery = new Class({
 
 		var timer, removeClone = this.removeClone.bind(this);
 
-		this.galleryTips = new FileManager.Tips();
 		this.input = new Element('input', {name: 'imgCaption'}).addEvent('keyup', function(e){
 			if (e.key == 'enter') removeClone(e);
 		});
@@ -127,14 +129,6 @@ FileManager.Gallery = new Class({
 
 		this.howto = new Element('div', {'class': 'howto', text: this.language.gallery.drag}).inject(this.galleryContainer);
 		this.switchButton();
-	},
-	
-	populate: function(){
-		Hash.each(JSON.decode(this.input.get('value')) || {}, function(v, i){
-			this.captions[i] = v;
-			
-			this.onDragComplete(i, this.gallery);
-		}, this);
 	},
 	
 	onDragStart: function(el, drag){
@@ -172,9 +166,9 @@ FileManager.Gallery = new Class({
 			events: {click: this.removePicture}
 		}).store('gallery', this);
 
-		var li = new Element('li').store('file', file).store('identifier', name).adopt(
+		var li = new Element('li').store('file', file).adopt(
 			img,
-			new Asset.image(name, {
+			new Asset.image(this.options.baseURL + name, {
 				onload: function(){
 					var el = this;
 					li.setStyle('background', 'none').addEvent('click', function(e){
@@ -235,7 +229,7 @@ FileManager.Gallery = new Class({
 			})
 		).inject(this.gallery);
 		
-		this.galleryTips.attach(img.appearOn(li));
+		this.tips.attach(img.appearOn(li));
 		this.switchButton();
 		
 		return true;
@@ -274,7 +268,7 @@ FileManager.Gallery = new Class({
 	erasePicture: function(name, element){
 		this.captions[name] = '';
 		this.files.erase(name);
-		this.galleryTips.hide();
+		this.tips.hide();
 
 		var self = this;
 		element.removeEvents('click').fade(0).get('tween').chain(function(){
@@ -288,9 +282,17 @@ FileManager.Gallery = new Class({
 		
 		this.menu.getElement('button.filemanager-serialize').set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
 	},
+
+	populate: function(data){
+		Hash.each(data || {}, function(v, i){
+			this.captions[i] = v;
+
+			this.onDragComplete(i, this.gallery);
+		}, this);
+	},
 	
 	serialize: function(e){
-		e.stop();
+		if(e) e.stop();
 		
 		var serialized = {};
 		this.files.each(function(v){
