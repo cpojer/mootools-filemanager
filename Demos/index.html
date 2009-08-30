@@ -83,7 +83,7 @@
 
 			/* Select a file */
 			var el = $('example2');
-			var div, tips;
+			var div, manager2;
 			var complete = function(path, file){
 				el.set('value', path);
 				
@@ -94,11 +94,11 @@
 					var self = this;
 					div.fade(0).get('tween').chain(function(){
 						div.destroy();
-						tips.hide();
-						tips.detach(self);
+						manager2.tips.hide();
+						manager2.tips.detach(self);
 					});
 				});
-				tips = new FileManager.Tips(icon);
+				manager2.tips.attach(icon);
 				
 				div = new Element('div', {'class': 'selected-file', text: 'Selected file: '}).adopt(
 					new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
@@ -107,7 +107,7 @@
 				).inject(el, 'after');
 			};
 			
-			var manager2 = new FileManager({
+			manager2 = new FileManager({
 				url: 'selectImage.php',
 				assetBasePath: '../Assets',
 				language: 'en',
@@ -137,11 +137,18 @@
 
 
 			/* Gallery Example */
+			var example4 = $('myGallery');
 			var manager4 = new FileManager.Gallery({
 				url: 'selectImage.php',
 				assetBasePath: '../Assets',
 				hideOnClick: true,
-				uploadAuthData: {session: 'MySessionId'}
+				uploadAuthData: {session: 'MySessionId'},
+				onShow: function(){
+					this.populate(JSON.decode(example4.get('value')));
+				},
+				onComplete: function(serialized){
+					example4.set('value', JSON.encode(serialized));
+				}
 			});
 			$('example4').addEvent('click', manager4.show.bind(manager4));
 		});
@@ -162,6 +169,7 @@
 
 	<div class="example">
 		<button id="example4">Create a Gallery</button>
+		<input name="BrowseExample4" type="text" id="myGallery" value="" />
 	</div>
 	<div style="clear: both;"></div>
 </div>

@@ -68,8 +68,10 @@ var FileManager = new Class({
 		this.options.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
 		this.droppables = [];
 		this.Directory = this.options.directory;
+
+		this.language = $unlink(FileManager.Language.en);
+		if (this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);
 		
-		this.language = FileManager.Language[this.options.language] || FileManager.Language.en;
 		this.container = new Element('div', {'class': 'filemanager-container filemanager-engine-' + Browser.Engine.name + (Browser.Engine.trident ? Browser.Engine.version : '')});
 		this.el = new Element('div', {'class': 'filemanager'}).inject(this.container);
 		this.menu = new Element('div', {'class': 'filemanager-menu'}).inject(this.el);
@@ -136,7 +138,23 @@ var FileManager = new Class({
 			title: this.language.close,
 			events: {click: this.hide.bind(this)}
 		}).adopt(new Asset.image(this.options.assetBasePath + 'destroy.png')).inject(this.el);
-		new FileManager.Tips(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.el, 0.8));
+
+		this.tips = new Tips({
+			className: 'tip-filebrowser',
+			offsets: {x: 15, y: 0},
+			text: null,
+			showDelay: 50,
+			hideDelay: 50,
+			onShow: function(){
+				this.tip.set('tween', {duration: 250}).setStyle('display', 'block').fade(1);
+			},
+			onHide: function(){
+				this.tip.fade(0).get('tween').chain(function(){
+					this.element.setStyle('display', 'none');
+				});
+			}
+		});
+		this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.el, 0.8));
 		
 		this.imageadd = new Asset.image(this.options.assetBasePath + 'add.png', {
 			'class': 'browser-add'
@@ -194,6 +212,7 @@ var FileManager = new Class({
 		if (e) e.stop();
 
 		this.overlay.hide();
+		this.tips.hide();
 		this.browser.empty();
 		this.container.setStyle('display', 'none');
 		
@@ -464,7 +483,7 @@ var FileManager = new Class({
 			}
 		});
 		$$(els).setStyles({left: 0, top: 0});
-		new FileManager.Tips(this.browser.getElements('img.browser-icon'));
+		this.tips.attach(this.browser.getElements('img.browser-icon'));
 	},
 
 	fillInfo: function(file, path){
@@ -577,6 +596,21 @@ var FileManager = new Class({
 	
 	onDragStart: $empty,
 	onDragComplete: $lambda(false)
+	
+});
+
+FileManager.Request = new Class({
+	
+	Extends: Request.JSON,
+	
+	initialize: function(options, filebrowser){
+		this.parent(options);
+		
+		if (filebrowser) this.addEvents({
+			request: filebrowser.onRequest.bind(filebrowser),
+			complete: filebrowser.onComplete.bind(filebrowser)
+		});
+	}
 	
 });
 

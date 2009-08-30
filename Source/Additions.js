@@ -10,56 +10,14 @@ Copyright:
 
 Dependencies:
 	- MooTools Core 1.2.3
-	- MooTools More 1.2.3.1 or newer: Tips.js
 
 Contains:
-	- FileManager.Tips: Augmented version of Tips for use within the FileManager
-	- FileManager.Request: Simple extension to request to always use the loader-icon specified by the FileManager instance
 	- Element.appearOn: Can be used to show an element when another one is hovered: $(myElement).appearOn(myWrapper)
 	- Element.center: Centers an element
 	- Dialog, Overlay: Classes used by the FileManager
 */
 
 (function(){
-
-var FileManager = this.FileManager || (this.FileManager = {});
-
-FileManager.Tips = new Class({
-	
-	Extends: Tips,
-	
-	options: {
-		className: 'tip-filebrowser',
-		offsets: {x: 15, y: 0},
-		text: null,
-		showDelay: 50,
-		hideDelay: 50,
-		onShow: function(){
-			this.tip.set('tween', {duration: 250}).setStyle('display', 'block').fade(1);
-		},
-		onHide: function(){
-			this.tip.fade(0).get('tween').chain(function(){
-				this.element.setStyle('display', 'none');
-			});
-		}
-	}
-	
-});
-
-FileManager.Request = new Class({
-	
-	Extends: Request.JSON,
-	
-	initialize: function(options, filebrowser){
-		this.parent(options);
-		
-		if (filebrowser)	this.addEvents({
-			request: filebrowser.onRequest.bind(filebrowser),
-			complete: filebrowser.onComplete.bind(filebrowser)
-		});
-	}
-	
-});
 
 Element.implement({
 	
