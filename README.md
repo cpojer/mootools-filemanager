@@ -1,6 +1,9 @@
-### MooTools FileManager - Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph)
+MooTools FileManager - Copyright (c) 2009 [Christoph Pojer](http://og5.net/christoph)
+=====================================================================================
 
 A filemanager for the web based on MooTools that allows you to (pre)view, upload and modify files and folders via your browser.
+
+![Screenshot](http://cpojer.net/Scripts/FileManager/FileManager.png)
 
 ### Features
 
@@ -12,7 +15,11 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Option to automatically resize big Images when uploading
 * Use it to select a File anywhere you need to specify one inside your Application's Backend
 * Use as a FileManager in TinyMCE
-* Provides your Client with the most possible convenience ( ;D )
+* Provides your client with the most possible convenience ( ;D )
+* Create galleries using the Gallery-Plugin
+
+How to use
+----------
 
 ### Demos
 
