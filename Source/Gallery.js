@@ -169,6 +169,7 @@ FileManager.Gallery = new Class({
 						pos.left += el.getStyle('paddingLeft').toInt();
 						pos.top += el.getStyle('paddingTop').toInt();
 
+						self.hideClone();
 						self.animation = {
 							from: {
 								width: 75,
@@ -244,6 +245,19 @@ FileManager.Gallery = new Class({
 			this.element.setStyle('display', 'none');
 		});
 	},
+
+	hideClone: function(){
+		if (!this.clone) return;
+
+		this.clone.get('morph').cancel();
+		var parent = this.clone.retrieve('parent');
+		if (parent) parent.set('opacity', 1);
+		this.clone.destroy();
+		this.wrapper.setStyles({
+			opacity: 0,
+			display: 'none'
+		});
+	},
 	
 	removePicture: function(e){
 		if(e) e.stop();
@@ -262,7 +276,7 @@ FileManager.Gallery = new Class({
 		this.tips.hide();
 
 		var self = this;
-		element.removeEvents('click').fade(0).get('tween').chain(function(){
+		element.set('tween', {duration: 250}).removeEvents('click').fade(0).get('tween').chain(function(){
 			this.element.destroy();
 			self.switchButton();
 		});
