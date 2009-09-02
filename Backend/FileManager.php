@@ -18,6 +18,8 @@ Options:
 	- directory: (string) The base directory to be used for the FileManger
 	- baseURL: (string) Absolute URL to the FileManager files
 	- assetBasePath: (string) The path to all images and swf files
+	- id3Path: (string, optional) The path to the getid3.php file
+	- mimeTypesPath: (string, optional) The path to the MimTypes.ini file.
 	- dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
 	- upload: (boolean, defaults to *false*) Whether to allow uploads or not
 	- destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
@@ -41,10 +43,14 @@ class FileManager {
 	protected $get;
 	
 	public function __construct($options){
+		$path = FileManagerUtility::getPath();
+		
 		$this->options = array_merge(array(
 			'directory' => '../Demos/Files',
 			'baseURL' => '',
 			'assetBasePath' => '../Assets',
+			'id3Path' => $path . '/Assets/getid3/getid3.php',
+			'mimeTypesPath' => $path . '/MimeTypes.ini',
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 1024 * 1024 * 3,
 			'upload' => false,
@@ -110,7 +116,7 @@ class FileManager {
 		$file = realpath($this->path . '/' . $this->post['directory'] . '/' . $this->post['file']);
 		if (!$this->checkFile($file)) return;
 		
-		require_once(FileManagerUtility::getPath() . '/Assets/getid3/getid3.php');
+		require_once($this->options['id3Path']);
 		
 		$url = $this->options['baseURL'] . $this->normalize(substr($file, strlen($this->path)+1));
 		$mime = $this->getMimeType($file);
@@ -327,7 +333,7 @@ class FileManager {
 		if (!FileManagerUtility::endsWith($filter, '/')) return array($filter);
 		
 		static $mimes;
-		if (!$mimes) $mimes = parse_ini_file(FileManagerUtility::getPath() . '/MimeTypes.ini');
+		if (!$mimes) $mimes = parse_ini_file($this->options['mimeTypesPath']);
 		
 		foreach ($mimes as $mime)
 			if (FileManagerUtility::startsWith($mime, $filter))
