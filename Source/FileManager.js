@@ -78,30 +78,31 @@ var FileManager = new Class({
 		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 200}}).inject(this.menu);
 
 		var self = this;
+		this.relayClick = function(e){
+			if(e) e.stop();
+			var file = this.retrieve('file');
+			if (this.retrieve('block')){
+				this.eliminate('block');
+				return;
+			}
+
+			if (file.mime == 'text/directory'){
+				this.addClass('selected');
+				self.load(self.Directory + '/' + file.name);
+				return;
+			}
+
+			self.fillInfo(file);
+			if (self.Current) self.Current.removeClass('selected');
+			self.Current = this.addClass('selected');
+
+			self.switchButton();
+		};
 		this.browser = new Element('ul', {'class': 'filemanager-browser'}).addEvents({
 			click: (function(){
 				return self.deselect();
 			}),
-			'click:relay(li span.fi)': function(e){
-				e.stop();
-				var file = this.retrieve('file');
-				if (this.retrieve('block')){
-					this.eliminate('block');
-					return;
-				}
-
-				if (file.mime == 'text/directory'){
-					this.addClass('selected');
-					self.load(self.Directory + '/' + file.name);
-					return;
-				}
-	
-				self.fillInfo(file);
-				if (self.Current) self.Current.removeClass('selected');
-				self.Current = this.addClass('selected');
-				
-				self.switchButton();
-			}
+			'click:relay(li span.fi)': this.relayClick
 		}).inject(this.el);
 		
 		this.addMenuButton('create');
@@ -266,7 +267,7 @@ var FileManager = new Class({
 	},
 
 	deselect: function(el){
-		if (el && this.Current!=el) return;
+		if (el && this.Current != el) return;
 
 		if (el) this.fillInfo();
 		if (this.Current) this.Current.removeClass('selected');
@@ -422,6 +423,8 @@ var FileManager = new Class({
 			
 			document.removeEvents('keydown', self.bound.keydown).removeEvents('keyup', self.bound.keydown);
 			self.imageadd.fade(0);
+
+			self.relayClick.apply(el);
 		};
 		$$(els[0]).makeDraggable({
 			droppables: $$(this.droppables, els[1]),
@@ -434,10 +437,10 @@ var FileManager = new Class({
 			},
 
 			onBeforeStart: function(el){
+				self.deselect();
 				self.tips.hide();
 				var position = el.getPosition();
 				el.addClass('drag').setStyles({
-					opacity: 0.7,
 					position: 'absolute',
 					width: el.getWidth() - el.getStyle('paddingLeft').toInt(),
 					left: position.x,
@@ -448,7 +451,7 @@ var FileManager = new Class({
 			onCancel: revert,
 
 			onStart: function(el){
-				el.addClass('move');
+				el.set('opacity', 0.7).addClass('move');
 				document.addEvents({
 					keydown: self.bound.keydown,
 					keyup: self.bound.keyup

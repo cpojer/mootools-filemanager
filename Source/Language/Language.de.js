@@ -68,5 +68,13 @@ FileManager.Language.de = {
 		flash: 'Um Dateien hochzuladen muss <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a> installiert werden.'
 	},
 	
-	resizeImages: 'Große Bilder bei Upload verkleinern'
+	resizeImages: 'Große Bilder bei Upload verkleinern',
+
+	serialize: 'Galerie speichern',
+	gallery: {
+		text: 'Bildtext',
+		save: 'Speichern',
+		remove: 'Entfernen',
+		drag: 'Verschiebe Bilder in diesen Bereich um eine Galerie zu erstellen...'
+	}
 };
