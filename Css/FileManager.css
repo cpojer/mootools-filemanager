@@ -176,10 +176,6 @@ div.filemanager-container span.fi img.browser-icon {
 	float: right;
 }
 
-div.filemanager-container span.drag {
-	z-index: 1300;
-}
-
 div.filemanager-container span.move img.browser-icon {
 	display: none;
 }

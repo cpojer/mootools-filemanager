@@ -66,6 +66,7 @@ var FileManager = new Class({
 	initialize: function(options){
 		this.setOptions(options);
 		this.options.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
+		this.dragZIndex = 1300;
 		this.droppables = [];
 		this.Directory = this.options.directory;
 
@@ -414,6 +415,7 @@ var FileManager = new Class({
 		var self = this, revert = function(el){
 			el.set('opacity', 1).store('block', true).removeClass('drag').removeClass('move').setStyles({
 				opacity: 1,
+				zIndex: '',
 				position: 'relative',
 				width: 'auto',
 				left: 0,
@@ -441,6 +443,7 @@ var FileManager = new Class({
 				self.tips.hide();
 				var position = el.getPosition();
 				el.addClass('drag').setStyles({
+					zIndex: self.dragZIndex,
 					position: 'absolute',
 					width: el.getWidth() - el.getStyle('paddingLeft').toInt(),
 					left: position.x,

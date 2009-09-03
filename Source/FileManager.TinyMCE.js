@@ -21,19 +21,20 @@ FileManager.TinyMCE = function(options){
 	return function(field, url, type, win){
 		var manager = new FileManager($extend({
 			onComplete: function(path){
-				if(!win.document) return;
+				if (!win.document) return;
 				win.document.getElementById(field).value = path;
-				if(win.ImageDialog) win.ImageDialog.showPreviewImage(path, 1);
+				if (win.ImageDialog) win.ImageDialog.showPreviewImage(path, 1);
 				this.container.destroy();
 			}
 		}, options(type)));
+		manager.dragZIndex = 400002;
 		manager.el.setStyle('zIndex', 400001);
 		manager.overlay.el.setStyle('zIndex', 400000);
 		manager.show();
 	};
 };
 
-FileManager.implement('SwiffZIndex', 400002);
+FileManager.implement('SwiffZIndex', 400003);
 
 var Dialog = new Class({
 	
