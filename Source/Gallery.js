@@ -49,7 +49,7 @@ FileManager.Gallery = new Class({
 				opacity: 1
 			});
 
-			$$('img.filemanager-clone').destroy();
+			this.hideClone();
 			this.wrapper.setStyle('display', 'none');
 
 			if (this.howto){
@@ -61,14 +61,15 @@ FileManager.Gallery = new Class({
 					});
 				}).delay(2000);
 			}
-
-			this.populate();
 		};
 
 		this.addEvents({
 
 			scroll: show,
-			show: show,
+			show: (function(){
+				show.apply(this);
+				this.populate();
+			}),
 
 			hide: function(){
 				this.gallery.empty();
@@ -76,7 +77,7 @@ FileManager.Gallery = new Class({
 				this.captions = {};
 				this.files = [];
 
-				$$('img.filemanager-clone').destroy();
+				this.hideClone();
 				this.wrapper.setStyle('display', 'none');
 			},
 
@@ -185,7 +186,7 @@ FileManager.Gallery = new Class({
 							}
 						};
 
-						$$('img.filemanager-clone').destroy();
+						self.hideClone();
 						self.input.removeEvents('blur').addEvent('blur', function(){
 							self.captions[name] = this.get('value') || '';
 						});

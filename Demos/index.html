@@ -144,7 +144,9 @@
 				hideOnClick: true,
 				uploadAuthData: {session: 'MySessionId'},
 				onShow: function(){
-					this.populate(JSON.decode(example4.get('value')));
+					var obj;
+					$try(function(){ obj = JSON.decode(example4.get('value')); });
+					this.populate(obj);
 				},
 				onComplete: function(serialized){
 					example4.set('value', JSON.encode(serialized));
@@ -169,7 +171,7 @@
 
 	<div class="example">
 		<button id="example4">Create a Gallery</button>
-		<input name="BrowseExample4" type="text" id="myGallery" value="" />
+		<input name="BrowseExample4" type="text" id="myGallery" value="Gallery output will be stored in here" style="width: 250px;" />
 	</div>
 	<div style="clear: both;"></div>
 </div>

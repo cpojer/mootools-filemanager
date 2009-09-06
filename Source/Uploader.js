@@ -213,8 +213,6 @@ FileManager.implement({
 			instantStart: true,
 			fileClass: File,
 			fileSizeMax: 25 * 1024 * 1024,
-			onBrowse: function(){},
-			onCancel: function(){},
 			zIndex: this.SwiffZIndex || 9999,
 			onSelectSuccess: function(){
 				self.fillInfo();
