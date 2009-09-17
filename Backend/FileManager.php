@@ -206,29 +206,29 @@ class FileManager {
 				'name' => $name,
 				'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
 				'size' => $this->options['maxUploadSize'],
-				'mimes' => $this->getAllowedMimeTypes(),
+				'mimes' => $this->getAllowedMimeTypes()
 			));
 			
 			if (FileManagerUtility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
 				$img = new Image($file);
 				$size = $img->getSize();
-				if ($size['width']>800) $img->resize(800)->save();
-				elseif ($size['height']>600) $img->resize(null, 600)->save();
+				if ($size['width'] > 800) $img->resize(800)->save();
+				elseif ($size['height'] > 600) $img->resize(null, 600)->save();
 			}
 			
 			echo json_encode(array(
 				'status' => 1,
-				'name' => pathinfo($file, PATHINFO_BASENAME),
+				'name' => pathinfo($file, PATHINFO_BASENAME)
 			));
 		}catch(UploadException $e){
 			echo json_encode(array(
 				'status' => 0,
-				'error' => class_exists('ValidatorException') ? $e->getMessage() : '${upload.' . $e->getMessage() . '}', // This is for Styx :)
+				'error' => class_exists('ValidatorException') ? strip_tags($e->getMessage()) : '${upload.' . $e->getMessage() . '}' // This is for Styx :)
 			));
 		}catch(FileManagerException $e){
 			echo json_encode(array(
 				'status' => 0,
-				'error' => '${upload.' . $e->getMessage() . '}',
+				'error' => '${upload.' . $e->getMessage() . '}'
 			));
 		}
 	}

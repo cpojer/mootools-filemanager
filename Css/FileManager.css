@@ -309,6 +309,7 @@ div.filemanager-preview img.preview {
 	margin: 0 auto 1em;
 	display: block;
 	max-height: 100px;
+	background: transparent;
 }
 
 div.filemanager-engine-trident4 div.filemanager-preview img.preview {
