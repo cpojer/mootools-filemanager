@@ -24,6 +24,7 @@ Inspiration:
 
 Options:
 	- url: (string) The base url to the Backend FileManager, without QueryString
+	- baseURL: (string) Absolute URL to the FileManager files
 	- assetBasePath: (string) The path to all images and swf files
 	- selectable: (boolean, defaults to *false*) If true, provides a button to select a file
 	- language: (string, defaults to *en*) The language used for the FileManager
@@ -52,6 +53,7 @@ var FileManager = new Class({
 		onHide: $empty,*/
 		directory: '',
 		url: null,
+		baseURL: '',
 		assetBasePath: null,
 		selectable: false,
 		hideOnClick: false,
@@ -398,7 +400,7 @@ var FileManager = new Class({
 				icons.push(new Asset.image(this.options.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
 					this.tips.hide();
 					e.stop();
-					window.open(this.normalize(this.Directory + '/' + file.name));
+					window.open(this.options.baseURL + this.normalize(this.Directory + '/' + file.name));
 				}).bind(this)).inject(el, 'top'));
 
 			if (file.name != '..')

@@ -13,9 +13,6 @@ Copyright:
 
 Dependencies:
 	- FileManager.js
-
-Options:
-	- baseURL: (string) Absolute URL to the FileManager files
 */
 
 (function(){
@@ -25,10 +22,6 @@ var global = this;
 FileManager.Gallery = new Class({
 	
 	Extends: FileManager,
-	
-	options: {
-		baseURL: ''
-	},
 	
 	initialize: function(options){
 		this.offsets = {y: -72};
