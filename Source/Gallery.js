@@ -17,8 +17,6 @@ Dependencies:
 
 (function(){
 
-var global = this;
-
 FileManager.Gallery = new Class({
 	
 	Extends: FileManager,
@@ -48,7 +46,7 @@ FileManager.Gallery = new Class({
 			if (this.howto){
 				var self = this;
 				(function(){
-					self.howto.fade(0).get('tween').chain(function(){
+					if (self.howto && self.howto.fade) self.howto.fade(0).get('tween').chain(function(){
 						this.element.destroy();
 						self.howto = null;
 					});
@@ -194,9 +192,7 @@ FileManager.Gallery = new Class({
 							},
 							events: {
 								click: function(e){
-									if (global.Slimbox) global.Slimbox.open(name, self.captions[name] || '', {
-										onClose: function(){ li.fireEvent('click', [e]); }
-									});
+									self.fireEvent('preview', [self.options.baseURL + name, self.captions[name], li]);
 								}
 							}
 						}).inject(document.body).morph(self.animation.to).get('morph').chain(function(){

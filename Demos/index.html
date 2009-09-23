@@ -137,6 +137,7 @@
 
 
 			/* Gallery Example */
+			var global = this;
 			var example4 = $('myGallery');
 			var manager4 = new FileManager.Gallery({
 				url: 'selectImage.php',
@@ -150,6 +151,14 @@
 				},
 				onComplete: function(serialized){
 					example4.set('value', JSON.encode(serialized));
+				},
+				onPreview: function(src, caption, li){
+					/* Suggestion */
+					/*
+					if (global.Slimbox) global.Slimbox.open(src, caption || '', {
+						onClose: function(){ li.fireEvent('click', [e]); }
+					});
+					*/
 				}
 			});
 			$('example4').addEvent('click', manager4.show.bind(manager4));

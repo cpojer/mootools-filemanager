@@ -16,7 +16,7 @@ Dependencies:
 	- MooTools More 1.2.3.1 or newer: Drag.js, Drag.Move.js, Tips.js, Assets.js
 	- Additions.js
 
-Todo:
+ToDo:
 	- Add Scroller.js (optional) for Drag&Drop in the Filelist
 
 Inspiration:
@@ -36,6 +36,7 @@ Events:
 	- onModify(file): fired when a file gets renamed/deleted or modified in another way
 	- onShow: fired when the FileManager opens
 	- onHide: event fired when FileManager closes
+	- onPreview: event fired when the user clicks an image in the preview
 */
 
 var FileManager = new Class({
@@ -50,7 +51,8 @@ var FileManager = new Class({
 		/*onComplete: $empty,
 		onModify: $empty,
 		onShow: $empty,
-		onHide: $empty,*/
+		onHide: $empty,
+		onPreview: $empty*/
 		directory: '',
 		url: null,
 		baseURL: '',
@@ -130,8 +132,10 @@ var FileManager = new Class({
 			new Element('dt', {text: this.language.dir}),
 			new Element('dd', {'class': 'filemanager-dir'})
 		]).inject(this.info);
-
-		this.preview = new Element('div', {'class': 'filemanager-preview'});
+		
+		this.preview = new Element('div', {'class': 'filemanager-preview'}).addEvent('click:relay(img.preview)', function(){
+			self.fireEvent('preview', [this.get('src')]);
+		});
 		this.info.adopt([
 			new Element('h2', {'class': 'filemanager-headline', text: this.language.preview}),
 			this.preview
@@ -168,6 +172,7 @@ var FileManager = new Class({
 		this.overlay = new Overlay(this.options.hideOnClick ? {
 			events: {click: this.hide.bind(this)}
 		} : null);
+		
 		this.bound = {
 			keydown: (function(e){
 				if (e.control || e.meta) this.imageadd.fade(1);
