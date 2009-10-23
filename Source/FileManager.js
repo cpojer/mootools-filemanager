@@ -12,8 +12,8 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
 
 Dependencies:
-	- MooTools Core 1.2.3
-	- MooTools More 1.2.3.1 or newer: Drag.js, Drag.Move.js, Tips.js, Assets.js
+	- MooTools Core 1.2.4
+	- MooTools More 1.2.4.1 or newer: Drag.js, Drag.Move.js, Tips.js, Assets.js, Element.Delegation.js
 	- Additions.js
 
 ToDo:
