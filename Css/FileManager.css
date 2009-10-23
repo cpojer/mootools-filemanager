@@ -427,6 +427,10 @@ div.filemanager-gallery {
 	border-radius-bottomright: 5px;
 	-moz-border-radius-bottomright: 5px;
 	-webkit-border-radius-bottomright: 5px;
+	
+	box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
+	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
 }
 
 div.filemanager-gallery div.howto {
