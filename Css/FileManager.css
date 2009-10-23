@@ -14,13 +14,16 @@ div.filemanager-container, div.filemanager, div.filemanager button, div.filemana
 }
 
 div.filemanager {
-	border: 1px solid #bebebe;
 	background: #eee;
 	
 	position: absolute;
 	z-index: 1001;
 	width: 800px;
 	height: 450px;
+
+	box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
+	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
 }
 
 div.filemanager div.filemanager-menu {
@@ -80,8 +83,11 @@ div.filemanager button.filemanager-open {
 div.filemanager-menu label {
 	cursor: pointer;
 	float: right;
-	font-size: 11px;
 	width: auto;
+	height: auto;
+	line-height: 30px;
+
+	font-size: 11px;
 }
 
 div.filemanager-menu div.loader {
