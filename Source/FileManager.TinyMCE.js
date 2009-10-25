@@ -33,6 +33,7 @@ FileManager.TinyMCE = function(options){
 		manager.overlay.el.setStyle('zIndex', 400000);
 		document.id(manager.tips).setStyle('zIndex', 400010);
 		manager.show();
+		return manager;
 	};
 };
 

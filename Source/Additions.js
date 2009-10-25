@@ -115,7 +115,8 @@ this.Dialog = new Class({
 		this.overlay.show();
 		var self = this.fireEvent('open');
 		this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
-			(this.element.getElement('button.dialog-confirm') || this.element.getElement('button')).focus();
+			var button = this.element.getElement('button.dialog-confirm') || this.element.getElement('button');
+			if (button) button.focus();
 			self.fireEvent('show');
 		});
 		
