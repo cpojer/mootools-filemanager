@@ -145,12 +145,11 @@ div.filemanager-container span.fi {
 div.filemanager-container span.fi span {
 	white-space: nowrap;
 	display: block;
-	width: 90%;
+	width: 65%;
 	overflow: hidden;
 }
 
 div.filemanager-container span.drag span, div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-trident5 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
-	width: 65%;
 	overflow: hidden;
 }
 

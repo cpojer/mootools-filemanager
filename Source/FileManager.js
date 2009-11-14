@@ -86,7 +86,7 @@ var FileManager = new Class({
 		this.relayClick = function(e){
 			if(e) e.stop();
 			var file = this.retrieve('file');
-			if (this.retrieve('block')){
+			if (this.retrieve('block') && !Browser.Engine.trident){
 				this.eliminate('block');
 				return;
 			}

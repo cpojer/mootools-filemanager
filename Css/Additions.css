@@ -15,8 +15,6 @@ div.overlay-dialog {
 	background: #fff;
 }
 
-div.dialog-engine-trident4 { width: 249px; }
-
 div.dialog {
 	position: absolute;
 	display: none;
@@ -36,6 +34,12 @@ div.dialog {
 	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 10px;
 	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 10px;
 }
+
+div.dialog-engine-trident {
+	background: #000;
+}
+
+div.dialog-engine-trident4 { width: 249px; }
 
 div.dialog a { color: #aaa; }
 div.dialog a:hover { text-decoration: none; }
