@@ -5,6 +5,8 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 
 ![Screenshot](http://cpojer.net/Scripts/FileManager/FileManager.png)
 
+*Please Note:* This is currently a pre-release. The final 1.0 version is going to be released "soon"
+
 ### Features
 
 * Browse through Files and Folders on your Server
