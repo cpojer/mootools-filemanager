@@ -1,20 +1,24 @@
 /*
-Script: FileManager.js
-	MooTools FileManager for integration with [TinyMCE](http://tinymce.moxiecode.com/) 
+---
+description: FileManager.TinyMCE
+longdescription: MooTools FileManager for integration with [TinyMCE](http://tinymce.moxiecode.com/)
 
-License:
-	MIT-style license.
+authors:
+  - Christoph Pojer
 
-Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
+requires:
+  filemanager
 
-Dependencies:
-	- FileManager.js
+provides:
+  - filemanager.tinymce
+
+license:
+  MIT-style license
 
 Usage:
-	- Pass this to the "file_browser_callback"-option of TinyMCE:
-		FileManager.TinyMCE(function(){ return {FileManagerOptions}; });
-	- See the Demo for an example.
+  - Pass this to the "file_browser_callback"-option of TinyMCE: FileManager.TinyMCE(function(){ return {FileManagerOptions}; });
+  - See the Demo for an example.
+...
 */
 
 FileManager.TinyMCE = function(options){

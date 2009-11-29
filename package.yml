@@ -1,8 +1,5 @@
 name: MooTools FileManager
 author: cpojer
 category: Interface
-tags: [filemanager, upload, gallery, images]
+tags: [filemanager, upload, gallery, images, navigation]
 demo: http://cpojer.net/Scripts/FileManager/Demos/
-requires:
-	core/1.2.4: '*'
-	more/1.2.4.2: [Drag, Drag.Move, Tips, Assets, Element.Delegation]

@@ -1,42 +1,46 @@
 /*
-Script: FileManager.js
-	MooTools FileManager
+---
+description: FileManager
 
-License:
-	MIT-style license.
+authors:
+  - Christoph Pojer
 
-Version:
-	1.0
+requires:
+  core/1.2.4: '*'
+  more/1.2.4.2: [Drag, Drag.Move, Tips, Assets, Element.Delegation]
+  filemanager.additions
 
-Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
+provides:
+  - filemanager
 
-Dependencies:
-	- MooTools Core 1.2.4
-	- MooTools More 1.2.4.1 or newer: Drag.js, Drag.Move.js, Tips.js, Assets.js, Element.Delegation.js
-	- Additions.js
+license:
+  MIT-style license
 
-ToDo:
-	- Add Scroller.js (optional) for Drag&Drop in the Filelist
+version:
+  1.0
 
-Inspiration:
-	- Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
+todo:
+  - Add Scroller.js (optional) for Drag&Drop in the Filelist
 
-Options:
-	- url: (string) The base url to the Backend FileManager, without QueryString
-	- baseURL: (string) Absolute URL to the FileManager files
-	- assetBasePath: (string) The path to all images and swf files
-	- selectable: (boolean, defaults to *false*) If true, provides a button to select a file
-	- language: (string, defaults to *en*) The language used for the FileManager
-	- hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
-	- directory: (string) Can be used to load a subfolder instead of the base folder
+inspiration:
+  - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
 
-Events:
-	- onComplete(path, file): fired when a file gets selected via the "Select file" button
-	- onModify(file): fired when a file gets renamed/deleted or modified in another way
-	- onShow: fired when the FileManager opens
-	- onHide: event fired when FileManager closes
-	- onPreview: event fired when the user clicks an image in the preview
+options:
+  - url: (string) The base url to the Backend FileManager, without QueryString
+  - baseURL: (string) Absolute URL to the FileManager files
+  - assetBasePath: (string) The path to all images and swf files
+  - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
+  - language: (string, defaults to *en*) The language used for the FileManager
+  - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
+  - directory: (string) Can be used to load a subfolder instead of the base folder
+
+events:
+  - onComplete(path, file): fired when a file gets selected via the "Select file" button
+  - onModify(file): fired when a file gets renamed/deleted or modified in another way
+  - onShow: fired when the FileManager opens
+  - onHide: event fired when FileManager closes
+  - onPreview: event fired when the user clicks an image in the preview
+...
 */
 
 var FileManager = new Class({

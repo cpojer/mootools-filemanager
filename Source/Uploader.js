@@ -1,20 +1,25 @@
 /*
-Script: Uploader.js
-	MooTools FileManager - Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
+---
+description: FileManager Uploader
+longdescription: Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
 
-License:
-	MIT-style license.
+authors:
+  - Christoph Pojer
 
-Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
+requires:
+  filemanager
 
-Dependencies:
-	- FileManager.js
+provides:
+  - filemanager.uploader
 
-Options:
-	- upload: (boolean, defaults to *true*) 
-	- uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
-	- resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
+license:
+  MIT-style license
+
+options:
+  - upload: (boolean, defaults to *true*) 
+  - uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
+  - resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
+...
 */
 
 FileManager.implement({

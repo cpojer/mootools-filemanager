@@ -1,20 +1,24 @@
 /*
-Script: Additions.js
-	MooTools Additions - Various Helpers, Overlay-Class, Dialog-Class
+---
+description: FileManager Additions
 
-License:
-	MIT-style license.
+authors:
+  - Christoph Pojer
 
-Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
+requires:
+  core/1.2.4: '*'
 
-Dependencies:
-	- MooTools Core 1.2.3
+provides:
+  - filemanager.additions
 
-Contains:
-	- Element.appearOn: Can be used to show an element when another one is hovered: $(myElement).appearOn(myWrapper)
-	- Element.center: Centers an element
-	- Dialog, Overlay: Classes used by the FileManager
+license:
+  MIT-style license
+
+contains:
+  - Element.appearOn: Can be used to show an element when another one is hovered: $(myElement).appearOn(myWrapper)
+  - Element.center: Centers an element
+  - Dialog, Overlay: Classes used by the FileManager
+...
 */
 
 (function(){

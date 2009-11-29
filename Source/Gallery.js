@@ -1,18 +1,20 @@
 /*
-Script: Gallery.js
-	MooTools FileManager - Adds functionality to create a gallery out of images
+---
+description: FileManager.Gallery
+longdescription: Adds functionality to create a gallery out of a list of images
 
-License:
-	MIT-style license.
+authors:
+  - Christoph Pojer
 
-Version:
-	1.0
+requires:
+  filemanager
 
-Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
+provides:
+  - filemanager.gallery
 
-Dependencies:
-	- FileManager.js
+license:
+  MIT-style license
+...
 */
 
 (function(){
