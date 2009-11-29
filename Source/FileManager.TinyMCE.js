@@ -7,7 +7,7 @@ authors:
   - Christoph Pojer
 
 requires:
-  filemanager
+  mootools-filemanager: [filemanager]
 
 provides:
   - filemanager.tinymce

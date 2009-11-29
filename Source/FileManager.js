@@ -8,7 +8,7 @@ authors:
 requires:
   core/1.2.4: '*'
   more/1.2.4.2: [Drag, Drag.Move, Tips, Assets, Element.Delegation]
-  filemanager.additions
+  mootools-filemanager: [filemanager.additions]
 
 provides:
   - filemanager
