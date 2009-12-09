@@ -5,7 +5,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 
 ![Screenshot](http://cpojer.net/Scripts/FileManager/FileManager.png)
 
-*Please Note:* This is currently a pre-release. The final 1.0 version is going to be released "soon"
+*Please Note:* This is currently a pre-release. The final 1.0 version is going to be released "soon".
 
 ### Features
 
@@ -27,6 +27,7 @@ How to use
 
 * Open the "Demos/" folder and have fun
 * To test TinyMCE Download and extract it to "Demos/TinyMCE" and access "Demos/tinymce.html"
+* Demo of 1.0rc2 (old): http://cpojer.net/Scripts/FileManager/Demos/
 
 ### Configurable Options
 
