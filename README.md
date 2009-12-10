@@ -3,7 +3,7 @@ MooTools FileManager - Copyright (c) 2009 [Christoph Pojer](http://og5.net/chris
 
 A filemanager for the web based on MooTools that allows you to (pre)view, upload and modify files and folders via your browser.
 
-![Screenshot](http://cpojer.net/Scripts/FileManager/FileManager.png)
+![Screenshot](http://cpojer.net/Forge/FileManager.png)
 
 *Please Note:* This is currently a pre-release. The final 1.0 version is going to be released "soon".
 
