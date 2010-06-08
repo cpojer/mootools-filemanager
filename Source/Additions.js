@@ -25,21 +25,23 @@ contains:
 
 Element.implement({
 	
-	appearOn: function(el, opacity, options){
-		opacity = $type(opacity) == 'array' ? [opacity[0] || 1, opacity[1] || 0] : [opacity || 1, 0];
-		
-		this.set({
-			opacity: opacity[1],
-			tween: options || {duration: 200}
-		});
-		
-		$(el).addEvents({
-			mouseenter: this.fade.bind(this, opacity[0]),
-			mouseleave: this.fade.bind(this, opacity[1])
-		});
-		
-		return this;
-	},
+		appearOn: function(el) {
+			
+			var params = Array.link($A(arguments).erase(arguments[0]), {options: Object.type, opacity: $defined}),
+				opacity = $type(params.opacity) == 'array' ? [params.opacity[0] || 1, params.opacity[1] || 0] : [params.opacity || 1, 0];
+			
+			this.set({
+				opacity: opacity[1],
+				tween: params.options || {duration: 500}
+			});
+			
+			$$(el).addEvents({
+				mouseenter: this.fade.bind(this, opacity[0]),
+				mouseleave: this.fade.bind(this, opacity[1])
+			});
+			
+			return this;
+		},
 	
 	center: function(offsets){
 		var scroll = document.getScroll(),
