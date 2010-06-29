@@ -120,15 +120,27 @@ div.filemanager ul li {
 	white-space: nowrap;
 }
 
-div.filemanager ul.filemanager-browser {
+div.filemanager div.filemanager-browsercontainer {
 	left: 0px;
 	top: 0px;
 	height: 100%;
-	width: 30%;
-	
+	width: 30%;	
 	border: 0;
 	border-right: 1px solid #bebebe;
-	background: url(../Assets/filelist.png) repeat-x #c1c7cf;
+	background:  #c1c7cf url(../Assets/filelist.png) repeat-x;
+}
+
+div.filemanager-browsercontainer div.filemanager-browserheader {
+  left: 0;
+  top: 0;
+  width:100%;
+  background:#C3CDD9;
+  border-bottom: 1px solid #bebebe;
+  text-align: right;
+}
+
+div.filemanager-browsercontainer div.filemanager-browserheader img {
+  padding:3px 3px 0;
 }
 
 div.filemanager-container span.fi {
