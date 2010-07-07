@@ -1,5 +1,9 @@
 /*
- * @todo - modify fill function to change layout based on fillType
+ * @todo - start uploading a lot of photos to test scrolling and thumb generation
+ * @todo - test thunmb generation of small files
+ * @todo - debug ui errors
+ * @todo - add css 95% width
+ * @todo - test in IE
  *
 ---
 description: FileManager
@@ -329,7 +333,8 @@ var FileManager = new Class({
 				this.fill(j, nofade);
 			}).bind(this),
 			data: {
-				directory: dir
+				directory: dir,
+        type: this.listType
 			}
 		}, this).post();
 	},
@@ -428,9 +433,19 @@ var FileManager = new Class({
 		var els = [[], []];
 		$each(j.files, function(file){
 			file.dir = j.path;
-			var el = file.element = new Element('span', {'class': 'fi', href: '#'}).adopt(
-				new Asset.image(this.options.assetBasePath + 'Icons/' + file.icon + '.png'),
-				new Element('span', {text: file.name})
+
+      if (this.listType == 'thumb')
+      {
+        $icon = new Asset.image(file.icon);
+      }
+      else
+      {
+        $icon = new Asset.image(this.options.assetBasePath + 'Icons/' + file.icon + '.png')
+      }
+
+			var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
+        $icon,
+        new Element('span', {text: file.name})
 			).store('file', file);
 
 			var icons = [];

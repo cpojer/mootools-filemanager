@@ -1,2 +1,4 @@
 Demos/Files/*
+Assets/Thumbs/*
+!Assets/Thumbs/index.html
 Demos/TinyMCE

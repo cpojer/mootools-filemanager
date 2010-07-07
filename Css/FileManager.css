@@ -154,11 +154,25 @@ div.filemanager-container span.fi {
 	cursor: pointer;
 }
 
+div.filemanager-container span.thumb {
+  height:60px;
+  padding:4px;
+  background:#D4DCE6;
+  margin:0 0 3px 0;
+  display:block;
+  float:left;
+  width:100%;
+}
+
 div.filemanager-container span.fi span {
 	white-space: nowrap;
 	display: block;
 	width: 65%;
 	overflow: hidden;
+}
+
+div.filemanager-container span.thumb span {
+  margin-top:16px;
 }
 
 div.filemanager-container span.drag span, div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-trident5 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
@@ -183,14 +197,28 @@ div.filemanager ul li a.selected, div.filemanager ul li span.selected {
 	outline: none;
 }
 
+div.filemanager ul li span.thumb.selected {
+	background:#8EAAD6;
+	color: #eee;
+	outline: none;
+}
+
 div.filemanager-container span.fi img {
 	display: block;
 	float: left;
 	margin: 3px 3px 0 0;
 }
 
+div.filemanager-container span.thumb img {
+	display: block;
+	float: left;
+	margin: 0 5px 0 0;
+  border:1px solid #CCC;
+}
+
 div.filemanager-container span.fi img.browser-icon {
 	float: right;
+  border:none;
 }
 
 div.filemanager-container span.move img.browser-icon {

@@ -235,7 +235,7 @@ class Image {
 	 * @param string $ext
 	 * @param string $file
 	 */
-	private function process($ext = null, $file = null){
+	public function process($ext = null, $file = null){
 		if(!$ext) $ext = $this->meta['ext'];
 		
 		if($ext=='png') imagesavealpha($this->image, true);
