@@ -90,7 +90,7 @@ class FileManager {
 			if ($this->options['filter'] && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->options['filter']))
 				continue;
 
-      if($type == 'thumb' && is_file($file))
+      if($type == 'thumb' && !is_dir($file))
       {
         $icon = $this->options['assetBasePath'] . '/Thumbs/' . $this->getThumb($file);
       }
