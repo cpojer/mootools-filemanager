@@ -125,6 +125,7 @@ var FileManager = new Class({
 
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.el);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
+    this.scroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer)
     this.browserheader.adopt([
       new Asset.image(this.options.assetBasePath + 'application_side_list.png',{
         'opacity':.95,
@@ -145,7 +146,7 @@ var FileManager = new Class({
 				return self.deselect();
 			}),
 			'click:relay(li span.fi)': this.relayClick
-		}).inject(this.browsercontainer);
+		}).inject(this.scroll);
 		
 		this.addMenuButton('create');
 		if (this.options.selectable) this.addMenuButton('open');
@@ -222,7 +223,10 @@ var FileManager = new Class({
 			}).bind(this),
 			scroll: (function(){
 				this.el.center(this.offsets);
-				this.fireEvent('scroll');
+				this.fireEvent('scroll')
+        scrollSize = this.browsercontainer.getSize();
+        headerSize = this.browserheader.getSize();
+        this.scroll.setStyle('height',scrollSize.y - headerSize.y);
 			}).bind(this)
 		};
 	},
@@ -251,6 +255,11 @@ var FileManager = new Class({
 				resize: this.bound.scroll,
 				keyup: this.bound.keyesc
 			});
+
+      scrollSize = this.browsercontainer.getSize();
+      headerSize = this.browserheader.getSize();
+      this.scroll.setStyle('height',scrollSize.y - headerSize.y);
+
 		}).delay(500, this);
 	},
 
@@ -431,19 +440,23 @@ var FileManager = new Class({
 		if (!j.files) return;
 
 		var els = [[], []];
+    
 		$each(j.files, function(file){
 			file.dir = j.path;
-
-      if (this.listType == 'thumb')
+      var extraClasses = '';
+      var largeDir = '';
+      if (this.listType == 'thumb' && file.mime!='text/directory')
       {
         $icon = new Asset.image(file.icon);
       }
       else
       {
-        $icon = new Asset.image(this.options.assetBasePath + 'Icons/' + file.icon + '.png')
+        largeDir = (this.listType == 'thumb') ? 'Large/' : '';
+        $icon = new Asset.image(this.options.assetBasePath + 'Icons/' + largeDir + file.icon + '.png')
+        extraClasses += 'file'
       }
 
-			var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
+			var el = file.element = new Element('span', {'class': 'fi ' + this.listType + ' ' + extraClasses, href: '#'}).adopt(
         $icon,
         new Element('span', {text: file.name})
 			).store('file', file);
@@ -472,7 +485,7 @@ var FileManager = new Class({
 				opacity: 1,
 				zIndex: '',
 				position: 'relative',
-				width: 'auto',
+				width: '98%',
 				left: 0,
 				top: 0
 			}).inject(el.retrieve('parent'));
