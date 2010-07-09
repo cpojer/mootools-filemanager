@@ -18,8 +18,8 @@ div.filemanager {
 	
 	position: absolute;
 	z-index: 1001;
-	width: 800px;
-	height: 450px;
+	width: 95%;
+	height: 95%;
 
 	box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
 	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
@@ -98,13 +98,18 @@ div.filemanager-menu div.loader {
 	background: url(../Assets/loader.gif) no-repeat;
 }
 
+div.filemanager div.filemanager-browserscroll {
+  margin: 0;
+	padding: 0;
+	height:100%;
+  overflow: auto;
+}
+
 div.filemanager ul {
 	margin: 0;
 	padding: 0;
 	position: relative;
 	line-height: 1.8em;
-	overflow: auto;
-	overflow-x: hidden;
 	zoom: 1;
 }
 
@@ -121,13 +126,11 @@ div.filemanager ul li {
 }
 
 div.filemanager div.filemanager-browsercontainer {
-	left: 0px;
-	top: 0px;
 	height: 100%;
 	width: 30%;	
 	border: 0;
 	border-right: 1px solid #bebebe;
-	background:  #c1c7cf url(../Assets/filelist.png) repeat-x;
+	background:#D7DEE8 url(../Assets/filelist.png) repeat-x bottom left;
 }
 
 div.filemanager-browsercontainer div.filemanager-browserheader {
@@ -158,10 +161,11 @@ div.filemanager-container span.thumb {
   height:60px;
   padding:4px;
   background:#D4DCE6;
-  margin:0 0 3px 0;
+  margin:0;
+  border-bottom:1px solid #EEEEEE;
   display:block;
   float:left;
-  width:100%;
+  width:98%;
 }
 
 div.filemanager-container span.fi span {
@@ -214,6 +218,11 @@ div.filemanager-container span.thumb img {
 	float: left;
 	margin: 0 5px 0 0;
   border:1px solid #CCC;
+}
+
+div.filemanager-container span.file img {
+  border:none;
+  margin-top:5px
 }
 
 div.filemanager-container span.fi img.browser-icon {
