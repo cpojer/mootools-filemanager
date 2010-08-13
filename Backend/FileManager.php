@@ -154,11 +154,11 @@ class FileManager {
 				</div>
 				<h2>${more}</h2>
 				<dl>
-					<dt>${title}</dt><dd>' . $getid3->info['comments']['title'][0] . '</dd>
-					<dt>${artist}</dt><dd>' . $getid3->info['comments']['artist'][0] . '</dd>
-					<dt>${album}</dt><dd>' . $getid3->info['comments']['album'][0] . '</dd>
-					<dt>${length}</dt><dd>' . $getid3->info['playtime_string'] . '</dd>
-					<dt>${bitrate}</dt><dd>' . round($getid3->info['bitrate']/1000) . 'kbps</dd>
+					<dt>${title}</dt><dd>' . @$getid3->info['comments']['title'][0] . '</dd>
+					<dt>${artist}</dt><dd>' . @$getid3->info['comments']['artist'][0] . '</dd>
+					<dt>${album}</dt><dd>' . @$getid3->info['comments']['album'][0] . '</dd>
+					<dt>${length}</dt><dd>' . @$getid3->info['playtime_string'] . '</dd>
+					<dt>${bitrate}</dt><dd>' . @round($getid3->info['bitrate']/1000) . 'kbps</dd>
 				</dl>';
 		}
 		
