@@ -101,7 +101,7 @@ class Upload {
 		}
 		error_reporting($ini);
 		
-		if(!$mime && in_array($options['extension'], array('gif', 'jpg', 'jpeg', 'png'))){
+		if(!$mime && in_array(strtolower($options['extension']), array('gif', 'jpg', 'jpeg', 'png'))){
 			$image = getimagesize($file);
 			if(!empty($image['mime']))
 				$mime = $image['mime'];
