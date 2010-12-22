@@ -80,7 +80,6 @@ class FileManager {
 	
 	protected function onView(){
 		$dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-    $type = ($this->post['type'] == 'list') ? 'list' : 'thumb';
 		$files = ($files = glob($dir . '/*')) ? $files : array();
 		
 		if ($dir != $this->basedir) array_unshift($files, $dir . '/..');
@@ -89,21 +88,12 @@ class FileManager {
 			$mime = $this->getMimeType($file);
 			if ($this->options['filter'] && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->options['filter']))
 				continue;
-
-      if($type == 'thumb' && !is_dir($file))
-      {
-        $icon = $this->options['assetBasePath'] . '/Thumbs/' . $this->getThumb($file);
-      }
-      else
-      {
-        $icon = $this->getIcon($this->normalize($file));
-      }
 			
 			$out[is_dir($file) ? 0 : 1][] = array(
 				'name' => pathinfo($file, PATHINFO_BASENAME),
 				'date' => date($this->options['dateFormat'], filemtime($file)),
 				'mime' => $this->getMimeType($file),
-				'icon' => $icon,
+				'icon' => $this->getIcon($this->normalize($file)),
 				'size' => filesize($file)
 			);
 		}
@@ -310,31 +300,6 @@ class FileManager {
 		$ext = pathinfo($file, PATHINFO_EXTENSION);
 		return ($ext && file_exists(realpath($this->options['assetBasePath'] . '/Icons/' . $ext . '.png'))) ? $ext : 'default';
 	}
-
-  protected function getThumb($file)
-  {
-    $thumb = md5($file) . '.jpg';
-    $thumbPath = $this->options['assetBasePath'] . '/Thumbs/' . $thumb;
-    if (is_file($thumbPath))
-    {
-      return $thumb;
-    }
-    else
-    {
-      return $this->generateThumb($file,$thumbPath);
-    }
-  }
-
-  protected function generateThumb($file,$thumbPath)
-  {
-    
-    $img = new Image($file);
-	  $size = $img->getSize();
-	  if ($size['width'] > 75) $img->resize(75)->process('jpeg',$thumbPath);
-	  elseif ($size['height'] > 50) $img->resize(null, 50)->process('jpeg',$thumbPath);
-    else $img->process('jpeg',$thumbPath);
-    return basename($thumbPath);
-  }
 
 	protected function getMimeType($file){
 		return is_dir($file) ? 'text/directory' : Upload::mime($file);
