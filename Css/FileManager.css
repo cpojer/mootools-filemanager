@@ -18,8 +18,8 @@ div.filemanager {
 	
 	position: absolute;
 	z-index: 1001;
-	width: 95%;
-	height: 95%;
+	width: 75%;
+	height: 75%;
 
 	box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
 	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;

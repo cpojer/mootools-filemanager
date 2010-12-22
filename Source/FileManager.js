@@ -2,7 +2,6 @@
  * @todo - start uploading a lot of photos to test scrolling and thumb generation
  * @todo - test thunmb generation of small files
  * @todo - debug ui errors
- * @todo - add css 95% width
  * @todo - test in IE
  *
 ---
@@ -587,9 +586,14 @@ var FileManager = new Class({
 
 		if (!file) return;
 		var size = this.size(file.size);
-
+    
+    // check if the icon should be a thumbnail or icon
+    var src = (file.icon.indexOf(this.options.assetBasePath) == -1)
+      ? this.options.assetBasePath + 'Icons/' + file.icon + '.png'
+      : file.icon;
+    
 		this.info.fade(1).getElement('img').set({
-			src: this.options.assetBasePath + 'Icons/' + file.icon + '.png',
+			src: src,
 			alt: file.mime
 		});
 		
