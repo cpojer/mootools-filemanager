@@ -19,7 +19,7 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
 
 version:
-  1.01
+  1.1beta
 
 Dependencies:
 	- Upload.php
@@ -76,8 +76,8 @@ class FileManager {
 		$this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath']);
 		$this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory']);
 		$this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
-		$this->path = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath(realPath($this->basedir.'../'));
-		$this->length = strlen($this->path);
+		//$this->path = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath(realPath($this->basedir.'../'));
+		$this->length = strlen($this->basedir);
 		$this->listType = ($_POST['type'] == 'list') ? 'list' : 'thumb';
 
 		header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
@@ -124,6 +124,7 @@ class FileManager {
 		}
 		
 		echo json_encode(array(
+		    'root' => pathinfo($this->basedir, PATHINFO_BASENAME),
 			  'path' => $this->getPath($dir),
 			  'dir' => array(
 				'name' => pathinfo($dir, PATHINFO_BASENAME),
@@ -139,7 +140,7 @@ class FileManager {
 	protected function onDetail(){
 		if (empty($this->post['directory']) || empty($this->post['file'])) return;
 		
-		$file = $this->path . $this->post['directory'] . $this->post['file'];
+		$file = $this->basedir . $this->post['directory'] . $this->post['file'];
 		if (!$this->checkFile($file)) return;
 		
 		require_once($this->options['id3Path']);
@@ -164,7 +165,7 @@ class FileManager {
 			$getid3->Analyze($file);
 			foreach ($getid3->info['zip']['files'] as $name => $size){
 				$icon = is_array($size) ? 'dir' : $this->getIcon($name);
-				$out[($icon == 'dir') ? 0 : 1][$name] = '<li><a><img src="' . $this->options['assetBasePath'] . '/Icons/' . $icon . '.png" alt="" /> ' . $name . '</a></li>';
+				$out[($icon == 'dir') ? 0 : 1][$name] = '<li><a><img src="' . $this->options['assetBasePath'] . 'Icons/' . $icon . '.png" alt="" /> ' . $name . '</a></li>';
 			}
 			natcasesort($out[0]);
 			natcasesort($out[1]);
@@ -198,7 +199,7 @@ class FileManager {
 	protected function onDestroy(){
 		if (!$this->options['destroy'] || empty($this->post['directory']) || empty($this->post['file'])) return;
 		
-		$file = $this->path . $this->post['directory'] . $this->post['file'];
+		$file = $this->basedir . $this->post['directory'] . $this->post['file'];
 		if (!$this->checkFile($file)) return;
 		
 		$this->unlink($file);
@@ -335,7 +336,7 @@ class FileManager {
 		}
 		
 		$largeDir = ($smallIcon === false && $this->listType == 'thumb') ? 'Large/' : '';
-		$path = $this->options['assetBasePath'] . '/Icons/'.$largeDir.$ext.'.png';
+		$path = $this->options['assetBasePath'] . 'Icons/'.$largeDir.$ext.'.png';
 		
 		return $path;
 	}
@@ -368,13 +369,13 @@ class FileManager {
 	}
 	
 	protected function getDir($dir){
-		$dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->path.$dir);
+		$dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->basedir.$dir);
 		return $this->checkFile($dir) ? $dir : $this->basedir;
 	}
 	
 	protected function getPath($file){
 		$file = $this->normalize(substr($file, $this->length));
-		return substr($file, FileManagerUtility::startsWith($file, '/') ? 1 : 0);
+		return $file;
 	}
 	
 	protected function checkFile($file){
