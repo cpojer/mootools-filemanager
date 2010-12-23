@@ -3,7 +3,7 @@
 include('../Backend/FileManager.php');
 
 $browser = new FileManager(array(
-	'directory' => 'Files/',
+	'directory' => '../../_feindura/_upload/',
 	'assetBasePath' => '../Assets',
 	'upload' => false,
 	'destroy' => false,

@@ -3,11 +3,23 @@
 Script: FileManager.php
 	MooTools FileManager - Backend for the FileManager Script
 
+Authors:
+ - Christoph Pojer (http://cpojer.net)
+    - author
+ - James Ehly (http://www.devtrench.com) 
+    - thumbnail list
+ - Fabian Vogelsteller (http://frozeman.de) 
+    - extended thumbnails
+    - now absolute and relative paths are possible
+
 License:
 	MIT-style license.
 
 Copyright:
-	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net).
+	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
+
+version:
+  1.01
 
 Dependencies:
 	- Upload.php
@@ -16,17 +28,17 @@ Dependencies:
 
 Options:
 	- directory: (string) The base directory to be used for the FileManger
-	- baseURL: (string) Absolute URL to the FileManager files
-	- assetBasePath: (string) The path to all images and swf files
-	- id3Path: (string, optional) The path to the getid3.php file
-	- mimeTypesPath: (string, optional) The path to the MimTypes.ini file.
+	- assetBasePath: (string) The path to all images and swf files used by the filemanager
+	- thumbnailPath: (string) The path where the thumbnails of the pictures will be saved
+	- id3Path: (string, optional, relative path) The path to the getid3.php file
+	- mimeTypesPath: (string, optional, relative path) The path to the MimTypes.ini file.
 	- dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
 	- upload: (boolean, defaults to *false*) Whether to allow uploads or not
 	- destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
 	- maxUploadSize: (integeter, defaults to *3145728* bytes) The maximum file size for upload in bytes
 	- safe: (string, defaults to *true*) If true, disallows 
 	- filter: (string) If specified, the mimetypes to be allowed (for display and upload).
-		Example: image/ allows all Image Mimetypes
+		Example: "image/" allows all Image Mimetypes
 */
 
 require_once(FileManagerUtility::getPath() . '/Upload.php');
@@ -48,8 +60,8 @@ class FileManager {
 		
 		$this->options = array_merge(array(
 			'directory' => '../Demos/Files',
-			'baseURL' => '',
 			'assetBasePath' => '../Assets',
+			'thumbnailPath' => '../Assets/Thumbs/',
 			'id3Path' => $path . '/Assets/getid3/getid3.php',
 			'mimeTypesPath' => $path . '/MimeTypes.ini',
 			'dateFormat' => 'j M Y - H:i',
@@ -60,12 +72,14 @@ class FileManager {
 			'filter' => null
 		), $options);
 		
-		$this->basedir = realpath($this->options['directory']);
+		$this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath']);
+		$this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath']);
+		$this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory']);
 		$this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
-		$this->path = realpath($this->options['directory'] . '/../');
+		$this->path = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath(realPath($this->basedir.'../'));
 		$this->length = strlen($this->path);
 		$this->listType = ($_POST['type'] == 'list') ? 'list' : 'thumb';
-		
+
 		header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
 		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
 		
@@ -90,16 +104,21 @@ class FileManager {
 			$mime = $this->getMimeType($file);
 			if ($this->options['filter'] && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->options['filter']))
 				continue;
-
+      
+      if(strpos($mime,'image') !== false)
+        $this->getThumb($this->normalize($file));
+      
       $icon = ($this->listType == 'thumb' && strpos($mime,'image') !== false )
-        ? $this->options['assetBasePath'] . '/Thumbs/' . $this->getThumb($this->normalize($file))
+        ? $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file))
         : $this->getIcon($this->normalize($file));
 			
 			$out[is_dir($file) ? 0 : 1][] = array(
+			  'path' => str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file)),
 				'name' => pathinfo($file, PATHINFO_BASENAME),
 				'date' => date($this->options['dateFormat'], filemtime($file)),
 				'mime' => $this->getMimeType($file),
-				'icon' => $icon,
+				'thumbnail' => $icon,
+				'icon' => $this->getIcon($this->normalize($file),true),
 				'size' => filesize($file)
 			);
 		}
@@ -110,7 +129,8 @@ class FileManager {
 				'name' => pathinfo($dir, PATHINFO_BASENAME),
 				'date' => date($this->options['dateFormat'], filemtime($dir)),
 				'mime' => 'text/directory',
-				'icon' => 'dir'
+				'thumbnail' => $this->getIcon($this->normalize($dir)),
+				'icon' => $this->getIcon($this->normalize($dir),true)
 			),
 			'files' => array_merge(!empty($out[0]) ? $out[0] : array(), !empty($out[1]) ? $out[1] : array())
 		));
@@ -119,17 +139,17 @@ class FileManager {
 	protected function onDetail(){
 		if (empty($this->post['directory']) || empty($this->post['file'])) return;
 		
-		$file = realpath($this->path . '/' . $this->post['directory'] . '/' . $this->post['file']);
+		$file = $this->path . $this->post['directory'] . $this->post['file'];
 		if (!$this->checkFile($file)) return;
 		
 		require_once($this->options['id3Path']);
 		
-		$url = $this->options['baseURL'] . $this->normalize(substr($file, strlen($this->path)+1));
+		$url = str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file));
 		$mime = $this->getMimeType($file);
 		$content = null;
 		if (FileManagerUtility::startsWith($mime, 'image/')){
 			$size = getimagesize($file);
-			$content = '<img src="' . $url . '" class="preview" alt="" />
+			$content = '<a href="'.$url.'" rel="preview"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)) . '" class="preview" alt="preview" /></a>
 				<h2>${more}</h2>
 				<dl>
 					<dt>${width}</dt><dd>' . $size[0] . 'px</dd>
@@ -178,15 +198,14 @@ class FileManager {
 	protected function onDestroy(){
 		if (!$this->options['destroy'] || empty($this->post['directory']) || empty($this->post['file'])) return;
 		
-		$file = realpath($this->path . '/' . $this->post['directory'] . '/' . $this->post['file']);
+		$file = $this->path . $this->post['directory'] . $this->post['file'];
 		if (!$this->checkFile($file)) return;
 		
 		$this->unlink($file);
 		
 		// unlink thumbnail
-		$file = str_replace('\\','/',$file);
-		$thumb = md5($file) . '.jpg';
-    $thumbPath = $this->options['assetBasePath'] . '/Thumbs/' . $thumb;
+		$thumb = $this->generateThumbName($file);
+    $thumbPath = $_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'] . $thumb;
     if (is_file($thumbPath))
       unlink($thumbPath);
 		
@@ -215,7 +234,7 @@ class FileManager {
 			
 			$dir = $this->getDir($this->get['directory']);
 			$name = pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_FILENAME);
-			$file = Upload::move('Filedata', $dir . '/', array(
+			$file = Upload::move('Filedata', $dir , array(
 				'name' => $name,
 				'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
 				'size' => $this->options['maxUploadSize'],
@@ -252,7 +271,7 @@ class FileManager {
 		
 		$rename = empty($this->post['newDirectory']) && !empty($this->post['name']);
 		$dir = $this->getDir($this->post['directory']);
-		$file = realpath($dir . '/' . $this->post['file']);
+		$file = $dir . $this->post['file'];
 		
 		$is_dir = is_dir($file);
 		if (!$this->checkFile($file) || (!$rename && $is_dir))
@@ -279,7 +298,7 @@ class FileManager {
 	}
 	
 	protected function unlink($file){
-		$file = realpath($file);
+		
 		if ($this->basedir==$file || strlen($this->basedir)>=strlen($file))
 			return;
 		
@@ -301,12 +320,12 @@ class FileManager {
 			$files[] = pathinfo($f, PATHINFO_FILENAME);
 		
 		$pathinfo = pathinfo($file);
-		$file = $dir . '/' . FileManagerUtility::pagetitle($pathinfo['filename'], $files).(!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
-		
+		$file = $dir . FileManagerUtility::pagetitle($pathinfo['filename'], $files).(!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
+
 		return !$file || !FileManagerUtility::startsWith($file, $this->basedir) || file_exists($file) ? null : $file;
 	}
 	
-	protected function getIcon($file){
+	protected function getIcon($file,$smallIcon = false){
 	  $ext = 'default';
 	 
 		if (FileManagerUtility::endsWith($file, '/..')) $ext = 'dir_up';
@@ -315,7 +334,7 @@ class FileManager {
 		  $ext = pathinfo($file, PATHINFO_EXTENSION);
 		}
 		
-		$largeDir = ($this->listType == 'thumb') ? 'Large/' : '';
+		$largeDir = ($smallIcon === false && $this->listType == 'thumb') ? 'Large/' : '';
 		$path = $this->options['assetBasePath'] . '/Icons/'.$largeDir.$ext.'.png';
 		
 		return $path;
@@ -323,12 +342,15 @@ class FileManager {
 
   protected function getThumb($file)
   {
-    $file = str_replace('\\','/',$file);
-    $thumb = md5($file) . '.jpg';
-    $thumbPath = $this->options['assetBasePath'] . '/Thumbs/' . $thumb;
+    $thumb = $this->generateThumbName($file);
+    $thumbPath = $_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'] . $thumb;
     return (is_file($thumbPath))
       ? $thumb
       : $this->generateThumb($file,$thumbPath);
+  }
+  
+  protected function generateThumbName($file) {
+    return 'thumb_'.str_replace('.','_',basename($file)).'.jpg';
   }
 
   protected function generateThumb($file,$thumbPath)
@@ -345,8 +367,8 @@ class FileManager {
 		return is_dir($file) ? 'text/directory' : Upload::mime($file);
 	}
 	
-	protected function getDir($dir){
-		$dir = realpath($this->path . '/' . (FileManagerUtility::startsWith($dir, $this->basename) ? $dir : $this->basename));
+	protected function getDir($dir){	 
+		$dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->path.$dir);
 		return $this->checkFile($dir) ? $dir : $this->basedir;
 	}
 	
@@ -434,6 +456,15 @@ class FileManagerUtility {
 	public static function getPath(){
 		static $path;
 		return $path ? $path : $path = pathinfo(__FILE__, PATHINFO_DIRNAME);
+	}
+	
+	public static function getRealPath($path){
+	  $path = (FileManagerUtility::startsWith($path,'/')) ? $_SERVER['DOCUMENT_ROOT'].$path : $path;
+		$path = (FileManagerUtility::startsWith($path,'../') || !FileManagerUtility::startsWith($path,'/')) ? realPath($path) : $path;
+		$path = str_replace('\\','/',$path);
+    $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
+    $path = (FileManagerUtility::endsWith($path,'/')) ? $path : $path.'/';
+		return $path;
 	}
 	
 }

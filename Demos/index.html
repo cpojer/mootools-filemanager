@@ -39,7 +39,9 @@
 		padding: 10px 17px;
 		border: 1px solid #b2b2b2;
 		background: #fff;
-		-moz-box-shadow: rgba(0, 0, 0, 0.5) 0px 0px 2px;
+		box-shadow: rgba(0, 0, 0, 0.3) 0 0 10px;
+	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 10px;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 10px;
 	}
 	
 	div.content div.example {
@@ -55,6 +57,7 @@
 	
 	<link rel="stylesheet" media="all" type="text/css" href="../Css/FileManager.css" />
 	<link rel="stylesheet" media="all" type="text/css" href="../Css/Additions.css" />
+	<link rel="stylesheet" media="all" type="text/css" href="../Source/SqueezeBox/Assets/SqueezeBox.css" />
 
 	<script type="text/javascript" src="mootools-1.2.5-core.js"></script>
 	<script type="text/javascript" src="mootools-1.2.5.1-more.js"></script>
@@ -70,13 +73,17 @@
 	<script type="text/javascript" src="../Source/Uploader.js"></script>
 	<script type="text/javascript" src="../Source/Gallery.js"></script>
 	
+	<script type="text/javascript" src="../Source/SqueezeBox/SqueezeBox.js"></script>
+	
 	<script type="text/javascript">
-		window.addEvent('domready', function(){
+		window.addEvent('domready', function() {
+		  
 			/* Simple Example */
 			var manager1 = new FileManager({
 				url: 'manager1.php',
 				assetBasePath: '../Assets',
 				language: 'en',
+				hideOnClick: true,
 				uploadAuthData: {session: 'MySessionId'}
 			});
 			$('example1').addEvent('click', manager1.show.bind(manager1));
@@ -99,9 +106,9 @@
 					});
 				});
 				manager2.tips.attach(icon);
-				
+
 				div = new Element('div', {'class': 'selected-file', text: 'Selected file: '}).adopt(
-					new Asset.image(this.options.assetBasePath+'Icons/'+file.icon+'.png', {'class': 'mime-icon'}),
+					new Asset.image(file.smallIcon, {'class': 'mime-icon'}),
 					new Element('span', {text: file.name}),
 					icon
 				).inject(el, 'after');
@@ -112,6 +119,7 @@
 				assetBasePath: '../Assets',
 				language: 'en',
 				selectable: true,
+				hideOnClick: true,
 				uploadAuthData: {session: 'MySessionId'},
 				onComplete: complete
 			});
@@ -120,7 +128,7 @@
 			var val = el.get('value');
 			if(val) complete.apply(manager2, [val, {
 				name: val.split('/').getLast(),
-				icon: val.split('.').getLast()
+				smallIcon: '../Assets/Icons/'+val.split('.').getLast()+'.png'
 			}]);
 			
 			new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager2.show.bind(manager2)).inject(el, 'before');

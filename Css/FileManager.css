@@ -27,15 +27,20 @@ div.filemanager {
 }
 
 div.filemanager div.filemanager-menu {
+  z-index: 2;
 	position: absolute;
 	height: 30px;
-	left: 30%;
-	width: 70%;
+	left: 40%;
+	width: 60%;
 	bottom: 0;
 	line-height: 30px;
 	
 	border-top: 1px solid #bebebe;
 	background: url(../Assets/menu.png) repeat-x;
+	
+	box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
+	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
 }
 
 div.filemanager button {
@@ -128,10 +133,13 @@ div.filemanager ul li {
 
 div.filemanager div.filemanager-browsercontainer {
 	height: 100%;
-	width: 30%;	
+	width: 40%;	
 	border: 0;
 	border-right: 1px solid #bebebe;
 	background:#D7DEE8 url(../Assets/filelist.png) repeat-x bottom left;
+	box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
+	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
 }
 
 div.filemanager-browsercontainer div.filemanager-browserheader {
@@ -173,7 +181,6 @@ div.filemanager-container span.thumb {
 div.filemanager-container span.fi span {
 	white-space: nowrap;
 	display: block;
-	width: 65%;
 	overflow: hidden;
 }
 
@@ -213,6 +220,7 @@ div.filemanager-container span.fi img {
 	display: inline-block;
 	float: left;
 	margin: 3px 3px 0 0;
+
 }
 
 div.filemanager-container span.thumb img {
@@ -261,10 +269,13 @@ div.filemanager div.filemanager-close img {
 }
 
 div.filemanager-infos {
+  z-index: 0;
 	position: absolute;
-	left: 30%;
+	left: 40%;
 	top: 0;
-	width: 70%;
+	width: 58%;
+	height: 100%;
+	padding: 0px 10px;
 	line-height: 1.6em;
 	overflow: auto;
 }
@@ -282,7 +293,6 @@ img.filemanager-icon {
 div.filemanager h1 {
 	margin: 0;
 	padding: 0;
-	width: 80%;
 	height: 32px;
 	line-height: 32px;
 	

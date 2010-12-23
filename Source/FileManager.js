@@ -1,18 +1,23 @@
 /*
- * @todo - start uploading a lot of photos to test scrolling and thumb generation
  * @todo - test thunmb generation of small files
- * @todo - debug ui errors
  * @todo - test in IE
  *
 ---
 description: FileManager
 
-authors:
-  - Christoph Pojer
+Authors:
+ - Christoph Pojer (http://cpojer.net)
+    - author
+ - James Ehly (http://www.devtrench.com) 
+    - thumbnail list
+ - Fabian Vogelsteller (http://frozeman.de) 
+    - extended thumbnails
+    - now absolute and relative paths are possible
+    - add SqueezeBox for preview
 
 requires:
-  core/1.2.4: '*'
-  more/1.2.4.2: [Drag, Drag.Move, Tips, Assets, Element.Delegation]
+  core/1.2.5: '*'
+  more/1.2.5.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation]
 
 provides:
   - filemanager
@@ -21,7 +26,7 @@ license:
   MIT-style license
 
 version:
-  1.0
+  1.01
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
@@ -31,7 +36,6 @@ inspiration:
 
 options:
   - url: (string) The base url to the Backend FileManager, without QueryString
-  - baseURL: (string) Absolute URL to the FileManager files
   - assetBasePath: (string) The path to all images and swf files
   - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
   - language: (string, defaults to *en*) The language used for the FileManager
@@ -63,7 +67,6 @@ var FileManager = new Class({
 		onPreview: $empty*/
 		directory: '',
 		url: null,
-		baseURL: '',
 		assetBasePath: null,
 		selectable: false,
 		hideOnClick: false,
@@ -276,11 +279,9 @@ var FileManager = new Class({
 
 	open: function(e){
 		e.stop();
-
-		if (!this.Current) return false;
-		
+    if (!this.Current) return false;
 		this.fireEvent('complete', [
-			this.normalize(this.Directory + '/' + this.Current.retrieve('file').name),
+			this.normalize(this.Current.retrieve('file').path),
 			this.Current.retrieve('file')
 		]);
 		this.hide();
@@ -445,11 +446,11 @@ var FileManager = new Class({
 			file.dir = j.path;
       var extraClasses = '';
       var largeDir = '';
-      var icon = new Asset.image(file.icon);
+      var icon = new Asset.image(file.thumbnail);
       
 			var el = file.element = new Element('span', {'class': 'fi ' + this.listType + ' ' + extraClasses, href: '#'}).adopt(
         icon,
-        new Element('span', {text: file.name})
+        new Element('span', {text: file.name, title:file.name})
 			).store('file', file);
 
 			var icons = [];
@@ -457,7 +458,7 @@ var FileManager = new Class({
 				icons.push(new Asset.image(this.options.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
 					this.tips.hide();
 					e.stop();
-					window.open(this.options.baseURL + this.normalize(this.Directory + '/' + file.name));
+					window.open(file.path);
 				}).bind(this)).inject(el, 'top'));
 
 			if (file.name != '..')
@@ -579,8 +580,8 @@ var FileManager = new Class({
 		if (!file) return;
 		var size = this.size(file.size);
     
-    var icon = (file.icon.indexOf(this.options.assetBasePath) == -1) ? this.options.assetBasePath + 'Icons/'+file.icon+'.png' : file.icon;
-    
+    var icon = file.icon;
+
 		this.info.fade(1).getElement('img').set({
 			src: icon,
 			alt: file.mime
@@ -590,6 +591,7 @@ var FileManager = new Class({
 		this.preview.empty();
 
 		this.info.getElement('h1').set('text', file.name);
+		this.info.getElement('h1').set('title', file.name);
 		this.info.getElement('dd.filemanager-modified').set('text', file.date);
 		this.info.getElement('dd.filemanager-type').set('text', file.mime);
 		this.info.getElement('dd.filemanager-size').set('text', !size[0] && size[1] == 'Bytes' ? '-' : (size.join(' ') + (size[1] != 'Bytes' ? ' (' + file.size + ' Bytes)' : '')));
@@ -636,12 +638,18 @@ var FileManager = new Class({
 					e.stop();
 					window.open(this.get('value'));
 				});
+				
+				// add SqueezeBox
+        if(typeof SqueezeBox != 'undefined')
+          SqueezeBox.assign($$('a[rel=preview]'));
+
 			}).bind(this),
 			data: {
 				directory: this.Directory,
 				file: file.name
 			}
 		}, this).post();
+		
 	},
 
 	size: function(size){
