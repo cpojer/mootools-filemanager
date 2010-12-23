@@ -41,6 +41,7 @@ class FileManager {
 	protected $options;
 	protected $post;
 	protected $get;
+	protected $listType;
 	
 	public function __construct($options){
 		$path = FileManagerUtility::getPath();
@@ -63,6 +64,7 @@ class FileManager {
 		$this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
 		$this->path = realpath($this->options['directory'] . '/../');
 		$this->length = strlen($this->path);
+		$this->listType = ($_POST['type'] == 'list') ? 'list' : 'thumb';
 		
 		header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
 		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
@@ -80,7 +82,6 @@ class FileManager {
 	
 	protected function onView(){
 		$dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-    $type = ($this->post['type'] == 'list') ? 'list' : 'thumb';
 		$files = ($files = glob($dir . '/*')) ? $files : array();
 		
 		if ($dir != $this->basedir) array_unshift($files, $dir . '/..');
@@ -90,8 +91,8 @@ class FileManager {
 			if ($this->options['filter'] && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->options['filter']))
 				continue;
 
-      $icon = ($type == 'thumb' && strpos($mime,'image') !== false )
-        ? $this->options['assetBasePath'] . '/Thumbs/' . $this->getThumb($file)
+      $icon = ($this->listType == 'thumb' && strpos($mime,'image') !== false )
+        ? $this->options['assetBasePath'] . '/Thumbs/' . $this->getThumb($this->normalize($file))
         : $this->getIcon($this->normalize($file));
 			
 			$out[is_dir($file) ? 0 : 1][] = array(
@@ -104,8 +105,8 @@ class FileManager {
 		}
 		
 		echo json_encode(array(
-			'path' => $this->getPath($dir),
-			'dir' => array(
+			  'path' => $this->getPath($dir),
+			  'dir' => array(
 				'name' => pathinfo($dir, PATHINFO_BASENAME),
 				'date' => date($this->options['dateFormat'], filemtime($dir)),
 				'mime' => 'text/directory',
@@ -181,6 +182,13 @@ class FileManager {
 		if (!$this->checkFile($file)) return;
 		
 		$this->unlink($file);
+		
+		// unlink thumbnail
+		$file = str_replace('\\','/',$file);
+		$thumb = md5($file) . '.jpg';
+    $thumbPath = $this->options['assetBasePath'] . '/Thumbs/' . $thumb;
+    if (is_file($thumbPath))
+      unlink($thumbPath);
 		
 		echo json_encode(array(
 			'content' => 'destroyed'
@@ -299,34 +307,36 @@ class FileManager {
 	}
 	
 	protected function getIcon($file){
-		if (FileManagerUtility::endsWith($file, '/..')) return 'dir_up';
-		else if (is_dir($file)) return 'dir';
+	  $ext = 'default';
+	 
+		if (FileManagerUtility::endsWith($file, '/..')) $ext = 'dir_up';
+		elseif (is_dir($file)) $ext = 'dir';
+		else {
+		  $ext = pathinfo($file, PATHINFO_EXTENSION);
+		}
 		
-		$ext = pathinfo($file, PATHINFO_EXTENSION);
-		return ($ext && file_exists(realpath($this->options['assetBasePath'] . '/Icons/' . $ext . '.png'))) ? $ext : 'default';
+		$largeDir = ($this->listType == 'thumb') ? 'Large/' : '';
+		$path = $this->options['assetBasePath'] . '/Icons/'.$largeDir.$ext.'.png';
+		
+		return $path;
 	}
 
   protected function getThumb($file)
   {
+    $file = str_replace('\\','/',$file);
     $thumb = md5($file) . '.jpg';
     $thumbPath = $this->options['assetBasePath'] . '/Thumbs/' . $thumb;
-    if (is_file($thumbPath))
-    {
-      return $thumb;
-    }
-    else
-    {
-      return $this->generateThumb($file,$thumbPath);
-    }
+    return (is_file($thumbPath))
+      ? $thumb
+      : $this->generateThumb($file,$thumbPath);
   }
 
   protected function generateThumb($file,$thumbPath)
-  {
-    
+  {    
     $img = new Image($file);
 	  $size = $img->getSize();
-	  if ($size['width'] > 75) $img->resize(75)->process('jpeg',$thumbPath);
-	  elseif ($size['height'] > 50) $img->resize(null, 50)->process('jpeg',$thumbPath);
+	  if ($size['width'] > 70) $img->resize(70)->process('jpeg',$thumbPath);
+	  elseif ($size['height'] > 48) $img->resize(null, 48)->process('jpeg',$thumbPath);
     else $img->process('jpeg',$thumbPath);
     return basename($thumbPath);
   }

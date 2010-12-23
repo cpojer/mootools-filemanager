@@ -81,7 +81,7 @@ var FileManager = new Class({
 		this.dragZIndex = 1300;
 		this.droppables = [];
 		this.Directory = this.options.directory;
-    this.listType = 'list';
+    this.listType = 'list';    
 
 		this.language = $unlink(FileManager.Language.en);
 		if (this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);
@@ -312,7 +312,8 @@ var FileManager = new Class({
 					onSuccess: self.fill.bind(self),
 					data: {
 						file: this.el.getElement('input').get('value'),
-						directory: self.Directory
+						directory: self.Directory,
+						type: self.listType
 					}
 				}, self).post();
 			}
@@ -440,23 +441,14 @@ var FileManager = new Class({
 
 		var els = [[], []];
     
-		$each(j.files, function(file){
+		$each(j.files, function(file) {
 			file.dir = j.path;
       var extraClasses = '';
       var largeDir = '';
-      if (this.listType == 'thumb' && file.mime!='text/directory')
-      {
-        $icon = new Asset.image(file.icon);
-      }
-      else
-      {
-        largeDir = (this.listType == 'thumb') ? 'Large/' : '';
-        $icon = new Asset.image(this.options.assetBasePath + 'Icons/' + largeDir + file.icon + '.png')
-        extraClasses += 'file'
-      }
-
+      var icon = new Asset.image(file.icon);
+      
 			var el = file.element = new Element('span', {'class': 'fi ' + this.listType + ' ' + extraClasses, href: '#'}).adopt(
-        $icon,
+        icon,
         new Element('span', {text: file.name})
 			).store('file', file);
 
@@ -587,13 +579,10 @@ var FileManager = new Class({
 		if (!file) return;
 		var size = this.size(file.size);
     
-    // check if the icon should be a thumbnail or icon
-    var src = (file.icon.indexOf(this.options.assetBasePath) == -1)
-      ? this.options.assetBasePath + 'Icons/' + file.icon + '.png'
-      : file.icon;
+    var icon = (file.icon.indexOf(this.options.assetBasePath) == -1) ? this.options.assetBasePath + 'Icons/'+file.icon+'.png' : file.icon;
     
 		this.info.fade(1).getElement('img').set({
-			src: src,
+			src: icon,
 			alt: file.mime
 		});
 		

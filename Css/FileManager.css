@@ -95,6 +95,7 @@ div.filemanager-menu div.loader {
 	width: 16px;
 	height: 16px;
 	margin: 8px 0;
+	margin-left: 5px;
 	background: url(../Assets/loader.gif) no-repeat;
 }
 
@@ -158,7 +159,7 @@ div.filemanager-container span.fi {
 }
 
 div.filemanager-container span.thumb {
-  height:60px;
+  height:48px;
   padding:4px;
   background:#D4DCE6;
   margin:0;
@@ -166,6 +167,7 @@ div.filemanager-container span.thumb {
   display:block;
   float:left;
   width:98%;
+  overflow: hidden;
 }
 
 div.filemanager-container span.fi span {
@@ -176,7 +178,7 @@ div.filemanager-container span.fi span {
 }
 
 div.filemanager-container span.thumb span {
-  margin-top:16px;
+  margin-top: 18px;
 }
 
 div.filemanager-container span.drag span, div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-trident5 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
@@ -208,16 +210,16 @@ div.filemanager ul li span.thumb.selected {
 }
 
 div.filemanager-container span.fi img {
-	display: block;
+	display: inline-block;
 	float: left;
 	margin: 3px 3px 0 0;
 }
 
 div.filemanager-container span.thumb img {
-	display: block;
+	display: inline-block;
 	float: left;
 	margin: 0 5px 0 0;
-  border:1px solid #CCC;
+
 }
 
 div.filemanager-container span.file img {
