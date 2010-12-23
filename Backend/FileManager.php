@@ -367,7 +367,7 @@ class FileManager {
 		return is_dir($file) ? 'text/directory' : Upload::mime($file);
 	}
 	
-	protected function getDir($dir){	 
+	protected function getDir($dir){
 		$dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->path.$dir);
 		return $this->checkFile($dir) ? $dir : $this->basedir;
 	}

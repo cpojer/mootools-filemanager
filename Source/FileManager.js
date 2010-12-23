@@ -84,8 +84,10 @@ var FileManager = new Class({
 		this.dragZIndex = 1300;
 		this.droppables = [];
 		this.Directory = this.options.directory;
-    this.listType = 'list';    
-
+    this.listType = 'list';
+    
+    //console.log(this.retrieve('file'));
+    
 		this.language = $unlink(FileManager.Language.en);
 		if (this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);
 		
@@ -105,7 +107,7 @@ var FileManager = new Class({
 
 			if (file.mime == 'text/directory'){
 				this.addClass('selected');
-				self.load(self.Directory + '/' + file.name);
+				self.load(self.Directory + file.name);
 				return;
 			}
 
@@ -332,6 +334,7 @@ var FileManager = new Class({
 	},
 
 	load: function(dir, nofade){
+
 		this.deselect();
 		if (!nofade) this.info.fade(0);
 
