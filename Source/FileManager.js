@@ -36,7 +36,6 @@ inspiration:
 
 options:
   - url: (string) The base url to the Backend FileManager, without QueryString
-  - assetBasePath: (string) The path to all images and swf files
   - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
   - language: (string, defaults to *en*) The language used for the FileManager
   - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
@@ -67,7 +66,6 @@ var FileManager = new Class({
 		onPreview: $empty*/
 		directory: '',
 		url: null,
-		assetBasePath: null,
 		selectable: false,
 		hideOnClick: false,
 		language: 'en'
@@ -80,11 +78,17 @@ var FileManager = new Class({
 
 	initialize: function(options){
 		this.setOptions(options);
-		this.options.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
 		this.dragZIndex = 1300;
 		this.droppables = [];
 		this.Directory = this.options.directory;
     this.listType = 'list';
+    this.ready = false; // prevent running show when the assetBasePath is not loaded
+    
+    // get the asseBasePath from the PHP class
+    new FileManager.Request({
+			url: this.options.url,
+			onSuccess: (function(j) {  this.assetBasePath = j.assetBasePath; this.ready = true; }).bind(this),
+		}).post();
     
 		this.language = $unlink(FileManager.Language.en);
 		if (this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);
@@ -141,21 +145,7 @@ var FileManager = new Class({
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
     this.scroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer)
-    this.browserheader.adopt([
-      new Asset.image(this.options.assetBasePath + 'application_side_list.png',{
-        'opacity':.95,
-        'id':'togggle_side_list'
-      }).addEvents({
-        click: this.toggleList
-      }),
-      new Asset.image(this.options.assetBasePath + 'application_side_boxes.png',{
-        'opacity':.7,
-        'id':'togggle_side_boxes'
-      }).addEvents({
-        click: this.toggleList
-      })
-    ]);
-
+    
 		this.browser = new Element('ul', {'class': 'filemanager-browser'}).addEvents({
 			click: (function(){
 				return self.deselect();
@@ -191,13 +181,7 @@ var FileManager = new Class({
 			new Element('h2', {'class': 'filemanager-headline', text: this.language.preview}),
 			this.preview
 		]);
-
-		this.closeIcon = new Element('a', {
-			'class': 'filemanager-close',
-			title: this.language.close,
-			events: {click: this.hide.bind(this)}
-		}).adopt(new Asset.image(this.options.assetBasePath + 'destroy.png')).inject(this.filemanager);
-
+		
 		this.tips = new Tips({
 			className: 'tip-filebrowser',
 			offsets: {x: 15, y: 0},
@@ -213,11 +197,6 @@ var FileManager = new Class({
 				});
 			}
 		});
-		this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.filemanager, 0.8));
-		
-		this.imageadd = new Asset.image(this.options.assetBasePath + 'add.png', {
-			'class': 'browser-add'
-		}).set('opacity', 0).inject(this.container);
 		
 		this.container.inject(document.body);
 		this.overlay = new Overlay(this.options.hideOnClick ? {
@@ -247,8 +226,36 @@ var FileManager = new Class({
 	},
 
 	show: function(e){
+	  if(!this.ready) return; // prevent start when assetBasePath is not loaded yet	  
 		if (e) e.stop();
-
+    
+    this.browserheader.adopt([
+      new Asset.image(this.assetBasePath + 'application_side_list.png',{
+        'opacity':.95,
+        'id':'togggle_side_list'
+      }).addEvents({
+        click: this.toggleList
+      }),
+      new Asset.image(this.assetBasePath + 'application_side_boxes.png',{
+        'opacity':.7,
+        'id':'togggle_side_boxes'
+      }).addEvents({
+        click: this.toggleList
+      })
+    ]);
+    
+    this.closeIcon = new Element('a', {
+			'class': 'filemanager-close',
+			title: this.language.close,
+			events: {click: this.hide.bind(this)}
+		}).adopt(new Asset.image(this.assetBasePath + 'destroy.png')).inject(this.filemanager);
+    this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.filemanager, 0.8));
+		
+		this.imageadd = new Asset.image(this.assetBasePath + 'add.png', {
+			'class': 'browser-add'
+		}).set('opacity', 0).inject(this.container);
+		
+		
 		this.load(this.Directory);
 		this.overlay.show();
 
@@ -292,7 +299,7 @@ var FileManager = new Class({
 	open: function(e){
 		e.stop();
     if (!this.Current) return false;
-		this.fireEvent('complete', [
+		this.fireEvent('complete', [		  
 			this.normalize(this.Current.retrieve('file').path),
 			this.Current.retrieve('file')
 		]);
@@ -352,7 +359,7 @@ var FileManager = new Class({
 
 		this.Request = new FileManager.Request({
 			url: this.options.url,
-			onSuccess: (function(j){
+			onSuccess: (function(j) {
 				this.fill(j, nofade);
 			}).bind(this),
 			data: {
@@ -478,7 +485,7 @@ var FileManager = new Class({
     
 		text.pop();
     text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e){e.stop();});
-		this.selectablePath.set('value',this.CurrentPath);
+		this.selectablePath.set('value','/'+this.CurrentPath);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
     
 		if (!j.files) return;
@@ -498,7 +505,7 @@ var FileManager = new Class({
 
 			var icons = [];
 			if (file.mime!='text/directory')
-				icons.push(new Asset.image(this.options.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
+				icons.push(new Asset.image(this.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
 					this.tips.hide();
 					e.stop();
 					window.open(file.path);
@@ -506,7 +513,7 @@ var FileManager = new Class({
 
 			if (file.name != '..')
 				['rename', 'destroy'].each(function(v){
-					icons.push(new Asset.image(this.options.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', (function(e){ e.stop(); this[v](file);}).bind(this)).injectTop(el));
+					icons.push(new Asset.image(this.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', (function(e){ e.stop(); this[v](file);}).bind(this)).injectTop(el));
 				}, this);
 
 			els[file.mime == 'text/directory' ? 1 : 0].push(el);

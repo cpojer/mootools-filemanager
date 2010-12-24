@@ -120,6 +120,7 @@ class FileManager {
 		}
 		
 		echo json_encode(array(
+		    'assetBasePath' => $this->options['assetBasePath'],
 		    'root' => substr(FileManagerUtility::getRealPath($this->options['directory']),1),
 			  'path' => $this->getPath($dir),
 			  'dir' => array(

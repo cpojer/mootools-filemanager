@@ -33,8 +33,8 @@ FileManager.Gallery = new Class({
 				display: 'block'
 			});
 
-			var size = this.el.getSize(),
-				pos = this.el.getPosition();
+			var size = this.filemanager.getSize(),
+				pos = this.filemanager.getPosition();
 
 			this.galleryContainer.setStyles({
 				top: pos.y + size.y - 1,
@@ -145,7 +145,7 @@ FileManager.Gallery = new Class({
 		if (this.files.contains(name)) return true;
 		this.files.push(name);
 
-		var img = new Asset.image(this.options.assetBasePath + 'destroy.png').set({
+		var img = new Asset.image(this.assetBasePath + 'destroy.png').set({
 			'class': 'filemanager-remove',
 			title: this.language.gallery.remove,
 			events: {click: this.removePicture}

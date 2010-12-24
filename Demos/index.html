@@ -81,7 +81,6 @@
 			/* Simple Example */
 			var manager1 = new FileManager({
 				url: 'manager1.php',
-				assetBasePath: '../Assets',
 				language: 'en',
 				hideOnClick: true,
 				uploadAuthData: {session: 'MySessionId'},
@@ -96,7 +95,7 @@
 				el.set('value', path);
 				
 				if(div) div.destroy();
-				var icon = new Asset.image(this.options.assetBasePath+'cancel.png', {'class': 'file-cancel', title: this.language.deselect}).addEvent('click', function(e){
+				var icon = new Asset.image(this.assetBasePath+'cancel.png', {'class': 'file-cancel', title: this.language.deselect}).addEvent('click', function(e){
 					e.stop();
 					el.set('value', '');
 					var self = this;
@@ -109,7 +108,7 @@
 				manager2.tips.attach(icon);
 
 				div = new Element('div', {'class': 'selected-file', text: 'Selected file: '}).adopt(
-					new Asset.image(file.smallIcon, {'class': 'mime-icon'}),
+					new Asset.image(file.icon, {'class': 'mime-icon'}),
 					new Element('span', {text: file.name}),
 					icon
 				).inject(el, 'after');
@@ -117,7 +116,6 @@
 			
 			manager2 = new FileManager({
 				url: 'selectImage.php',
-				assetBasePath: '../Assets',
 				language: 'en',
 				selectable: true,
 				hideOnClick: true,
@@ -129,7 +127,7 @@
 			var val = el.get('value');
 			if(val) complete.apply(manager2, [val, {
 				name: val.split('/').getLast(),
-				smallIcon: '../Assets/Icons/'+val.split('.').getLast()+'.png'
+				icon: '../Assets/Icons/'+val.split('.').getLast()+'.png'
 			}]);
 			
 			new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager2.show.bind(manager2)).inject(el, 'before');
@@ -137,7 +135,6 @@
 			/* Localized Example */
 			var manager3 = new FileManager({
 				url: 'manager.php',
-				assetBasePath: '../Assets',
 				language: 'de',
 				hideOnClick: true,
 				uploadAuthData: {session: 'MySessionId'}
