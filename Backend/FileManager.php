@@ -4,13 +4,9 @@ Script: FileManager.php
 	MooTools FileManager - Backend for the FileManager Script
 
 Authors:
- - Christoph Pojer (http://cpojer.net)
-    - author
+ - Christoph Pojer (http://cpojer.net) (author)
  - James Ehly (http://www.devtrench.com) 
-    - thumbnail list
  - Fabian Vogelsteller (http://frozeman.de) 
-    - extended thumbnails
-    - now absolute and relative paths are possible
 
 License:
 	MIT-style license.
@@ -19,7 +15,7 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
 
 version:
-  1.1beta
+  1.1beta1
 
 Dependencies:
 	- Upload.php
@@ -35,7 +31,7 @@ Options:
 	- dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
 	- upload: (boolean, defaults to *false*) Whether to allow uploads or not
 	- destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
-	- maxUploadSize: (integeter, defaults to *3145728* bytes) The maximum file size for upload in bytes
+	- maxUploadSize: (integeter, defaults to *10830000* bytes) The maximum file size for upload in bytes
 	- safe: (string, defaults to *true*) If true, disallows 
 	- filter: (string) If specified, the mimetypes to be allowed (for display and upload).
 		Example: "image/" allows all Image Mimetypes
@@ -65,7 +61,7 @@ class FileManager {
 			'id3Path' => $path . '/Assets/getid3/getid3.php',
 			'mimeTypesPath' => $path . '/MimeTypes.ini',
 			'dateFormat' => 'j M Y - H:i',
-			'maxUploadSize' => 1024 * 1024 * 3,
+			'maxUploadSize' => 1900 * 1900 * 3,
 			'upload' => false,
 			'destroy' => false,
 			'safe' => true,
@@ -124,7 +120,7 @@ class FileManager {
 		}
 		
 		echo json_encode(array(
-		    'root' => pathinfo($this->basedir, PATHINFO_BASENAME),
+		    'root' => substr(FileManagerUtility::getRealPath($this->options['directory']),1),
 			  'path' => $this->getPath($dir),
 			  'dir' => array(
 				'name' => pathinfo($dir, PATHINFO_BASENAME),
@@ -138,16 +134,17 @@ class FileManager {
 	}
 	
 	protected function onDetail(){
-		if (empty($this->post['directory']) || empty($this->post['file'])) return;
+		if (empty($this->post['file'])) return;
 		
 		$file = $this->basedir . $this->post['directory'] . $this->post['file'];
+		
 		if (!$this->checkFile($file)) return;
 		
-		require_once($this->options['id3Path']);
 		
 		$url = str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file));
 		$mime = $this->getMimeType($file);
 		$content = null;
+		// image
 		if (FileManagerUtility::startsWith($mime, 'image/')){
 			$size = getimagesize($file);
 			$content = '<a href="'.$url.'" rel="preview"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)) . '" class="preview" alt="preview" /></a>
@@ -156,10 +153,12 @@ class FileManager {
 					<dt>${width}</dt><dd>' . $size[0] . 'px</dd>
 					<dt>${height}</dt><dd>' . $size[1] . 'px</dd>
 				</dl>';
-		}elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript'){
-			$filecontent = file_get_contents($file, null, null, 0, 300);
+		// text preview
+		}elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript') {
+			$filecontent = file_get_contents($file, null, null, 0);
 			if (!FileManagerUtility::isBinary($filecontent)) $content = '<div class="textpreview">' . nl2br(str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent))) . '</div>';
-		}elseif ($mime == 'application/zip'){
+		// zip
+    }elseif ($mime == 'application/zip'){
 			$out = array(array(), array());
 			$getid3 = new getID3();
 			$getid3->Analyze($file);
@@ -170,7 +169,9 @@ class FileManager {
 			natcasesort($out[0]);
 			natcasesort($out[1]);
 			$content = '<ul>' . implode(array_merge($out[0], $out[1])) . '</ul>';
-		}elseif (FileManagerUtility::startsWith($mime, 'audio/')){
+		// audio
+    }elseif (FileManagerUtility::startsWith($mime, 'audio/')){
+      require_once($this->options['id3Path']);
 			$getid3 = new getID3();
 			$getid3->Analyze($file);
 			
@@ -197,7 +198,7 @@ class FileManager {
 	}
 	
 	protected function onDestroy(){
-		if (!$this->options['destroy'] || empty($this->post['directory']) || empty($this->post['file'])) return;
+		if (!$this->options['destroy'] || empty($this->post['file'])) return;
 		
 		$file = $this->basedir . $this->post['directory'] . $this->post['file'];
 		if (!$this->checkFile($file)) return;
@@ -216,7 +217,7 @@ class FileManager {
 	}
 	
 	protected function onCreate(){
-		if (empty($this->post['directory']) || empty($this->post['file'])) return;
+		if (empty($this->post['file'])) return;
 		
 		$file = $this->getName($this->post['file'], $this->getDir($this->post['directory']));
 		if (!$file) return;
@@ -230,12 +231,12 @@ class FileManager {
 		try{
 			if (!$this->options['upload'])
 				throw new FileManagerException('disabled');
-			if (empty($this->get['directory']) || (function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this->get)))
+			if ((function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this->get)))
 				throw new FileManagerException('authenticated');
 			
 			$dir = $this->getDir($this->get['directory']);
 			$name = pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_FILENAME);
-			$file = Upload::move('Filedata', $dir , array(
+      $file = Upload::move('Filedata', $dir , array(
 				'name' => $name,
 				'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
 				'size' => $this->options['maxUploadSize'],
@@ -268,7 +269,7 @@ class FileManager {
 	
 	/* This method is used by both move and rename */
 	protected function onMove(){
-		if (empty($this->post['directory']) || empty($this->post['file'])) return;
+		if (empty($this->post['file'])) return;
 		
 		$rename = empty($this->post['newDirectory']) && !empty($this->post['name']);
 		$dir = $this->getDir($this->post['directory']);
@@ -322,7 +323,7 @@ class FileManager {
 		
 		$pathinfo = pathinfo($file);
 		$file = $dir . FileManagerUtility::pagetitle($pathinfo['filename'], $files).(!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
-
+    
 		return !$file || !FileManagerUtility::startsWith($file, $this->basedir) || file_exists($file) ? null : $file;
 	}
 	
@@ -427,9 +428,6 @@ class FileManagerUtility {
 				explode(' ', 'Æ æ Œ œ ß Ü ü Ö ö Ä ä À Á Â Ã Ä Å &#260; &#258; Ç &#262; &#268; &#270; &#272; Ð È É Ê Ë &#280; &#282; &#286; Ì Í Î Ï &#304; &#321; &#317; &#313; Ñ &#323; &#327; Ò Ó Ô Õ Ö Ø &#336; &#340; &#344; Š &#346; &#350; &#356; &#354; Ù Ú Û Ü &#366; &#368; Ý Ž &#377; &#379; à á â ã ä å &#261; &#259; ç &#263; &#269; &#271; &#273; è é ê ë &#281; &#283; &#287; ì í î ï &#305; &#322; &#318; &#314; ñ &#324; &#328; ð ò ó ô õ ö ø &#337; &#341; &#345; &#347; š &#351; &#357; &#355; ù ú û ü &#367; &#369; ý ÿ ž &#378; &#380;'),
 				explode(' ', 'Ae ae Oe oe ss Ue ue Oe oe Ae ae A A A A A A A A C C C D D D E E E E E E G I I I I I L L L N N N O O O O O O O R R S S S T T U U U U U U Y Z Z Z a a a a a a a a c c c d d e e e e e e g i i i i i l l l n n n o o o o o o o o r r s s s t t u u u u u u y y z z z'),
 			);
-			
-			$regex[0][] = '"';
-			$regex[0][] = "'";
 		}
 		
 		$data = trim(substr(preg_replace('/(?:[^A-z0-9]|_|\^)+/i', '_', str_replace($regex[0], $regex[1], $data)), 0, 64), '_');

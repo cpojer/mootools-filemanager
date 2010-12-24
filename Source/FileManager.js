@@ -26,7 +26,7 @@ license:
   MIT-style license
 
 version:
-  1.1beta
+  1.1beta1
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
@@ -192,7 +192,7 @@ var FileManager = new Class({
 			this.preview
 		]);
 
-		this.closeIcon = new Element('div', {
+		this.closeIcon = new Element('a', {
 			'class': 'filemanager-close',
 			title: this.language.close,
 			events: {click: this.hide.bind(this)}
@@ -301,7 +301,8 @@ var FileManager = new Class({
 
 	create: function(e){
 		e.stop();
-
+    var input = new Element('input', {'class': 'createDirectory','autofocus':'autofocus'});
+    
 		var self = this;
 		new Dialog(this.language.createdir, {
 			language: {
@@ -309,14 +310,13 @@ var FileManager = new Class({
 				decline: this.language.cancel
 			},
 			content: [
-				new Element('input', {'class': 'createDirectory'})
+				input
 			],
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
-				var self = this;
-				this.filemanager.getElement('input').addEvent('keyup', function(e){
-					if (e.key == 'enter') self.el.getElement('button-confirm').fireEvent('click');
+				input.addEvent('keyup', function(e){
+					if (e.key == 'enter') e.target.getParent('div.dialog').getElement('button-confirm').fireEvent('click');
 				}).focus();
 			},
 			onConfirm: function(){
@@ -324,11 +324,11 @@ var FileManager = new Class({
 					url: self.options.url + '?event=create',
 					onSuccess: self.fill.bind(self),
 					data: {
-						file: this.filemanager.getElement('input').get('value'),
+						file: input.get('value'),
 						directory: self.Directory,
 						type: self.listType
 					}
-				}, self).post();
+				}).post();
 			}
 		});
 	},
@@ -344,10 +344,10 @@ var FileManager = new Class({
 	},
 
 	load: function(dir, nofade){
-
+    
 		this.deselect();
-		if (!nofade) this.info.fade(0);
-
+		if (!nofade) this.info.fade(0);    
+    
 		if (this.Request) this.Request.cancel();
 
 		this.Request = new FileManager.Request({
@@ -362,11 +362,9 @@ var FileManager = new Class({
 		}, this).post();
 	},
 
-	destroy: function(e, file){
-		e.stop();
-		this.tips.hide();
-		
-		var self = this;
+	destroy: function(file){
+	  var self = this;
+		this.tips.hide();		
 		new Dialog(this.language.destroyfile, {
 			language: {
 				confirm: this.language.destroy,
@@ -393,34 +391,33 @@ var FileManager = new Class({
 							this.element.destroy();
 						});
 					}
-				}, self).post();
+				}).post();
 			}
 		});
 
 	},
 
-	rename: function(e, file){
-		e.stop();
+	rename: function(file){
+	  var self = this;
 		this.tips.hide();
-		
 		var name = file.name;
+		var input = new Element('input', {'class': 'rename', value: name,'autofocus':'autofocus'});		
+		
 		if (file.mime != 'text/directory') name = name.replace(/\..*$/, '');
-
-		var self = this;
+		
 		new Dialog(this.language.renamefile, {
 			language: {
 				confirm: this.language.rename,
 				decline: this.language.cancel
 			},
 			content: [
-				new Element('input', {'class': 'rename', value: name})
+				input
 			],
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
-				var self = this;
-				this.filemanager.getElement('input').addEvent('keyup', function(e){
-					if (e.key=='enter') self.el.getElement('button-confirm').fireEvent('click');
+				input.addEvent('keyup', function(e){
+					if (e.key=='enter') e.target.getParent('div.dialog').getElement('button-confirm').fireEvent('click');
 				}).focus();
 			},
 			onConfirm: function(){
@@ -437,7 +434,7 @@ var FileManager = new Class({
 					}).bind(this),
 					data: {
 						file: file.name,
-						name: this.filemanager.getElement('input').get('value'),
+						name: input.get('value'),
 						directory: self.Directory
 					}
 				}, self).post();
@@ -450,36 +447,45 @@ var FileManager = new Class({
 		this.CurrentDir = j.dir;
 		if (!nofade) this.fillInfo(j.dir);
 		this.browser.empty();
+		var self = this;
 		
-		this.CurrentPath = j.root + '/' + this.Directory;
-		var text = [], pre = [];    
-		this.CurrentPath.split('/').each(function(v){
-			if (!v) return;
+		this.CurrentPath = j.root + this.Directory;
+		var text = [], pre = [];
+		var rootPath = j.root.slice(0,-1).split('/');
+    rootPath.pop();
+		this.CurrentPath.split('/').each(function(folderName){
+			if (!folderName) return;
 
-			pre.push(v);
-			text.push(new Element('a', {
-					'class': 'icon',
-					href: '#',
-					text: v
-				}).addEvent('click', (function(e, dir){
-					e.stop();
-					console.log(v);
-					this.load(dir);
-				}).bindWithEvent(this, [pre.join('/')]))
-			);
+			pre.push(folderName);
+			var path = ('/'+pre.join('/')).replace(j.root,'');
+			// add non-clickable path
+			if(rootPath.contains(folderName)) {
+			  text.push(new Element('span', {'class': 'icon',text: folderName}));
+  		// add clickable path
+			} else {
+        text.push(new Element('a', {
+  					'class': 'icon',
+  					href: '#',
+  					text: folderName
+  				}).addEvent('click', function(e){
+  					e.stop();	
+  					self.load(path);
+  				})
+  			);
+      }
 			text.push(new Element('span', {text: ' / '}));
-		}, this);
+		});
     
 		text.pop();
     text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e){e.stop();});
-		this.selectablePath.set('value','/'+this.CurrentPath);
+		this.selectablePath.set('value',this.CurrentPath);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
     
 		if (!j.files) return;
 
 		var els = [[], []];
     
-		$each(j.files, function(file) {
+		Array.each(j.files, function(file) {
 			file.dir = j.path;
       var extraClasses = '';
       var largeDir = '';
@@ -500,7 +506,7 @@ var FileManager = new Class({
 
 			if (file.name != '..')
 				['rename', 'destroy'].each(function(v){
-					icons.push(new Asset.image(this.options.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', this[v].bindWithEvent(this, [file])).injectTop(el));
+					icons.push(new Asset.image(this.options.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', (function(e){ e.stop(); this[v](file);}).bind(this)).injectTop(el));
 				}, this);
 
 			els[file.mime == 'text/directory' ? 1 : 0].push(el);
@@ -639,8 +645,8 @@ var FileManager = new Class({
 
 		this.Request = new FileManager.Request({
 			url: this.options.url + '?event=detail',
-			onSuccess: (function(j){
-				var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.prev');
+			onSuccess: (function(j) {
+				var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
 				if (prev) prev.addEvent('load', function(){
 					this.setStyle('background', 'none');
 				});
@@ -699,14 +705,12 @@ var FileManager = new Class({
 	
 	onRequest: function(){this.loader.set('opacity', 1);},
 	onComplete: function(){this.loader.fade(0);},
-	onDialogOpen: $empty,
-	onDialogClose: $empty,
-	onDragComplete: $lambda(false)
-	
+	onDialogOpen: function(){},
+	onDialogClose: function(){},
+	onDragComplete: function(){} // $lambda(false)
 });
 
-FileManager.Request = new Class({
-	
+FileManager.Request = new Class({	
 	Extends: Request.JSON,
 	
 	initialize: function(options, filebrowser){
@@ -717,7 +721,6 @@ FileManager.Request = new Class({
 			complete: filebrowser.onComplete.bind(filebrowser)
 		});
 	}
-	
 });
 
 FileManager.Language = {};

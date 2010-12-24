@@ -96,7 +96,7 @@ FileManager.implement({
 
 			Extends: Swiff.Uploader.File,
 			
-			initialize: function(base, data){
+			initialize: function(base, data){			  
 				this.parent(base, data);
 				this.setOptions({
 					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Hash.toQueryString($merge({}, self.options.uploadAuthData, {
@@ -105,6 +105,8 @@ FileManager.implement({
 						resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0
 					}))
 				});
+				this.name = this.name.replace('"','');
+				this.name = this.name.replace("'",'');
 			},
 			
 			render: function(){
@@ -220,12 +222,15 @@ FileManager.implement({
 			fileSizeMax: 25 * 1024 * 1024,
 			zIndex: this.SwiffZIndex || 9999,
 			onSelectSuccess: function(){
+			  console.log(this.fileList);
+			  //this.fileList[0].name = this.fileList[0].name.replace("'",'');
 				self.fillInfo();
 				self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
 				self.preview.adopt(self.upload.uploader);
 				self.upload.uploader.fade(1);
 			},
 			onComplete: function(){
+			   
 				self.load(self.Directory, true);
 			},
 			onFail: function(error){

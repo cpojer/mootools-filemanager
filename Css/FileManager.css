@@ -202,7 +202,7 @@ div.filemanager-browsercontainer div.filemanager-browserheader {
 }
 
 div.filemanager-browsercontainer div.filemanager-browserheader img {
-  padding:3px 3px 0;
+  padding:4px 4px 0;
 }
 
 div.filemanager-container span.fi {
@@ -218,7 +218,7 @@ div.filemanager-container span.fi {
 
 div.filemanager-container span.thumb {
   height:48px;
-  padding:4px;
+  padding: 3px;
   background:#D4DCE6;
   margin:0;
   border-bottom:1px solid #EEEEEE;
@@ -235,7 +235,7 @@ div.filemanager-container span.fi span {
 }
 
 div.filemanager-container span.thumb span {
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 div.filemanager-container span.drag span, div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-trident5 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
@@ -300,13 +300,15 @@ div.filemanager span.notice {
 	left: 16px;
 }
 
-div.filemanager div.filemanager-close {
+div.filemanager a.filemanager-close {
   z-index: 4;
+  display: block;
 	position: absolute;
 	right: 4px;
 	top: -26px;
-	height: 20px;
-	width: 20px;
+	height: 16px;
+	width: 16px;
+	padding: 2px;
 	
 	cursor: pointer;
 	background: url(../Assets/button.png) repeat-x;
@@ -315,6 +317,17 @@ div.filemanager div.filemanager-close {
 	-webkit-border-radius: 8px;
 	-o-border-radius: 8px;
 	border-radius: 8px;
+	
+	box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px inset;
+	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px inset;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px inset;
+	-o-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px inset;
+}
+div.filemanager a.filemanager-close:hover {
+  box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	-o-box-shadow: none;
 }
 div.filemanager div.filemanager-close img {
 	padding: 2px;
@@ -326,8 +339,8 @@ div.filemanager-infos {
 	left: 40%;
 	top: 0;
 	width: 58%;
-	height: 100%;
-	padding: 0px 10px;
+	height: 92%;
+	padding: 0px 1%;
 	line-height: 1.6em;
 	overflow: auto;
 }
@@ -410,7 +423,7 @@ div.filemanager input.filemanager-dir {
   margin-top: -5px;
   background-color: #EAEBED;
   border: 1px solid #ccc;
-  width: 88%;
+  width: 89%;
 }
 
 div.filemanager span.filemanager-dir a.icon {
@@ -424,6 +437,13 @@ div.filemanager span.filemanager-dir a.icon {
 	-webkit-border-radius: 3px;
 	-o-border-radius: 3px;
 	border-radius: 3px;
+}
+/* not selectable path */
+div.filemanager span.filemanager-dir span.icon {
+  border: none;
+	padding: 2px 5px 2px 20px;
+	background: url(../Assets/Icons/dir.png) 2px 0 no-repeat;
+	color: #999;
 }
 
 div.filemanager span.filemanager-dir a.icon:hover {

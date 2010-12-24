@@ -5,7 +5,17 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 
 ![Screenshot](http://cpojer.net/Forge/FileManager.png)
 
-*Please Note:* This is currently a pre-release. The final 1.0 version is going to be released "soon".
+### Version
+  1.1beta
+  *Please Note:* This is currently the 1.1 beta version, means its possible not stable.
+
+### Changes
+ - James Ehly (http://www.devtrench.com) 
+    - thumbnail list
+ - Fabian Vogelsteller (http://frozeman.de) 
+    - extended thumbnails
+    - now absolute and relative paths are possible
+    - add clickable and selectable path in the header
 
 ### Features
 
