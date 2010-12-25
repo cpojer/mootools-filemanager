@@ -140,6 +140,21 @@ var FileManager = new Class({
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
     this.scroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer)
+    this.browserheader.adopt([
+      new Asset.image(this.assetBasePath + 'application_side_list.png',{
+        'opacity':.95,
+        'id':'togggle_side_list'
+      }).addEvents({
+        click: this.toggleList
+      }),
+      new Asset.image(this.assetBasePath + 'application_side_boxes.png',{
+        'opacity':.7,
+        'id':'togggle_side_boxes'
+      }).addEvents({
+        click: this.toggleList
+      })
+    ]);
+    
     
 		this.browser = new Element('ul', {'class': 'filemanager-browser'}).addEvents({
 			click: (function(){
@@ -177,6 +192,12 @@ var FileManager = new Class({
 			this.preview
 		]);
 		
+		this.closeIcon = new Element('a', {
+			'class': 'filemanager-close',
+			title: this.language.close,
+			events: {click: this.hide.bind(this)}
+		}).adopt(new Asset.image(this.assetBasePath + 'destroy.png')).inject(this.filemanager);
+		
 		this.tips = new Tips({
 			className: 'tip-filebrowser',
 			offsets: {x: 15, y: 0},
@@ -192,6 +213,11 @@ var FileManager = new Class({
 				});
 			}
 		});
+		this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.filemanager, 0.8));
+		
+		this.imageadd = new Asset.image(this.assetBasePath + 'add.png', {
+			'class': 'browser-add'
+		}).set('opacity', 0).inject(this.container);
 		
 		this.container.inject(document.body);
 		this.overlay = new Overlay(this.options.hideOnClick ? {
@@ -224,34 +250,7 @@ var FileManager = new Class({
 
 	show: function(e){ 
 		if (e) e.stop();
-    
-    this.browserheader.adopt([
-      new Asset.image(this.assetBasePath + 'application_side_list.png',{
-        'opacity':.95,
-        'id':'togggle_side_list'
-      }).addEvents({
-        click: this.toggleList
-      }),
-      new Asset.image(this.assetBasePath + 'application_side_boxes.png',{
-        'opacity':.7,
-        'id':'togggle_side_boxes'
-      }).addEvents({
-        click: this.toggleList
-      })
-    ]);
-    
-    this.closeIcon = new Element('a', {
-			'class': 'filemanager-close',
-			title: this.language.close,
-			events: {click: this.hide.bind(this)}
-		}).adopt(new Asset.image(this.assetBasePath + 'destroy.png')).inject(this.filemanager);
-    this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.filemanager, 0.8));
-		
-		this.imageadd = new Asset.image(this.assetBasePath + 'add.png', {
-			'class': 'browser-add'
-		}).set('opacity', 0).inject(this.container);
-		
-		
+
 		this.load(this.Directory);
 		this.overlay.show();
 

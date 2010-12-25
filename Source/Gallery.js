@@ -46,8 +46,6 @@ FileManager.Gallery = new Class({
 				left: pos.x + (size.x - this.galleryContainer.getWidth()) / 2,
 				opacity: 1
 			});
-			
-			
 
 			this.hideClone();
 			this.wrapper.setStyle('display', 'none');
@@ -72,6 +70,7 @@ FileManager.Gallery = new Class({
 			}),
 
 			hide: function(){
+			 console.log(this.gallery);
 				this.gallery.empty();
 
 				this.captions = {};
@@ -82,10 +81,10 @@ FileManager.Gallery = new Class({
 			},
 
 			modify: function(file){
-				var name = this.normalize(file.dir + '/' + file.name);
+				var name = this.normalize(file.path);
 				var el = (this.gallery.getElements('li').filter(function(el){
 					var f = el.retrieve('file');
-					return name == this.normalize(f.dir + '/' + f.name);
+					return name == this.normalize(f.path);
 				}, this) || null)[0];
 
 				if (el) this.erasePicture(name, el);
@@ -160,7 +159,7 @@ FileManager.Gallery = new Class({
 
 		var li = new Element('li').store('file', file).adopt(
 			img,
-			new Asset.image(this.options.baseURL + name, {
+			new Asset.image(file.path, {
 				onload: function(){
 					var el = this;
 					li.setStyle('background', 'none').addEvent('click', function(e){
@@ -201,7 +200,7 @@ FileManager.Gallery = new Class({
 							},
 							events: {
 								click: function(e){
-									self.fireEvent('preview', [self.options.baseURL + name, self.captions[name], li]);
+									self.fireEvent('preview', [file.path, self.captions[name], li]);
 								}
 							}
 						}).inject(document.body).morph(self.animation.to).get('morph').chain(function(){
