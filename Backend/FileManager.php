@@ -32,6 +32,7 @@ Options:
 	- upload: (boolean, defaults to *false*) Whether to allow uploads or not
 	- destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
 	- maxUploadSize: (integeter, defaults to *10830000* bytes) The maximum file size for upload in bytes
+	- maxImageSize: (integeter, default is 1024) The maximum number of pixels an image can have, if the user enables "resize on upload"
 	- safe: (string, defaults to *true*) If true, disallows 
 	- filter: (string) If specified, the mimetypes to be allowed (for display and upload).
 		Example: "image/" allows all Image Mimetypes
@@ -62,6 +63,7 @@ class FileManager {
 			'mimeTypesPath' => $path . '/MimeTypes.ini',
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 1900 * 1900 * 3,
+			'maxImageSize' => 1024,
 			'upload' => false,
 			'destroy' => false,
 			'safe' => true,
@@ -247,8 +249,8 @@ class FileManager {
 			if (FileManagerUtility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
 				$img = new Image($file);
 				$size = $img->getSize();
-				if ($size['width'] > 800) $img->resize(800)->save();
-				elseif ($size['height'] > 600) $img->resize(null, 600)->save();
+				if ($size['width'] > $this->options['maxImageSize']) $img->resize($this->options['maxImageSize'])->save();
+				elseif ($size['height'] > $this->options['maxImageSize']) $img->resize(null, $this->options['maxImageSize'])->save();
 			}
 			
 			echo json_encode(array(

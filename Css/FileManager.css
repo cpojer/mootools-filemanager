@@ -154,6 +154,14 @@ div.filemanager div.filemanager-browserscroll {
   overflow: auto;
 }
 
+
+div.filemanager div.filemanager-browserscroll li.list{
+  height: 21px;
+}
+div.filemanager div.filemanager-browserscroll li.thumb{
+  height: 54px;
+}
+
 div.filemanager ul {
 	margin: 0;
 	padding: 0;
@@ -170,7 +178,6 @@ div.filemanager ul li {
 	line-height: 1.8em;
 	margin: 0;
 	padding: 0;
-	height: 21px;
 	white-space: nowrap;
 }
 
@@ -196,14 +203,24 @@ div.filemanager-browsercontainer div.filemanager-browserheader {
   left: 0;
   top: 0;
   width:100%;
+  height: 25px;
   background:#C3CDD9;
   border-bottom: 1px solid #bebebe;
   text-align: right;
 }
 
-div.filemanager-browsercontainer div.filemanager-browserheader img {
-  padding:4px 4px 0;
-  cursor: pointer;
+div.filemanager-browsercontainer div.filemanager-browserheader a.listType {
+  display: inline-block;
+  float: right;
+  width: 16px;
+  height: 16px;
+  margin: 5px;
+}
+div.filemanager-browsercontainer div.filemanager-browserheader a.listType#togggle_side_list {
+  background: url(../Assets/application_side_list.png) no-repeat;
+}
+div.filemanager-browsercontainer div.filemanager-browserheader a.listType#togggle_side_boxes {
+  background: url(../Assets/application_side_boxes.png) no-repeat;
 }
 
 div.filemanager-container span.fi {
@@ -216,19 +233,19 @@ div.filemanager-container span.fi {
 	white-space: nowrap;
 	cursor: pointer;
 }
-div.filemanager-container span.fi:hover {
-  background:#E2EBF6;
-}
 
 div.filemanager-container span.thumb {
-  height:48px;
+  height: 48px;
   padding: 3px;
   margin:0;
-  border-bottom:1px solid #EEEEEE;
   display: block;
   float:left;
   width:98%;
   overflow: hidden;
+}
+
+div.filemanager-container span.fi:hover {
+  background:#E2EBF6;
 }
 
 div.filemanager-container span.fi span {
@@ -263,7 +280,7 @@ div.filemanager ul li a.selected, div.filemanager ul li span.selected {
 	outline: none;
 }
 
-div.filemanager ul li span.thumb.selected {
+div.filemanager ul li span.thumb.selected, div.filemanager ul li span.fi.selected {
 	background:#8EAAD6;
 	color: #eee;
 	outline: none;
@@ -307,30 +324,14 @@ div.filemanager a.filemanager-close {
   z-index: 4;
   display: block;
 	position: absolute;
-	right: 4px;
-	top: -26px;
+	right: 6px;
+	top: -23px;
 	height: 16px;
 	width: 16px;
-	padding: 2px;
-	
-	cursor: pointer;
-	background: url(../Assets/button.png) repeat-x;
-	border: 1px solid #a1aeb9;
-	-moz-border-radius: 8px;
-	-webkit-border-radius: 8px;
-	-o-border-radius: 8px;
-	border-radius: 8px;
-	
-	box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px inset;
-	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px inset;
-	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px inset;
-	-o-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px inset;
+	background: url(../Assets/close.png) no-repeat;
 }
 div.filemanager a.filemanager-close:hover {
-  box-shadow: none;
-	-moz-box-shadow: none;
-	-webkit-box-shadow: none;
-	-o-box-shadow: none;
+  background-position: 0px -16px;
 }
 div.filemanager div.filemanager-close img {
 	padding: 2px;

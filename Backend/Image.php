@@ -35,6 +35,9 @@ class Image {
 	 * @param string $file The path to the image file
 	 */
 	public function __construct($file){
+	  ini_set('memory_limit', '50M');   //  handle large images
+	  $memory_limit = (int)(ini_get('memory_limit'));
+	  
 		$file = realpath($file);
 		if(!file_exists($file))
 			return;

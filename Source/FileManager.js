@@ -36,6 +36,7 @@ inspiration:
 
 options:
   - url: (string) The base url to the Backend FileManager, without QueryString
+  - assetBasePath: (string) The path to all images and swf files used by the filemanager
   - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
   - language: (string, defaults to *en*) The language used for the FileManager
   - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
@@ -131,8 +132,8 @@ var FileManager = new Class({
     this.toggleList = function(e)
     {
       if(e) e.stop();
-      $$('.filemanager-browserheader img').set('opacity',.7);
-      this.set('opacity',.95);
+      $$('.filemanager-browserheader a').set('opacity',0.5);
+      this.set('opacity',1);
       self.listType = (this.id == 'togggle_side_list') ? 'list' : 'thumb';
       self.load(self.Directory);
     }
@@ -140,17 +141,18 @@ var FileManager = new Class({
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
     this.scroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer)
-    this.browserheader.adopt([
-      new Asset.image(this.assetBasePath + 'application_side_list.png',{
-        'opacity':.95,
-        'id':'togggle_side_list'
-      }).addEvents({
+    this.browserheader.adopt([      
+      new Element('a',{
+        'id':'togggle_side_boxes',
+        'class':'listType',
+        'style' : 'margin-right: 10px;'
+      }).set('opacity',0.5).addEvents({
         click: this.toggleList
       }),
-      new Asset.image(this.assetBasePath + 'application_side_boxes.png',{
-        'opacity':.7,
-        'id':'togggle_side_boxes'
-      }).addEvents({
+      new Element('a',{
+        'id':'togggle_side_list',
+        'class':'listType'
+      }).set('opacity',1).addEvents({
         click: this.toggleList
       })
     ]);
@@ -196,7 +198,7 @@ var FileManager = new Class({
 			'class': 'filemanager-close',
 			title: this.language.close,
 			events: {click: this.hide.bind(this)}
-		}).adopt(new Asset.image(this.assetBasePath + 'destroy.png')).inject(this.filemanager);
+		}).inject(this.filemanager);
 		
 		this.tips = new Tips({
 			className: 'tip-filebrowser',
@@ -513,7 +515,7 @@ var FileManager = new Class({
 
 			els[file.mime == 'text/directory' ? 1 : 0].push(el);
 			if (file.name == '..') el.set('opacity', 0.7);
-			el.inject(new Element('li').inject(this.browser)).store('parent', el.getParent());
+			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
 			icons = $$(icons.map(function(icon){return icon.appearOn(icon, [1, 0.7]);})).appearOn(el.getParent('li'), 0.7);
 		}, this);
 
@@ -538,9 +540,10 @@ var FileManager = new Class({
 
 			onDrag: function(el, e){
 				self.imageadd.setStyles({
-					left: e.page.x + 15,
-					top: e.page.y + 15
+					left: e.page.x + 20,
+					top: e.page.y + 20,
 				});
+				self.imageadd.fade('in');
 			},
 
 			onBeforeStart: function(el){

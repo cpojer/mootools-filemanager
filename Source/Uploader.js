@@ -151,7 +151,7 @@ FileManager.implement({
 				});
 				self.tips.attach(this.ui.cancel);
 				
-				var progress = new Element('img', {'class': 'file-progress', src: this.assetBasePath+'bar.gif'});
+				var progress = new Element('img', {'class': 'file-progress', src: self.assetBasePath+'bar.gif'});
 
 				this.ui.element.adopt(
 					this.ui.cancel,
@@ -220,8 +220,6 @@ FileManager.implement({
 			fileSizeMax: 25 * 1024 * 1024,
 			zIndex: this.SwiffZIndex || 9999,
 			onSelectSuccess: function(){
-			  console.log(this.fileList);
-			  //this.fileList[0].name = this.fileList[0].name.replace("'",'');
 				self.fillInfo();
 				self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
 				self.preview.adopt(self.upload.uploader);
