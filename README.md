@@ -16,6 +16,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
     - extended thumbnails
     - now absolute and relative paths are possible
     - add clickable and selectable path in the header
+    - add hiding of the thumbnail directory
 
 ### Features
 

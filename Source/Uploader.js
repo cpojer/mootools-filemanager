@@ -217,7 +217,8 @@ FileManager.implement({
 			allowDuplicates: true,
 			instantStart: true,
 			fileClass: File,
-			fileSizeMax: 25 * 1024 * 1024,
+			timeLimit: 260,
+			fileSizeMax: 2600 * 2600 * 25,
 			zIndex: this.SwiffZIndex || 9999,
 			onSelectSuccess: function(){
 				self.fillInfo();

@@ -9,6 +9,10 @@
  * @author Christoph Pojer <christoph.pojer@gmail.com>
  *
  * @link http://www.bin-co.com/php/scripts/classes/gd_image/ Based on work by "Binny V A"
+ * 
+ * @version 1.01
+ * Changlog<br>
+ *    - 1.01 small fixes in process method and add set memory limit to a higher value
  */
 
 class Image {
@@ -35,8 +39,7 @@ class Image {
 	 * @param string $file The path to the image file
 	 */
 	public function __construct($file){
-	  ini_set('memory_limit', '50M');   //  handle large images
-	  $memory_limit = (int)(ini_get('memory_limit'));
+	  //ini_set('memory_limit', '50M'); //  handle large images
 	  
 		$file = realpath($file);
 		if(!file_exists($file))
@@ -44,6 +47,13 @@ class Image {
 		
 		$this->file = $file;
 		$img = getimagesize($file);
+		
+		/*
+		echo basename($file)."\n";
+		var_dump(filesize($file));
+		$this->showMemoryUsage();
+    echo "\n";
+    */
 
 		$this->meta = array(
 			'width' => $img[0],
@@ -51,9 +61,9 @@ class Image {
 			'mime' => $img['mime'],
 			'ext' => end(explode('/', $img['mime'])),
 		);
+		
 		if($this->meta['ext']=='jpg')
 			$this->meta['ext'] = 'jpeg';
-		
 		if(!in_array($this->meta['ext'], array('gif', 'png', 'jpeg')))
 			return;
 		
@@ -68,8 +78,9 @@ class Image {
 		}
 	}
 	
-	public function __destruct(){
+	public function __destruct(){	  
 		if(!empty($this->image)) imagedestroy($this->image);
+		unset($this->image);
 	}
 	
 	/**
@@ -112,7 +123,7 @@ class Image {
 	 * @param resource $new
 	 */
 	private function set($new){
-		imagedestroy($this->image);
+	  if(!empty($this->image)) imagedestroy($this->image);
 		$this->image = $new;
 		
 		$this->meta['width'] = imagesx($this->image);
@@ -239,14 +250,18 @@ class Image {
 	 * @param string $file
 	 */
 	public function process($ext = null, $file = null){
-		if(!$ext) $ext = $this->meta['ext'];
-		
-		if($ext=='png') imagesavealpha($this->image, true);
-		$fn = 'image'.$ext;
-		$fn($this->image, $file);
-		
-		// If there is a new filename change the internal name too
-		if($file) $this->file = $file;
+	  if(!empty($this->image)) {
+  		if(!$ext) $ext = $this->meta['ext'];
+  		
+  		if($ext=='png') imagesavealpha($this->image, true);
+  		$fn = 'image'.$ext;
+  		$fn($this->image, $file);
+  		
+  		// If there is a new filename change the internal name too
+  		if($file) $this->file = $file;
+  		return true;
+		} else
+		  return false;
 	}
 
 	/**
@@ -289,5 +304,20 @@ class Image {
 		
 		return $this;
 	}
+	
+	function showMemoryUsage() {
+      $mem_usage = memory_get_usage(true);
+      
+      echo $mem_usage.' -> ';
+      
+      if ($mem_usage < 1024)
+          echo $mem_usage." bytes";
+      elseif ($mem_usage < 1048576)
+          echo round($mem_usage/1024,2)." kilobytes";
+      else
+          echo round($mem_usage/1048576,2)." megabytes";
+         
+      echo "<br />";
+  }
 	
 }

@@ -31,7 +31,7 @@ Options:
 	- dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
 	- upload: (boolean, defaults to *false*) Whether to allow uploads or not
 	- destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
-	- maxUploadSize: (integeter, defaults to *10830000* bytes) The maximum file size for upload in bytes
+	- maxUploadSize: (integeter, defaults to *20280000* bytes) The maximum file size for upload in bytes
 	- maxImageSize: (integeter, default is 1024) The maximum number of pixels an image can have, if the user enables "resize on upload"
 	- safe: (string, defaults to *true*) If true, disallows 
 	- filter: (string) If specified, the mimetypes to be allowed (for display and upload).
@@ -62,7 +62,7 @@ class FileManager {
 			'id3Path' => $path . '/Assets/getid3/getid3.php',
 			'mimeTypesPath' => $path . '/MimeTypes.ini',
 			'dateFormat' => 'j M Y - H:i',
-			'maxUploadSize' => 1900 * 1900 * 3,
+			'maxUploadSize' => 2600 * 2600 * 3,
 			'maxImageSize' => 1024,
 			'upload' => false,
 			'destroy' => false,
@@ -74,7 +74,6 @@ class FileManager {
 		$this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath']);
 		$this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory']);
 		$this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
-		//$this->path = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath(realPath($this->basedir.'../'));
 		$this->length = strlen($this->basedir);
 		$this->listType = ($_POST['type'] == 'list') ? 'list' : 'thumb';
 
@@ -110,19 +109,22 @@ class FileManager {
         ? $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file))
         : $this->getIcon($this->normalize($file));
 			
-			$out[is_dir($file) ? 0 : 1][] = array(
-			  'path' => str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file)),
-				'name' => pathinfo($file, PATHINFO_BASENAME),
-				'date' => date($this->options['dateFormat'], filemtime($file)),
-				'mime' => $this->getMimeType($file),
-				'thumbnail' => $icon,
-				'icon' => $this->getIcon($this->normalize($file),true),
-				'size' => filesize($file)
-			);
+			// list files, except the thumbnail folder
+			if(str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file)) != substr($this->options['thumbnailPath'],0,-1)) {
+  			$out[is_dir($file) ? 0 : 1][] = array(
+  			  'path' => str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file)),
+  				'name' => pathinfo($file, PATHINFO_BASENAME),
+  				'date' => date($this->options['dateFormat'], filemtime($file)),
+  				'mime' => $this->getMimeType($file),
+  				'thumbnail' => $icon,
+  				'icon' => $this->getIcon($this->normalize($file),true),
+  				'size' => filesize($file)
+  			);
+			}
 		}
 		
 		echo json_encode(array(
-		    'assetBasePath' => $this->options['assetBasePath'],
+		    //'assetBasePath' => $this->options['assetBasePath'],
 		    'root' => substr(FileManagerUtility::getRealPath($this->options['directory']),1),
 			  'path' => $this->getPath($dir),
 			  'dir' => array(
@@ -208,12 +210,6 @@ class FileManager {
 		
 		$this->unlink($file);
 		
-		// unlink thumbnail
-		$thumb = $this->generateThumbName($file);
-    $thumbPath = $_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'] . $thumb;
-    if (is_file($thumbPath))
-      unlink($thumbPath);
-		
 		echo json_encode(array(
 			'content' => 'destroyed'
 		));
@@ -251,6 +247,7 @@ class FileManager {
 				$size = $img->getSize();
 				if ($size['width'] > $this->options['maxImageSize']) $img->resize($this->options['maxImageSize'])->save();
 				elseif ($size['height'] > $this->options['maxImageSize']) $img->resize(null, $this->options['maxImageSize'])->save();
+				unset($img);
 			}
 			
 			echo json_encode(array(
@@ -302,20 +299,22 @@ class FileManager {
 		));
 	}
 	
-	protected function unlink($file){
+	protected function unlink($file) {
 		
 		if ($this->basedir==$file || strlen($this->basedir)>=strlen($file))
 			return;
 		
-		if (is_dir($file)){
+		if(is_dir($file)){
 			$files = glob($file . '/*');
 			if (is_array($files))
-				foreach ($files as $f)
+				foreach ($files as $f) {
 					$this->unlink($f);
+				  $this->deleteThumb($f);
+        }
 				
-			rmdir($file);
+			@rmdir($file);
 		}else{
-			try{ if ($this->checkFile($file)) unlink($file); }catch(Exception $e){}
+			try{ if ($this->checkFile($file)) {unlink($file); $this->deleteThumb($file);} }catch(Exception $e){}
 		}
 	}
 	
@@ -365,7 +364,15 @@ class FileManager {
 	  if ($size['width'] > 70) $img->resize(70)->process('jpeg',$thumbPath);
 	  elseif ($size['height'] > 48) $img->resize(null, 48)->process('jpeg',$thumbPath);
     else $img->process('jpeg',$thumbPath);
+    unset($img);
     return basename($thumbPath);
+  }
+  protected function deleteThumb($file)
+  {
+		$thumb = $this->generateThumbName($file);
+    $thumbPath = $_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'] . $thumb;
+    if(is_file($thumbPath))
+      @unlink($thumbPath);
   }
 
 	protected function getMimeType($file){

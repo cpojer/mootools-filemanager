@@ -30,6 +30,7 @@ version:
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
+  - port to mootools 1.3, ($unlink is Object.copy or Object.clone?)
 
 inspiration:
   - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
@@ -368,7 +369,7 @@ var FileManager = new Class({
 
 	destroy: function(file){
 	  var self = this;
-		this.tips.hide();		
+		self.tips.hide();
 		new Dialog(this.language.destroyfile, {
 			language: {
 				confirm: this.language.destroy,
@@ -403,7 +404,7 @@ var FileManager = new Class({
 
 	rename: function(file){
 	  var self = this;
-		this.tips.hide();
+		self.tips.hide();
 		var name = file.name;
 		var input = new Element('input', {'class': 'rename', value: name,'autofocus':'autofocus'});		
 		
@@ -488,7 +489,7 @@ var FileManager = new Class({
 		if (!j.files) return;
 
 		var els = [[], []];
-    
+
 		Array.each(j.files, function(file) {
 			file.dir = j.path;
       var extraClasses = '';
@@ -517,7 +518,7 @@ var FileManager = new Class({
 			if (file.name == '..') el.set('opacity', 0.7);
 			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
 			icons = $$(icons.map(function(icon){return icon.appearOn(icon, [1, 0.7]);})).appearOn(el.getParent('li'), 0.7);
-		}, this);
+    }, this);
 
 		var self = this, revert = function(el){
 			el.set('opacity', 1).store('block', true).removeClass('drag').removeClass('move').setStyles({
