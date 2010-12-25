@@ -105,8 +105,6 @@ FileManager.implement({
 						resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0
 					}))
 				});
-				this.name = this.name.replace('"','');
-				this.name = this.name.replace("'",'');
 			},
 			
 			render: function(){
@@ -210,7 +208,7 @@ FileManager.implement({
 			}
 
 		});
-
+    
 		this.swf = new Swiff.Uploader({
 			id: 'SwiffFileManagerUpload',
 			path: this.assetBasePath + 'Swiff.Uploader.swf',
@@ -233,7 +231,7 @@ FileManager.implement({
 			   
 				self.load(self.Directory, true);
 			},
-			onFail: function(error){
+			onFail: function(error) {
 				$$(self.upload.button, self.upload.label).dispose();
 				new Dialog(new Element('div', {html: self.language.flash[error] || self.language.flash.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
 			}

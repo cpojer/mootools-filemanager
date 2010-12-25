@@ -32,15 +32,22 @@ FileManager.Gallery = new Class({
 				opacity: 0,
 				display: 'block'
 			});
-
+      
+      this.filemanager.setStyles({
+        top: '10%',
+        height: '60%'
+      });
+      
 			var size = this.filemanager.getSize(),
 				pos = this.filemanager.getPosition();
 
-			this.galleryContainer.setStyles({
+			this.galleryContainer.setStyles({			  
 				top: pos.y + size.y - 1,
 				left: pos.x + (size.x - this.galleryContainer.getWidth()) / 2,
 				opacity: 1
 			});
+			
+			
 
 			this.hideClone();
 			this.wrapper.setStyle('display', 'none');

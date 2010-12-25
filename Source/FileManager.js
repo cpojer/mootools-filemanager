@@ -66,6 +66,7 @@ var FileManager = new Class({
 		onPreview: $empty*/
 		directory: '',
 		url: null,
+		assetBasePath: null,
 		selectable: false,
 		hideOnClick: false,
 		language: 'en'
@@ -80,19 +81,13 @@ var FileManager = new Class({
 		this.setOptions(options);
 		this.dragZIndex = 1300;
 		this.droppables = [];
+		this.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
 		this.Directory = this.options.directory;
     this.listType = 'list';
-    this.ready = false; // prevent running show when the assetBasePath is not loaded
     
-    // get the asseBasePath from the PHP class
-    new FileManager.Request({
-			url: this.options.url,
-			onSuccess: (function(j) {  this.assetBasePath = j.assetBasePath; this.ready = true; }).bind(this),
-		}).post();
-    
-		this.language = $unlink(FileManager.Language.en);
-		if (this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);
-		
+    this.language = $unlink(FileManager.Language.en);
+		if (this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);  
+  
 		this.container = new Element('div', {'class': 'filemanager-container filemanager-engine-' + Browser.Engine.name + (Browser.Engine.trident ? Browser.Engine.version : '')});
 		this.filemanager = new Element('div', {'class': 'filemanager'}).inject(this.container);
 		this.header = new Element('div', {'class': 'filemanager-header'}).inject(this.filemanager);
@@ -223,10 +218,11 @@ var FileManager = new Class({
 
 			}).bind(this)
 		};
+		
+		this.fireEvent('ready');
 	},
 
-	show: function(e){
-	  if(!this.ready) return; // prevent start when assetBasePath is not loaded yet	  
+	show: function(e){ 
 		if (e) e.stop();
     
     this.browserheader.adopt([

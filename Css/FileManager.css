@@ -203,6 +203,7 @@ div.filemanager-browsercontainer div.filemanager-browserheader {
 
 div.filemanager-browsercontainer div.filemanager-browserheader img {
   padding:4px 4px 0;
+  cursor: pointer;
 }
 
 div.filemanager-container span.fi {
@@ -215,14 +216,16 @@ div.filemanager-container span.fi {
 	white-space: nowrap;
 	cursor: pointer;
 }
+div.filemanager-container span.fi:hover {
+  background:#E2EBF6;
+}
 
 div.filemanager-container span.thumb {
   height:48px;
   padding: 3px;
-  background:#D4DCE6;
   margin:0;
   border-bottom:1px solid #EEEEEE;
-  display:block;
+  display: block;
   float:left;
   width:98%;
   overflow: hidden;
