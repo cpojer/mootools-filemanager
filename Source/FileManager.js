@@ -94,7 +94,8 @@ var FileManager = new Class({
 		this.filemanager = new Element('div', {'class': 'filemanager'}).inject(this.container);
 		this.header = new Element('div', {'class': 'filemanager-header'}).inject(this.filemanager);
 		this.menu = new Element('div', {'class': 'filemanager-menu'}).inject(this.filemanager);
-		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 200}}).inject(this.menu);
+		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 200}}).inject(this.header);
+		this.previewLoader = new Element('div', {'class': 'loader', opacity: 1, tween: {duration: 200}});
     
     // switch the path, from clickable to input text
     this.clickablePath = new Element('span', {'class': 'filemanager-dir'});
@@ -141,7 +142,7 @@ var FileManager = new Class({
 
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
-    this.scroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer)
+    this.scroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer);
     this.browserheader.adopt([      
       new Element('a',{
         'id':'togggle_side_boxes',
@@ -494,7 +495,10 @@ var FileManager = new Class({
 			file.dir = j.path;
       var extraClasses = '';
       var largeDir = '';
-      var icon = new Asset.image(file.thumbnail);
+      // generate unique id
+      var newDate = new Date;
+      uniqueId = newDate.getTime();
+      var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail+'?'+uniqueId,{'style':'width:48px;'}) : new Asset.image(file.thumbnail);
       
 			var el = file.element = new Element('span', {'class': 'fi ' + this.listType + ' ' + extraClasses, href: '#'}).adopt(
         icon,
@@ -651,6 +655,9 @@ var FileManager = new Class({
 
 		this.Request = new FileManager.Request({
 			url: this.options.url + '?event=detail',
+			onRequest: (function(){
+        this.preview.adopt(this.previewLoader);
+      }).bind(this),
 			onSuccess: (function(j) {
 				var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
 				if (prev) prev.addEvent('load', function(){

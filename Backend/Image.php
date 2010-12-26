@@ -253,9 +253,14 @@ class Image {
 	  if(!empty($this->image)) {
   		if(!$ext) $ext = $this->meta['ext'];
   		
+  		if($ext=='jpg')	$ext = 'jpeg';
+  		
   		if($ext=='png') imagesavealpha($this->image, true);
   		$fn = 'image'.$ext;
-  		$fn($this->image, $file);
+  		if($ext = 'jpeg')
+  		  $fn($this->image, $file,100);
+  		else
+  		  $fn($this->image, $file);
   		
   		// If there is a new filename change the internal name too
   		if($file) $this->file = $file;

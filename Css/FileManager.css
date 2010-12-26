@@ -136,13 +136,22 @@ div.filemanager-menu label {
 	font-size: 11px;
 }
 
-div.filemanager-menu div.loader {
-	float: left;
+div.loader {	
 	width: 16px;
 	height: 16px;
-	margin: 8px 0;
-	margin-left: 5px;
 	background: url(../Assets/loader.gif) no-repeat;
+}
+div.filemanager-header div.loader {
+  position: absolute;
+  top: 7px;
+  right: 30px;
+}
+
+div.filemanager-preview div.loader {
+  position: relative;
+  left: 50%;
+  right: auto;
+  margin-left: -8px;
 }
 
 /* filemanager-browserscroll */
@@ -155,10 +164,10 @@ div.filemanager div.filemanager-browserscroll {
 }
 
 
-div.filemanager div.filemanager-browserscroll li.list{
+div.filemanager div.filemanager-browserscroll li.list {
   height: 21px;
 }
-div.filemanager div.filemanager-browserscroll li.thumb{
+div.filemanager div.filemanager-browserscroll li.thumb {
   height: 54px;
 }
 
@@ -297,7 +306,6 @@ div.filemanager-container span.thumb img {
 	display: inline-block;
 	float: left;
 	margin: 0 5px 0 0;
-
 }
 
 div.filemanager-container span.file img {
@@ -469,13 +477,12 @@ div.filemanager-preview {
 div.filemanager-preview img.preview {
 	margin: 0 auto 1em;
 	display: block;
-	max-height: 100px;
 	background: transparent;
 	border: 2px solid #fff;
 }
 
 div.filemanager-preview img.preview:hover {
-  border: 2px solid #000;
+  border: 2px solid #666;
 }
 
 div.filemanager-engine-trident4 div.filemanager-preview img.preview {

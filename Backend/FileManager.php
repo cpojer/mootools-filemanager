@@ -150,9 +150,11 @@ class FileManager {
 		$mime = $this->getMimeType($file);
 		$content = null;
 		// image
-		if (FileManagerUtility::startsWith($mime, 'image/')){
+		if (FileManagerUtility::startsWith($mime, 'image/')) {
+		  // generates a random number to put on the end of the image, to prevent caching
+      $randomImage = '?'.md5(uniqid(rand(),1));
 			$size = getimagesize($file);
-			$content = '<a href="'.$url.'" rel="preview"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)) . '" class="preview" alt="preview" /></a>
+			$content = '<a href="'.$url.'" rel="preview"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)).$randomImage.'" class="preview" alt="preview" /></a>
 				<h2>${more}</h2>
 				<dl>
 					<dt>${width}</dt><dd>' . $size[0] . 'px</dd>
@@ -361,8 +363,8 @@ class FileManager {
   {    
     $img = new Image($file);
 	  $size = $img->getSize();
-	  if ($size['width'] > 70) $img->resize(70)->process('jpeg',$thumbPath);
-	  elseif ($size['height'] > 48) $img->resize(null, 48)->process('jpeg',$thumbPath);
+	  if ($size['width'] > 250) $img->resize(250)->process('jpeg',$thumbPath);
+	  elseif ($size['height'] > 250) $img->resize(null, 250)->process('jpeg',$thumbPath);
     else $img->process('jpeg',$thumbPath);
     unset($img);
     return basename($thumbPath);

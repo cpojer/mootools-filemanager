@@ -32,7 +32,7 @@ FileManager.implement({
 	
 	hooks: {
 		show: {
-			upload: function(){
+			upload: function() {
 				this.startUpload();
 			}
 		},
