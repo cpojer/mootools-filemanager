@@ -39,6 +39,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Create galleries using the Gallery-Plugin
 
 ### ToDo
+  - fix flash issue in IE (somwhere in fancy uploader)
   - fix issue https://github.com/cpojer/mootools-filemanager/issues#issue/11
   - port to mootools 1.3
 

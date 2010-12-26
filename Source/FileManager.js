@@ -217,7 +217,7 @@ var FileManager = new Class({
 				});
 			}
 		});
-		this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 0.8]).appearOn(this.filemanager, 0.8));
+		this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 1]).appearOn(this.filemanager, 1));
 		
 		this.imageadd = new Asset.image(this.assetBasePath + 'add.png', {
 			'class': 'browser-add'
@@ -519,7 +519,7 @@ var FileManager = new Class({
 				}, this);
 
 			els[file.mime == 'text/directory' ? 1 : 0].push(el);
-			if (file.name == '..') el.set('opacity', 0.7);
+			//if (file.name == '..') el.set('opacity', 0.7);
 			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
 			icons = $$(icons.map(function(icon){return icon.appearOn(icon, [1, 0.7]);})).appearOn(el.getParent('li'), 0.7);
     }, this);
