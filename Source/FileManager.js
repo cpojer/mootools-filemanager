@@ -26,7 +26,7 @@ license:
   MIT-style license
 
 version:
-  1.1beta1
+  1.1 rc
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
@@ -498,7 +498,7 @@ var FileManager = new Class({
       // generate unique id
       var newDate = new Date;
       uniqueId = newDate.getTime();
-      var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail+'?'+uniqueId,{'style':'width:48px;'}) : new Asset.image(file.thumbnail);
+      var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail+'?'+uniqueId,{'width':'48'}) : new Asset.image(file.thumbnail);
       
 			var el = file.element = new Element('span', {'class': 'fi ' + this.listType + ' ' + extraClasses, href: '#'}).adopt(
         icon,

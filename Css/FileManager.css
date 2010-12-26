@@ -517,7 +517,7 @@ div.filemanager-container img.browser-add {
 	position: absolute;
 	width: 16px;
 	height: 16px;
-	z-index: 1010;
+	z-index: 2000;
 }
 
 /* UPLOAD */
