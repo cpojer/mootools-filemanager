@@ -26,7 +26,7 @@ license:
   MIT-style license
 
 version:
-  1.1rc2
+  1.1rc3
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
@@ -42,7 +42,7 @@ options:
   - language: (string, defaults to *en*) The language used for the FileManager
   - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
   - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
-  - delete: (boolean, defaults to *false*) Whether to allow deletion of files or not
+  - destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
 	- rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
 	- createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
   
@@ -80,7 +80,7 @@ var FileManager = new Class({
 		hideOnClick: false,
 		language: 'en',
 		selectable: false,
-		delete: false,
+		destroy: false,
 		rename: false,
 		createFolders: false
 	},
@@ -153,7 +153,9 @@ var FileManager = new Class({
 
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
-    this.browserScroll= new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer);
+    this.browserScroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer).addEvent('mouseover',(function(){
+      this.browser.getElements('span.fi.hover').each(function(span){ span.removeClass('hover'); });
+    }).bind(this));
     this.browserheader.adopt([      
       new Element('a',{
         'id':'togggle_side_boxes',
@@ -472,7 +474,7 @@ var FileManager = new Class({
 		});
 	},
   
-  browserSelection: function(direction) {    
+  browserSelection: function(direction) {
     if(this.browser.getElement('li') == null) return;
 
     // folder up
@@ -480,40 +482,45 @@ var FileManager = new Class({
       this.load(this.Directory + '..');
     
     // none is selected
-    if(this.browser.getElement('span.fi.selected') == null) {
+    if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') == null) {
       // select first folder
-      this.browser.getFirst('li').getElement('span.fi').addClass('selected');
+      this.browser.getFirst('li').getElement('span.fi').addClass('hover');
       new Fx.Scroll(this.browserScroll,{duration: 250}).toElement(this.browser.getFirst('li').getElement('span.fi'));
     } else {
-      var current = this.browser.getElement('span.fi.selected');
+      // select the current file/folder or the one with hover
+      var current = null;
+      if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') != null)
+        current = this.browser.getElement('span.fi.selected');
+      else if(this.browser.getElement('span.fi.hover') != null)
+        current = this.browser.getElement('span.fi.hover');      
       var scrollHeight = (this.browserScroll.getSize().y+this.browserScroll.getScroll().y);
-      //console.log(height);
-      //console.log(current.getPosition(this.browserScroll));
-      //console.log(this.browserScroll.getScroll());
-      //console.log();
       var browserScrollFx = new Fx.Scroll(this.browserScroll,{duration: 250}); //offset: {x:0,y:-(this.browserScroll.getSize().y / 4)},
       
       // go down
       if(direction == 'down') {
         if(current.getParent('li').getNext('li') != null) {
-          current.removeClass('selected');
+          current.removeClass('hover');
           var next = current.getParent('li').getNext('li').getElement('span.fi');
-          next.addClass('selected');
+          next.addClass('hover');
           if((current.getPosition(this.browserScroll).y + (current.getSize().y*2)) >= scrollHeight)
             browserScrollFx.toElement(next);
         }
       // go up
       } else if(direction == 'up') {
         if(current.getParent('li').getPrevious('li') != null) {
-          current.removeClass('selected');      
+          current.removeClass('hover');      
           var previous = current.getParent('li').getPrevious('li').getElement('span.fi');      
-          previous.addClass('selected');
+          previous.addClass('hover');
           if((current.getPosition(this.browserScroll).y - current.getSize().y)<= this.browserScroll.getScroll().y)
             browserScrollFx.start(current.getPosition(this.browserScroll).x,current.getPosition(this.browserScroll).y-this.browserScroll.getSize().y)
         }
       
       // select
       } else if(direction == 'enter') {
+        this.Current = current;
+        if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
+          this.browser.getElement('span.fi.selected').removeClass('selected');
+        current.addClass('selected');
         var currentFile = current.retrieve('file');        
         if(currentFile.mime == 'text/directory')
           this.load(currentFile.path.replace(this.root,''));
@@ -594,7 +601,7 @@ var FileManager = new Class({
 			if (file.name != '..') {			 
 			  var editButtons = new Array();
 			  if(this.options.rename) editButtons.push('rename');
-			  if(this.options.delete) editButtons.push('destroy');
+			  if(this.options.destroy) editButtons.push('destroy');
 				editButtons.each(function(v){
 					icons.push(new Asset.image(this.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', (function(e){ e.stop(); this[v](file);}).bind(this)).injectTop(el));
 				}, this);

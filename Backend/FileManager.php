@@ -15,7 +15,7 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
 
 version:
-  1.1rc2
+  1.1rc3
 
 Dependencies:
 	- Upload.php
