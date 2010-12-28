@@ -133,7 +133,7 @@ this.Dialog = new Class({
 		});
 	},
 	
-	destroy: function(){
+	destroy: function() {
 		if (this.el) this.el.fade(0).get('tween').chain((function(){
 			this.overlay.destroy();
 			this.el.destroy();

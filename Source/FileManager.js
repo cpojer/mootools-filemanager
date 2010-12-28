@@ -17,7 +17,7 @@ Authors:
 
 requires:
   core/1.2.5: '*'
-  more/1.2.5.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation]
+  more/1.2.5.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation, Scroll, SmoothScroll]
 
 provides:
   - filemanager
@@ -26,7 +26,7 @@ license:
   MIT-style license
 
 version:
-  1.1 rc
+  1.1rc2
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
@@ -110,7 +110,7 @@ var FileManager = new Class({
     }).bind(this)),this.clickablePath);
     
 		var self = this;
-		this.relayClick = function(e){
+		this.relayClick = function(e) {
 			if(e) e.stop();
 			var file = this.retrieve('file');
 			if (this.retrieve('block') && !Browser.Engine.trident){
@@ -142,7 +142,7 @@ var FileManager = new Class({
 
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
-    this.scroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer);
+    this.browserScroll= new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer);
     this.browserheader.adopt([      
       new Element('a',{
         'id':'togggle_side_boxes',
@@ -165,7 +165,7 @@ var FileManager = new Class({
 				return self.deselect();
 			}),
 			'click:relay(li span.fi)': this.relayClick
-		}).inject(this.scroll);
+		}).inject(this.browserScroll);
 		
 		this.addMenuButton('create');
 		if (this.options.selectable) this.addMenuButton('open');
@@ -235,8 +235,24 @@ var FileManager = new Class({
 			keyup: (function(){
 				this.imageadd.fade(0);
 			}).bind(this),
-			keyesc: (function(e){
+			keyboardInput: (function(e){
 				if (e.key=='esc') this.hide();
+				if (e.key=='up') {
+          e.stop();
+          this.browserSelection('up');
+        }
+				if (e.key=='down') {
+          e.stop();
+          this.browserSelection('down');
+        }
+				if (e.key=='enter') {
+          e.stop();
+          this.browserSelection('enter');
+        }
+        if (e.key=='backspace') {
+          e.stop();
+          this.browserSelection('backspace');
+        }
 			}).bind(this),
 			scroll: (function(){
 				this.filemanager.center(this.offsets);
@@ -244,15 +260,13 @@ var FileManager = new Class({
 				
         scrollSize = this.browsercontainer.getSize();
         headerSize = this.browserheader.getSize();
-        this.scroll.setStyle('height',scrollSize.y - headerSize.y);
+        this.browserScroll.setStyle('height',scrollSize.y - headerSize.y);
 
 			}).bind(this)
-		};
-		
-		this.fireEvent('ready');
+		};		
 	},
 
-	show: function(e){ 
+	show: function(e){
 		if (e) e.stop();
 
 		this.load(this.Directory);
@@ -274,11 +288,11 @@ var FileManager = new Class({
 			window.addEvents({
 				scroll: this.bound.scroll,
 				resize: this.bound.scroll,
-				keyup: this.bound.keyesc
+				keypress: this.bound.keyboardInput
 			});
       scrollSize = this.browsercontainer.getSize();
       headerSize = this.browserheader.getSize();
-      this.scroll.setStyle('height',scrollSize.y - headerSize.y);
+      this.browserScroll.setStyle('height',scrollSize.y - headerSize.y);
             
 		}).delay(500, this);
 	},
@@ -292,7 +306,7 @@ var FileManager = new Class({
 		this.container.setStyle('display', 'none');
 		
 		this.fireHooks('cleanup').fireEvent('hide');
-		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
+		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keypress', this.bound.keyboardInput);
 	},
 
 	open: function(e){
@@ -339,9 +353,9 @@ var FileManager = new Class({
 		});
 	},
 
-	deselect: function(el){
+	deselect: function(el) {
 		if (el && this.Current != el) return;
-
+    
 		if (el) this.fillInfo();
 		if (this.Current) this.Current.removeClass('selected');
 		this.Current = null;
@@ -350,7 +364,6 @@ var FileManager = new Class({
 	},
 
 	load: function(dir, nofade){
-    
 		this.deselect();
 		if (!nofade) this.info.fade(0);    
     
@@ -378,7 +391,7 @@ var FileManager = new Class({
 			},
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
-			onConfirm: function(){
+			onConfirm: function() {
 				new FileManager.Request({
 					url: self.options.url + '?event=destroy',
 					data: {
@@ -447,15 +460,69 @@ var FileManager = new Class({
 			}
 		});
 	},
+  
+  browserSelection: function(direction) {
+    
+    if(this.browser.getElement('li') == null) return;
 
+    // folder up
+    if(this.Directory && direction == 'backspace')
+      this.load(this.Directory + '..');
+    
+    // none is selected
+    if(this.browser.getElement('span.fi.selected') == null) {
+      // select first folder
+      this.browser.getFirst('li').getElement('span.fi').addClass('selected');
+      new Fx.Scroll(this.browserScroll,{duration: 250}).toElement(this.browser.getFirst('li').getElement('span.fi'));
+    } else {
+      var current = this.browser.getElement('span.fi.selected');
+      var scrollHeight = (this.browserScroll.getSize().y+this.browserScroll.getScroll().y);
+      //console.log(height);
+      //console.log(current.getPosition(this.browserScroll));
+      //console.log(this.browserScroll.getScroll());
+      //console.log();
+      var browserScrollFx = new Fx.Scroll(this.browserScroll,{duration: 250}); //offset: {x:0,y:-(this.browserScroll.getSize().y / 4)},
+      
+      // go down
+      if(direction == 'down') {
+        if(current.getParent('li').getNext('li') != null) {
+          current.removeClass('selected');
+          var next = current.getParent('li').getNext('li').getElement('span.fi');
+          next.addClass('selected');
+          if((current.getPosition(this.browserScroll).y + (current.getSize().y*2)) >= scrollHeight)
+            browserScrollFx.toElement(next);
+        }
+      // go up
+      } else if(direction == 'up') {
+        if(current.getParent('li').getPrevious('li') != null) {
+          current.removeClass('selected');      
+          var previous = current.getParent('li').getPrevious('li').getElement('span.fi');      
+          previous.addClass('selected');
+          if((current.getPosition(this.browserScroll).y - current.getSize().y)<= this.browserScroll.getScroll().y)
+            browserScrollFx.start(current.getPosition(this.browserScroll).x,current.getPosition(this.browserScroll).y-this.browserScroll.getSize().y)
+        }
+      
+      // select
+      } else if(direction == 'enter') {
+        var currentFile = current.retrieve('file');        
+        if(currentFile.mime == 'text/directory')
+          this.load(currentFile.path.replace(this.root,''));
+        else
+          this.fillInfo(currentFile);      
+      }
+    }
+    
+  },
+  
 	fill: function(j, nofade){
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
 		if (!nofade) this.fillInfo(j.dir);
 		this.browser.empty();
+		this.root = j.root;
 		var self = this;
 		
-		this.CurrentPath = j.root + this.Directory;
+		this.CurrentPath = this.root + this.Directory;
 		var text = [], pre = [];
 		var rootPath = j.root.slice(0,-1).split('/');
     rootPath.pop();
@@ -626,7 +693,7 @@ var FileManager = new Class({
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
 	},
 
-	fillInfo: function(file){
+	fillInfo: function(file) {
 		if (!file) file = this.CurrentDir;
 
 		if (!file) return;

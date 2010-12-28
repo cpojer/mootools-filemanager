@@ -11,9 +11,11 @@ function UploadIsAuthenticated($get){
 
 $browser = new FileManager(array(
 	'directory' => 'Files/',
+	'thumbnailPath' => 'Files/Thumbnails/',
 	'assetBasePath' => '../Assets',
-	'upload' => false,
+	'upload' => true,
 	'destroy' => false,
+	'chmod' => 0777
 ));
 
 $browser->fireEvent(!empty($_GET['event']) ? $_GET['event'] : null);

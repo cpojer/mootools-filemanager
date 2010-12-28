@@ -6,24 +6,10 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.1 rc
-  *Please Note:* This is currently the 1.1 rc version, means there are possible still some bugs.
+  1.1 rc2
 
 ### Author
  [Christoph Pojer](http://og5.net/christoph)
-
-### Changes
- - [James Ehly](http://www.devtrench.com)
-    - thumbnail list
- - [Fabian Vogelsteller](http://frozeman.de)
-    - extended thumbnails
-    - now absolute and relative paths are possible
-    - add clickable and selectable path in the header
-    - add hiding of the thumbnail directory
-    - a lot of bugfixes
-    - add .htaccess to allow upload and resize of big files
-    - made interface changes
-    - add SqueezBox for preview of the images
 
 ### Features
 
@@ -39,6 +25,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Create galleries using the Gallery-Plugin
 
 ### ToDo
+  - keyboard navigation doesnt work in webkit browsers?
   - fix flash issue in IE (somwhere in fancy uploader)
   - fix issue https://github.com/cpojer/mootools-filemanager/issues#issue/11
   - port to mootools 1.3
@@ -64,3 +51,18 @@ How to use
 ### Custom Authentication
 
 * As Flash and therefore the Uploader ignores authenticated clients you need to specify your own authentication. In order to do this you need to provide a custom "UploadIsAuthenticated" function on the serverside and you need to specify "uploadAuthData" on the client.
+
+
+### Changes
+ - [James Ehly](http://www.devtrench.com)
+    - thumbnail list
+ - [Fabian Vogelsteller](http://frozeman.de)
+    - extended thumbnails
+    - now absolute and relative paths are possible
+    - add clickable and selectable path in the header
+    - add hiding of the thumbnail directory
+    - a lot of bugfixes
+    - add .htaccess to allow upload and resize of big files
+    - made interface changes
+    - add SqueezBox for preview of the images
+    - add keyboard navigation in the file browser

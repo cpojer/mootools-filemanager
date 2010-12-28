@@ -15,7 +15,7 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
 
 version:
-  1.1 rc
+  1.1rc2
 
 Dependencies:
 	- Upload.php
@@ -36,6 +36,7 @@ Options:
 	- safe: (string, defaults to *true*) If true, disallows 
 	- filter: (string) If specified, the mimetypes to be allowed (for display and upload).
 		Example: "image/" allows all Image Mimetypes
+	- chmod: (integeter, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
 */
 
 require_once(FileManagerUtility::getPath() . '/Upload.php');
@@ -67,19 +68,20 @@ class FileManager {
 			'upload' => false,
 			'destroy' => false,
 			'safe' => true,
-			'filter' => null
+			'filter' => null,
+			'chmod' => 0777,
 		), $options);
 		
-		$this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath']);
-		$this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath']);
-		$this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory']);
+		$this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'],$this->options['chmod']);
+		$this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath'],$this->options['chmod']);
+		$this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
 		$this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
 		$this->length = strlen($this->basedir);
 		$this->listType = ($_POST['type'] == 'list') ? 'list' : 'thumb';
 
 		header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
 		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
-		
+
 		$this->get = $_GET;
 		$this->post = $_POST;
 	}
@@ -125,7 +127,7 @@ class FileManager {
 		
 		echo json_encode(array(
 		    //'assetBasePath' => $this->options['assetBasePath'],
-		    'root' => substr(FileManagerUtility::getRealPath($this->options['directory']),1),
+		    'root' => substr(FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']),1),
 			  'path' => $this->getPath($dir),
 			  'dir' => array(
 				'name' => pathinfo($dir, PATHINFO_BASENAME),
@@ -241,7 +243,8 @@ class FileManager {
 				'name' => $name,
 				'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
 				'size' => $this->options['maxUploadSize'],
-				'mimes' => $this->getAllowedMimeTypes()
+				'mimes' => $this->getAllowedMimeTypes(),
+				'chmod' => $this->options['chmod']
 			));
 			
 			if (FileManagerUtility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
@@ -285,6 +288,8 @@ class FileManager {
 			if (empty($this->post['name'])) return;
 			$newname = $this->getName($this->post['name'], $dir);
 			$fn = 'rename';
+			unlink($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file));
+			//rename($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file),$_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($this->post['name'])); // rename thumbnail
 		}else{
 			$newname = $this->getName(pathinfo($file, PATHINFO_FILENAME), $this->getDir($this->post['newDirectory']));
 			$fn = !empty($this->post['copy']) ? 'copy' : 'rename';
@@ -292,8 +297,9 @@ class FileManager {
 		
 		if (!$newname) return;
 		
-		$ext = pathinfo($file, PATHINFO_EXTENSION);
-		if ($ext) $newname .= '.' . $ext;
+		$extOld = pathinfo($file, PATHINFO_EXTENSION);
+		$extNew = pathinfo($newname, PATHINFO_EXTENSION);
+		if ($extOld != $extNew) $newname .= '.' . $extOld;
 		$fn($file, $newname);
 		
 		echo json_encode(array(
@@ -360,7 +366,7 @@ class FileManager {
   }
 
   protected function generateThumb($file,$thumbPath)
-  {    
+  { 
     $img = new Image($file);
 	  $size = $img->getSize();
 	  if ($size['width'] > 250) $img->resize(250)->process('jpeg',$thumbPath);
@@ -382,7 +388,7 @@ class FileManager {
 	}
 	
 	protected function getDir($dir){
-		$dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->basedir.$dir);
+		$dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->basedir.$dir,$this->options['chmod']);
 		return $this->checkFile($dir) ? $dir : $this->basedir;
 	}
 	
@@ -469,10 +475,12 @@ class FileManagerUtility {
 		return $path ? $path : $path = pathinfo(__FILE__, PATHINFO_DIRNAME);
 	}
 	
-	public static function getRealPath($path){
+	public static function getRealPath($path,$chmod = 0777) {
+	  if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path)) mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realPath() function
 	  $path = (FileManagerUtility::startsWith($path,'/')) ? $_SERVER['DOCUMENT_ROOT'].$path : $path;
-		$path = (FileManagerUtility::startsWith($path,'../') || !FileManagerUtility::startsWith($path,'/')) ? realPath($path) : $path;
-		$path = str_replace('\\','/',$path);
+		if(!is_dir($path)) mkdir($path,$chmod); // create folder if not existing
+    $path = (FileManagerUtility::startsWith($path,'../') || !FileManagerUtility::startsWith($path,'/')) ? realPath($path) : $path;
+		$path = str_replace('\\','/',$path);		
     $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
     $path = (FileManagerUtility::endsWith($path,'/')) ? $path : $path.'/';
 		return $path;
