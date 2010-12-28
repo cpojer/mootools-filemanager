@@ -36,13 +36,21 @@ inspiration:
   - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
 
 options:
-  - url: (string) The base url to the Backend FileManager, without QueryString
+  - url: (string) The base url to the Backend FileManager (FileManager.php), without QueryString
   - assetBasePath: (string) The path to all images and swf files used by the filemanager
-  - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
+  - directory: (string, relative to the directory set in to the filemanager php class) Can be used to load a subfolder instead of the base folder
   - language: (string, defaults to *en*) The language used for the FileManager
   - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
-  - directory: (string, relative to the directory set in to the filemanager php class) Can be used to load a subfolder instead of the base folder
-
+  - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
+  - delete: (boolean, defaults to *false*) Whether to allow deletion of files or not
+	- rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
+	- createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
+  
+  // set in uploader.js
+  - upload: (boolean, defaults to *true*) 
+  - uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
+  - resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
+  
 events:
   - onComplete(path, file): fired when a file gets selected via the "Select file" button
   - onModify(file): fired when a file gets renamed/deleted or modified in another way
@@ -68,10 +76,13 @@ var FileManager = new Class({
 		onPreview: $empty*/
 		directory: '',
 		url: null,
-		assetBasePath: null,
-		selectable: false,
+		assetBasePath: null,		
 		hideOnClick: false,
-		language: 'en'
+		language: 'en',
+		selectable: false,
+		delete: false,
+		rename: false,
+		createFolders: false
 	},
 	
 	hooks: {
@@ -167,8 +178,8 @@ var FileManager = new Class({
 			'click:relay(li span.fi)': this.relayClick
 		}).inject(this.browserScroll);
 		
-		this.addMenuButton('create');
-		if (this.options.selectable) this.addMenuButton('open');
+		if(this.options.createFolders) this.addMenuButton('create');
+		if(this.options.selectable) this.addMenuButton('open');
 		
 		this.info = new Element('div', {'class': 'filemanager-infos', opacity: 0}).inject(this.filemanager);
 
@@ -461,8 +472,7 @@ var FileManager = new Class({
 		});
 	},
   
-  browserSelection: function(direction) {
-    
+  browserSelection: function(direction) {    
     if(this.browser.getElement('li') == null) return;
 
     // folder up
@@ -514,7 +524,7 @@ var FileManager = new Class({
     
   },
   
-	fill: function(j, nofade){
+	fill: function(j, nofade) {
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
 		if (!nofade) this.fillInfo(j.dir);
@@ -573,30 +583,35 @@ var FileManager = new Class({
 			).store('file', file);
 
 			var icons = [];
+			// dowload icon
 			if (file.mime!='text/directory')
 				icons.push(new Asset.image(this.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
 					this.tips.hide();
 					e.stop();
 					window.open(file.path);
 				}).bind(this)).inject(el, 'top'));
-
-			if (file.name != '..')
-				['rename', 'destroy'].each(function(v){
+      // rename, delete icon
+			if (file.name != '..') {			 
+			  var editButtons = new Array();
+			  if(this.options.rename) editButtons.push('rename');
+			  if(this.options.delete) editButtons.push('destroy');
+				editButtons.each(function(v){
 					icons.push(new Asset.image(this.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', (function(e){ e.stop(); this[v](file);}).bind(this)).injectTop(el));
 				}, this);
+			}
 
 			els[file.mime == 'text/directory' ? 1 : 0].push(el);
 			//if (file.name == '..') el.set('opacity', 0.7);
 			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
 			icons = $$(icons.map(function(icon){return icon.appearOn(icon, [1, 0.7]);})).appearOn(el.getParent('li'), 0.7);
     }, this);
-
+    
+    // cancel dragging
 		var self = this, revert = function(el){
 			el.set('opacity', 1).store('block', true).removeClass('drag').removeClass('move').setStyles({
 				opacity: 1,
-				zIndex: '',
+				'z-index': '',
 				position: 'relative',
-				width: '98%',
 				left: 0,
 				top: 0
 			}).inject(el.retrieve('parent'));
@@ -607,6 +622,8 @@ var FileManager = new Class({
 
 			self.relayClick.apply(el);
 		};
+		
+		/*
 		$$(els[0]).makeDraggable({
 			droppables: $$(this.droppables, els[1]),
 
@@ -623,9 +640,9 @@ var FileManager = new Class({
 				self.tips.hide();
 				var position = el.getPosition();
 				el.addClass('drag').setStyles({
-					zIndex: self.dragZIndex,
+					'z-index': self.dragZIndex,
 					position: 'absolute',
-					width: el.getWidth() - el.getStyle('paddingLeft').toInt(),
+					width: el.getWidth() - el.getStyle('paddingLeft').toInt() - el.getStyle('paddingRight').toInt(),
 					left: position.x,
 					top: position.y
 				}).inject(self.container);
@@ -687,7 +704,7 @@ var FileManager = new Class({
 					});
 			}
 		});
-
+    */
 		$$(els).setStyles({left: 0, top: 0});
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
@@ -767,8 +784,9 @@ var FileManager = new Class({
 		var el = this.menu.getElement('button.filemanager-open');
 		if (el) el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
 	},
-
-	addMenuButton: function(name){
+  
+  // adds buttons to the file main menu, which onClick start a method with the same name
+	addMenuButton: function(name) {
 		var el = new Element('button', {
 			'class': 'filemanager-' + name,
 			text: this.language[name]

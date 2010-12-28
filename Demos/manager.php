@@ -13,8 +13,6 @@ $browser = new FileManager(array(
 	'directory' => 'Files/',
 	'thumbnailPath' => 'Files/Thumbnails/',
 	'assetBasePath' => '../Assets',
-	'upload' => true,
-	'destroy' => false,
 	'chmod' => 0777
 ));
 

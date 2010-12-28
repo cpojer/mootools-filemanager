@@ -29,11 +29,10 @@ Options:
 	- id3Path: (string, optional, relative path) The path to the getid3.php file
 	- mimeTypesPath: (string, optional, relative path) The path to the MimTypes.ini file.
 	- dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
-	- upload: (boolean, defaults to *false*) Whether to allow uploads or not
-	- destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
 	- maxUploadSize: (integeter, defaults to *20280000* bytes) The maximum file size for upload in bytes
 	- maxImageSize: (integeter, default is 1024) The maximum number of pixels an image can have, if the user enables "resize on upload"
-	- safe: (string, defaults to *true*) If true, disallows 
+	- upload: (boolean, defaults to *true*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
+  - safe: (string, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps'
 	- filter: (string) If specified, the mimetypes to be allowed (for display and upload).
 		Example: "image/" allows all Image Mimetypes
 	- chmod: (integeter, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
@@ -65,8 +64,7 @@ class FileManager {
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 2600 * 2600 * 3,
 			'maxImageSize' => 1024,
-			'upload' => false,
-			'destroy' => false,
+			'upload' => true,
 			'safe' => true,
 			'filter' => null,
 			'chmod' => 0777,

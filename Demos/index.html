@@ -85,7 +85,10 @@
 				hideOnClick: true,
 				assetBasePath: '../Assets',
 				uploadAuthData: {session: 'MySessionId'},
-
+        upload: true,
+      	delete: true,
+      	rename: true,
+      	createFolders: true,
 			});
 			$('example1').addEvent('click', manager1.show.bind(manager1));
 
@@ -118,10 +121,15 @@
 			manager2 = new FileManager({
 				url: 'selectImage.php',
 				language: 'en',
-				selectable: true,
+				
 				hideOnClick: true,
 				assetBasePath: '../Assets',
 				uploadAuthData: {session: 'MySessionId'},
+				selectable: true,
+				upload: true,
+      	delete: true,
+      	rename: true,
+      	createFolders: true
 				//onReady: complete
 			}).addEvent('ready',complete);
 			
@@ -140,7 +148,11 @@
 				language: 'de',
 				hideOnClick: true,
 				assetBasePath: '../Assets',
-				uploadAuthData: {session: 'MySessionId'}
+				uploadAuthData: {session: 'MySessionId'},
+				upload: true,
+      	delete: true,
+      	rename: true,
+      	createFolders: true
 			});
 			$('example3').addEvent('click', manager3.show.bind(manager3));
 

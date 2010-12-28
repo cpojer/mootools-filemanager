@@ -224,6 +224,7 @@ div.filemanager-browsercontainer div.filemanager-browserheader a.listType {
   width: 16px;
   height: 16px;
   margin: 5px;
+  cursor: pointer;
 }
 div.filemanager-browsercontainer div.filemanager-browserheader a.listType#togggle_side_list {
   background: url(../Assets/application_side_list.png) no-repeat;
@@ -245,11 +246,8 @@ div.filemanager-container span.fi {
 
 div.filemanager-container span.thumb {
   height: 48px;
-  padding: 3px;
-  margin:0;
-  display: block;
-  float:left;
-  width:98%;
+  padding: 3px 0 3px 3px;
+  margin: 0;
   overflow: hidden;
 }
 
@@ -257,7 +255,7 @@ div.filemanager-container span.fi:hover {
   background:#E2EBF6;
 }
 
-div.filemanager-container span.fi span {
+div.filemanager-container span.fi span, div.filemanager-container span.thumb {
 	white-space: nowrap;
 	display: block;
 	overflow: hidden;
@@ -275,7 +273,7 @@ div.filemanager ul li span.dir {
 	background-color: transparent;
 }
 
-div.filemanager ul li span.droppable {
+div.filemanager ul li span.droppable, div.filemanager-gallery ul.droppable {
 	background-color: #99b7e7;
 }
 
@@ -283,11 +281,13 @@ ul.filemanager-browser a, ul.filemanager-browser span {
 	position: relative;
 }
 
+/*
 div.filemanager ul li a.selected, div.filemanager ul li span.selected {
 	background: url(../Assets/filelist_selected.png) repeat-x;
 	color: #eee;
 	outline: none;
 }
+*/
 
 div.filemanager ul li span.thumb.selected, div.filemanager ul li span.fi.selected {
 	background:#8EAAD6;
@@ -337,6 +337,7 @@ div.filemanager a.filemanager-close {
 	height: 16px;
 	width: 16px;
 	background: url(../Assets/close.png) no-repeat;
+	cursor: pointer;
 }
 div.filemanager a.filemanager-close:hover {
   background-position: 0px -16px;
@@ -626,19 +627,13 @@ div.filemanager-gallery ul {
 	background: #f2f2f2;
 }
 
-div.filemanager-gallery ul.droppable {
-	background-color: #99b7e7;
-}
-
 div.filemanager-gallery ul li {
 	position: relative;
 	float: left;
 	margin: 0;
 	width: 79px;
 	height: 60px;
-
-	list-style: none;
-	
+	list-style: none;	
 	background: url(../Assets/loader.gif) center center no-repeat;
 }
 
