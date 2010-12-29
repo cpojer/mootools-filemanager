@@ -25,9 +25,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Create galleries using the Gallery-Plugin
 
 ### ToDo
-  - keyboard navigation doesnt work in webkit browsers?
-  - fix flash issue in IE (somwhere in fancy uploader)
-  - fix issue https://github.com/cpojer/mootools-filemanager/issues#issue/11
+  - fix flash issue in IE (somewhere in fancy uploader)
   - port to mootools 1.3
 
 How to use

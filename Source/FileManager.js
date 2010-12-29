@@ -121,14 +121,18 @@ var FileManager = new Class({
     }).bind(this)),this.clickablePath);
     
 		var self = this;
-		this.relayClick = function(e) {
+		// -> catch a click on an element in the file/folder browser
+    this.relayClick = function(e) {
 			if(e) e.stop();
+			
+			console.log('click');
+			
 			var file = this.retrieve('file');
-			if (this.retrieve('block') && !Browser.Engine.trident){
-				this.eliminate('block');
+			if (this.retrieve('edit')) {
+				this.eliminate('edit');
 				return;
 			}
-
+      
 			if (file.mime == 'text/directory'){
 				this.addClass('selected');
 				self.load(self.Directory + file.name);
@@ -173,12 +177,12 @@ var FileManager = new Class({
     ]);
     
     
-		this.browser = new Element('ul', {'class': 'filemanager-browser'}).addEvents({
-			click: (function(){
+		this.browser = new Element('ul', {'class': 'filemanager-browser'})./*addEvents({
+      click: (function(){
 				return self.deselect();
 			}),
 			'click:relay(li span.fi)': this.relayClick
-		}).inject(this.browserScroll);
+		}).*/inject(this.browserScroll);
 		
 		if(this.options.createFolders) this.addMenuButton('create');
 		if(this.options.selectable) this.addMenuButton('open');
@@ -251,19 +255,19 @@ var FileManager = new Class({
 			keyboardInput: (function(e){
 				if (e.key=='esc') this.hide();
 				if (e.key=='up') {
-          e.stop();
+          e.preventDefault();
           this.browserSelection('up');
         }
 				if (e.key=='down') {
-          e.stop();
+          e.preventDefault();
           this.browserSelection('down');
         }
 				if (e.key=='enter') {
-          e.stop();
+          e.preventDefault();
           this.browserSelection('enter');
         }
         if (e.key=='backspace') {
-          e.stop();
+          e.preventDefault();
           this.browserSelection('backspace');
         }
 			}).bind(this),
@@ -377,7 +381,7 @@ var FileManager = new Class({
 	},
 
 	load: function(dir, nofade){
-		this.deselect();
+		//this.deselect();
 		if (!nofade) this.info.fade(0);    
     
 		if (this.Request) this.Request.cancel();
@@ -396,7 +400,6 @@ var FileManager = new Class({
 
 	destroy: function(file){
 	  var self = this;
-		self.tips.hide();
 		new Dialog(this.language.destroyfile, {
 			language: {
 				confirm: this.language.destroy,
@@ -430,8 +433,7 @@ var FileManager = new Class({
 	},
 
 	rename: function(file){
-	  var self = this;
-		self.tips.hide();
+    var self = this;
 		var name = file.name;
 		var input = new Element('input', {'class': 'rename', value: name,'autofocus':'autofocus'});		
 		
@@ -456,6 +458,7 @@ var FileManager = new Class({
 				new FileManager.Request({
 					url: self.options.url + '?event=move',
 					onSuccess: (function(j){
+					  console.log(j);
 						if (!j || !j.name) return;
 
 						self.fireEvent('modify', [$unlink(file)]);
@@ -528,7 +531,6 @@ var FileManager = new Class({
           this.fillInfo(currentFile);      
       }
     }
-    
   },
   
 	fill: function(j, nofade) {
@@ -588,22 +590,32 @@ var FileManager = new Class({
         icon,
         new Element('span', {text: file.name, title:file.name})
 			).store('file', file);
-
+      
+      // add click event, only to directories, files use the revert function (to enable drag n drop)
+      if(file.mime == 'text/directory')
+        el.addEvent('click',this.relayClick);
+      
+      // -> add icons
 			var icons = [];
 			// dowload icon
-			if (file.mime!='text/directory')
-				icons.push(new Asset.image(this.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('click', (function(e){
-					this.tips.hide();
-					e.stop();
+			if(file.mime!='text/directory')
+				icons.push(new Asset.image(this.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
+					//e.stop();
+					el.store('edit',true);
 					window.open(file.path);
 				}).bind(this)).inject(el, 'top'));
       // rename, delete icon
-			if (file.name != '..') {			 
+			if(file.name != '..') {			 
 			  var editButtons = new Array();
 			  if(this.options.rename) editButtons.push('rename');
 			  if(this.options.destroy) editButtons.push('destroy');
 				editButtons.each(function(v){
-					icons.push(new Asset.image(this.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('click', (function(e){ e.stop(); this[v](file);}).bind(this)).injectTop(el));
+					icons.push(new Asset.image(this.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('mouseup', (function(e){
+            //e.stop();
+            el.store('edit',true);
+            this.tips.hide();
+            this[v](file);
+          }).bind(this)).injectTop(el));
 				}, this);
 			}
 
@@ -613,16 +625,17 @@ var FileManager = new Class({
 			icons = $$(icons.map(function(icon){return icon.appearOn(icon, [1, 0.7]);})).appearOn(el.getParent('li'), 0.7);
     }, this);
     
-    // cancel dragging
-		var self = this, revert = function(el){
-			el.set('opacity', 1).store('block', true).removeClass('drag').removeClass('move').setStyles({
+    // -> cancel dragging
+		var self = this, revert = function(el) {
+			el.set('opacity', 1).removeClass('drag').removeClass('move').setStyles({
 				opacity: 1,
-				'z-index': '',
+				'z-index': 'auto',
 				position: 'relative',
+				width: 'auto',
 				left: 0,
 				top: 0
 			}).inject(el.retrieve('parent'));
-			el.getElements('img.browser-icon').set('opacity', 0);
+			//el.getElements('img.browser-icon').set('opacity', 0);
 			
 			document.removeEvents('keydown', self.bound.keydown).removeEvents('keyup', self.bound.keydown);
 			self.imageadd.fade(0);
@@ -630,9 +643,10 @@ var FileManager = new Class({
 			self.relayClick.apply(el);
 		};
 		
-		/*
+		// -> make dragable
 		$$(els[0]).makeDraggable({
 			droppables: $$(this.droppables, els[1]),
+			//stopPropagation: true,
 
 			onDrag: function(el, e){
 				self.imageadd.setStyles({
@@ -711,7 +725,7 @@ var FileManager = new Class({
 					});
 			}
 		});
-    */
+
 		$$(els).setStyles({left: 0, top: 0});
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));

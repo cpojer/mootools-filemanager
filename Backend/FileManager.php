@@ -32,6 +32,7 @@ Options:
 	- maxUploadSize: (integeter, defaults to *20280000* bytes) The maximum file size for upload in bytes
 	- maxImageSize: (integeter, default is 1024) The maximum number of pixels an image can have, if the user enables "resize on upload"
 	- upload: (boolean, defaults to *true*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
+  - destroy: (boolean, defaults to *true*) allow files get deleted, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
   - safe: (string, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps'
 	- filter: (string) If specified, the mimetypes to be allowed (for display and upload).
 		Example: "image/" allows all Image Mimetypes
@@ -65,6 +66,7 @@ class FileManager {
 			'maxUploadSize' => 2600 * 2600 * 3,
 			'maxImageSize' => 1024,
 			'upload' => true,
+			'destroy' => true,
 			'safe' => true,
 			'filter' => null,
 			'chmod' => 0777,
@@ -282,13 +284,12 @@ class FileManager {
 		if (!$this->checkFile($file) || (!$rename && $is_dir))
 			return;
 		
-		if ($rename || $is_dir){
+		if($rename || $is_dir){
 			if (empty($this->post['name'])) return;
 			$newname = $this->getName($this->post['name'], $dir);
 			$fn = 'rename';
-			unlink($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file));
-			//rename($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file),$_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($this->post['name'])); // rename thumbnail
-		}else{
+			if(!$is_dir) unlink($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file));
+		} else {
 			$newname = $this->getName(pathinfo($file, PATHINFO_FILENAME), $this->getDir($this->post['newDirectory']));
 			$fn = !empty($this->post['copy']) ? 'copy' : 'rename';
 		}
