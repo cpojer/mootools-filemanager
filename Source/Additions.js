@@ -78,6 +78,7 @@ this.Dialog = new Class({
 	
 	initialize: function(text, options){
 		this.setOptions(options);
+		this.dialogOpen = false;
 		
 		this.el = new Element('div', {
 			'class': 'dialog dialog-engine-' + Browser.Engine.name + ' dialog-engine-' + Browser.Engine.name + (Browser.Engine.trident ? Browser.Engine.version : ''),
@@ -126,21 +127,22 @@ this.Dialog = new Class({
 			self.fireEvent('show');
 		});
 		
-		window.addEvents({
+		document.addEvents({
 			scroll: this.bound.scroll,
 			resize: this.bound.scroll,
 			keyup: this.bound.keyesc
 		});
 	},
 	
-	destroy: function() {
-		if (this.el) this.el.fade(0).get('tween').chain((function(){
-			this.overlay.destroy();
-			this.el.destroy();
-		}).bind(this));
-		
-		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
-	}
+	destroy: function() {	  
+		if (this.el)
+      this.el.fade(0).get('tween').chain((function(){
+  			this.overlay.destroy();
+  			this.el.destroy();
+  		}).bind(this));
+  		
+  		document.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
+  }
 	
 });
 

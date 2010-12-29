@@ -45,12 +45,12 @@ FileManager.implement({
 			}
 		}
 	},
-	
-	onDialogOpen: function(){
+
+	onDialogOpenWhenUpload: function(){
 		if (this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'hidden');
 	},
 	
-	onDialogClose: function(){
+	onDialogCloseWhenUpload: function(){
 		if (this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'visible');
 	},
 	

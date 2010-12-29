@@ -146,7 +146,11 @@ div.filemanager-header div.loader {
   top: 7px;
   right: 30px;
 }
-
+div.filemanager-browserheader div.loader {
+  position: absolute;
+  top: 4px;
+  left: 5px;
+}
 div.filemanager-preview div.loader {
   position: relative;
   left: 50%;

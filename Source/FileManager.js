@@ -26,7 +26,7 @@ license:
   MIT-style license
 
 version:
-  1.1rc3
+  1.1rc4
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
@@ -97,17 +97,18 @@ var FileManager = new Class({
 		this.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
 		this.Directory = this.options.directory;
     this.listType = 'list';
+    this.dialogOpen = false;
     
     this.language = $unlink(FileManager.Language.en);
-		if (this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);  
+		if(this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);  
   
 		this.container = new Element('div', {'class': 'filemanager-container filemanager-engine-' + Browser.Engine.name + (Browser.Engine.trident ? Browser.Engine.version : '')});
 		this.filemanager = new Element('div', {'class': 'filemanager'}).inject(this.container);
 		this.header = new Element('div', {'class': 'filemanager-header'}).inject(this.filemanager);
 		this.menu = new Element('div', {'class': 'filemanager-menu'}).inject(this.filemanager);
-		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 200}}).inject(this.header);
-		this.previewLoader = new Element('div', {'class': 'loader', opacity: 1, tween: {duration: 200}});
-    
+		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 300}}).inject(this.header);
+		this.previewLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 300}});
+		this.browserLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 300}});
     // switch the path, from clickable to input text
     this.clickablePath = new Element('span', {'class': 'filemanager-dir'});
     this.selectablePath = new Element('input',{'type':'text','class': 'filemanager-dir','readonly':'readonly'})
@@ -155,6 +156,7 @@ var FileManager = new Class({
 
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
+    this.browserheader.adopt(this.browserLoader);
     this.browserScroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer).addEvent('mouseover',(function(){
       this.browser.getElements('span.fi.hover').each(function(span){ span.removeClass('hover'); });
     }).bind(this));
@@ -251,6 +253,8 @@ var FileManager = new Class({
 				this.imageadd.fade(0);
 			}).bind(this),
 			keyboardInput: (function(e){
+			  if(this.dialogOpen) return;
+
 				if (e.key=='esc') this.hide();
 				if (e.key=='up') {
           e.preventDefault();
@@ -288,28 +292,32 @@ var FileManager = new Class({
 		this.overlay.show();
 
 		this.info.set('opacity', 0);
-
-		(function(){
-			this.container.setStyles({
+    
+    this.container.setStyles({
 				opacity: 0,
 				display: 'block'
 			});
+    
+    this.filemanager.center(this.offsets);
+		this.fireEvent('show');
+		this.container.set('opacity', 1);
+		this.fireHooks('show');
 
-			this.filemanager.center(this.offsets);
-			this.fireEvent('show');
-			this.container.set('opacity', 1);
-			this.fireHooks('show');
-
-			window.addEvents({
-				scroll: this.bound.scroll,
-				resize: this.bound.scroll,
-				keypress: this.bound.keyboardInput
-			});
-      scrollSize = this.browsercontainer.getSize();
-      headerSize = this.browserheader.getSize();
-      this.browserScroll.setStyle('height',scrollSize.y - headerSize.y);
-            
-		}).delay(500, this);
+		document.addEvents({
+			'scroll': this.bound.scroll,
+			'resize': this.bound.scroll
+		});
+		// add keyboard navigation
+		if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
+		 document.addEvent('keydown', this.bound.keyboardInput);
+		else
+		 document.addEvent('keypress', this.bound.keyboardInput);
+		
+    scrollSize = this.browsercontainer.getSize();
+    headerSize = this.browserheader.getSize();
+    this.browserScroll.setStyle('height',scrollSize.y - headerSize.y);
+    
+    this.container.tween('opacity',1);
 	},
   
 	hide: function(e){
@@ -321,7 +329,13 @@ var FileManager = new Class({
 		this.container.setStyle('display', 'none');
 		
 		this.fireHooks('cleanup').fireEvent('hide');
-		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keypress', this.bound.keyboardInput);
+		
+		// add keyboard navigation
+		document.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
+		if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
+		 document.removeEvent('keydown', this.bound.keyboardInput);
+		else
+		 document.removeEvent('keypress', this.bound.keyboardInput);
 	},
 
 	open: function(e){
@@ -386,9 +400,15 @@ var FileManager = new Class({
 
 		this.Request = new FileManager.Request({
 			url: this.options.url,
+			onRequest: (function(){        
+        this.browserLoader.set('opacity', 1);
+      }).bind(this),
 			onSuccess: (function(j) {
 				this.fill(j, nofade);
 			}).bind(this),
+			onComplete: (function() {
+        this.browserLoader.fade(0);
+      }).bind(this),
 			data: {
 				directory: dir,
         type: this.listType
@@ -430,7 +450,7 @@ var FileManager = new Class({
 
 	},
 
-	rename: function(file){
+	rename: function(file) {
     var self = this;
 		var name = file.name;
 		var input = new Element('input', {'class': 'rename', value: name,'autofocus':'autofocus'});		
@@ -757,26 +777,36 @@ var FileManager = new Class({
 
 		this.Request = new FileManager.Request({
 			url: this.options.url + '?event=detail',
-			onRequest: (function(){
-        this.preview.adopt(this.previewLoader);
+			onRequest: (function() {
+        this.previewLoader.inject(this.preview);
+        this.previewLoader.set('opacity', 1);
       }).bind(this),
 			onSuccess: (function(j) {
-				var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
-				if (prev) prev.addEvent('load', function(){
-					this.setStyle('background', 'none');
-				});
+			  
+			  this.previewLoader.fade(0).get('tween').chain((function() {
+          this.previewLoader.dispose();
+			  
+  				var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
+  				if (prev) prev.addEvent('load', function(){
+  					this.setStyle('background', 'none');
+  				});
+          
+  				var els = this.preview.getElements('button');
+  				if (els) els.addEvent('click', function(e){
+  					e.stop();
+  					window.open(this.get('value'));
+  				});
+  				
+  				// add SqueezeBox
+          if(typeof SqueezeBox != 'undefined')
+            SqueezeBox.assign($$('a[rel=preview]'));
 
-				var els = this.preview.getElements('button');
-				if (els) els.addEvent('click', function(e){
-					e.stop();
-					window.open(this.get('value'));
-				});
-				
-				// add SqueezeBox
-        if(typeof SqueezeBox != 'undefined')
-          SqueezeBox.assign($$('a[rel=preview]'));
-
+        }).bind(this));
+        
 			}).bind(this),
+			onFailure: (function() {
+        this.previewLoader.dispose();
+      }).bind(this),
 			data: {
 				directory: this.Directory,
 				file: file.name
@@ -821,8 +851,10 @@ var FileManager = new Class({
 	
 	onRequest: function(){this.loader.set('opacity', 1);},
 	onComplete: function(){this.loader.fade(0);},
-	onDialogOpen: function(){},
-	onDialogClose: function(){},
+	onDialogOpen: function(){this.dialogOpen = true; this.onDialogOpenWhenUpload.apply(this);},
+	onDialogClose: function(){this.dialogOpen = false; this.onDialogCloseWhenUpload.apply(this);},
+	onDialogOpenWhenUpload: function(){},
+	onDialogCloseWhenUpload: function(){},
 	onDragComplete: function(){} // $lambda(false)
 });
 

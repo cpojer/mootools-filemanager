@@ -15,7 +15,7 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
 
 version:
-  1.1rc3
+  1.1rc4
 
 Dependencies:
 	- Upload.php
@@ -167,7 +167,7 @@ class FileManager {
 			$filecontent = file_get_contents($file, false, null, 0);
 			if (!FileManagerUtility::isBinary($filecontent)) $content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent,ENT_QUOTES,'UTF-8')) . '</pre></div>';
 		// zip
-    }elseif ($mime == 'application/zip'){
+    } elseif ($mime == 'application/zip'){
 			$out = array(array(), array());
 			$getid3 = new getID3();
 			$getid3->Analyze($file);
@@ -288,7 +288,8 @@ class FileManager {
 			if (empty($this->post['name'])) return;
 			$newname = $this->getName($this->post['name'], $dir);
 			$fn = 'rename';
-			if(!$is_dir) unlink($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file));
+			if(!$is_dir && file_exists($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file)))
+        unlink($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file));
 		} else {
 			$newname = $this->getName(pathinfo($file, PATHINFO_FILENAME), $this->getDir($this->post['newDirectory']));
 			$fn = !empty($this->post['copy']) ? 'copy' : 'rename';

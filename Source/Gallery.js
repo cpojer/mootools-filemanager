@@ -70,7 +70,6 @@ FileManager.Gallery = new Class({
 			}),
 
 			hide: function(){
-			 console.log(this.gallery);
 				this.gallery.empty();
 
 				this.captions = {};
