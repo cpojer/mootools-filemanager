@@ -1,20 +1,14 @@
-/*
----
-description: Swiff.Uploader
-
-authors:
-  - Harald Kirschner
-
-requires:
-  core/1.2.4: '*'
-
-provides:
-  - filemanager.swiff.uploader
-
-license:
-  MIT-style license
-...
-*/
+/**
+ * Swiff.Uploader - Flash FileReference Control
+ *
+ * @version		3.0
+ *
+ * @license		MIT License
+ *
+ * @author		Harald Kirschner <http://digitarald.de>
+ * @author		Valerio Proietti, <http://mad4milk.net>
+ * @copyright	Authors
+ */
 
 Swiff.Uploader = new Class({
 
@@ -24,10 +18,10 @@ Swiff.Uploader = new Class({
 
 	options: {
 		path: 'Swiff.Uploader.swf',
-
+		
 		target: null,
 		zIndex: 9999,
-
+		
 		height: 30,
 		width: 100,
 		callBacks: null,
@@ -55,13 +49,13 @@ Swiff.Uploader = new Class({
 
 		buttonImage: null,
 		policyFile: null,
-
+		
 		fileListMax: 0,
 		fileListSizeMax: 0,
 
 		instantStart: false,
 		appendCookieData: false,
-
+		
 		fileClass: null
 		/*
 		onLoad: $empty,
@@ -75,12 +69,12 @@ Swiff.Uploader = new Class({
 		onSelect: $empty,
 		onSelectSuccess: $empty,
 		onSelectFail: $empty,
-
+		
 		onButtonEnter: $empty,
 		onButtonLeave: $empty,
 		onButtonDown: $empty,
 		onButtonDisable: $empty,
-
+		
 		onFileStart: $empty,
 		onFileStop: $empty,
 		onFileRequeue: $empty,
@@ -88,7 +82,7 @@ Swiff.Uploader = new Class({
 		onFileProgress: $empty,
 		onFileComplete: $empty,
 		onFileRemove: $empty,
-
+		
 		onBeforeStart: $empty,
 		onBeforeStop: $empty,
 		onBeforeRemove: $empty
@@ -123,10 +117,10 @@ Swiff.Uploader = new Class({
 		if (!path.contains('?')) path += '?noCache=' + $time(); // cache in IE
 
 		// container options for Swiff class
-		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box'}).inject(document.id(this.options.container) || document.body);
+		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box'}).inject($(this.options.container) || document.body);
 
-		// target
-		this.target = document.id(this.options.target);
+		// target 
+		this.target = $(this.options.target);
 		if (this.target) {
 			var scroll = window.getScroll();
 			this.box.setStyles({
@@ -137,7 +131,7 @@ Swiff.Uploader = new Class({
 				height: 1, width: 1,
 				top: scroll.y, left: scroll.x
 			});
-
+			
 			// we force wMode to transparent for the overlay effect
 			this.parent(path, {
 				params: {
@@ -146,9 +140,9 @@ Swiff.Uploader = new Class({
 				height: '100%',
 				width: '100%'
 			});
-
+			
 			this.target.addEvent('mouseenter', this.reposition.bind(this, []));
-
+			
 			// button interactions, relayed to to the target
 			this.addEvents({
 				buttonEnter: this.targetRelay.bind(this, ['mouseenter']),
@@ -156,7 +150,7 @@ Swiff.Uploader = new Class({
 				buttonDown: this.targetRelay.bind(this, ['mousedown']),
 				buttonDisable: this.targetRelay.bind(this, ['disable'])
 			});
-
+			
 			this.reposition();
 			window.addEvent('resize', this.reposition.bind(this, []));
 		} else {
@@ -166,16 +160,16 @@ Swiff.Uploader = new Class({
 		this.inject(this.box);
 
 		this.fileList = [];
-
+		
 		this.size = this.uploading = this.bytesLoaded = this.percentLoaded = 0;
-
+		
 		if (Browser.Plugins.Flash.version < 9) {
 			this.fireEvent('fail', ['flash']);
 		} else {
 			this.verifyLoad.delay(1000, this);
 		}
 	},
-
+	
 	verifyLoad: function() {
 		if (this.loaded) return;
 		if (!this.object.parentNode) {
@@ -193,7 +187,7 @@ Swiff.Uploader = new Class({
 			// updated queue data is the second argument
 			if (args.length > 1) this.update(args[1]);
 			var data = args[0];
-
+			
 			var file = this.findFile(data.id);
 			this.fireEvent(name, file || data, 5);
 			if (file) {
@@ -208,7 +202,7 @@ Swiff.Uploader = new Class({
 	},
 
 	update: function(data) {
-		// the data is saved right to the instance
+		// the data is saved right to the instance 
 		$extend(this, data);
 		this.fireEvent('queue', [this], 10);
 		return this;
@@ -222,7 +216,7 @@ Swiff.Uploader = new Class({
 	},
 
 	initializeSwiff: function() {
-		// extracted options for the swf
+		// extracted options for the swf 
 		this.remote('initialize', {
 			width: this.options.width,
 			height: this.options.height,
@@ -247,7 +241,7 @@ Swiff.Uploader = new Class({
 
 		this.appendCookieData();
 	},
-
+	
 	targetRelay: function(name) {
 		if (this.target) this.target.fireEvent(name);
 	},
@@ -256,7 +250,7 @@ Swiff.Uploader = new Class({
 		// update coordinates, manual or automatically
 		coords = coords || (this.target && this.target.offsetHeight)
 			? this.target.getCoordinates(this.box.getOffsetParent())
-			: {top: window.getScrollTop(), left: 0, width: 40, height: 40};
+			: {top: window.getScrollTop(), left: 0, width: 40, height: 40}
 		this.box.setStyles(coords);
 		this.fireEvent('reposition', [coords, this.box, this.target]);
 	},
@@ -277,12 +271,12 @@ Swiff.Uploader = new Class({
 
 	start: function() {
 		this.fireEvent('beforeStart');
-		this.remote('start');
+		this.remote('UploadStart');
 	},
 
 	stop: function() {
 		this.fireEvent('beforeStop');
-		this.remote('stop');
+		this.remote('UploadStop');
 	},
 
 	remove: function() {
@@ -309,7 +303,7 @@ Swiff.Uploader = new Class({
 	appendCookieData: function() {
 		var append = this.options.appendCookieData;
 		if (!append) return;
-
+		
 		var hash = {};
 		document.cookie.split(/;\s*/).each(function(cookie) {
 			cookie = cookie.split('=');
@@ -414,9 +408,9 @@ $extend(Swiff.Uploader, {
 });
 
 Swiff.Uploader.qualifyPath = (function() {
-
+	
 	var anchor;
-
+	
 	return function(path) {
 		(anchor || (anchor = new Element('a'))).href = path;
 		return anchor.href;
@@ -439,17 +433,17 @@ Swiff.Uploader.File = new Class({
 
 	validate: function() {
 		var options = this.base.options;
-
+		
 		if (options.fileListMax && this.base.fileList.length >= options.fileListMax) {
 			this.validationError = 'fileListMax';
 			return false;
 		}
-
+		
 		if (options.fileListSizeMax && (this.base.size + this.size) > options.fileListSizeMax) {
 			this.validationError = 'fileListSizeMax';
 			return false;
 		}
-
+		
 		return true;
 	},
 
@@ -489,6 +483,6 @@ Swiff.Uploader.File = new Class({
 
 	requeue: function() {
 		this.base.fileRequeue(this);
-	}
+	} 
 
 });

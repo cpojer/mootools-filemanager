@@ -458,7 +458,6 @@ var FileManager = new Class({
 				new FileManager.Request({
 					url: self.options.url + '?event=move',
 					onSuccess: (function(j){
-					  console.log(j);
 						if (!j || !j.name) return;
 
 						self.fireEvent('modify', [$unlink(file)]);

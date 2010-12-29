@@ -337,16 +337,15 @@ class FileManager {
 	}
 	
 	protected function getIcon($file,$smallIcon = false){
-	  $ext = 'default';
-	 
+  	 
 		if (FileManagerUtility::endsWith($file, '/..')) $ext = 'dir_up';
 		elseif (is_dir($file)) $ext = 'dir';
-		else {
-		  $ext = pathinfo($file, PATHINFO_EXTENSION);
-		}
+		else $ext = pathinfo($file, PATHINFO_EXTENSION);
 		
 		$largeDir = ($smallIcon === false && $this->listType == 'thumb') ? 'Large/' : '';
-		$path = $this->options['assetBasePath'] . 'Icons/'.$largeDir.$ext.'.png';
+		$path = (is_file($_SERVER['DOCUMENT_ROOT'].$this->options['assetBasePath'] . 'Icons/'.$largeDir.$ext.'.png'))
+      ? $this->options['assetBasePath'] . 'Icons/'.$largeDir.$ext.'.png'
+      : $this->options['assetBasePath'] . 'Icons/default.png';
 		
 		return $path;
 	}
