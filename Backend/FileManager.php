@@ -147,10 +147,10 @@ class FileManager {
 		
 		if (!$this->checkFile($file)) return;
 		
-		
 		$url = str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file));
 		$mime = $this->getMimeType($file);
 		$content = null;
+
 		// image
 		if (FileManagerUtility::startsWith($mime, 'image/')) {
 		  // generates a random number to put on the end of the image, to prevent caching
@@ -164,8 +164,8 @@ class FileManager {
 				</dl>';
 		// text preview
 		}elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript') {
-			$filecontent = file_get_contents($file, null, null, 0);
-			if (!FileManagerUtility::isBinary($filecontent)) $content = '<div class="textpreview">' . nl2br(str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent))) . '</div>';
+			$filecontent = file_get_contents($file, false, null, 0);
+			if (!FileManagerUtility::isBinary($filecontent)) $content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent,ENT_QUOTES,'UTF-8')) . '</pre></div>';
 		// zip
     }elseif ($mime == 'application/zip'){
 			$out = array(array(), array());

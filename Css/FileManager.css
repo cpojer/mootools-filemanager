@@ -505,8 +505,8 @@ div.filemanager-preview ul, div.filemanager-preview div.textpreview {
 	overflow: auto;
 }
 
-div.filemanager-preview div.textpreview {
-	font: 9px Verdana, Arial, Helvetica, sans-serif;
+div.filemanager-preview div.textpreview pre {
+	font: 10px Verdana, Arial, Helvetica, sans-serif;
 }
 
 div.filemanager-preview div.object {

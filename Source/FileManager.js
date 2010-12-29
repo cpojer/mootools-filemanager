@@ -597,7 +597,7 @@ var FileManager = new Class({
 			// dowload icon
 			if(file.mime!='text/directory')
 				icons.push(new Asset.image(this.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
-					//e.stop();
+					e.preventDefault();
 					el.store('edit',true);
 					window.open(file.path);
 				}).bind(this)).inject(el, 'top'));
@@ -608,7 +608,7 @@ var FileManager = new Class({
 			  if(this.options.destroy) editButtons.push('destroy');
 				editButtons.each(function(v){
 					icons.push(new Asset.image(this.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('mouseup', (function(e){
-            //e.stop();
+            e.preventDefault();
             el.store('edit',true);
             this.tips.hide();
             this[v](file);
