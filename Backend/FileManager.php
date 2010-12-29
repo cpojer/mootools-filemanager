@@ -345,7 +345,7 @@ class FileManager {
 		$largeDir = ($smallIcon === false && $this->listType == 'thumb') ? 'Large/' : '';
 		$path = (is_file($_SERVER['DOCUMENT_ROOT'].$this->options['assetBasePath'] . 'Icons/'.$largeDir.$ext.'.png'))
       ? $this->options['assetBasePath'] . 'Icons/'.$largeDir.$ext.'.png'
-      : $this->options['assetBasePath'] . 'Icons/default.png';
+      : $this->options['assetBasePath'] . 'Icons/'.$largeDir.'default.png';
 		
 		return $path;
 	}

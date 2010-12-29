@@ -125,8 +125,6 @@ var FileManager = new Class({
     this.relayClick = function(e) {
 			if(e) e.stop();
 			
-			console.log('click');
-			
 			var file = this.retrieve('file');
 			if (this.retrieve('edit')) {
 				this.eliminate('edit');
@@ -583,7 +581,7 @@ var FileManager = new Class({
       // generate unique id
       var newDate = new Date;
       uniqueId = newDate.getTime();
-      var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail+'?'+uniqueId,{'width':'48'}) : new Asset.image(file.thumbnail);
+      var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail+'?'+uniqueId,{'class':this.listType}) : new Asset.image(file.thumbnail);
       
 			var el = file.element = new Element('span', {'class': 'fi ' + this.listType + ' ' + extraClasses, href: '#'}).adopt(
         icon,
