@@ -6,7 +6,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.1 rc3
+  1.1 rc5
 
 ### Author
  [Christoph Pojer](http://og5.net/christoph)
@@ -25,7 +25,6 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Create galleries using the Gallery-Plugin
 
 ### ToDo
-  - fix flash issue in IE (somewhere in fancy uploader)
   - port to mootools 1.3
 
 How to use

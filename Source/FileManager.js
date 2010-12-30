@@ -26,7 +26,7 @@ license:
   MIT-style license
 
 version:
-  1.1rc4
+  1.1rc5
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
@@ -654,7 +654,7 @@ var FileManager = new Class({
 			}).inject(el.retrieve('parent'));
 			//el.getElements('img.browser-icon').set('opacity', 0);
 			
-			document.removeEvents('keydown', self.bound.keydown).removeEvents('keyup', self.bound.keydown);
+			document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keydown);
 			self.imageadd.fade(0);
 
 			self.relayClick.apply(el);
