@@ -23,7 +23,7 @@ Usage:
 
 FileManager.TinyMCE = function(options){
 	return function(field, url, type, win){
-		var manager = new FileManager($extend({
+		var manager = new FileManager(Object.append({
 			onComplete: function(path){
 				if (!win.document) return;
 				win.document.getElementById(field).value = path;

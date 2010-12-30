@@ -17,7 +17,7 @@ Authors:
 
 requires:
   core/1.2.5: '*'
-  more/1.2.5.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation, Scroll, SmoothScroll]
+  more/1.2.5.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation, Scroll, SmoothScroll, Hash]
 
 provides:
   - filemanager
@@ -26,11 +26,11 @@ license:
   MIT-style license
 
 version:
-  1.1rc5
+  1.1rc6
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
-  - port to mootools 1.3, ($unlink is Object.copy or Object.clone?)
+  - port to mootools 1.3
 
 inspiration:
   - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
@@ -69,11 +69,11 @@ var FileManager = new Class({
 	Current: null,
 
 	options: {
-		/*onComplete: $empty,
-		onModify: $empty,
-		onShow: $empty,
-		onHide: $empty,
-		onPreview: $empty*/
+		/*onComplete: function(){},
+		onModify: function(){},
+		onShow: function(){},
+		onHide: function(){},
+		onPreview: function(){}*/
 		directory: '',
 		url: null,
 		assetBasePath: null,		
@@ -99,10 +99,10 @@ var FileManager = new Class({
     this.listType = 'list';
     this.dialogOpen = false;
     
-    this.language = $unlink(FileManager.Language.en);
-		if(this.options.language != 'en') this.language = $merge(this.language, FileManager.Language[this.options.language]);  
+    this.language = Object.clone(FileManager.Language.en);
+		if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);  
   
-		this.container = new Element('div', {'class': 'filemanager-container filemanager-engine-' + Browser.Engine.name + (Browser.Engine.trident ? Browser.Engine.version : '')});
+		this.container = new Element('div', {'class': 'filemanager-container' + (Browser.ie ? ' filemanager-engine-trident' : '') + (Browser.opera ? ' filemanager-engine-presto' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : '')});
 		this.filemanager = new Element('div', {'class': 'filemanager'}).inject(this.container);
 		this.header = new Element('div', {'class': 'filemanager-header'}).inject(this.filemanager);
 		this.menu = new Element('div', {'class': 'filemanager-menu'}).inject(this.filemanager);
@@ -438,7 +438,7 @@ var FileManager = new Class({
 							return;
 						}
 
-						self.fireEvent('modify', [$unlink(file)]);
+						self.fireEvent('modify', [Object.clone(file)]);
 						file.element.getParent().fade(0).get('tween').chain(function(){
 							self.deselect(file.element);
 							this.element.destroy();
@@ -478,7 +478,7 @@ var FileManager = new Class({
 					onSuccess: (function(j){
 						if (!j || !j.name) return;
 
-						self.fireEvent('modify', [$unlink(file)]);
+						self.fireEvent('modify', [Object.clone(file)]);
 
 						file.element.getElement('span').set('text', j.name);
 						file.name = j.name;
@@ -566,7 +566,7 @@ var FileManager = new Class({
 			if (!folderName) return;
 
 			pre.push(folderName);
-			var path = ('/'+pre.join('/')).replace(j.root,'');
+			var path = ('/'+pre.join('/')+'/').replace(j.root,'');
 			// add non-clickable path
 			if(rootPath.contains(folderName)) {
 			  text.push(new Element('span', {'class': 'icon',text: folderName}));
@@ -632,7 +632,7 @@ var FileManager = new Class({
             el.store('edit',true);
             this.tips.hide();
             this[v](file);
-          }).bind(this)).injectTop(el));
+          }).bind(this)).inject(el,'top'));
 				}, this);
 			}
 
@@ -733,7 +733,7 @@ var FileManager = new Class({
 					}
 				}, self).post();
 
-				self.fireEvent('modify', [$unlink(file)]);
+				self.fireEvent('modify', [Object.clone(file)]);
 
 				if (!e.control && !e.meta)
 					el.fade(0).get('tween').chain(function(){
@@ -797,7 +797,7 @@ var FileManager = new Class({
   					window.open(this.get('value'));
   				});
   				
-  				// add SqueezeBox
+  				// add SqueezeBox for preview zoom
           if(typeof SqueezeBox != 'undefined')
             SqueezeBox.assign($$('a[rel=preview]'));
 
@@ -855,7 +855,7 @@ var FileManager = new Class({
 	onDialogClose: function(){this.dialogOpen = false; this.onDialogCloseWhenUpload.apply(this);},
 	onDialogOpenWhenUpload: function(){},
 	onDialogCloseWhenUpload: function(){},
-	onDragComplete: function(){} // $lambda(false)
+	onDragComplete: Function.from(false)
 });
 
 FileManager.Request = new Class({	

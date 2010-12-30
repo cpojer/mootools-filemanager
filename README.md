@@ -6,7 +6,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.1 rc5
+  1.1 rc6
 
 ### Author
  [Christoph Pojer](http://og5.net/christoph)

@@ -27,8 +27,10 @@ Element.implement({
 	
 		appearOn: function(el) {
 			
-			var params = Array.link($A(arguments).erase(arguments[0]), {options: Object.type, opacity: $defined}),
-				opacity = $type(params.opacity) == 'array' ? [params.opacity[0] || 1, params.opacity[1] || 0] : [params.opacity || 1, 0];
+			var $defined = function(obj){ return (obj != undefined); };
+			
+			var params = Array.link(Array.from(arguments).erase(arguments[0]), {options: Type.isObject, opacity: $defined}),
+				opacity = typeOf(params.opacity) == 'array' ? [params.opacity[0] || 1, params.opacity[1] || 0] : [params.opacity || 1, 0];
 			
 			this.set({
 				opacity: opacity[1],
@@ -66,11 +68,11 @@ this.Dialog = new Class({
 	Implements: [Options, Events],
 	
 	options: {
-		/*onShow: $empty,
-		onOpen: $empty,
-		onConfirm: $empty,
-		onDecline: $empty,
-		onClose: $empty,*/
+		/*onShow: function(){},
+		onOpen: function(){},
+		onConfirm: function(){},
+		onDecline: function(){},
+		onClose: function(){},*/
 		request: null,
 		buttons: ['confirm', 'decline'],
 		language: {}
@@ -81,11 +83,11 @@ this.Dialog = new Class({
 		this.dialogOpen = false;
 		
 		this.el = new Element('div', {
-			'class': 'dialog dialog-engine-' + Browser.Engine.name + ' dialog-engine-' + Browser.Engine.name + (Browser.Engine.trident ? Browser.Engine.version : ''),
+			'class': 'dialog' + (Browser.ie ? ' dialog-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
 			opacity: 0,
 			tween: {duration: 250}
 		}).adopt([
-			$type(text) == 'string' ? new Element('div', {text: text}) : text
+			typeOf(text) == 'string' ? new Element('div', {text: text}) : text
 		]);
 		
 		if (this.options.content) this.el.getElement('div').adopt(this.options.content);
@@ -101,7 +103,7 @@ this.Dialog = new Class({
 		
 		this.overlay = new Overlay({
 			'class': 'overlay overlay-dialog',
-			events: {click: this.fireEvent.bind(this, ['close'])},
+			events: {click: this.fireEvent.bind(this, 'close')},
 			tween: {duration: 250}
 		});
 		
@@ -149,7 +151,7 @@ this.Dialog = new Class({
 this.Overlay = new Class({
 	
 	initialize: function(options){
-		this.el = new Element('div', $extend({
+		this.el = new Element('div', Object.append({
 			'class': 'overlay'
 		}, options)).inject(document.body);
 	},

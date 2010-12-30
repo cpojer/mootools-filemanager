@@ -15,7 +15,7 @@ Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
 
 version:
-  1.1rc5
+  1.1rc6
 
 Dependencies:
 	- Upload.php
@@ -475,13 +475,19 @@ class FileManagerUtility {
 	}
 	
 	public static function getRealPath($path,$chmod = 0777) {
-	  if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path)) mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realPath() function
+	  
+	  $path = str_replace('\\','/',$path);
+    $path = preg_replace('#/+#','/',$path);
+    $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
+	  
+	  if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path) && is_dir(dirname($path))) mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realPath() function
 	  $path = (FileManagerUtility::startsWith($path,'/')) ? $_SERVER['DOCUMENT_ROOT'].$path : $path;
-		if(!is_dir($path)) mkdir($path,$chmod); // create folder if not existing
+    if(!is_dir($path) && is_dir(dirname($path))) mkdir($path,$chmod); // create folder if not existing
     $path = (FileManagerUtility::startsWith($path,'../') || !FileManagerUtility::startsWith($path,'/')) ? realPath($path) : $path;
 		$path = str_replace('\\','/',$path);		
     $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
     $path = (FileManagerUtility::endsWith($path,'/')) ? $path : $path.'/';
+    
 		return $path;
 	}
 	

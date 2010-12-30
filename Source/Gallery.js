@@ -105,7 +105,7 @@ FileManager.Gallery = new Class({
 			opacity: 0,
 			events: {
 				mouseenter: function(){
-					$clear(timer);
+					clearTimeout(timer);
 				},
 				mouseleave: function(e){
 					timer = (function(){
@@ -134,7 +134,7 @@ FileManager.Gallery = new Class({
 		if (!droppable || droppable != this.gallery) return false;
 		
 		var file;
-		if ($type(el) == 'string'){
+		if (typeOf(el) == 'string'){
 			var part = el.split('/');
 			file = {
 				name: part.pop(),
@@ -225,7 +225,7 @@ FileManager.Gallery = new Class({
 	},
 	
 	removeClone: function(e){
-		if (!this.clone || (e.relatedTarget && ([this.clone, this.wrapper].contains(e.relatedTarget) || this.wrapper.hasChild(e.relatedTarget)))) return;
+		if (!this.clone || (e.relatedTarget && ([this.clone, this.wrapper].contains(e.relatedTarget) || (this.wrapper.contains(e.relatedTarget) && e.relatedTarget != this.wrapper)))) return;
 		if (this.clone.get('morph').timer) return;
 		
 		var file = this.clone.retrieve('file');

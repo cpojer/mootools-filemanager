@@ -19,13 +19,13 @@
 var SqueezeBox = {
 
 	presets: {
-		onOpen: $empty,
-		onClose: $empty,
-		onUpdate: $empty,
-		onResize: $empty,
-		onMove: $empty,
-		onShow: $empty,
-		onHide: $empty,
+		onOpen: function(){},
+		onClose: function(){},
+		onUpdate: function(){},
+		onResize: function(){},
+		onMove: function(){},
+		onShow: function(){},
+		onHide: function(){},
 		size: {x: 600, y: 450},
 		sizeLoading: {x: 200, y: 150},
 		marginInner: {x: 20, y: 20},
@@ -51,12 +51,12 @@ var SqueezeBox = {
 	initialize: function(presets) {
 		if (this.options) return this;
 
-		this.presets = $merge(this.presets, presets);
+		this.presets = Object.merge(this.presets, presets);
 		this.doc = this.presets.document || document;
 		this.options = {};
 		this.setOptions(this.presets).build();
 		this.bound = {
-			window: this.reposition.bind(this, [null]),
+			window: this.reposition.bind(this, null),
 			scroll: this.checkTarget.bind(this),
 			close: this.close.bind(this),
 			key: this.onKey.bind(this)
@@ -75,9 +75,9 @@ var SqueezeBox = {
 			styles: {display: 'none', zIndex: this.options.zIndex + 2}
 		});
 		if (this.options.shadow) {
-			if (Browser.Engine.webkit420) {
+			if (Browser.safari || Browser.chrome) {
 				this.win.setStyle('-webkit-box-shadow', '0 0 10px rgba(0, 0, 0, 0.7)');
-			} else if (!Browser.Engine.trident4) {
+			} else if (!Browser.ie) {
 				var shadow = new Element('div', {'class': 'sbox-bg-wrap'}).inject(this.win);
 				var relay = function(e) {
 					this.overlay.fireEvent('click', [e]);
@@ -90,13 +90,13 @@ var SqueezeBox = {
 		this.content = new Element('div', {id: 'sbox-content'}).inject(this.win);
 		this.closeBtn = new Element('a', {id: 'sbox-btn-close', href: '#'}).inject(this.win);
 		this.fx = {
-			overlay: new Fx.Tween(this.overlay, $merge({
+			overlay: new Fx.Tween(this.overlay, Object.merge({
 				property: 'opacity',
 				onStart: Events.prototype.clearChain,
 				duration: 250,
 				link: 'cancel'
 			}, this.options.overlayFx)).set(0),
-			win: new Fx.Morph(this.win, $merge({
+			win: new Fx.Morph(this.win, Object.merge({
 				onStart: Events.prototype.clearChain,
 				unit: 'px',
 				duration: 750,
@@ -104,7 +104,7 @@ var SqueezeBox = {
 				link: 'cancel',
 				unit: 'px'
 			}, this.options.resizeFx)),
-			content: new Fx.Tween(this.content, $merge({
+			content: new Fx.Tween(this.content, Object.merge({
 				property: 'opacity',
 				duration: 250,
 				link: 'cancel'
@@ -125,7 +125,7 @@ var SqueezeBox = {
 		if (this.element != null) this.trash();
 		this.element = $(subject) || false;
 		
-		this.setOptions($merge(this.presets, options || {}));
+		this.setOptions(Object.merge(this.presets, options || {}));
 		
 		if (this.element && this.options.parse) {
 			var obj = this.element.getProperty(this.options.parse);
@@ -155,13 +155,13 @@ var SqueezeBox = {
 	assignOptions: function() {
 		this.overlay.set('class', this.options.classOverlay);
 		this.win.set('class', this.options.classWindow);
-		if (Browser.Engine.trident4) this.win.addClass('sbox-window-ie6');
+		if (Browser.ie) this.win.addClass('sbox-window-ie6');
 	},
 
 	close: function(e) {
-		var stoppable = ($type(e) == 'event');
+		var stoppable = (typeOf(e) == 'event');
 		if (stoppable) e.stop();
-		if (!this.isOpen || (stoppable && !$lambda(this.options.closable).call(this, e))) return this;
+		if (!this.isOpen || (stoppable && !Function.from(this.options.closable).call(this, e))) return this;
 		this.fx.overlay.start(0).chain(this.toggleOverlay.bind(this));
 		this.win.setStyle('display', 'none');
 		this.fireEvent('onClose', [this.content]);
@@ -195,7 +195,7 @@ var SqueezeBox = {
 
 	applyContent: function(content, size) {
 		if (!this.isOpen && !this.applyTimer) return;
-		this.applyTimer = $clear(this.applyTimer);
+		this.applyTimer = clearTimeout(this.applyTimer);
 		this.hideContent();
 		if (!content) {
 			this.toggleLoading(true);
@@ -204,8 +204,8 @@ var SqueezeBox = {
 			this.fireEvent('onUpdate', [this.content], 20);
 		}
 		if (content) {
-			if (['string', 'array'].contains($type(content))) this.content.set('html', content);
-			else if (!this.content.hasChild(content)) this.content.adopt(content);
+			if (['string', 'array'].contains(typeOf(content))) this.content.set('html', content);
+			else if ((!this.content.contains(content)) && content != this.content) this.content.adopt(content);
 		}
 		this.callChain();
 		if (!this.isOpen) {
@@ -219,9 +219,9 @@ var SqueezeBox = {
 	},
 
 	resize: function(size, instantly) {
-		this.showTimer = $clear(this.showTimer || null);
+		this.showTimer = clearTimeout(this.showTimer || null);
 		var box = this.doc.getSize(), scroll = this.doc.getScroll();
-		this.size = $merge((this.isLoading) ? this.options.sizeLoading : this.options.size, size);
+		this.size = Object.merge((this.isLoading) ? this.options.sizeLoading : this.options.size, size);
 		var to = {
 			width: this.size.x,
 			height: this.size.y,
@@ -282,7 +282,7 @@ var SqueezeBox = {
 	},
 
 	checkTarget: function(e) {
-		return this.content.hasChild(e.target);
+		return (this.content.contains(e.target) && e.target != this.content);
 	},
 
 	reposition: function() {
@@ -306,7 +306,7 @@ var SqueezeBox = {
 	},
 
 	extend: function(properties) {
-		return $extend(this, properties);
+		return Object.append(this, properties);
 	},
 
 	handlers: new Hash(),
@@ -315,9 +315,9 @@ var SqueezeBox = {
 
 };
 
-SqueezeBox.extend(new Events($empty)).extend(new Options($empty)).extend(new Chain($empty));
+SqueezeBox.append(new Events(function(){})).append(new Options(function(){})).append(new Chain(function(){}));
 
-SqueezeBox.parsers.extend({
+SqueezeBox.parsers.append({
 
 	image: function(preset) {
 		return (preset || (/\.(?:jpg|png|gif)$/i).test(this.url)) ? this.url : false;
@@ -343,7 +343,7 @@ SqueezeBox.parsers.extend({
 	}
 });
 
-SqueezeBox.handlers.extend({
+SqueezeBox.handlers.append({
 
 	image: function(url) {
 		var size, tmp = new Image();
@@ -392,13 +392,13 @@ SqueezeBox.handlers.extend({
 
 	ajax: function(url) {
 		var options = this.options.ajaxOptions || {};
-		this.asset = new Request.HTML($merge({
+		this.asset = new Request.HTML(Object.merge({
 			method: 'get',
 			evalScripts: false
 		}, this.options.ajaxOptions)).addEvents({
 			onSuccess: function(resp) {
 				this.applyContent(resp);
-				if (options.evalScripts !== null && !options.evalScripts) $exec(this.asset.response.javascript);
+				if (options.evalScripts !== null && !options.evalScripts) Browser.exec(this.asset.response.javascript);
 				this.fireEvent('onAjax', [resp, this.asset]);
 				this.asset = null;
 			}.bind(this),
@@ -408,7 +408,7 @@ SqueezeBox.handlers.extend({
 	},
 
 	iframe: function(url) {
-		this.asset = new Element('iframe', $merge({
+		this.asset = new Element('iframe', Object.merge({
 			src: url,
 			frameBorder: 0,
 			width: this.options.size.x,
