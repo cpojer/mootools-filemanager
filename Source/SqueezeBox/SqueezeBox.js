@@ -315,9 +315,9 @@ var SqueezeBox = {
 
 };
 
-SqueezeBox.append(new Events(function(){})).append(new Options(function(){})).append(new Chain(function(){}));
+SqueezeBox.extend(new Events(function(){})).extend(new Options(function(){})).extend(new Chain(function(){}));
 
-SqueezeBox.parsers.append({
+SqueezeBox.parsers.extend({
 
 	image: function(preset) {
 		return (preset || (/\.(?:jpg|png|gif)$/i).test(this.url)) ? this.url : false;
@@ -343,7 +343,7 @@ SqueezeBox.parsers.append({
 	}
 });
 
-SqueezeBox.handlers.append({
+SqueezeBox.handlers.extend({
 
 	image: function(url) {
 		var size, tmp = new Image();

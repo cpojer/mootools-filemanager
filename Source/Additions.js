@@ -36,7 +36,7 @@ Element.implement({
 				opacity: opacity[1],
 				tween: params.options || {duration: 500}
 			});
-			console.log(opacity[0]);
+
 			$$(el).addEvents({
 				mouseenter: this.fade.bind(this, opacity[0]),
 				mouseleave: this.fade.bind(this, opacity[1])
