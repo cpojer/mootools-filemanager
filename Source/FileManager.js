@@ -365,10 +365,10 @@ var FileManager = new Class({
 			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
 				input.addEvent('keyup', function(e){
-					if (e.key == 'enter') e.target.getParent('div.dialog').getElement('button-confirm').fireEvent('click');
+					if (e.key == 'enter') e.target.getParent('div.dialog').getElement('button.dialog-confirm').fireEvent('click');
 				}).focus();
 			},
-			onConfirm: function(){
+			onConfirm: function() {
 				new FileManager.Request({
 					url: self.options.url + '?event=create',
 					onSuccess: self.fill.bind(self),
@@ -377,7 +377,7 @@ var FileManager = new Class({
 						directory: self.Directory,
 						type: self.listType
 					}
-				}).post();
+				}).send();
 			}
 		});
 	},
@@ -413,7 +413,7 @@ var FileManager = new Class({
 				directory: dir,
         type: this.listType
 			}
-		}, this).post();
+		}, this).send();
 	},
 
 	destroy: function(file){
@@ -444,7 +444,7 @@ var FileManager = new Class({
 							this.element.destroy();
 						});
 					}
-				}).post();
+				}).send();
 			}
 		});
 
@@ -469,7 +469,7 @@ var FileManager = new Class({
 			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
 				input.addEvent('keyup', function(e){
-					if (e.key=='enter') e.target.getParent('div.dialog').getElement('button-confirm').fireEvent('click');
+					if (e.key=='enter') e.target.getParent('div.dialog').getElement('button.dialog-confirm').fireEvent('click');
 				}).focus();
 			},
 			onConfirm: function(){
@@ -489,7 +489,7 @@ var FileManager = new Class({
 						name: input.get('value'),
 						directory: self.Directory
 					}
-				}, self).post();
+				}, self).send();
 			}
 		});
 	},
@@ -596,14 +596,13 @@ var FileManager = new Class({
 
 		Array.each(j.files, function(file) {
 			file.dir = j.path;
-      var extraClasses = '';
       var largeDir = '';
       // generate unique id
       var newDate = new Date;
       uniqueId = newDate.getTime();
       var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail+'?'+uniqueId,{'class':this.listType}) : new Asset.image(file.thumbnail);
       
-			var el = file.element = new Element('span', {'class': 'fi ' + this.listType + ' ' + extraClasses, href: '#'}).adopt(
+			var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
         icon,
         new Element('span', {text: file.name, title:file.name})
 			).store('file', file);
@@ -731,7 +730,7 @@ var FileManager = new Class({
 					onSuccess: function(){
 						if (!dir) self.load(self.Directory);
 					}
-				}, self).post();
+				}, self).send();
 
 				self.fireEvent('modify', [Object.clone(file)]);
 
@@ -811,7 +810,7 @@ var FileManager = new Class({
 				directory: this.Directory,
 				file: file.name
 			}
-		}, this).post();
+		}, this).send();
 		
 	},
 
