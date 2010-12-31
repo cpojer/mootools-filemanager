@@ -590,8 +590,9 @@ var FileManager = new Class({
 		this.selectablePath.set('value','/'+this.CurrentPath);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
     
-		if (!j.files) return;
-
+		if (!j.files) return;    
+    
+    // ->> generate browser list
 		var els = [[], []];
 
 		Array.each(j.files, function(file) {
@@ -658,16 +659,16 @@ var FileManager = new Class({
 
 			self.relayClick.apply(el);
 		};
-		
+
 		// -> make dragable
 		$$(els[0]).makeDraggable({
-			droppables: $$(this.droppables, els[1]),
+			droppables: $$(this.droppables.combine(els[1])),
 			//stopPropagation: true,
 
 			onDrag: function(el, e){
 				self.imageadd.setStyles({
-					left: e.page.x + 20,
-					top: e.page.y + 20,
+					'left': e.page.x + 20,
+					'top': e.page.y + 20,
 				});
 				self.imageadd.fade('in');
 			},
@@ -678,10 +679,10 @@ var FileManager = new Class({
 				var position = el.getPosition();
 				el.addClass('drag').setStyles({
 					'z-index': self.dragZIndex,
-					position: 'absolute',
-					width: el.getWidth() - el.getStyle('paddingLeft').toInt() - el.getStyle('paddingRight').toInt(),
-					left: position.x,
-					top: position.y
+					'position': 'absolute',
+					'width': el.getWidth() - el.getStyle('paddingLeft').toInt() - el.getStyle('paddingRight').toInt(),
+					'left': position.x,
+					'top': position.y
 				}).inject(self.container);
 			},
 
@@ -741,8 +742,8 @@ var FileManager = new Class({
 					});
 			}
 		});
-
-		$$(els).setStyles({left: 0, top: 0});
+    
+		$$(els[0].combine(els[1])).setStyles({'left': 0, 'top': 0});
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
 	},
