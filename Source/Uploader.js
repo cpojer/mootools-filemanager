@@ -97,10 +97,12 @@ FileManager.implement({
 
 			Extends: Swiff.Uploader.File,
 			
-			initialize: function(base, data){			  
+			initialize: function(base, data){
+
 				this.parent(base, data);
+				
 				this.setOptions({
-					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Hash.toQueryString(Object.merge({}, self.options.uploadAuthData, {
+					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.uploadAuthData, {
 						event: 'upload',
 						directory: self.normalize(self.Directory),
 						resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0

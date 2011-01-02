@@ -286,7 +286,7 @@ FileManager.Gallery = new Class({
 	},
 
 	populate: function(data){
-		Hash.each(data || {}, function(v, i){
+		Object.each(data || {}, function(v, i){
 			this.captions[i] = v;
 
 			this.onDragComplete(i, this.gallery);

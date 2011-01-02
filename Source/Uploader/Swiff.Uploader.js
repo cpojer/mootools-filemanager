@@ -105,11 +105,11 @@ Swiff.Uploader = new Class({
 		// callbacks are no longer in the options, every callback
 		// is fired as event, this is just compat
 		if (this.options.callBacks) {
-			Hash.each(this.options.callBacks, function(fn, name) {
+			Object.each(this.options.callBacks, function(fn, name) {
 				this.addEvent(name, fn);
 			}, this);
 		}
-
+    
 		this.options.callBacks = {
 			fireCallback: this.fireCallback.bind(this)
 		};
@@ -118,7 +118,7 @@ Swiff.Uploader = new Class({
 		if (!path.contains('?')) path += '?noCache=' + Date.now; // cache in IE
 
 		// container options for Swiff class
-		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box',events: { click: function(e) { e.stop(); } }}).inject($(this.options.container) || document.body);
+		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box',events: { click: function(e) { e.stopPropagation(); } }}).inject($(this.options.container) || document.body);
 
 		// target 
 		this.target = $(this.options.target);
@@ -423,6 +423,8 @@ Swiff.Uploader.qualifyPath = (function() {
 Swiff.Uploader.File = new Class({
 
 	Implements: Events,
+	
+	
 
 	initialize: function(base, data) {
 		this.base = base;
@@ -463,7 +465,7 @@ Swiff.Uploader.File = new Class({
 		if (options) {
 			if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
 			this.base.remote('xFileSetOptions', this.id, options);
-			this.options = Object.merge(this.options, options);
+			this.options = Object.merge(this.base.options, options);
 		}
 		return this;
 	},
