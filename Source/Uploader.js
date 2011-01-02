@@ -139,15 +139,16 @@ FileManager.implement({
 				});
 				
 				this.ui = {};
-				this.ui.icon = new Asset.image(this.assetBasePath+'Icons/' + this.extension + '.png', {
-					onerror: function(){ new Asset.image(this.assetBasePath + 'Icons/default.png').replaces(this); }
+				this.ui.icon = new Asset.image(self.assetBasePath+'Icons/' + this.extension + '.png', {
+          'class': 'icon',
+					onerror: function(){ new Asset.image(self.assetBasePath + 'Icons/default.png').replaces(this); }
 				});
 				this.ui.element = new Element('li', {'class': 'file', id: 'file-' + this.id});
 				this.ui.title = new Element('span', {'class': 'file-title', text: this.name});
 				this.ui.size = new Element('span', {'class': 'file-size', text: Swiff.Uploader.formatUnit(this.size, 'b')});
 				
 				var file = this;
-				this.ui.cancel = new Asset.image(this.assetBasePath+'cancel.png', {'class': 'file-cancel', title: self.language.cancel}).addEvent('click', function(){
+				this.ui.cancel = new Asset.image(self.assetBasePath+'cancel.png', {'class': 'file-cancel', title: self.language.cancel}).addEvent('click', function(){
 					file.remove();
 					self.tips.hide();
 					self.tips.detach(this);
@@ -209,7 +210,6 @@ FileManager.implement({
 					});
 				}).delay(5000, this);
 			}
-
 		});
     
 		this.swf = new Swiff.Uploader({

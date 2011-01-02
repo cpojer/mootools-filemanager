@@ -163,7 +163,7 @@ Swiff.Uploader = new Class({
 		this.fileList = [];
 		
 		this.size = this.uploading = this.bytesLoaded = this.percentLoaded = 0;
-		
+
 		if (Browser.Plugins.Flash.version < 9) {
 			this.fireEvent('fail', ['flash']);
 		} else {

@@ -531,8 +531,9 @@ var FileManager = new Class({
           current.removeClass('hover');      
           var previous = current.getParent('li').getPrevious('li').getElement('span.fi');      
           previous.addClass('hover');
-          if((current.getPosition(this.browserScroll).y - current.getSize().y)<= this.browserScroll.getScroll().y)
+          if((current.getPosition(this.browserScroll).y - current.getSize().y) < 0) {
             browserScrollFx.start(current.getPosition(this.browserScroll).x,current.getPosition(this.browserScroll).y-this.browserScroll.getSize().y)
+          }
         }
       
       // select

@@ -1,3 +1,17 @@
+/* upload */
+
+.filemanager-uploader ul.filemanager-uploader-list {
+  padding: 2px 5px;
+}
+
+.filemanager-uploader li.file img.icon, .filemanager-uploader li.file img.file-cancel {
+  position:relative;
+  top: 3px;
+}
+.filemanager-uploader li.file img.icon {
+  padding-right: 4px;
+}
+
 /* Overlay */
 div.overlay {
 	position: absolute;
