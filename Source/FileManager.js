@@ -303,7 +303,7 @@ var FileManager = new Class({
 		this.container.set('opacity', 1);
 		this.fireHooks('show');
 
-		document.addEvents({
+		window.addEvents({
 			'scroll': this.bound.scroll,
 			'resize': this.bound.scroll
 		});
@@ -331,7 +331,7 @@ var FileManager = new Class({
 		this.fireHooks('cleanup').fireEvent('hide');
 		
 		// add keyboard navigation
-		document.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
+		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
 		if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
 		 document.removeEvent('keydown', this.bound.keyboardInput);
 		else
