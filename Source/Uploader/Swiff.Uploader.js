@@ -22,8 +22,6 @@ Swiff.Uploader = new Class({
 		target: null,
 		zIndex: 9999,
 		
-		height: 30,
-		width: 100,
 		callBacks: null,
 		params: {
 			wMode: 'opaque',
@@ -35,6 +33,9 @@ Swiff.Uploader = new Class({
 		multiple: true,
 		queued: true,
 		verbose: false,
+		height: 30,
+		width: 100,
+		passStatus: null,
 
 		url: null,
 		method: null,
@@ -47,8 +48,8 @@ Swiff.Uploader = new Class({
 		allowDuplicates: false,
 		timeLimit: (Browser.Platform.linux) ? 0 : 30,
 
-		buttonImage: null,
 		policyFile: null,
+		buttonImage: null,
 		
 		fileListMax: 0,
 		fileListSizeMax: 0,
@@ -58,34 +59,34 @@ Swiff.Uploader = new Class({
 		
 		fileClass: null
 		/*
-		onLoad: function(){},
-		onFail: function(){},
-		onStart: function(){},
-		onQueue: function(){},
-		onComplete: function(){},
-		onBrowse: function(){},
-		onDisabledBrowse: function(){},
-		onCancel: function(){},
-		onSelect: function(){},
-		onSelectSuccess: function(){},
-		onSelectFail: function(){},
+		onLoad: $empty,
+		onFail: $empty,
+		onStart: $empty,
+		onQueue: $empty,
+		onComplete: $empty,
+		onBrowse: $empty,
+		onDisabledBrowse: $empty,
+		onCancel: $empty,
+		onSelect: $empty,
+		onSelectSuccess: $empty,
+		onSelectFail: $empty,
 		
-		onButtonEnter: function(){},
-		onButtonLeave: function(){},
-		onButtonDown: function(){},
-		onButtonDisable: function(){},
+		onButtonEnter: $empty,
+		onButtonLeave: $empty,
+		onButtonDown: $empty,
+		onButtonDisable: $empty,
 		
-		onFileStart: function(){},
-		onFileStop: function(){},
-		onFileRequeue: function(){},
-		onFileOpen: function(){},
-		onFileProgress: function(){},
-		onFileComplete: function(){},
-		onFileRemove: function(){},
+		onFileStart: $empty,
+		onFileStop: $empty,
+		onFileRequeue: $empty,
+		onFileOpen: $empty,
+		onFileProgress: $empty,
+		onFileComplete: $empty,
+		onFileRemove: $empty,
 		
-		onBeforeStart: function(){},
-		onBeforeStop: function(){},
-		onBeforeRemove: function(){}
+		onBeforeStart: $empty,
+		onBeforeStop: $empty,
+		onBeforeRemove: $empty
 		*/
 	},
 
@@ -114,10 +115,10 @@ Swiff.Uploader = new Class({
 		};
 
 		var path = this.options.path;
-		if (!path.contains('?')) path += '?noCache=' + Date.now(); // cache in IE
+		if (!path.contains('?')) path += '?noCache=' + Date.now; // cache in IE
 
 		// container options for Swiff class
-		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box'}).inject($(this.options.container) || document.body);
+		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box',events: { click: function(e) { e.stop(); } }}).inject($(this.options.container) || document.body);
 
 		// target 
 		this.target = $(this.options.target);
@@ -141,18 +142,18 @@ Swiff.Uploader = new Class({
 				width: '100%'
 			});
 			
-			this.target.addEvent('mouseenter', this.reposition.bind(this, []));
+			this.target.addEvent('mouseenter', this.reposition.bind(this));
 			
 			// button interactions, relayed to to the target
 			this.addEvents({
-				buttonEnter: this.targetRelay.bind(this, 'mouseenter'),
-				buttonLeave: this.targetRelay.bind(this, 'mouseleave'),
-				buttonDown: this.targetRelay.bind(this, 'mousedown'),
-				buttonDisable: this.targetRelay.bind(this, 'disable')
+				buttonEnter: this.targetRelay.pass('mouseenter',this),
+				buttonLeave: this.targetRelay.pass('mouseleave',this),
+				buttonDown: this.targetRelay.pass('mousedown',this),
+				buttonDisable: this.targetRelay.pass('disable',this)
 			});
 			
 			this.reposition();
-			window.addEvent('resize', this.reposition.bind(this, []));
+			window.addEvent('resize', this.reposition.bind(this));
 		} else {
 			this.parent(path);
 		}
@@ -217,24 +218,25 @@ Swiff.Uploader = new Class({
 
 	initializeSwiff: function() {
 		// extracted options for the swf 
-		this.remote('initialize', {
-			width: this.options.width,
-			height: this.options.height,
+		this.remote('xInitialize', {
 			typeFilter: this.options.typeFilter,
 			multiple: this.options.multiple,
 			queued: this.options.queued,
+			verbose: this.options.verbose,
+			width: this.options.width,
+			height: this.options.height,
+			passStatus: this.options.passStatus,
 			url: this.options.url,
 			method: this.options.method,
 			data: this.options.data,
 			mergeData: this.options.mergeData,
 			fieldName: this.options.fieldName,
-			verbose: this.options.verbose,
 			fileSizeMin: this.options.fileSizeMin,
 			fileSizeMax: this.options.fileSizeMax,
 			allowDuplicates: this.options.allowDuplicates,
 			timeLimit: this.options.timeLimit,
-			buttonImage: this.options.buttonImage,
-			policyFile: this.options.policyFile
+			policyFile: this.options.policyFile,
+			buttonImage: this.options.buttonImage
 		});
 
 		this.loaded = true;
@@ -260,44 +262,44 @@ Swiff.Uploader = new Class({
 			if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
 			if (options.buttonImage) options.buttonImage = Swiff.Uploader.qualifyPath(options.buttonImage);
 			this.parent(options);
-			if (this.loaded) this.remote('setOptions', options);
+			if (this.loaded) this.remote('xSetOptions', options);
 		}
 		return this;
 	},
 
 	setEnabled: function(status) {
-		this.remote('setEnabled', status);
+		this.remote('xSetEnabled', status);
 	},
 
 	start: function() {
 		this.fireEvent('beforeStart');
-		this.remote('UploadStart');
+		this.remote('xStart');
 	},
 
 	stop: function() {
 		this.fireEvent('beforeStop');
-		this.remote('UploadStop');
+		this.remote('xStop');
 	},
 
 	remove: function() {
 		this.fireEvent('beforeRemove');
-		this.remote('remove');
+		this.remote('xRemove');
 	},
 
 	fileStart: function(file) {
-		this.remote('fileStart', file.id);
+		this.remote('xFileStart', file.id);
 	},
 
 	fileStop: function(file) {
-		this.remote('fileStop', file.id);
+		this.remote('xFileStop', file.id);
 	},
 
 	fileRemove: function(file) {
-		this.remote('fileRemove', file.id);
+		this.remote('xFileRemove', file.id);
 	},
 
 	fileRequeue: function(file) {
-		this.remote('fileRequeue', file.id);
+		this.remote('xFileRequeue', file.id);
 	},
 
 	appendCookieData: function() {
@@ -460,7 +462,7 @@ Swiff.Uploader.File = new Class({
 	setOptions: function(options) {
 		if (options) {
 			if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
-			this.base.remote('fileSetOptions', this.id, options);
+			this.base.remote('xFileSetOptions', this.id, options);
 			this.options = Object.merge(this.options, options);
 		}
 		return this;

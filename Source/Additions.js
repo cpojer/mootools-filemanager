@@ -83,7 +83,7 @@ this.Dialog = new Class({
 		this.dialogOpen = false;
 		
 		this.el = new Element('div', {
-			'class': 'dialog' + (Browser.ie ? ' dialog-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
+			'class': 'dialog' + (Browser.ie ? ' dialog-engine-trident' : '') + (Browser.ie ? ' dialog-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
 			opacity: 0,
 			tween: {duration: 250}
 		}).adopt([
