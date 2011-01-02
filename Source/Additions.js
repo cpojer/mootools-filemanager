@@ -113,7 +113,10 @@ this.Dialog = new Class({
 				else this.el.center();
 			}).bind(this),
 			keyesc: (function(e){
-				if (e.key == 'esc') this.fireEvent('close').destroy();
+				if (e.key == 'esc') {
+				  e.stopPropagation();
+          this.fireEvent('close').destroy()
+        };
 			}).bind(this)
 		};
 		
@@ -130,9 +133,9 @@ this.Dialog = new Class({
 		});
 		
 		window.addEvents({
-			scroll: this.bound.scroll,
-			resize: this.bound.scroll,
-			keyup: this.bound.keyesc
+			'scroll': this.bound.scroll,
+			'resize': this.bound.scroll,
+			'keyup': this.bound.keyesc
 		});
 	},
 	
