@@ -97,6 +97,7 @@ class FileManager {
 		if ($dir != $this->basedir) array_unshift($files, $dir . '/..');
 		natcasesort($files);
 		foreach ($files as $file){
+		
 			$mime = $this->getMimeType($file);
 			if ($this->options['filter'] && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->options['filter']))
 				continue;
@@ -386,8 +387,8 @@ class FileManager {
 		return is_dir($file) ? 'text/directory' : Upload::mime($file);
 	}
 	
-	protected function getDir($dir){
-		$dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->basedir.$dir,$this->options['chmod']);
+	protected function getDir($dir){	
+		$dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'].'/'.$dir,$this->options['chmod']);
 		return $this->checkFile($dir) ? $dir : $this->basedir;
 	}
 	
@@ -480,9 +481,9 @@ class FileManagerUtility {
     $path = preg_replace('#/+#','/',$path);
     $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
 	  
-	  if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path) && is_dir(dirname($path))) mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realPath() function
+	  if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path) && is_dir(dirname($path))) @mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realPath() function
 	  $path = (FileManagerUtility::startsWith($path,'/')) ? $_SERVER['DOCUMENT_ROOT'].$path : $path;
-    if(!is_dir($path) && is_dir(dirname($path))) mkdir($path,$chmod); // create folder if not existing
+    if(!is_dir($path) && is_dir(dirname($path))) @mkdir($path,$chmod); // create folder if not existing
     $path = (FileManagerUtility::startsWith($path,'../') || !FileManagerUtility::startsWith($path,'/')) ? realPath($path) : $path;
 		$path = str_replace('\\','/',$path);		
     $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
