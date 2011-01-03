@@ -358,16 +358,16 @@ class FileManager {
   }
   
   protected function generateThumbName($file) {
-    return 'thumb_'.str_replace('.','_',basename($file)).'.jpg';
+    return 'thumb_'.str_replace('.','_',basename($file)).'.png';
   }
 
   protected function generateThumb($file,$thumbPath)
   { 
     $img = new Image($file);
 	  $size = $img->getSize();
-	  if ($size['width'] > 250) $img->resize(250)->process('jpeg',$thumbPath);
-	  elseif ($size['height'] > 250) $img->resize(null, 250)->process('jpeg',$thumbPath);
-    else $img->process('jpeg',$thumbPath);
+	  if ($size['width'] > 250) $img->resize(250)->process('png',$thumbPath);
+	  elseif ($size['height'] > 250) $img->resize(null, 250)->process('png',$thumbPath);
+    else $img->process('png',$thumbPath);
     unset($img);
     return basename($thumbPath);
   }

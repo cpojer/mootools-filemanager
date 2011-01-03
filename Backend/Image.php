@@ -257,7 +257,7 @@ class Image {
   		
   		if($ext=='png') imagesavealpha($this->image, true);
   		$fn = 'image'.$ext;
-  		if($ext = 'jpeg')
+  		if($ext == 'jpeg')
   		  $fn($this->image, $file,100);
   		else
   		  $fn($this->image, $file);
