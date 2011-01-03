@@ -103,6 +103,7 @@ class FileManager {
       
       if(strpos($mime,'image') !== false)
         $this->getThumb($this->normalize($file));
+
       
       $icon = ($this->listType == 'thumb' && strpos($mime,'image') !== false )
         ? $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file))
@@ -121,7 +122,6 @@ class FileManager {
   			);
 			}
 		}
-		
 		echo json_encode(array(
 		    //'assetBasePath' => $this->options['assetBasePath'],
 		    'root' => substr(FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']),1),
@@ -352,9 +352,12 @@ class FileManager {
   {
     $thumb = $this->generateThumbName($file);
     $thumbPath = $_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'] . $thumb;
-    return (is_file($thumbPath))
-      ? $thumb
-      : $this->generateThumb($file,$thumbPath);
+    if (is_file($thumbPath))
+      return $thumb;
+    elseif(is_file($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].basename($file)))
+      return basename($file);
+    else
+      return $this->generateThumb($file,$thumbPath);
   }
   
   protected function generateThumbName($file) {
