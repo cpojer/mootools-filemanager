@@ -132,7 +132,7 @@ this.Dialog = new Class({
 			self.fireEvent('show');
 		});
 		
-		window.addEvents({
+		document.addEvents({
 			'scroll': this.bound.scroll,
 			'resize': this.bound.scroll,
 			'keyup': this.bound.keyesc
@@ -146,7 +146,7 @@ this.Dialog = new Class({
   			this.el.destroy();
   		}).bind(this));
   		
-  		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
+  		document.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
   }
 	
 });
