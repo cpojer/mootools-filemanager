@@ -166,7 +166,7 @@ var SqueezeBox = {
 		this.win.setStyle('display', 'none');
 		this.fireEvent('onClose', [this.content]);
 		this.trash();
-		this.toggleListeners();
+		this.toggleListeners(false);
 		this.isOpen = false;
 		return this;
 	},
@@ -298,7 +298,7 @@ var SqueezeBox = {
 		return this.fireEvent('onMove', [this.overlay, this.win]);
 	},
 
-	removeEvents: function(type){
+	removeEvents: function(type) {
 		if (!this.$events) return this;
 		if (!type) this.$events = null;
 		else if (this.$events[type]) this.$events[type] = null;
