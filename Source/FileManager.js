@@ -16,8 +16,8 @@ Authors:
     - add SqueezeBox for preview
 
 requires:
-  core/1.2.5: '*'
-  more/1.2.5.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation, Scroll, SmoothScroll, Hash]
+  core/1.3: '*'
+  more/1.3.0.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation, Scroll, SmoothScroll, Hash]
 
 provides:
   - filemanager

@@ -6,7 +6,7 @@ authors:
   - Christoph Pojer
 
 requires:
-  core/1.2.4: '*'
+  core/1.3: '*'
 
 provides:
   - filemanager.additions

@@ -24,8 +24,8 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Provides your client with the most possible convenience ( ;D )
 * Create galleries using the Gallery-Plugin
 
-### ToDo
-  - there is a bug in SqueezBox, caused by mootools, should be fixed with mootools 1.3.1
+### Warning!
+  - there is a bug in SqueezBox, when opening a preview the second time, caused by mootools, should be fixed with mootools 1.3.1
 
 How to use
 ----------
@@ -61,5 +61,6 @@ How to use
     - a lot of bugfixes
     - add .htaccess to allow upload and resize of big files
     - made interface changes
-    - add SqueezBox for preview of the images
+    - add SqueezeBox for preview of the images
     - add keyboard navigation in the file browser
+    - ported to mootools 1.3
