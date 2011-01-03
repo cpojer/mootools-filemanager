@@ -14,9 +14,6 @@ License:
 Copyright:
 	Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
 
-version:
-  1.1rc6
-
 Dependencies:
 	- Upload.php
 	- Image.php

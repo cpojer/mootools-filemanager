@@ -25,12 +25,8 @@ provides:
 license:
   MIT-style license
 
-version:
-  1.1rc6
-
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
-  - port to mootools 1.3
 
 inspiration:
   - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
