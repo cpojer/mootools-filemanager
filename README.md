@@ -6,7 +6,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.3beta
+  1.3rc1
 
 ### Author
  [Christoph Pojer](http://og5.net/christoph)
@@ -24,8 +24,8 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Provides your client with the most possible convenience ( ;D )
 * Create galleries using the Gallery-Plugin
 
-### Warning!
-  - there is a bug in SqueezBox, when opening a preview the second time, caused by mootools, should be fixed with mootools 1.3.1
+### Issues!
+  - there is a bug in SqueezeBox, when opening a preview the second time, caused by mootools, should be fixed with mootools 1.3.1 (SqueezeBox is in the Demos deactivated)
 
 How to use
 ----------
