@@ -5,16 +5,6 @@
 ---
 description: FileManager
 
-Authors:
- - Christoph Pojer (http://cpojer.net)
-    - author
- - James Ehly (http://www.devtrench.com) 
-    - thumbnail list
- - Fabian Vogelsteller (http://frozeman.de) 
-    - extended thumbnails
-    - now absolute and relative paths are possible
-    - add SqueezeBox for preview
-
 requires:
   core/1.3: '*'
   more/1.3.0.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation, Scroll, SmoothScroll, Hash]
