@@ -97,7 +97,6 @@
 			var div, manager2;
 			var complete = function(path, file){
 				el.set('value', path);
-				alert('dd');
 				if(div) div.destroy();
 				var icon = new Asset.image(this.assetBasePath+'cancel.png', {'class': 'file-cancel', title: this.language.deselect}).addEvent('click', function(e){
 					e.stop();
@@ -129,16 +128,16 @@
 				upload: true,
       	destroy: true,
       	rename: true,
-      	createFolders: true
-				//onReady: complete
+      	createFolders: true,
+				onComplete: complete
 			}).addEvent('ready',complete);
 			
 			el.setStyle('display', 'none');
 			var val = el.get('value');
-			/*if(val) complete.apply(manager2, [val, {
+			if(val) complete.apply(manager2, [val, {
 				name: val.split('/').getLast(),
 				icon: '../Assets/Icons/'+val.split('.').getLast()+'.png'
-			}]);*/
+			}]);
 			
 			new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager2.show.bind(manager2)).inject(el, 'before');
 
@@ -167,7 +166,7 @@
 				uploadAuthData: {session: 'MySessionId'},
 				onShow: function(){
 					var obj;
-					$try(function(){ obj = JSON.decode(example4.get('value')); });
+					Function.attempt(function(){ obj = JSON.decode(example4.get('value')); });
 					this.populate(obj);
 				},
 				onComplete: function(serialized){
