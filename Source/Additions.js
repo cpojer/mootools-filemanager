@@ -38,8 +38,8 @@ Element.implement({
 			});
 
 			$$(el).addEvents({
-				mouseenter: this.fade.bind(this, opacity[0]),
-				mouseleave: this.fade.bind(this, opacity[1])
+				mouseenter: this.fade.pass(opacity[0],this),
+				mouseleave: this.fade.pass(opacity[1],this)
 			});
 			
 			return this;
@@ -103,7 +103,7 @@ this.Dialog = new Class({
 		
 		this.overlay = new Overlay({
 			'class': 'overlay overlay-dialog',
-			events: {click: this.fireEvent.bind(this, 'close')},
+			events: {click: this.fireEvent.pass('close',this)},
 			tween: {duration: 250}
 		});
 		

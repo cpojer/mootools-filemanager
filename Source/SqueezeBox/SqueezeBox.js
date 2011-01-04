@@ -56,7 +56,7 @@ var SqueezeBox = {
 		this.options = {};
 		this.setOptions(this.presets).build();
 		this.bound = {
-			window: this.reposition.bind(this, null),
+			window: this.reposition.pass(null,this),
 			scroll: this.checkTarget.bind(this),
 			close: this.close.bind(this),
 			key: this.onKey.bind(this)
