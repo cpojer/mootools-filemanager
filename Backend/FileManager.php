@@ -16,7 +16,7 @@ Copyright:
 
 Dependencies:
   - Upload.php
-  - Image.php
+  - Image.class.php
   - getId3 Library
 
 Options:
@@ -37,7 +37,7 @@ Options:
 */
 
 require_once(FileManagerUtility::getPath() . '/Upload.php');
-require_once(FileManagerUtility::getPath() . '/Image.php');
+require_once(FileManagerUtility::getPath() . '/Image.class.php');
 
 class FileManager {
   
@@ -368,10 +368,8 @@ class FileManager {
   protected function generateThumb($file,$thumbPath)
   { 
     $img = new Image($file);
-    $size = $img->getSize();
-    if ($size['width'] > 250) $img->resize(250)->process('png',$thumbPath);
-    elseif ($size['height'] > 250) $img->resize(null, 250)->process('png',$thumbPath);
-    else $img->process('png',$thumbPath);
+    $size = $img->resize(250,250,true,false);
+    $img->process('png',$thumbPath);
     unset($img);
     return basename($thumbPath);
   }
