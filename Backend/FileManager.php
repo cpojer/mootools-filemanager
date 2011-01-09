@@ -223,7 +223,7 @@ class FileManager {
     $file = $this->getName($this->post['file'], $this->getDir($this->post['directory']));
     if (!$file) return;
     
-    mkdir($file);
+    mkdir($file,$this->options['chmod']);
     
     $this->onView();
   }

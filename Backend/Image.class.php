@@ -39,7 +39,7 @@ class Image {
 	 * @param string $file The path to the image file
 	 */
 	public function __construct($file){
-	  ini_set('memory_limit', '50M'); //  handle large images
+	  ini_set('memory_limit', '64M'); //  handle large images
 	  
 	  $file = str_replace('\\','/',$file);
     $file = preg_replace('#/+#','/',$file);
@@ -175,10 +175,10 @@ class Image {
 	 * @param int $y
 	 * @param bool $ratio
 	 * @param bool $resizeWhenSmaller if FALSE the images will not be resized when already smaller, if TRUE the images will always be resized
-	 * @return Image
+	 * @return false|resource Image resource or fals, if it couldnt be resized
 	 */
 	public function resize($x = null, $y = null, $ratio = true, $resizeWhenSmaller = true){
-		if(empty($this->image) || (empty($x) && empty($y))) return $this;
+		if(empty($this->image) || (empty($x) && empty($y))) return false;
 		
 		$xStart = $x;
     $yStart = $y;
@@ -225,10 +225,11 @@ class Image {
 		//echo 'END: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
 		
 		$new = $this->create($x, $y);
-		imagecopyresampled($new, $this->image, 0, 0, 0, 0, $x, $y, $this->meta['width'], $this->meta['height']);
-		$this->set($new);
-		
-		return $this;
+		if(imagecopyresampled($new, $this->image, 0, 0, 0, 0, $x, $y, $this->meta['width'], $this->meta['height'])) {
+  		$this->set($new);
+  		return $this;
+  	} else
+  	 return false;
 	}
 	
 	/**
