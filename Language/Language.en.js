@@ -17,6 +17,7 @@ FileManager.Language.en = {
 	create: 'Create folder',
 	createdir: 'Please specify a folder name:',
 	cancel: 'Cancel',
+	error: 'Error',
 	
 	information: 'Information',
 	type: 'Type:',

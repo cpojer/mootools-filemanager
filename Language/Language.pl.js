@@ -17,6 +17,7 @@ FileManager.Language.pl = {
 	create: 'Stwórz folder',
 	createdir: 'Podaj nazwe folderu:',
 	cancel: 'Anuluj',
+	error: 'Błąd',
 	
 	information: 'Informacje',
 	type: 'Typ:',

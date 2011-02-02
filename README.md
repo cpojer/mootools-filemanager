@@ -6,7 +6,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.3rc1
+  1.3rc2
 
 ### Author
  [Christoph Pojer](http://og5.net/christoph)
@@ -66,3 +66,4 @@ How to use
     - add SqueezeBox for preview of the images
     - add keyboard navigation in the file browser
     - ported to mootools 1.3
+    - add error dialogs for php errors

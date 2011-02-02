@@ -17,6 +17,7 @@ FileManager.Language.ru = {
 	create: 'Создать папку',
 	createdir: 'Пожалуйста укажите имя папки:',
 	cancel: 'Отмена',
+	error: 'Ошибка',
 	
 	information: 'Информация',
 	type: 'Тип:',

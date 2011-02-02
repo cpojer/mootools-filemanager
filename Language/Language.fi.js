@@ -17,6 +17,7 @@ FileManager.Language.fi = {
 	create: 'Luo kansio',
 	createdir: 'Kansion nimi:',
 	cancel: 'Peruuta',
+	error: 'Virhe',
 	
 	information: 'Tiedot',
 	type: 'Tyyppi:',

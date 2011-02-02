@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script: Language.pt.js
 	MooTools FileManager - Language Strings in European Portuguese
 
@@ -17,6 +17,7 @@ FileManager.Language.en = {
 	create: 'Criar pasta',
 	createdir: 'Por favor especifique o nome da pasta:',
 	cancel: 'Cancelar',
+	error: 'Erro',
 	
 	information: 'Informação',
 	type: 'Tipo:',

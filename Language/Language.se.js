@@ -17,6 +17,7 @@ FileManager.Language.se = {
 	create: 'Skapa mapp',
 	createdir: 'Vänligen ange ett mapp-namn:',
 	cancel: 'Avbryt',
+	error: 'Fel',
 	
 	information: 'Information',
 	type: 'Typ:',

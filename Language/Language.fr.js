@@ -17,6 +17,7 @@ FileManager.Language.fr = {
 	create: 'Créer un dossier',
 	createdir: 'Merci de spécifier un nom de dossier :',
 	cancel: 'Annuler',
+	error: 'Erreur',
 	
 	information: 'Informations',
 	type: 'Type :',

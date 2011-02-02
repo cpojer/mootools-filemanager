@@ -17,6 +17,7 @@ FileManager.Language.nl = {
 	create: 'Maak map',
 	createdir: 'Geef een map-naam op:',
 	cancel: 'Annuleren',
+	error: 'Fout',
 	
 	information: 'Informatie',
 	type: 'Type:',

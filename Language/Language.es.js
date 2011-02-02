@@ -17,6 +17,7 @@ FileManager.Language.es = {
 	create: 'Crear carpeta',
 	createdir: 'Especifica el nombre de la carpeta:',
 	cancel: 'Cancelar',
+	error: 'Error',
 	
 	information: 'Información',
 	type: 'Tipo:',

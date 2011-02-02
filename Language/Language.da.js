@@ -17,6 +17,7 @@ FileManager.Language.da = {
 	create: 'Opret mappe',
 	createdir: 'Angiv venligst mappe navn:',
 	cancel: 'Anuller',
+	error: 'Fejl',
 	
 	information: 'Information',
 	type: 'Type:',

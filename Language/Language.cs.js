@@ -17,6 +17,7 @@ FileManager.Language.cs = {
 	create: 'Vytvořit složku',
 	createdir: 'Prosím zadejte název složky:',
 	cancel: 'Storno',
+	error: 'Chyba',
 	
 	information: 'Informace',
 	type: 'Typ:',

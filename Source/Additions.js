@@ -90,7 +90,10 @@ this.Dialog = new Class({
       typeOf(text) == 'string' ? new Element('div', {text: text}) : text
     ]);
     
-    if (this.options.content) this.el.getElement('div').adopt(this.options.content);
+    this.options.content.each((function(content){
+      if(content && typeOf(content) == 'element') this.el.getElement('div').adopt(content);
+      else if(content) this.el.getElement('div').set('html',this.el.getElement('div').get('html')+'<br>'+content);
+    }).bind(this));
     
     Array.each(this.options.buttons, function(v){
       new Element('button', {'class': 'dialog-' + v, text: this.options.language[v]}).addEvent('click', (function(e){

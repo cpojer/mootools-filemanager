@@ -1,8 +1,5 @@
 /*
- * @todo - test thunmb generation of small files
- * @todo - test in IE
- *
----
+
 description: FileManager
 
 requires:
@@ -17,6 +14,7 @@ license:
 
 todo:
   - Add Scroller.js (optional) for Drag&Drop in the Filelist
+  - exchange SqueezBox with MilkBox
 
 inspiration:
   - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
@@ -395,6 +393,9 @@ var FileManager = new Class({
       onComplete: (function() {
         this.browserLoader.fade(0);
       }).bind(this),
+      onFailure: (function(xmlHttpRequest) {
+        this.showError(xmlHttpRequest);
+      }).bind(this),
       data: {
         directory: dir,
         type: this.listType
@@ -458,7 +459,7 @@ var FileManager = new Class({
           if (e.key=='enter') e.target.getParent('div.dialog').getElement('button.dialog-confirm').fireEvent('click');
         }).focus();
       },
-      onConfirm: function(){
+      onConfirm: (function(){
         new FileManager.Request({
           url: self.options.url + '?event=move',
           onSuccess: (function(j){
@@ -470,13 +471,16 @@ var FileManager = new Class({
             file.name = j.name;
             self.fillInfo(file);
           }).bind(this),
+          onFailure: (function(xmlHttpRequest) {
+            this.showError(xmlHttpRequest);
+          }).bind(self),
           data: {
             file: file.name,
             name: input.get('value'),
             directory: self.Directory
           }
         }, self).send();
-      }
+      }).bind(this)
     });
   },
   
@@ -717,7 +721,10 @@ var FileManager = new Class({
           },
           onSuccess: function(){
             if (!dir) self.load(self.Directory);
-          }
+          },
+          onFailure: (function(xmlHttpRequest) {
+            this.showError(xmlHttpRequest);
+          }).bind(self)
         }, self).send();
 
         self.fireEvent('modify', [Object.clone(file)]);
@@ -789,10 +796,10 @@ var FileManager = new Class({
             SqueezeBox.assign($$('a[rel=preview]'));
 
         }).bind(this));
-        
       }).bind(this),
-      onFailure: (function() {
+      onFailure: (function(xmlHttpRequest) {
         this.previewLoader.dispose();
+        this.showError(xmlHttpRequest);
       }).bind(this),
       data: {
         directory: this.Directory,
@@ -834,6 +841,26 @@ var FileManager = new Class({
     var args = Array.slice(arguments, 1);
     for(var key in this.hooks[hook]) this.hooks[hook][key].apply(this, args);
     return this;
+  },
+  
+  showError: function(xmlHttpRequest) {
+    var errorText = xmlHttpRequest.responseText.toString();
+    var self = this;
+    
+    if(errorText.indexOf('{') != -1)
+      errorText = errorText.substring(0,errorText.indexOf('{'));
+    
+    new Dialog(this.language.error, {
+      buttons: ['confirm'],
+      language: {
+        confirm: this.language.ok
+      },
+      content: [
+        errorText
+      ],
+      onOpen: this.onDialogOpen.bind(this),
+      onClose: this.onDialogClose.bind(this)
+    });
   },
   
   onRequest: function(){this.loader.set('opacity', 1);},

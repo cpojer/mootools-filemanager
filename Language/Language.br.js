@@ -17,6 +17,7 @@ FileManager.Language.br = {
 	create: 'Criar pasta',
 	createdir: 'Por favor especifique o nome da pasta:',
 	cancel: 'Cancelar',
+	error: 'Erro',
 	
 	information: 'Informação',
 	type: 'Tipo:',

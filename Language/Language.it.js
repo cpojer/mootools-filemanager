@@ -17,6 +17,7 @@ FileManager.Language.it = {
 	create: 'Crea cartella',
 	createdir: 'Specifica il nome della cartella:',
 	cancel: 'Annulla',
+	error: 'Errore',
 	
 	information: 'Informazioni',
 	type: 'Tipo:',

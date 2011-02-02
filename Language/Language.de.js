@@ -17,6 +17,7 @@ FileManager.Language.de = {
 	create: 'Ordner erstellen',
 	createdir: 'Bitte gib einen Ordnernamen ein:',
 	cancel: 'Abbrechen',
+	error: 'Fehler',
 	
 	information: 'Information',
 	type: 'Typ:',
