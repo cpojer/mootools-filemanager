@@ -66,6 +66,7 @@ var FileManager = new Class({
     selectable: false,
     destroy: false,
     rename: false,
+    download: false,
     createFolders: false
   },
   
@@ -187,6 +188,7 @@ var FileManager = new Class({
     }).*/inject(this.browserScroll);
     
     if(this.options.createFolders) this.addMenuButton('create');
+    if(this.options.download) this.addMenuButton('download');
     if(this.options.selectable) this.addMenuButton('open');
     
     this.info = new Element('div', {'class': 'filemanager-infos', opacity: 0}).inject(this.filemanager);
@@ -343,11 +345,17 @@ var FileManager = new Class({
   open: function(e){
     e.stop();
     if (!this.Current) return false;
-    this.fireEvent('complete', [      
+    this.fireEvent('complete', [
       this.normalize(this.Current.retrieve('file').path),
       this.Current.retrieve('file')
     ]);
     this.hide();
+  },
+  
+  download: function(e) {
+    e.stop();
+    if (!this.Current) return false;
+    window.open(this.normalize(this.Current.retrieve('file').path));
   },
 
   create: function(e){
@@ -395,7 +403,7 @@ var FileManager = new Class({
   },
 
   load: function(dir, nofade){
-    //this.deselect();
+    this.deselect();
     if (!nofade) this.info.fade(0);    
     
     if (this.Request) this.Request.cancel();
@@ -502,7 +510,7 @@ var FileManager = new Class({
     });
   },
   
-  browserSelection: function(direction) {
+  browserSelection: function(direction) {   
     if(this.browser.getElement('li') == null) return;
 
     // folder up
@@ -554,7 +562,7 @@ var FileManager = new Class({
         if(currentFile.mime == 'text/directory')
           this.load(currentFile.path.replace(this.root,''));
         else
-          this.fillInfo(currentFile);      
+          this.fillInfo(currentFile);
       }
     }
   },
@@ -624,12 +632,13 @@ var FileManager = new Class({
       // -> add icons
       var icons = [];
       // dowload icon
-      if(file.mime!='text/directory')
+      if(file.mime!='text/directory' && this.options.download)
         icons.push(new Asset.image(this.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
           window.open(file.path);
         }).bind(this)).inject(el, 'top'));
+
       // rename, delete icon
       if(file.name != '..') {       
         var editButtons = new Array();
@@ -764,9 +773,10 @@ var FileManager = new Class({
     if (!file) file = this.CurrentDir;
 
     if (!file) return;
-    var size = this.size(file.size);
-    
+    var size = this.size(file.size);    
     var icon = file.icon;
+    
+    this.switchButton();
 
     this.info.fade(1).getElement('img').set({
       src: icon,
@@ -841,10 +851,14 @@ var FileManager = new Class({
     return str.replace(/\/+/g, '/');
   },
 
-  switchButton: function(){
+  switchButton: function() {
     var chk = !!this.Current;
-    var el = this.menu.getElement('button.filemanager-open');
-    if (el) el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
+    var els = new Array();
+    els.push(this.menu.getElement('button.filemanager-open'));
+    els.push(this.menu.getElement('button.filemanager-download'));
+    els.each(function(el){
+      if (el) el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
+    });
   },
   
   // adds buttons to the file main menu, which onClick start a method with the same name
