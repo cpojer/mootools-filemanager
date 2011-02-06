@@ -528,18 +528,17 @@ var FileManager = new Class({
       if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') != null)
         current = this.browser.getElement('span.fi.selected');
       else if(this.browser.getElement('span.fi.hover') != null)
-        current = this.browser.getElement('span.fi.hover');      
-      var scrollHeight = (this.browserScroll.getSize().y+this.browserScroll.getScroll().y);
-      var browserScrollFx = new Fx.Scroll(this.browserScroll,{duration: 250}); //offset: {x:0,y:-(this.browserScroll.getSize().y / 4)},
-      
+        current = this.browser.getElement('span.fi.hover');
+      var browserScrollFx = new Fx.Scroll(this.browserScroll,{duration: 150}); //offset: {x:0,y:-(this.browserScroll.getSize().y / 4)},
+
       // go down
       if(direction == 'down') {
         if(current.getParent('li').getNext('li') != null) {
           current.removeClass('hover');
           var next = current.getParent('li').getNext('li').getElement('span.fi');
-          next.addClass('hover');
-          if((current.getPosition(this.browserScroll).y + (current.getSize().y*2)) >= scrollHeight)
-            browserScrollFx.toElement(next);
+          next.addClass('hover');   
+          if((current.getPosition(this.browserScroll).y + (current.getSize().y*2)) >= this.browserScroll.getSize().y)
+            browserScrollFx.toElement(current);
         }
       // go up
       } else if(direction == 'up') {
@@ -547,8 +546,8 @@ var FileManager = new Class({
           current.removeClass('hover');      
           var previous = current.getParent('li').getPrevious('li').getElement('span.fi');      
           previous.addClass('hover');
-          if((current.getPosition(this.browserScroll).y - current.getSize().y) < 0) {
-            browserScrollFx.start(current.getPosition(this.browserScroll).x,current.getPosition(this.browserScroll).y-this.browserScroll.getSize().y)
+          if((current.getPosition(this.browserScroll).y) <= current.getSize().y) {
+            browserScrollFx.start(current.getPosition(this.browserScroll).x,(this.browserScroll.getScroll().y - this.browserScroll.getSize().y + (current.getSize().y*2)))
           }
         }
       
