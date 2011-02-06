@@ -83,6 +83,24 @@ var FileManager = new Class({
     this.listType = 'list';
     this.dialogOpen = false;
     
+    // load all necessary js
+    Asset.javascript(this.assetBasePath+'js/Uploader/Fx.ProgressBar.js');
+    Asset.javascript(this.assetBasePath+'js/Uploader/Swiff.Uploader.js');
+    Asset.javascript(this.assetBasePath+'js/Uploader.js');
+    Asset.javascript(this.assetBasePath+'js/Gallery.js');
+    Asset.javascript(this.assetBasePath+'js/milkbox/milkbox.js');
+    Asset.css(this.assetBasePath+'js/milkbox/css/milkbox.css');
+    /*
+    Asset.javascript(this.assetBasePath+'Language/Language.'+this.options.language+'.js', {
+    events: {
+        load: function(){
+            alert('myScript.js is loaded!');
+        }
+    }
+    });
+    */
+
+    
     this.language = Object.clone(FileManager.Language.en);
     if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);  
   
@@ -193,7 +211,7 @@ var FileManager = new Class({
       self.fireEvent('preview', [this.get('src')]);
     });
     this.info.adopt([
-      new Element('h2', {'class': 'filemanager-headline', text: this.language.preview}),
+      new Element('h2', {'class': 'filemanager-headline', text: this.language.more}),
       this.preview
     ]);
     
@@ -268,7 +286,7 @@ var FileManager = new Class({
       }).bind(this)
     };    
   },
-
+  
   show: function(e){
     if (e) e.stop();
 
@@ -792,8 +810,10 @@ var FileManager = new Class({
           });
           
           // add SqueezeBox for preview zoom
-          if(typeof SqueezeBox != 'undefined')
-            SqueezeBox.assign($$('a[rel=preview]'));
+          //if(typeof SqueezeBox != 'undefined')
+            //SqueezeBox.assign($$('a[rel=preview]'));
+          if(typeof milkbox != 'undefined')
+            milkbox.reloadPageGalleries();
 
         }).bind(this));
       }).bind(this),

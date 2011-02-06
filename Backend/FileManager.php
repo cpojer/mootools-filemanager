@@ -154,18 +154,20 @@ class FileManager {
       // generates a random number to put on the end of the image, to prevent caching
       $randomImage = '?'.md5(uniqid(rand(),1));
       $size = getimagesize($file);
-      $content = '<a href="'.$url.'" rel="preview"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)).$randomImage.'" class="preview" alt="preview" /></a>
-        <h2>${more}</h2>
-        <dl>
+      $content = '<dl>
           <dt>${width}</dt><dd>' . $size[0] . 'px</dd>
           <dt>${height}</dt><dd>' . $size[1] . 'px</dd>
-        </dl>';
+        </dl>
+        <h2>${preview}</h2>
+        <a href="'.$url.'" data-milkbox="preview"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)).$randomImage.'" class="preview" alt="preview" /></a>
+        ';
     // text preview
     }elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript') {
       $filecontent = file_get_contents($file, false, null, 0);
       if (!FileManagerUtility::isBinary($filecontent)) $content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent,ENT_QUOTES,'UTF-8')) . '</pre></div>';
     // zip
     } elseif ($mime == 'application/zip'){
+      require_once($this->options['id3Path']);
       $out = array(array(), array());
       $getid3 = new getID3();
       $getid3->Analyze($file);
@@ -182,19 +184,19 @@ class FileManager {
       $getid3 = new getID3();
       $getid3->Analyze($file);
       
-      $content = '<div class="object">
-          <object type="application/x-shockwave-flash" data="' . $this->options['assetBasePath'] . '/dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30" width="200" height="20">
-            <param name="movie" value="' . $this->options['assetBasePath'] . '/dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30" />
-          </object>
-        </div>
-        <h2>${more}</h2>
-        <dl>
+      $content = '<dl>
           <dt>${title}</dt><dd>' . $getid3->info['comments']['title'][0] . '</dd>
           <dt>${artist}</dt><dd>' . $getid3->info['comments']['artist'][0] . '</dd>
           <dt>${album}</dt><dd>' . $getid3->info['comments']['album'][0] . '</dd>
           <dt>${length}</dt><dd>' . $getid3->info['playtime_string'] . '</dd>
           <dt>${bitrate}</dt><dd>' . round($getid3->info['bitrate']/1000) . 'kbps</dd>
-        </dl>';
+        </dl>
+        <h2>${preview}</h2>
+        <div class="object">
+          <object type="application/x-shockwave-flash" data="' . $this->options['assetBasePath'] . '/dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30" width="200" height="20">
+            <param name="movie" value="' . $this->options['assetBasePath'] . '/dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30" />
+          </object>
+        </div>';
     }
     
     echo json_encode(array(
