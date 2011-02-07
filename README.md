@@ -6,7 +6,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.3rc3
+  1.3rc4
 
 ### Author
  [Christoph Pojer](http://og5.net/christoph)
@@ -27,7 +27,6 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ### Issues!
   - there is a bug in SqueezeBox, when opening a preview the second time, caused by mootools, should be fixed with mootools 1.3.1 (SqueezeBox is in the Demos deactivated)
   - sometime "illegal character (Error #2038) mootools-core-1.3.js (line 5015)" when uploading multiple files
-  - sometime "flash is missing" error when starting the filemanager
 
 How to use
 ----------

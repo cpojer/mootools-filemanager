@@ -234,8 +234,10 @@ FileManager.implement({
         self.load(self.Directory, true);
       },
       onFail: function(error) {
-        $$(self.upload.button, self.upload.label).dispose();
-        new Dialog(new Element('div', {html: self.language.flash[error] || self.language.flash.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
+        if(error != 'empty') {
+          $$(self.upload.button, self.upload.label).dispose();
+          new Dialog(new Element('div', {html: self.language.flash[error] || self.language.flash.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
+        }
       }
     });
   }
