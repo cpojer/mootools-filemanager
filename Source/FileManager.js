@@ -4,7 +4,7 @@ description: FileManager
 
 requires:
   core/1.3: '*'
-  more/1.3.0.1: [Drag, Drag.Move, Tips, Assets, Element.Delegation, Scroll, SmoothScroll, Hash]
+  more/1.3.0.1: [Array.Extras, String.QueryString, Hash, Element.Delegation, Element.Measure, Fx.Scroll, Fx.SmoothScroll, Drag, Drag.Move, Assets, Tips ]
 
 provides:
   - filemanager
@@ -28,10 +28,11 @@ options:
   - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
   - destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
   - rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
+  - download: (boolean, defaults to *false*) Whether to allow downloading of files or not
   - createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
   
   // set in uploader.js
-  - upload: (boolean, defaults to *true*) 
+  - upload: (boolean, defaults to *true*)
   - uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
   - resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
   
@@ -44,6 +45,156 @@ events:
 ...
 */
 
+var $_GET = {
+  vars: {},
+  load: function() {
+    var hashVars = window.location.hash.split('#');
+    if(typeof hashVars[1] != 'undefined') {
+      hashVars = hashVars[1].split('&');
+      for(var i = 0; i < hashVars.length; i++) {
+          var hashVar = hashVars[i].split('=');
+          this.vars[hashVar[0]] = hashVar[1];
+      }
+    }
+    return this.vars;
+  },
+  clear: function() {
+    window.location.hash = '#none';
+    return false;
+  },
+  get: function(get) {
+    this.load();    
+    return (this.vars[get]) ? this.vars[get] : null;
+  },
+  set: function(set) {
+    this.load();
+    
+    if(typeof set != 'object') {
+      setSplit = set.split('=');
+      if(typeof setSplit[1] != 'undefined')
+        set[setSplit[0]] = setSplit[1];
+      else
+        set[setSplit[0]] = '';
+    }
+    
+    // var
+    var hashString = '';
+    var sep = '#';
+    
+    // check for change in existing vars
+    for(var prop in this.vars) {
+      if(this.vars.hasOwnProperty(prop)) {
+        if(set.hasOwnProperty(prop)) {
+          hashString += sep+prop+'='+set[prop];
+          delete set[prop];
+        } else if(typeof this.vars[prop] != 'undefined') {
+          hashString += sep+prop+'='+this.vars[prop];
+        } else
+          hashString += sep+prop;
+        sep = '&';
+      }
+    }
+    
+    // add new vars
+    for(var prop in set) {
+      if(set.hasOwnProperty(prop) &&
+         (typeof this.vars[prop] == 'undefined' || this.get(prop) != set[prop])) {
+        hashString += sep+prop+'='+set[prop];
+        sep = '&';
+      }
+    }
+    window.location.hash = hashString;
+
+    return this.load();
+  },
+  remove: function(remove) {
+    this.load();
+    
+    // var
+    var hashString = '';
+    var sep = '#';
+    
+    if(this.vars.hasOwnProperty(remove))
+      delete this.vars[remove];
+    
+    // check for change in existing vars
+    for(var prop in this.vars) {
+      if(this.vars.hasOwnProperty(prop)) {
+        if(typeof this.vars[prop] != 'undefined') {
+          hashString += sep+prop+'='+this.vars[prop];
+        } else
+          hashString += sep+prop;
+        sep = '&';
+      }
+    }
+    window.location.hash = hashString;
+  },
+  addListener: function(listener,bind) { // use the returned interval ID for removeListener
+    //var
+    var self = this;
+    var lastHash = '';
+    var oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];;
+    var newVars = {};
+    
+    function compare(obj1,obj2) {
+      for(var key in obj1) if(obj1[key] !== obj2[key]) return false;
+      return true;
+    }
+    
+    function pollHash() {
+        if(lastHash !== window.location.hash) {
+          // var
+          lastHash = window.location.hash;
+          newVars = self.vars;
+          
+          if(compare(newVars,oldVars)) {
+            // var
+            //oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];
+            self.load();
+            newVars = new self.vars.constructor(); for(var key in self.vars) newVars[key] = self.vars[key];
+            var changedVars = new self.vars.constructor(); for(var key in self.vars) changedVars[key] = self.vars[key];
+            
+            /*
+            console.log('-----');
+            console.log(oldVars);
+            console.log(newVars);
+            */
+            
+            // check for changed vars
+            for(var prop in newVars)
+              if(newVars.hasOwnProperty(prop) && typeof oldVars[prop] != 'undefined' && oldVars[prop] == newVars[prop])
+                delete changedVars[prop];
+            
+            if(typeof listener == 'function')
+              listener.apply(bind,[changedVars]);
+          }
+          
+          oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];
+        }
+    }
+    return setInterval(pollHash, 500);
+  },
+  removeListener: function(listenerId) { // use the interval ID returned by addListener
+    return clearInterval(listenerId);
+  }
+}
+
+/*
+// load depencies
+//(function(){
+  var scriptSource = (function() {
+        var scripts = document.getElementsByTagName('script');
+        var script = scripts[scripts.length - 1].src;
+        return script.substring(0, script.lastIndexOf('/')) + '/';
+    }());
+  
+  //document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/Uploader/Fx.ProgressBar.js'}));
+  //document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/Uploader/Swiff.Uploader.js'}));
+  //document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/Uploader.js'}));
+//})();
+*/
+
+var MooFileManagerUniqueID = 1;
 var FileManager = new Class({
 
   Implements: [Options, Events],
@@ -51,6 +202,7 @@ var FileManager = new Class({
   Request: null,
   Directory: null,
   Current: null,
+  ID: null,
 
   options: {
     /*onComplete: function(){},
@@ -75,31 +227,24 @@ var FileManager = new Class({
     cleanup: {}
   },
 
-  initialize: function(options){
+  initialize: function(options) {
     this.setOptions(options);
+    this.ID = MooFileManagerUniqueID;
+    MooFileManagerUniqueID++;
     this.dragZIndex = 1300;
     this.droppables = [];
     this.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
     this.Directory = this.options.directory;
     this.listType = 'list';
     this.dialogOpen = false;
+    this.usingHistory = false;
     
     // load all necessary js
-    Asset.javascript(this.assetBasePath+'js/Uploader/Fx.ProgressBar.js');
-    Asset.javascript(this.assetBasePath+'js/Uploader/Swiff.Uploader.js');
-    Asset.javascript(this.assetBasePath+'js/Uploader.js');
+    //Asset.javascript(this.assetBasePath+'js/Uploader/Fx.ProgressBar.js');
+    //Asset.javascript(this.assetBasePath+'js/Uploader/Swiff.Uploader.js');
+    //Asset.javascript(this.assetBasePath+'js/Uploader.js');
     Asset.javascript(this.assetBasePath+'js/milkbox/milkbox.js');
     Asset.css(this.assetBasePath+'js/milkbox/css/milkbox.css');
-    /*
-    Asset.javascript(this.assetBasePath+'Language/Language.'+this.options.language+'.js', {
-    events: {
-        load: function(){
-            alert('myScript.js is loaded!');
-        }
-    }
-    });
-    */
-
     
     this.language = Object.clone(FileManager.Language.en);
     if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);  
@@ -127,6 +272,7 @@ var FileManager = new Class({
     // -> catch a click on an element in the file/folder browser
     this.relayClick = function(e) {
       if(e) e.stop();
+      self.storeHistory = true;
       
       var file = this.retrieve('file');
       if (this.retrieve('edit')) {
@@ -285,12 +431,49 @@ var FileManager = new Class({
         this.browserScroll.setStyle('height',scrollSize.y - headerSize.y);
 
       }).bind(this)
-    };    
+    };
+   
+   // autostart filemanager when set
+   if($_GET.get('mooFileManager_ID') == this.ID)
+    this.show();
+   
+  },
+  
+  hashHistory: function(vars) {
+    this.storeHistory = false;
+    
+    //console.log('change');
+    //console.log(vars);
+    
+    for(var prop in vars) {
+      if(vars.hasOwnProperty(prop)) {
+        var type = prop.replace('mooFileManager_','');
+        
+        if(type == 'path') {
+          this.load(vars[prop]);
+        }
+        
+        if(type == 'file') {
+          this.browser.getElements('span.fi span').each((function(current){           
+            if(current.get('title') == vars[prop]) {
+              this.fillInfo(current.getParent('span.fi').retrieve('file'));
+            }
+          }).bind(this));
+        }
+        
+      }
+    }
   },
   
   show: function(e){
     if (e) e.stop();
-
+    
+    // get and set history
+    this.hashListenerId = $_GET.addListener(this.hashHistory,this);
+    $_GET.set({'mooFileManager_ID':this.ID});
+    if($_GET.get('mooFileManager_path') != null)
+      this.Directory = $_GET.get('mooFileManager_path');
+    
     this.load(this.Directory);
     this.overlay.show();
 
@@ -325,7 +508,10 @@ var FileManager = new Class({
   
   hide: function(e){
     if (e) e.stop();
-
+    
+    // stop hashListener
+    $_GET.removeListener(this.hashListenerId);
+    
     this.overlay.hide();
     this.tips.hide();
     this.browser.empty();
@@ -401,7 +587,8 @@ var FileManager = new Class({
     this.switchButton();
   },
 
-  load: function(dir, nofade){
+  load: function(dir, nofade) {
+    
     this.deselect();
     if (!nofade) this.info.fade(0);    
     
@@ -409,7 +596,7 @@ var FileManager = new Class({
 
     this.Request = new FileManager.Request({
       url: this.options.url,
-      onRequest: (function(){        
+      onRequest: (function(){
         this.browserLoader.set('opacity', 1);
       }).bind(this),
       onSuccess: (function(j) {
@@ -552,6 +739,7 @@ var FileManager = new Class({
       
       // select
       } else if(direction == 'enter') {
+        this.storeHistory = true;
         this.Current = current;
         if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
           this.browser.getElement('span.fi.selected').removeClass('selected');
@@ -559,8 +747,9 @@ var FileManager = new Class({
         var currentFile = current.retrieve('file');        
         if(currentFile.mime == 'text/directory')
           this.load(currentFile.path.replace(this.root,''));
-        else
+        else {
           this.fillInfo(currentFile);
+        }
       }
     }
   },
@@ -572,7 +761,7 @@ var FileManager = new Class({
     this.browser.empty();
     this.root = j.root;
     var self = this;
-    
+
     this.CurrentPath = this.root + this.Directory;
     var text = [], pre = [];
     var rootPath = j.root.slice(0,-1).split('/');
@@ -769,8 +958,19 @@ var FileManager = new Class({
 
   fillInfo: function(file) {
     if (!file) file = this.CurrentDir;
-
     if (!file) return;
+    
+    // set file history
+    //console.log(this.storeHistory);
+    if(this.storeHistory) {
+      if(file.mime != 'text/directory')
+        $_GET.set({'mooFileManager_path':this.Directory,'mooFileManager_file':file.name});
+      else if(this.Directory)
+        $_GET.set({'mooFileManager_path':this.Directory,'mooFileManager_file':''});
+      else
+        $_GET.set({'mooFileManager_path':'/','mooFileManager_file':''});
+    }
+    
     var size = this.size(file.size);    
     var icon = file.icon;
     

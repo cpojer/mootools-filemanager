@@ -23,7 +23,7 @@ FileManager.Gallery = new Class({
   
   Extends: FileManager,
   
-  initialize: function(options){
+  initialize: function(options) {
     this.offsets = {y: -72};
     this.parent(options);
     
@@ -128,6 +128,9 @@ FileManager.Gallery = new Class({
 
     this.howto = new Element('div', {'class': 'howto', text: this.language.gallery.drag}).inject(this.galleryContainer);
     this.switchButton();
+    
+    if($_GET.get('mooFileManager_ID') == this.ID)
+      this.show();
   },
   
   onDragComplete: function(el, droppable){
@@ -280,9 +283,11 @@ FileManager.Gallery = new Class({
   },
   
   switchButton: function(){
-    var chk = !!this.gallery.getChildren().length;
+    if(typeof this.gallery != 'undefined') {
+      var chk = !!this.gallery.getChildren().length;
     
-    this.menu.getElement('button.filemanager-serialize').set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
+      this.menu.getElement('button.filemanager-serialize').set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
+    }
   },
 
   populate: function(data){
