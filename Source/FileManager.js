@@ -45,7 +45,7 @@ events:
 ...
 */
 
-var GETjs = {
+var jsGET = {
   vars: {},
   load: function() {
     var hashVars = window.location.hash.split('#');
@@ -105,20 +105,27 @@ var GETjs = {
       }
     }
     window.location.hash = hashString;
-
     return this.load();
   },
   remove: function(remove) {
     this.load();
     
+    if(typeof remove != 'object') {
+      removes = new Array();
+      removes[0] = remove;
+    } else
+      removes = remove;
+    
     // var
     var hashString = '';
     var sep = '#';
     
-    if(this.vars.hasOwnProperty(remove))
-      delete this.vars[remove];
+    for (var i = 0; i < removes.length; i++) {
+      if(this.vars.hasOwnProperty(removes[i]))
+        delete this.vars[removes[i]];
+    }
     
-    // check for change in existing vars
+    // create new hash string
     for(var key in this.vars) {
       if(this.vars.hasOwnProperty(key)) {
         if(typeof this.vars[key] != 'undefined') {
@@ -129,8 +136,9 @@ var GETjs = {
       }
     }
     window.location.hash = hashString;
+    return this.vars;
   },
-  addListener: function(listener,bind) { // use the returned interval ID for removeListener
+  addListener: function(listener,callAlways,bind) { // use the returned interval ID for removeListener
     //var
     var self = this;
     var lastHash = '';
@@ -142,13 +150,13 @@ var GETjs = {
       return true;
     }
     
-    function pollHash() {
+    this.pollHash = function() {
         if(lastHash !== window.location.hash) {
           // var
           lastHash = window.location.hash;
           newVars = self.vars;
           
-          if(compare(newVars,oldVars)) {
+          if(callAlways || compare(newVars,oldVars)) {
             // var
             //oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];
             self.load();
@@ -177,10 +185,11 @@ var GETjs = {
           oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];
         }
     }
-    return setInterval(pollHash, 500);
+    return setInterval(this.pollHash, 500);
   },
-  removeListener: function(listenerId) { // use the interval ID returned by addListener
-    return clearInterval(listenerId);
+  removeListener: function(listenerID) { // use the interval ID returned by addListener
+    delete this.pollHash;
+    return clearInterval(listenerID);
   }
 }
 
@@ -416,24 +425,22 @@ var FileManager = new Class({
     };
    
    // autostart filemanager when set
-   if(typeof GETjs != 'undefined' && GETjs.get('fmID') == this.ID)
+   if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
     this.show();
   },
   
-  hashHistory: function(vars) { // get called from the GETjs listener
+  hashHistory: function(vars) { // get called from the jsGET listener
     this.storeHistory = false;
     //console.log(vars);
-    if(vars['fmpath'] == '')
-      vars['fmpath'] = '/';
+    if(vars['fmPath'] == '')
+      vars['fmPath'] = '/';
     
-    Object.each(vars,function(value,key) {
-        var type = key.replace('fm','');
-        
-        if(type == 'path') {
+    Object.each(vars,function(value,key) {        
+        if(key == 'fmPath') {
           this.load(value);
         }
         
-        if(type == 'file') {
+        if(key == 'fmFile') {
           this.browser.getElements('span.fi span').each((function(current){
             if(current.get('title') == value) {
               this.deselect();
@@ -449,12 +456,14 @@ var FileManager = new Class({
   
   show: function(e){
     if (e) e.stop();
+    this.onShow = false;
     
     // get and set history
-    if(typeof GETjs != 'undefined') {
-      if(GETjs.get('fmpath') != null) this.Directory = GETjs.get('fmpath');
-      GETjs.set({'fmID':this.ID,'fmpath':this.Directory});
-      this.hashListenerId = GETjs.addListener(this.hashHistory,this);
+    if(typeof jsGET != 'undefined') {
+      if(jsGET.get('fmFile') != null) this.onShow = true;
+      if(jsGET.get('fmPath') != null) this.Directory = jsGET.get('fmPath');
+      jsGET.set({'fmID':this.ID,'fmPath':this.Directory});
+      this.hashListenerId = jsGET.addListener(this.hashHistory,false,this);
     }
     
     this.load(this.Directory);
@@ -493,8 +502,8 @@ var FileManager = new Class({
     if (e) e.stop();
     
     // stop hashListener
-    if(typeof GETjs != 'undefined')
-      GETjs.removeListener(this.hashListenerId);
+    if(typeof jsGET != 'undefined')
+      jsGET.removeListener(this.hashListenerId);
     
     this.overlay.hide();
     this.tips.hide();
@@ -741,14 +750,14 @@ var FileManager = new Class({
   fill: function(j, nofade) {
     this.Directory = j.path;
     this.CurrentDir = j.dir;
-    if (!nofade) this.fillInfo(j.dir);
+    if (!nofade && !this.onShow) this.fillInfo(j.dir);
     this.browser.empty();
     this.root = j.root;
     var self = this;
     
     // set history
-    if(typeof GETjs != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')
-      GETjs.set({'fmpath':j.path});
+    if(typeof jsGET != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')
+      jsGET.set({'fmPath':j.path});
 
     this.CurrentPath = this.root + this.Directory;
     var text = [], pre = [];
@@ -788,6 +797,7 @@ var FileManager = new Class({
     var els = [[], []];
 
     Array.each(j.files, function(file) {
+      
       file.dir = j.path;
       var largeDir = '';
       // generate unique id
@@ -799,7 +809,7 @@ var FileManager = new Class({
         icon,
         new Element('span', {text: file.name, title:file.name})
       ).store('file', file);
-      
+
       // add click event, only to directories, files use the revert function (to enable drag n drop)
       if(file.mime == 'text/directory')
         el.addEvent('click',this.relayClick);
@@ -833,6 +843,16 @@ var FileManager = new Class({
       //if (file.name == '..') el.set('opacity', 0.7);
       el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
       icons = $$(icons.map(function(icon){return icon.appearOn(icon, [1, 0.7]);})).appearOn(el.getParent('li'), 0.7);
+      
+      // ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
+      if(this.onShow && typeof jsGET != 'undefined' && jsGET.get('fmFile') != null && file.name == jsGET.get('fmFile')) {
+        this.deselect();
+        this.Current = file.element;
+        new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(file.element);
+        file.element.addClass('selected');
+        this.fillInfo(file);
+      } else if(this.onShow && jsGET.get('fmFile') == null)
+        this.onShow = false;
     }, this);
     
     // -> cancel dragging
@@ -950,11 +970,11 @@ var FileManager = new Class({
     
     // set file history
     //console.log(this.storeHistory);
-    if(typeof GETjs != 'undefined' && this.storeHistory) {
+    if(typeof jsGET != 'undefined' && this.storeHistory) {
       if(file.mime != 'text/directory')
-        GETjs.set({'fmfile':file.name});
+        jsGET.set({'fmFile':file.name});
       else
-        GETjs.set({'fmfile':''});
+        jsGET.set({'fmFile':''});
     }
     
     var size = this.size(file.size);    
