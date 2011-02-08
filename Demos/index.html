@@ -55,17 +55,14 @@
   }
   </style>
   
-  <link rel="stylesheet" media="all" type="text/css" href="../Css/FileManager.css" />
-  <link rel="stylesheet" media="all" type="text/css" href="../Css/Additions.css" />
-
   <script type="text/javascript" src="mootools-core-1.3.js"></script>
   <script type="text/javascript" src="mootools-more-1.3.0.1.js"></script>
   
   <script type="text/javascript" src="../Source/FileManager.js"></script>
   <script type="text/javascript" src="../Source/Gallery.js"></script>
-  <script type="text/javascript" src="../Assets/js/Uploader/Fx.ProgressBar.js"></script>
-  <script type="text/javascript" src="../Assets/js/Uploader/Swiff.Uploader.js"></script>
-  <script type="text/javascript" src="../Assets/js/Uploader.js"></script>
+  <script type="text/javascript" src="../Source/Uploader/Fx.ProgressBar.js"></script>
+  <script type="text/javascript" src="../Source/Uploader/Swiff.Uploader.js"></script>
+  <script type="text/javascript" src="../Source/Uploader.js"></script>
   <script type="text/javascript" src="../Language/Language.en.js"></script>
   <script type="text/javascript" src="../Language/Language.de.js"></script>
   
@@ -90,10 +87,10 @@
       /* Select a file */
       var el = $('example2');
       var div, manager2;
-      var complete = function(path, file){
+      var complete = function(path, file) {
         el.set('value', path);
         if(div) div.destroy();
-        var icon = new Asset.image(this.assetBasePath+'cancel.png', {'class': 'file-cancel', title: this.language.deselect}).addEvent('click', function(e){
+        var icon = new Asset.image(this.assetBasePath+'Images/cancel.png', {'class': 'file-cancel', title: 'deselect'}).addEvent('click', function(e){
           e.stop();
           el.set('value', '');
           var self = this;
@@ -125,13 +122,13 @@
         rename: true,
         createFolders: true,
         onComplete: complete
-      }).addEvent('ready',complete);
+      });
       
       el.setStyle('display', 'none');
       var val = el.get('value');
       if(val) complete.apply(manager2, [val, {
         name: val.split('/').getLast(),
-        icon: '../Assets/Icons/'+val.split('.').getLast()+'.png'
+        icon: '../Assets/Images/Icons/'+val.split('.').getLast()+'.png'
       }]);
       
       new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager2.show.bind(manager2)).inject(el, 'before');

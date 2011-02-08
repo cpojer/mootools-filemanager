@@ -6,7 +6,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.3.1rc1
+  1.3.2rc1
 
 ### Author
  [Christoph Pojer](http://og5.net/christoph)
@@ -23,9 +23,9 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Use as a FileManager in TinyMCE
 * Provides your client with the most possible convenience ( ;D )
 * Create galleries using the Gallery-Plugin
+* History (youre able to use the forward and back button of your browser)
 
 ### Issues!
-  - there is a bug in SqueezeBox, when opening a preview the second time, caused by mootools, should be fixed with mootools 1.3.1 (SqueezeBox is in the Demos deactivated)
   - sometime "illegal character (Error #2038) mootools-core-1.3.js (line 5015)" when uploading multiple files
 
 How to use
@@ -43,8 +43,23 @@ How to use
 
 ### Installation
 
-* See "Demos/index.html" for the clientside integration
-* See "Demos/manager.php" or "Demos/selectImage.php" for serverside integration
+* First you need to include the follwing scripts
+** Source/FileManager.js
+** Source/Uploader/Fx.ProgressBar.js
+** Source/Uploader/Swiff.Uploader.js
+** Source/Uploader.js
+** Source/Gallery.js (if you want to create a gallery, see example in the Demos/index.html)
+** Language/Language.en.js (or which language(s) do you need)
+
+* Then you need do modify the "Demos/manager.php" or "Demos/selectImage.php" to set up your upload folder etc
+* See the "Demos/index.html" for examples, but basically you need to do the following:
+
+  var myFileManager = new FileManager({
+    url: 'manager.php',
+    assetBasePath: '../Assets'
+  });
+  myFileManager.show.bind(myFileManager);
+
 
 ### Custom Authentication
 

@@ -1,6 +1,6 @@
 <?php
 
-include('../Backend/FileManager.php');
+include('../Assets/Connector/FileManager.php');
 
 // Please add your own authentication here
 function UploadIsAuthenticated($get){

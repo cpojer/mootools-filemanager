@@ -129,7 +129,7 @@ FileManager.Gallery = new Class({
     this.howto = new Element('div', {'class': 'howto', text: this.language.gallery.drag}).inject(this.galleryContainer);
     this.switchButton();
     
-    if($_GET.get('mooFileManager_ID') == this.ID)
+    if(typeof $_GET != 'undefined' && $_GET.get('mooFileManager_ID') == this.ID)
       this.show();
   },
   

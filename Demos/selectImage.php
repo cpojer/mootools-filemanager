@@ -1,6 +1,6 @@
 <?php
 
-include('../Backend/FileManager.php');
+include('../Assets/Connector/FileManager.php');
 
 $browser = new FileManager(array(
   'directory' => 'Files/',

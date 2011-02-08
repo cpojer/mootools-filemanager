@@ -20,7 +20,7 @@ inspiration:
   - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
 
 options:
-  - url: (string) The base url to the Backend FileManager (FileManager.php), without QueryString
+  - url: (string) The base url to a file with an instance of the FileManager php class (FileManager.php), without QueryString
   - assetBasePath: (string) The path to all images and swf files used by the filemanager
   - directory: (string, relative to the directory set in to the filemanager php class) Can be used to load a subfolder instead of the base folder
   - language: (string, defaults to *en*) The language used for the FileManager
@@ -45,7 +45,7 @@ events:
 ...
 */
 
-var $_GET = {
+var GETjs = {
   vars: {},
   load: function() {
     var hashVars = window.location.hash.split('#');
@@ -67,6 +67,7 @@ var $_GET = {
     return (this.vars[get]) ? this.vars[get] : null;
   },
   set: function(set) {
+    //console.log('savedHistory');
     this.load();
     
     if(typeof set != 'object') {
@@ -82,24 +83,24 @@ var $_GET = {
     var sep = '#';
     
     // check for change in existing vars
-    for(var prop in this.vars) {
-      if(this.vars.hasOwnProperty(prop)) {
-        if(set.hasOwnProperty(prop)) {
-          hashString += sep+prop+'='+set[prop];
-          delete set[prop];
-        } else if(typeof this.vars[prop] != 'undefined') {
-          hashString += sep+prop+'='+this.vars[prop];
+    for(var key in this.vars) {
+      if(this.vars.hasOwnProperty(key)) {
+        if(set.hasOwnProperty(key)) {
+          hashString += sep+key+'='+set[key];
+          delete set[key];
+        } else if(typeof this.vars[key] != 'undefined') {
+          hashString += sep+key+'='+this.vars[key];
         } else
-          hashString += sep+prop;
+          hashString += sep+key;
         sep = '&';
       }
     }
     
     // add new vars
-    for(var prop in set) {
-      if(set.hasOwnProperty(prop) &&
-         (typeof this.vars[prop] == 'undefined' || this.get(prop) != set[prop])) {
-        hashString += sep+prop+'='+set[prop];
+    for(var key in set) {
+      if(set.hasOwnProperty(key) &&
+         (typeof this.vars[key] == 'undefined' || this.get(key) != set[key])) {
+        hashString += sep+key+'='+set[key];
         sep = '&';
       }
     }
@@ -118,12 +119,12 @@ var $_GET = {
       delete this.vars[remove];
     
     // check for change in existing vars
-    for(var prop in this.vars) {
-      if(this.vars.hasOwnProperty(prop)) {
-        if(typeof this.vars[prop] != 'undefined') {
-          hashString += sep+prop+'='+this.vars[prop];
+    for(var key in this.vars) {
+      if(this.vars.hasOwnProperty(key)) {
+        if(typeof this.vars[key] != 'undefined') {
+          hashString += sep+key+'='+this.vars[key];
         } else
-          hashString += sep+prop;
+          hashString += sep+key;
         sep = '&';
       }
     }
@@ -151,20 +152,24 @@ var $_GET = {
             // var
             //oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];
             self.load();
-            newVars = new self.vars.constructor(); for(var key in self.vars) newVars[key] = self.vars[key];
+            //newVars = new self.vars.constructor(); for(var key in self.vars) newVars[key] = self.vars[key];
             var changedVars = new self.vars.constructor(); for(var key in self.vars) changedVars[key] = self.vars[key];
-            
             /*
             console.log('-----');
             console.log(oldVars);
-            console.log(newVars);
+            console.log(changedVars);
             */
-            
             // check for changed vars
-            for(var prop in newVars)
-              if(newVars.hasOwnProperty(prop) && typeof oldVars[prop] != 'undefined' && oldVars[prop] == newVars[prop])
-                delete changedVars[prop];
-            
+            for(var key in changedVars)
+              if(changedVars.hasOwnProperty(key) && typeof oldVars[key] != 'undefined' && oldVars[key] == changedVars[key]) {
+                delete changedVars[key];
+                delete oldVars[key];
+              }
+            // merge the rest of oldVars with the changedVars
+            for(var key in oldVars) {
+              if(oldVars.hasOwnProperty(key) && !(key in changedVars)) changedVars[key] = oldVars[key];
+            }
+            // call the given listener function
             if(typeof listener == 'function')
               listener.apply(bind,[changedVars]);
           }
@@ -178,21 +183,6 @@ var $_GET = {
     return clearInterval(listenerId);
   }
 }
-
-/*
-// load depencies
-//(function(){
-  var scriptSource = (function() {
-        var scripts = document.getElementsByTagName('script');
-        var script = scripts[scripts.length - 1].src;
-        return script.substring(0, script.lastIndexOf('/')) + '/';
-    }());
-  
-  //document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/Uploader/Fx.ProgressBar.js'}));
-  //document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/Uploader/Swiff.Uploader.js'}));
-  //document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/Uploader.js'}));
-//})();
-*/
 
 var MooFileManagerUniqueID = 1;
 var FileManager = new Class({
@@ -239,16 +229,9 @@ var FileManager = new Class({
     this.dialogOpen = false;
     this.usingHistory = false;
     
-    // load all necessary js
-    //Asset.javascript(this.assetBasePath+'js/Uploader/Fx.ProgressBar.js');
-    //Asset.javascript(this.assetBasePath+'js/Uploader/Swiff.Uploader.js');
-    //Asset.javascript(this.assetBasePath+'js/Uploader.js');
-    Asset.javascript(this.assetBasePath+'js/milkbox/milkbox.js');
-    Asset.css(this.assetBasePath+'js/milkbox/css/milkbox.css');
-    
     this.language = Object.clone(FileManager.Language.en);
     if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);  
-  
+    
     this.container = new Element('div', {'class': 'filemanager-container' + (Browser.opera ? ' filemanager-engine-presto' : '') + (Browser.ie ? ' filemanager-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : '')});
     this.filemanager = new Element('div', {'class': 'filemanager'}).inject(this.container);
     this.header = new Element('div', {'class': 'filemanager-header'}).inject(this.filemanager);
@@ -323,7 +306,6 @@ var FileManager = new Class({
         click: this.toggleList
       })
     ]);
-    
     
     this.browser = new Element('ul', {'class': 'filemanager-browser'})./*addEvents({
       click: (function(){
@@ -434,45 +416,46 @@ var FileManager = new Class({
     };
    
    // autostart filemanager when set
-   if($_GET.get('mooFileManager_ID') == this.ID)
+   if(typeof GETjs != 'undefined' && GETjs.get('fmID') == this.ID)
     this.show();
-   
   },
   
-  hashHistory: function(vars) {
+  hashHistory: function(vars) { // get called from the GETjs listener
     this.storeHistory = false;
-    
-    //console.log('change');
     //console.log(vars);
+    if(vars['fmpath'] == '')
+      vars['fmpath'] = '/';
     
-    for(var prop in vars) {
-      if(vars.hasOwnProperty(prop)) {
-        var type = prop.replace('mooFileManager_','');
+    Object.each(vars,function(value,key) {
+        var type = key.replace('fm','');
         
         if(type == 'path') {
-          this.load(vars[prop]);
+          this.load(value);
         }
         
         if(type == 'file') {
-          this.browser.getElements('span.fi span').each((function(current){           
-            if(current.get('title') == vars[prop]) {
+          this.browser.getElements('span.fi span').each((function(current){
+            if(current.get('title') == value) {
+              this.deselect();
+              this.Current = current.getParent('span.fi');
+              new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(current.getParent('span.fi'));
+              current.getParent('span.fi').addClass('selected');
               this.fillInfo(current.getParent('span.fi').retrieve('file'));
             }
           }).bind(this));
         }
-        
-      }
-    }
+    },this);
   },
   
   show: function(e){
     if (e) e.stop();
     
     // get and set history
-    this.hashListenerId = $_GET.addListener(this.hashHistory,this);
-    $_GET.set({'mooFileManager_ID':this.ID});
-    if($_GET.get('mooFileManager_path') != null)
-      this.Directory = $_GET.get('mooFileManager_path');
+    if(typeof GETjs != 'undefined') {
+      if(GETjs.get('fmpath') != null) this.Directory = GETjs.get('fmpath');
+      GETjs.set({'fmID':this.ID,'fmpath':this.Directory});
+      this.hashListenerId = GETjs.addListener(this.hashHistory,this);
+    }
     
     this.load(this.Directory);
     this.overlay.show();
@@ -510,7 +493,8 @@ var FileManager = new Class({
     if (e) e.stop();
     
     // stop hashListener
-    $_GET.removeListener(this.hashListenerId);
+    if(typeof GETjs != 'undefined')
+      GETjs.removeListener(this.hashListenerId);
     
     this.overlay.hide();
     this.tips.hide();
@@ -761,6 +745,10 @@ var FileManager = new Class({
     this.browser.empty();
     this.root = j.root;
     var self = this;
+    
+    // set history
+    if(typeof GETjs != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')
+      GETjs.set({'fmpath':j.path});
 
     this.CurrentPath = this.root + this.Directory;
     var text = [], pre = [];
@@ -820,7 +808,7 @@ var FileManager = new Class({
       var icons = [];
       // dowload icon
       if(file.mime!='text/directory' && this.options.download)
-        icons.push(new Asset.image(this.assetBasePath + 'disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
+        icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
           window.open(file.path);
@@ -832,7 +820,7 @@ var FileManager = new Class({
         if(this.options.rename) editButtons.push('rename');
         if(this.options.destroy) editButtons.push('destroy');
         editButtons.each(function(v){
-          icons.push(new Asset.image(this.assetBasePath + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('mouseup', (function(e){
+          icons.push(new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('mouseup', (function(e){
             e.preventDefault();
             el.store('edit',true);
             this.tips.hide();
@@ -962,13 +950,11 @@ var FileManager = new Class({
     
     // set file history
     //console.log(this.storeHistory);
-    if(this.storeHistory) {
+    if(typeof GETjs != 'undefined' && this.storeHistory) {
       if(file.mime != 'text/directory')
-        $_GET.set({'mooFileManager_path':this.Directory,'mooFileManager_file':file.name});
-      else if(this.Directory)
-        $_GET.set({'mooFileManager_path':this.Directory,'mooFileManager_file':''});
+        GETjs.set({'fmfile':file.name});
       else
-        $_GET.set({'mooFileManager_path':'/','mooFileManager_file':''});
+        GETjs.set({'fmfile':''});
     }
     
     var size = this.size(file.size);    
@@ -1017,9 +1003,6 @@ var FileManager = new Class({
             window.open(this.get('value'));
           });
           
-          // add SqueezeBox for preview zoom
-          //if(typeof SqueezeBox != 'undefined')
-            //SqueezeBox.assign($$('a[rel=preview]'));
           if(typeof milkbox != 'undefined')
             milkbox.reloadPageGalleries();
 
@@ -1119,8 +1102,19 @@ FileManager.Request = new Class({
 
 FileManager.Language = {};
 
-
 (function(){
+
+// ->> load DEPENCIES
+var scriptSource = (function() {
+      var scripts = document.getElementsByTagName('script');
+      var script = scripts[scripts.length - 1].src;
+      return script.substring(0, script.lastIndexOf('/')) + '/';
+  }());
+document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/milkbox/milkbox.js'}));
+document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/js/milkbox/css/milkbox.css'}));
+document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/Css/FileManager.css'}));
+document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/Css/Additions.css'}));
+
 
 Element.implement({
   
