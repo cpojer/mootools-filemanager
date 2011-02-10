@@ -486,11 +486,11 @@ div.filemanager-preview img.preview {
   margin: 0 auto 1em;
   display: block;
   background: transparent;
-  border: 2px solid #fff;
+  border: 1px solid #fff;
 }
 
 div.filemanager-preview img.preview:hover {
-  border: 2px solid #666;
+  border: 1px solid #666;
 }
 
 div.filemanager-engine-trident4 div.filemanager-preview img.preview {

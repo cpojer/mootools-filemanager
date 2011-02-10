@@ -230,7 +230,7 @@ var FileManager = new Class({
     
     this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
       'class': 'browser-add'
-    }).set('opacity', 0).inject(this.container);
+    }).set('opacity', 0).set('tween',{duration:300}).inject(this.container);
     
     this.container.inject(document.body);
     this.overlay = new Overlay(this.options.hideOnClick ? {
@@ -275,10 +275,17 @@ var FileManager = new Class({
 
       }).bind(this)
     };
-   
-   // autostart filemanager when set
-   if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
-    this.show();
+
+    // ->> autostart filemanager when set
+    if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
+        this.show();
+    else {
+      window.addEvent('jsGETloaded',(function(){
+        if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
+          this.show();
+      }).bind(this));
+    }
+
   },
   
   hashHistory: function(vars) { // get called from the jsGET listener
@@ -522,10 +529,9 @@ var FileManager = new Class({
           url: self.options.url + '?event=move',
           onSuccess: (function(j){
             if (!j || !j.name) return;
-
             self.fireEvent('modify', [Object.clone(file)]);
-
             file.element.getElement('span').set('text', j.name);
+            file.element.addClass('selected');
             file.name = j.name;
             self.fillInfo(file);
           }).bind(this),
@@ -733,8 +739,8 @@ var FileManager = new Class({
 
       onDrag: function(el, e){
         self.imageadd.setStyles({
-          'left': e.page.x + 20,
-          'top': e.page.y + 20,
+          'left': e.page.x + 25,
+          'top': e.page.y + 25,
         });
         self.imageadd.fade('in');
       },
@@ -984,11 +990,11 @@ var __DIR__ = (function() {
     var host = window.location.href.replace(window.location.pathname+window.location.hash,'');
     return script.substring(0, script.lastIndexOf('/')).replace(host,'') + '/';
 })();
-document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':__DIR__+'../Assets/js/jsGET.js'}));
-document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':__DIR__+'../Assets/js/milkbox/milkbox.js'}));
-document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':__DIR__+'../Assets/js/milkbox/css/milkbox.css'}));
-document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':__DIR__+'../Assets/Css/FileManager.css'}));
-document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':__DIR__+'../Assets/Css/Additions.css'}));
+Asset.javascript(__DIR__+'../Assets/js/milkbox/milkbox.js');
+Asset.css(__DIR__+'../Assets/js/milkbox/css/milkbox.css');
+Asset.css(__DIR__+'../Assets/Css/FileManager.css');
+Asset.css(__DIR__+'../Assets/Css/Additions.css');
+Asset.javascript(__DIR__+'../Assets/js/jsGET.js', { events: {load: (function(){ window.fireEvent('jsGETloaded'); }).bind(this)}});
 
 Element.implement({
   
