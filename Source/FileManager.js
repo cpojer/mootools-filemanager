@@ -250,15 +250,16 @@ var FileManager = new Class({
     this.browserLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 300}});
     // switch the path, from clickable to input text
     this.clickablePath = new Element('span', {'class': 'filemanager-dir'});
-    this.selectablePath = new Element('input',{'type':'text','class': 'filemanager-dir','readonly':'readonly'})
-    
-    this.header.adopt(new Element('a', {href:'#','class': 'filemanager-dir-title',text: this.language.dir}).addEvent('click',(function(e){
+    this.selectablePath = new Element('input',{'type':'text','class': 'filemanager-dir','readonly':'readonly'});
+    this.pathTitle = new Element('a', {href:'#','class': 'filemanager-dir-title',text: this.language.dir}).addEvent('click',(function(e){
       e.stop();
-      if(this.header.getElement('span.filemanager-dir')!= null)
-          this.selectablePath.replaces(this.clickablePath);
-      else
+      if(this.header.getElement('span.filemanager-dir')!= null) {
+        this.selectablePath.setStyle('width',(this.header.getSize().x - this.pathTitle.getSize().x - 35));
+        this.selectablePath.replaces(this.clickablePath);
+      } else
         this.clickablePath.replaces(this.selectablePath);
-    }).bind(this)),this.clickablePath);
+    }).bind(this));    
+    this.header.adopt(this.pathTitle,this.clickablePath);
     
     var self = this;
     // -> catch a click on an element in the file/folder browser
