@@ -61,10 +61,10 @@ var jsGET = {
     
     if(typeof set != 'object') {
       setSplit = set.split('=');
-      if(typeof setSplit[1] != 'undefined')
-        set[setSplit[0]] = setSplit[1];
-      else
-        set[setSplit[0]] = '';
+      set = {};
+      set[setSplit[0]] = (typeof setSplit[1] != 'undefined')
+        ? setSplit[1]
+        : '';
     }
     
     // var

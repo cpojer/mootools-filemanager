@@ -136,44 +136,46 @@ var FileManager = new Class({
 
       self.switchButton();
     };
-
-    this.toggleList = function(e)
-    {
+    
+    this.toggleList = function(e) {
       if(e) e.stop();
       $$('.filemanager-browserheader a').set('opacity',0.5);
-      this.set('opacity',1);
-      self.listType = (this.id == 'togggle_side_list') ? 'list' : 'thumb';
-      self.load(self.Directory);
+      if(!this.browserMenu_thumb.retrieve('set',false)) {
+        this.browserMenu_list.store('set',false);
+        this.browserMenu_thumb.store('set',true).set('opacity',1);
+        this.listType = 'thumb';
+        if(typeof jsGET != 'undefined') jsGET.set('fmListType=thumb');
+      } else {
+        this.browserMenu_thumb.store('set',false);
+        this.browserMenu_list.store('set',true).set('opacity',1);
+        this.listType = 'list';
+        if(typeof jsGET != 'undefined') jsGET.set('fmListType=list');
+      }
+      this.load(this.Directory);
     }
-
+    
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
     this.browserheader.adopt(this.browserLoader);
     this.browserScroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer).addEvent('mouseover',(function(){
       this.browser.getElements('span.fi.hover').each(function(span){ span.removeClass('hover'); });
     }).bind(this));
-    this.browserheader.adopt([      
-      new Element('a',{
+    this.browserMenu_thumb = new Element('a',{
         'id':'togggle_side_boxes',
         'class':'listType',
         'style' : 'margin-right: 10px;'
       }).set('opacity',0.5).addEvents({
-        click: this.toggleList
-      }),
-      new Element('a',{
+        click: this.toggleList.bind(this)
+      });
+    this.browserMenu_list = new Element('a',{
         'id':'togggle_side_list',
         'class':'listType'
       }).set('opacity',1).addEvents({
-        click: this.toggleList
-      })
-    ]);
+        click: this.toggleList.bind(this)
+      });
+    this.browserheader.adopt([this.browserMenu_thumb,this.browserMenu_list]);    
     
-    this.browser = new Element('ul', {'class': 'filemanager-browser'})./*addEvents({
-      click: (function(){
-        return self.deselect();
-      }),
-      'click:relay(li span.fi)': this.relayClick
-    }).*/inject(this.browserScroll);
+    this.browser = new Element('ul', {'class': 'filemanager-browser'}).inject(this.browserScroll);
     
     if(this.options.createFolders) this.addMenuButton('create');
     if(this.options.download) this.addMenuButton('download');
@@ -244,7 +246,14 @@ var FileManager = new Class({
       keyup: (function(){
         this.imageadd.fade(0);
       }).bind(this),
-      keyboardInput: (function(e){
+      toggleList: (function(e){
+        if(this.dialogOpen) return;
+        if(e.key=='tab') {
+          e.preventDefault();
+          this.toggleList();
+        }
+      }).bind(this),
+      keyboardInput: (function(e) {
         if(this.dialogOpen) return;
 
         if (e.key=='esc') this.hide();
@@ -259,10 +268,6 @@ var FileManager = new Class({
         if (e.key=='enter') {
           e.preventDefault();
           this.browserSelection('enter');
-        }
-        if (e.key=='backspace') {
-          e.preventDefault();
-          this.browserSelection('backspace');
         }
       }).bind(this),
       scroll: (function(){
@@ -321,6 +326,14 @@ var FileManager = new Class({
     // get and set history
     if(typeof jsGET != 'undefined') {
       if(jsGET.get('fmFile') != null) this.onShow = true;
+      if(jsGET.get('fmListType') != null) {
+        $$('.filemanager-browserheader a').set('opacity',0.5);
+        this.listType = jsGET.get('fmListType');
+        if(this.listType == 'thumb')
+          this.browserMenu_thumb.store('set',true).set('opacity',1);
+        else
+          this.browserMenu_list.store('set',true).set('opacity',1);
+      }
       if(jsGET.get('fmPath') != null) this.Directory = jsGET.get('fmPath');
       jsGET.set({'fmID':this.ID,'fmPath':this.Directory});
       this.hashListenerId = jsGET.addListener(this.hashHistory,false,this);
@@ -346,6 +359,7 @@ var FileManager = new Class({
       'resize': this.bound.scroll
     });
     // add keyboard navigation
+    document.addEvent('keydown', this.bound.toggleList);
     if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
      document.addEvent('keydown', this.bound.keyboardInput);
     else
@@ -374,6 +388,7 @@ var FileManager = new Class({
     
     // add keyboard navigation
     window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
+    document.removeEvent('keydown', this.bound.toggleList);
     if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
      document.removeEvent('keydown', this.bound.keyboardInput);
     else
@@ -550,10 +565,6 @@ var FileManager = new Class({
   
   browserSelection: function(direction) {   
     if(this.browser.getElement('li') == null) return;
-
-    // folder up
-    if(this.Directory && direction == 'backspace')
-      this.load(this.Directory + '..');
     
     // none is selected
     if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') == null) {

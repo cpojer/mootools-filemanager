@@ -194,7 +194,7 @@ class FileManager {
           <object type="application/x-shockwave-flash" data="' . $this->options['assetBasePath'] . '/dewplayer.swf" width="200" height="20" id="dewplayer" name="dewplayer">
             <param name="wmode" value="transparent" />
             <param name="movie" value="' . $this->options['assetBasePath'] . '/dewplayer.swf" />
-            <param name="flashvars" value="mp3=' . rawurlencode($url) . '&amp;volume=30&amp;showtime=1" />
+            <param name="flashvars" value="mp3=' . rawurlencode($url) . '&amp;volume=50&amp;showtime=1" />
           </object>
         </div>';
     }
