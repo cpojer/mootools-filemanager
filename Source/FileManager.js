@@ -45,154 +45,6 @@ events:
 ...
 */
 
-var jsGET = {
-  vars: {},
-  load: function() {
-    var hashVars = window.location.hash.split('#');
-    if(typeof hashVars[1] != 'undefined') {
-      hashVars = hashVars[1].split('&');
-      for(var i = 0; i < hashVars.length; i++) {
-          var hashVar = hashVars[i].split('=');
-          this.vars[hashVar[0]] = hashVar[1];
-      }
-    }
-    return this.vars;
-  },
-  clear: function() {
-    window.location.hash = '#none';
-    return false;
-  },
-  get: function(get) {
-    this.load();    
-    return (this.vars[get]) ? this.vars[get] : null;
-  },
-  set: function(set) {
-    //console.log('savedHistory');
-    this.load();
-    
-    if(typeof set != 'object') {
-      setSplit = set.split('=');
-      if(typeof setSplit[1] != 'undefined')
-        set[setSplit[0]] = setSplit[1];
-      else
-        set[setSplit[0]] = '';
-    }
-    
-    // var
-    var hashString = '';
-    var sep = '#';
-    
-    // check for change in existing vars
-    for(var key in this.vars) {
-      if(this.vars.hasOwnProperty(key)) {
-        if(set.hasOwnProperty(key)) {
-          hashString += sep+key+'='+set[key];
-          delete set[key];
-        } else if(typeof this.vars[key] != 'undefined') {
-          hashString += sep+key+'='+this.vars[key];
-        } else
-          hashString += sep+key;
-        sep = '&';
-      }
-    }
-    
-    // add new vars
-    for(var key in set) {
-      if(set.hasOwnProperty(key) &&
-         (typeof this.vars[key] == 'undefined' || this.get(key) != set[key])) {
-        hashString += sep+key+'='+set[key];
-        sep = '&';
-      }
-    }
-    window.location.hash = hashString;
-    return this.load();
-  },
-  remove: function(remove) {
-    this.load();
-    
-    if(typeof remove != 'object') {
-      removes = new Array();
-      removes[0] = remove;
-    } else
-      removes = remove;
-    
-    // var
-    var hashString = '';
-    var sep = '#';
-    
-    for (var i = 0; i < removes.length; i++) {
-      if(this.vars.hasOwnProperty(removes[i]))
-        delete this.vars[removes[i]];
-    }
-    
-    // create new hash string
-    for(var key in this.vars) {
-      if(this.vars.hasOwnProperty(key)) {
-        if(typeof this.vars[key] != 'undefined') {
-          hashString += sep+key+'='+this.vars[key];
-        } else
-          hashString += sep+key;
-        sep = '&';
-      }
-    }
-    window.location.hash = hashString;
-    return this.vars;
-  },
-  addListener: function(listener,callAlways,bind) { // use the returned interval ID for removeListener
-    //var
-    var self = this;
-    var lastHash = '';
-    var oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];;
-    var newVars = {};
-    
-    function compare(obj1,obj2) {
-      for(var key in obj1) if(obj1[key] !== obj2[key]) return false;
-      return true;
-    }
-    
-    this.pollHash = function() {
-        if(lastHash !== window.location.hash) {
-          // var
-          lastHash = window.location.hash;
-          newVars = self.vars;
-          
-          if(callAlways || compare(newVars,oldVars)) {
-            // var
-            //oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];
-            self.load();
-            //newVars = new self.vars.constructor(); for(var key in self.vars) newVars[key] = self.vars[key];
-            var changedVars = new self.vars.constructor(); for(var key in self.vars) changedVars[key] = self.vars[key];
-            /*
-            console.log('-----');
-            console.log(oldVars);
-            console.log(changedVars);
-            */
-            // check for changed vars
-            for(var key in changedVars)
-              if(changedVars.hasOwnProperty(key) && typeof oldVars[key] != 'undefined' && oldVars[key] == changedVars[key]) {
-                delete changedVars[key];
-                delete oldVars[key];
-              }
-            // merge the rest of oldVars with the changedVars
-            for(var key in oldVars) {
-              if(oldVars.hasOwnProperty(key) && !(key in changedVars)) changedVars[key] = oldVars[key];
-            }
-            // call the given listener function
-            if(typeof listener == 'function')
-              listener.apply(bind,[changedVars]);
-          }
-          
-          oldVars = new self.vars.constructor(); for(var key in self.vars) oldVars[key] = self.vars[key];
-        }
-    }
-    return setInterval(this.pollHash, 500);
-  },
-  removeListener: function(listenerID) { // use the interval ID returned by addListener
-    delete this.pollHash;
-    return clearInterval(listenerID);
-  }
-}
-
 var MooFileManagerUniqueID = 1;
 var FileManager = new Class({
 
@@ -228,8 +80,7 @@ var FileManager = new Class({
 
   initialize: function(options) {
     this.setOptions(options);
-    this.ID = MooFileManagerUniqueID;
-    MooFileManagerUniqueID++;
+    this.ID = MooFileManagerUniqueID++;
     this.dragZIndex = 1300;
     this.droppables = [];
     this.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
@@ -433,16 +284,17 @@ var FileManager = new Class({
   hashHistory: function(vars) { // get called from the jsGET listener
     this.storeHistory = false;
     //console.log(vars);
-    if(vars['fmPath'] == '')
-      vars['fmPath'] = '/';
+    if(vars.changed['fmPath'] == '')
+      vars.changed['fmPath'] = '/';
     
-    Object.each(vars,function(value,key) {        
+    Object.each(vars.changed,function(value,key) {        
         if(key == 'fmPath') {
           this.load(value);
         }
         
         if(key == 'fmFile') {
-          this.browser.getElements('span.fi span').each((function(current){
+          this.browser.getElements('span.fi span').each((function(current) {
+            current.getParent('span.fi').removeClass('hover');
             if(current.get('title') == value) {
               this.deselect();
               this.Current = current.getParent('span.fi');
@@ -1127,15 +979,15 @@ FileManager.Language = {};
 
 // ->> load DEPENCIES
 var scriptSource = (function() {
-      var scripts = document.getElementsByTagName('script');
-      var script = scripts[scripts.length - 1].src;
-      return script.substring(0, script.lastIndexOf('/')) + '/';
-  }());
+    var scripts = document.getElementsByTagName('script');
+    var script = scripts[scripts.length - 1].src;
+    return script.substring(0, script.lastIndexOf('/')) + '/';
+})();
+document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/jsGET.js'}));
 document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/milkbox/milkbox.js'}));
 document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/js/milkbox/css/milkbox.css'}));
 document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/Css/FileManager.css'}));
 document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/Css/Additions.css'}));
-
 
 Element.implement({
   

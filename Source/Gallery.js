@@ -59,8 +59,10 @@ FileManager.Gallery = new Class({
           });
         }).delay(2000);
       }
+      
+      
     };
-
+     
     this.addEvents({
 
       scroll: show,
@@ -70,10 +72,10 @@ FileManager.Gallery = new Class({
       }),
 
       hide: function(){
-        this.gallery.empty();
+        //this.gallery.empty();
 
-        this.captions = {};
-        this.files = [];
+        //this.captions = {};
+        //this.files = [];
 
         this.hideClone();
         this.wrapper.setStyle('display', 'none');
@@ -129,7 +131,8 @@ FileManager.Gallery = new Class({
     this.howto = new Element('div', {'class': 'howto', text: this.language.gallery.drag}).inject(this.galleryContainer);
     this.switchButton();
     
-    if(typeof $_GET != 'undefined' && $_GET.get('mooFileManager_ID') == this.ID)
+    
+    if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
       this.show();
   },
   
@@ -153,7 +156,7 @@ FileManager.Gallery = new Class({
     if (this.files.contains(name)) return true;
     this.files.push(name);
 
-    var img = new Asset.image(this.assetBasePath + 'destroy.png').set({
+    var img = new Asset.image(this.assetBasePath + 'Images/destroy.png').set({
       'class': 'filemanager-remove',
       title: this.language.gallery.remove,
       events: {click: this.removePicture}
