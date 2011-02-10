@@ -22,18 +22,6 @@ options:
 ...
 */
 
-// load depencies
-(function(){
-  var scriptSource = (function() {
-        var scripts = document.getElementsByTagName('script');
-        var script = scripts[scripts.length - 1].src;
-        return script.substring(0, script.lastIndexOf('/')) + '/';
-    }());
-  
-  document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'Uploader/Fx.ProgressBar.js'}));
-  document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'Uploader/Swiff.Uploader.js'}));
-})();
-
 FileManager.implement({
   
   options: {

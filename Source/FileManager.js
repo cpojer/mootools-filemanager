@@ -977,17 +977,21 @@ FileManager.Language = {};
 
 (function(){
 
+console.log(window.location.pathname);
+console.log(window.location.href.replace(window.location.pathname+window.location.hash,''));
+
 // ->> load DEPENCIES
-var scriptSource = (function() {
+var __DIR__ = (function() {
     var scripts = document.getElementsByTagName('script');
     var script = scripts[scripts.length - 1].src;
-    return script.substring(0, script.lastIndexOf('/')) + '/';
+    var host = window.location.href.replace(window.location.pathname+window.location.hash,'');
+    return script.substring(0, script.lastIndexOf('/')).replace(host,'') + '/';
 })();
-document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/jsGET.js'}));
-document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':scriptSource+'../Assets/js/milkbox/milkbox.js'}));
-document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/js/milkbox/css/milkbox.css'}));
-document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/Css/FileManager.css'}));
-document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':scriptSource+'../Assets/Css/Additions.css'}));
+document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':__DIR__+'../Assets/js/jsGET.js'}));
+document.getElement('head').adopt(new Element('script',{'type':'text/javascript','src':__DIR__+'../Assets/js/milkbox/milkbox.js'}));
+document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':__DIR__+'../Assets/js/milkbox/css/milkbox.css'}));
+document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':__DIR__+'../Assets/Css/FileManager.css'}));
+document.getElement('head').adopt(new Element('link',{'type':'text/css','rel':'stylesheet','href':__DIR__+'../Assets/Css/Additions.css'}));
 
 Element.implement({
   
