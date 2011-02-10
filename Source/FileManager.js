@@ -105,7 +105,7 @@ var FileManager = new Class({
     this.pathTitle = new Element('a', {href:'#','class': 'filemanager-dir-title',text: this.language.dir}).addEvent('click',(function(e){
       e.stop();
       if(this.header.getElement('span.filemanager-dir')!= null) {
-        this.selectablePath.setStyle('width',(this.header.getSize().x - this.pathTitle.getSize().x - 35));
+        this.selectablePath.setStyle('width',(this.header.getSize().x - this.pathTitle.getSize().x - 55));
         this.selectablePath.replaces(this.clickablePath);
       } else
         this.clickablePath.replaces(this.selectablePath);
@@ -209,9 +209,10 @@ var FileManager = new Class({
     
     this.closeIcon = new Element('a', {
       'class': 'filemanager-close',
+      opacity: 0.5,
       title: this.language.close,
       events: {click: this.hide.bind(this)}
-    }).inject(this.filemanager);
+    }).inject(this.filemanager).addEvent('mouseover',function(){this.fade(1)}).addEvent('mouseout',function(){this.fade(0.5)});
     
     this.tips = new Tips({
       className: 'tip-filebrowser',
@@ -228,7 +229,7 @@ var FileManager = new Class({
         });
       }
     });
-    this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 1]).appearOn(this.filemanager, 1));
+    this.tips.attach(this.closeIcon); //.appearOn(this.closeIcon, [1, 0.5]).appearOn(document, 0.5)
     
     this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
       'class': 'browser-add'

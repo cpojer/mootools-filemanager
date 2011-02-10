@@ -200,6 +200,7 @@ div.filemanager div.filemanager-browsercontainer {
   border: 0;
   border-right: 1px solid #bebebe;
   background:#D7DEE8 url("../Images/filelist.png") repeat-x bottom left;
+  overflow:hidden;
   
   box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
   -moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;

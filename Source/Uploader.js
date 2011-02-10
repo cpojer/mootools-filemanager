@@ -82,7 +82,7 @@ FileManager.implement({
       )
     };
     this.upload.uploader.getElement('div').adopt(this.upload.list);
-    this.closeIcon.appearOn(this.upload.button, 0.8);
+    //this.closeIcon.appearOn(this.upload.button, 0.5);
     
     if (this.options.resizeImages){
       var resizer = new Element('div', {'class': 'checkbox'}),
