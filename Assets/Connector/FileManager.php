@@ -53,9 +53,9 @@ class FileManager {
     $path = FileManagerUtility::getPath();
     
     $this->options = array_merge(array(
-      'directory' => '../Demos/Files',
-      'assetBasePath' => '../Assets',
-      'thumbnailPath' => '../Assets/Thumbs/',
+      'directory' => 'Files/',
+      'assetBasePath' => '../',
+      'thumbnailPath' => '../Thumbs/',
       'mimeTypesPath' => $path . '/MimeTypes.ini',
       'dateFormat' => 'j M Y - H:i',
       'maxUploadSize' => 2600 * 2600 * 3,

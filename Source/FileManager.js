@@ -228,7 +228,7 @@ var FileManager = new Class({
     });
     this.tips.attach(this.closeIcon.appearOn(this.closeIcon, [1, 1]).appearOn(this.filemanager, 1));
     
-    this.imageadd = new Asset.image(this.assetBasePath + 'add.png', {
+    this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
       'class': 'browser-add'
     }).set('opacity', 0).inject(this.container);
     
@@ -976,9 +976,6 @@ FileManager.Request = new Class({
 FileManager.Language = {};
 
 (function(){
-
-console.log(window.location.pathname);
-console.log(window.location.href.replace(window.location.pathname+window.location.hash,''));
 
 // ->> load DEPENCIES
 var __DIR__ = (function() {
