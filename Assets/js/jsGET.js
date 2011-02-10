@@ -2,8 +2,9 @@
 *
 * jsGET
 * 
-* A GET-Variables clone for javascript, using the hash part of the URL (index.html#...)
-* You can set and get variables, and run a listener to hash changes (e.g. when the the history back button get pressed).
+* jsGET is a http GET-Variables clone for javascript, using the hash part of the URL (index.html#...).
+* You can set and get variables, and run a listener to hash changes, e.g. when the the history back button get pressed.
+* This allows you to create a usable history navigation in your ajay application. It should work with all a-grade browsers.
 *      
 * @author Fabian Vogelsteller <fabian@feindura.org>
 * @copyright Fabian Vogelsteller
@@ -11,44 +12,50 @@
 * 
 * @version 0.1
 * 
-* ### Propteries
-* * vars:         (object) the hash variables object loaded by get(), set(), remove(), or clear() or load().
-* * vars.current: (object) the current variables.
-* * vars.old:     (object) the old variables, before they where changed with get(), set(), remove(), or clear(),load() or the browser history back button.
-* * vars.changed: (object) the variabels which have changed since the last call of get(), set(), remove(), or clear(), load() or the browser history back button.
+* ### Properties
+* - vars:         (object) the hash variables object loaded by get(), set(), remove(), or clear() or load().
+* - vars.current: (object) the current variables.
+* - vars.old:     (object) the old variables, before they where changed with set(), remove(), clear() or the browser history back button.
+* - vars.changed: (object) the variabels which have changed since the last call of get(), set(), remove(), or clear(), load() or the browser history back button.
 *
 * ### Methods
-* * load():                                 loads the current hash variables into an JSON object.
-* * clear():                                clears the hash part of the URL, which is not completely possible, thats why it sets "#none".
-* * get(get):                               (string) try to get a hash variable with the given name.
-* * set(set):                               (string,number,object) sets the given parameters to the hash variales. If its a string it should have the following format: "key=value".
-* * remove(remove):                         (string,array) the variable name(s) which should be removed from the hash variables
-* * addListener(listener,callAlways,bind):  (listener: function, callAlways: boolean, bind: object instance) creates a listener which calls the given function, when a hash change appears. The called function will get the vars property (vars.current,vars.old,vars.changed) and the "bind" as "this", when specified.
+* - load():                                 loads the current hash variables into the vars.current property as JSON object.
+* - clear():                                clears the hash part of the URL.
+* - get(get):                               (string) try to get a hash variable with the given name.
+* - set(set):                               (string,number,object) sets the given parameters to the hash variales. If its a string it should have the following format: "key=value".
+* - remove(remove):                         (string,array) the variable name(s) which should be removed from the hash variables
+* - addListener(listener,callAlways,bind):  (listener: function, callAlways: boolean, bind: object instance) creates a listener which calls the given function, when a hash change appears. The called function will get the vars property (vars.current,vars.old,vars.changed) and the "bind" as "this", when specified.
 *                                                                                                           The return of the addListener() method is a setInterval ID and must be passed to the removeListener() method, to stop the listening.
 *                                                                                                           When callAlways is FALSE, it only calls when the browser history buttons are pressed and not when get(), set(), remove() or clear() is called.
-* * removeListener(listenerID):             (the setInterval Id get from a addListener() method) removes a listener set with the addListener() method.
+* - removeListener(listenerID):             (the setInterval Id get from a addListener() method) removes a listener set with the addListener() method.
 *
-* ### Attention!
-* Everytime you call get(), set(), remove(), or clear() or load() a new hash string will be set,
-* that means that also a new history step will be created in the browser history!
+* ### ATTENTION!
+* Everytime you call set(), remove() or clear() a new hash string will be set,
+* that means you also create a new history step in the browser history!
 * 
 */
 
 var jsGET = {
-  vars: {old:{},current:{},changed:{}},
+  vars: {
+    old:{},
+    current:{},
+    changed:{}
+  },
   load: function() {
     var hashVars = window.location.hash.split('#');
-    if(typeof hashVars[1] != 'undefined') {
+    if(typeof hashVars[1] != 'undefined' && hashVars[1]) {
       hashVars = hashVars[1].split('&');
       for(var i = 0; i < hashVars.length; i++) {
           var hashVar = hashVars[i].split('=');
           this.vars.current[hashVar[0]] = hashVar[1];
       }
-    }
+    } else
+      this.vars.current = {};
     return this.vars.current;
   },
   clear: function() {
-    window.location.hash = '#none';
+    //window.location = window.location.href.replace( /#.*/, "");
+    window.location.hash = "";
     return false;
   },
   get: function(get) {
@@ -166,9 +173,10 @@ var jsGET = {
             console.log('-----');
             console.log(self.vars.old);
             console.log(self.vars.changed);
-            */    
+            */
             // call the given listener function
             if(typeof listener == 'function') listener.apply(bind,[self.vars]);
+
           } else
             setChangedVars();
           /*
