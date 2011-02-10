@@ -191,16 +191,18 @@ class FileManager {
         </dl>
         <h2>${preview}</h2>
         <div class="object">
-          <object type="application/x-shockwave-flash" data="' . $this->options['assetBasePath'] . '/dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30" width="200" height="20">
-            <param name="movie" value="' . $this->options['assetBasePath'] . '/dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30" />
+          <object type="application/x-shockwave-flash" data="' . $this->options['assetBasePath'] . '/dewplayer.swf" width="200" height="20" id="dewplayer" name="dewplayer">
+            <param name="wmode" value="transparent" />
+            <param name="movie" value="' . $this->options['assetBasePath'] . '/dewplayer.swf" />
+            <param name="flashvars" value="mp3=' . rawurlencode($url) . '&amp;volume=30&amp;showtime=1" />
           </object>
         </div>';
     }
     
     echo json_encode(array(
       'content' => $content ? $content : '<div class="margin">
-        ${nopreview}<br/><button value="' . $url . '">${download}</button>
-      </div>'
+        ${nopreview}
+      </div>'//<br/><button value="' . $url . '">${download}</button>
     ));
   }
   

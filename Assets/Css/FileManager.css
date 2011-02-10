@@ -16,7 +16,7 @@ div.filemanager-container, div.filemanager, div.filemanager button, div.filemana
 /* filemanager */
 
 div.filemanager {
-  background: #eee;
+  background: #F5F5F5;
   
   position: absolute;
   z-index: 1001;
@@ -516,7 +516,6 @@ div.filemanager-preview div.textpreview pre {
 div.filemanager-preview div.object {
   width: 200px;
   height: 20px;
-  border: 1px solid #bebebe;
   margin: 0 0 1em 190px;
   overflow: hidden;
 }
