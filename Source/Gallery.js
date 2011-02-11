@@ -25,9 +25,10 @@ FileManager.Gallery = new Class({
   
   initialize: function(options) {
     this.offsets = {y: -72};
+    this.galleryPlugin = true; // prevent that this.show() is called in the base class again
     this.parent(options);
     
-    var show = function(){
+    var show = function() {
       this.galleryContainer.setStyles({
         opacity: 0,
         display: 'block'
@@ -37,50 +38,38 @@ FileManager.Gallery = new Class({
         top: '10%',
         height: '60%'
       });
+      this.fitSizes();
       
       var size = this.filemanager.getSize(),
         pos = this.filemanager.getPosition();
-
       this.galleryContainer.setStyles({        
         top: pos.y + size.y - 1,
         left: pos.x + (size.x - this.galleryContainer.getWidth()) / 2,
         opacity: 1
       });
-
+      
       this.hideClone();
       this.wrapper.setStyle('display', 'none');
 
-      if (this.howto){
-        var self = this;
-        (function(){
-          if (self.howto && self.howto.fade) self.howto.fade(0).get('tween').chain(function(){
-            this.element.destroy();
-            self.howto = null;
-          });
-        }).delay(2000);
-      }
-      
-      
     };
      
     this.addEvents({
-
       scroll: show,
-      show: (function(){
+      show: (function() {
         show.apply(this);
         this.populate();
       }),
 
       hide: function(){
-        //this.gallery.empty();
-
-        //this.captions = {};
-        //this.files = [];
-
+        if(!this.keepData) {
+          this.gallery.empty();
+          this.captions = {};
+          this.files = [];
+        } else
+          this.keepData = false;
         this.hideClone();
         this.wrapper.setStyle('display', 'none');
       },
-
       modify: function(file){
         var name = this.normalize(file.path);
         var el = (this.gallery.getElements('li').filter(function(el){
@@ -131,12 +120,22 @@ FileManager.Gallery = new Class({
     this.howto = new Element('div', {'class': 'howto', text: this.language.gallery.drag}).inject(this.galleryContainer);
     this.switchButton();
     
-    
     if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
-      this.show();
+        this.show();
+    else {
+      window.addEvent('jsGETloaded',(function(){
+        if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
+          this.show();
+      }).bind(this));
+      }
   },
   
-  onDragComplete: function(el, droppable){
+  onDragComplete: function(el, droppable) {
+    if(this.howto){
+      this.howto.destroy();
+      this.howto = null;
+    }
+    
     if (!droppable || droppable != this.gallery) return false;
     
     var file;
@@ -146,7 +145,7 @@ FileManager.Gallery = new Class({
         name: part.pop(),
         dir: part.join('/')
       };
-    }else{
+    } else {
       el.setStyles({left: '', top: ''});
       file = el.retrieve('file');
     }
@@ -288,27 +287,24 @@ FileManager.Gallery = new Class({
   switchButton: function(){
     if(typeof this.gallery != 'undefined') {
       var chk = !!this.gallery.getChildren().length;
-    
       this.menu.getElement('button.filemanager-serialize').set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
     }
   },
 
   populate: function(data){
-    Object.each(data || {}, function(v, i){
+    Array.each(data || {}, function(v, i){
       this.captions[i] = v;
-
       this.onDragComplete(i, this.gallery);
     }, this);
   },
   
   serialize: function(e){
     if(e) e.stop();
-    
     var serialized = {};
     this.files.each(function(v){
       serialized[v] = this.captions[v] || '';
     }, this);
-    
+    this.keepData = true;
     this.hide();
     this.fireEvent('complete', [serialized]);
   }

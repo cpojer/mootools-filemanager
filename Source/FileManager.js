@@ -272,24 +272,30 @@ var FileManager = new Class({
         }
       }).bind(this),
       scroll: (function(){
-        this.filemanager.center(this.offsets);
         this.fireEvent('scroll');
-        
-        scrollSize = this.browsercontainer.getSize();
-        headerSize = this.browserheader.getSize();
-        this.browserScroll.setStyle('height',scrollSize.y - headerSize.y);
-
+        this.fitSizes();
       }).bind(this)
+    };
+    
+    this.fitSizes = function(){
+      this.filemanager.center(this.offsets);
+      containerSize = this.filemanager.getSize();
+      headerSize = this.browserheader.getSize();
+      menuSize = this.menu.getSize();
+      this.browserScroll.setStyle('height',containerSize.y - headerSize.y);
+      this.info.setStyle('height',containerSize.y - menuSize.y);
     };
 
     // ->> autostart filemanager when set
-    if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
-        this.show();
-    else {
-      window.addEvent('jsGETloaded',(function(){
-        if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
+    if(!this.galleryPlugin) {
+      if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
           this.show();
-      }).bind(this));
+      else {
+        window.addEvent('jsGETloaded',(function(){
+          if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
+            this.show();
+        }).bind(this));
+      }
     }
 
   },
@@ -344,16 +350,12 @@ var FileManager = new Class({
     this.overlay.show();
 
     this.info.set('opacity', 0);
+    this.container.set('opacity', 0);
     
     this.container.setStyles({
         opacity: 0,
         display: 'block'
       });
-    
-    this.filemanager.center(this.offsets);
-    this.fireEvent('show');
-    this.container.set('opacity', 1);
-    this.fireHooks('show');
 
     window.addEvents({
       'scroll': this.bound.scroll,
@@ -365,28 +367,27 @@ var FileManager = new Class({
      document.addEvent('keydown', this.bound.keyboardInput);
     else
      document.addEvent('keypress', this.bound.keyboardInput);
-    
-    scrollSize = this.browsercontainer.getSize();
-    headerSize = this.browserheader.getSize();
-    this.browserScroll.setStyle('height',scrollSize.y - headerSize.y);
-    
     this.container.tween('opacity',1);
+    
+    this.fitSizes();
+    this.fireEvent('show');
+    this.fireHooks('show');
   },
   
   hide: function(e){
     if (e) e.stop();
     
     // stop hashListener
-    if(typeof jsGET != 'undefined')
+    if(typeof jsGET != 'undefined') {
       jsGET.removeListener(this.hashListenerId);
+      jsGET.clear();
+    }
     
     this.overlay.hide();
     this.tips.hide();
     this.browser.empty();
     this.container.setStyle('display', 'none');
-    
-    this.fireHooks('cleanup').fireEvent('hide');
-    
+
     // add keyboard navigation
     window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
     document.removeEvent('keydown', this.bound.toggleList);
@@ -394,6 +395,8 @@ var FileManager = new Class({
      document.removeEvent('keydown', this.bound.keyboardInput);
     else
      document.removeEvent('keypress', this.bound.keyboardInput);
+     
+    this.fireHooks('cleanup').fireEvent('hide');
   },
 
   open: function(e){

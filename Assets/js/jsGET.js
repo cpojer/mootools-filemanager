@@ -20,7 +20,7 @@
 *
 * ### Methods
 * - load():                                 loads the current hash variables into the vars.current property as JSON object.
-* - clear():                                clears the hash part of the URL.
+* - clear():                                clears the hash part of the URL. (beacuse its not completely possible, it sets it to "#_")
 * - get(get):                               (string) try to get a hash variable with the given name.
 * - set(set):                               (string,number,object) sets the given parameters to the hash variales. If its a string it should have the following format: "key=value".
 * - remove(remove):                         (string,array) the variable name(s) which should be removed from the hash variables
@@ -43,7 +43,7 @@ var jsGET = {
   },
   load: function() {
     var hashVars = window.location.hash.split('#');
-    if(typeof hashVars[1] != 'undefined' && hashVars[1]) {
+    if(typeof hashVars[1] != 'undefined' && hashVars[1] && hashVars[1] != '_') {
       hashVars = hashVars[1].split('&');
       for(var i = 0; i < hashVars.length; i++) {
           var hashVar = hashVars[i].split('=');
@@ -54,8 +54,8 @@ var jsGET = {
     return this.vars.current;
   },
   clear: function() {
-    //window.location = window.location.href.replace( /#.*/, "");
-    window.location.hash = "";
+    window.location.hash = "#_";
+    //window.location.href = window.location.href.replace( /#.*$/, "");
     return false;
   },
   get: function(get) {
