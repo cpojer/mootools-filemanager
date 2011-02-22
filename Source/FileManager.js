@@ -90,6 +90,7 @@ var FileManager = new Class({
     this.listType = 'list';
     this.dialogOpen = false;
     this.usingHistory = false;
+    this.fmShown = false;
     
     this.language = Object.clone(FileManager.Language.en);
     if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);  
@@ -333,6 +334,8 @@ var FileManager = new Class({
   
   show: function(e){
     if (e) e.stop();
+    if(this.fmShown) return;
+    this.fmShown = true;
     this.onShow = false;
     
     // get and set history
@@ -381,6 +384,8 @@ var FileManager = new Class({
   
   hide: function(e){
     if (e) e.stop();
+    if(!this.fmShown) return;
+    this.fmShown = false;
     
     // stop hashListener
     if(typeof jsGET != 'undefined') {
