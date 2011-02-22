@@ -30,6 +30,7 @@ options:
   - rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
   - download: (boolean, defaults to *false*) Whether to allow downloading of files or not
   - createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
+  - hideClose: (boolean, defaults to *false*) Whether to hide the close button in the right corner
   
   // set in uploader.js
   - upload: (boolean, defaults to *true*)
@@ -70,7 +71,8 @@ var FileManager = new Class({
     destroy: false,
     rename: false,
     download: false,
-    createFolders: false
+    createFolders: false,
+    hideClose: false
   },
   
   hooks: {
@@ -207,12 +209,14 @@ var FileManager = new Class({
       this.preview
     ]);
     
-    this.closeIcon = new Element('a', {
-      'class': 'filemanager-close',
-      opacity: 0.5,
-      title: this.language.close,
-      events: {click: this.hide.bind(this)}
-    }).inject(this.filemanager).addEvent('mouseover',function(){this.fade(1)}).addEvent('mouseout',function(){this.fade(0.5)});
+    if(!this.options.hideClose) {
+      this.closeIcon = new Element('a', {
+        'class': 'filemanager-close',
+        opacity: 0.5,
+        title: this.language.close,
+        events: {click: this.hide.bind(this)}
+      }).inject(this.filemanager).addEvent('mouseover',function(){this.fade(1)}).addEvent('mouseout',function(){this.fade(0.5)});
+    }
     
     this.tips = new Tips({
       className: 'tip-filebrowser',
@@ -229,7 +233,8 @@ var FileManager = new Class({
         });
       }
     });
-    this.tips.attach(this.closeIcon); //.appearOn(this.closeIcon, [1, 0.5]).appearOn(document, 0.5)
+    if(!this.options.hideClose)
+      this.tips.attach(this.closeIcon); //.appearOn(this.closeIcon, [1, 0.5]).appearOn(document, 0.5)
     
     this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
       'class': 'browser-add'
@@ -1043,7 +1048,7 @@ Element.implement({
     
     for (var z in values){
       var style = scroll[z] + (offset[z] - size[z]) / 2 + (offsets[z] || 0);
-      this.setStyle(values[z], style < 10 ? 10 : style);
+      this.setStyle(values[z], (z == 'y' && style < 30) ? 30 : style);
     }
     
     return this;
