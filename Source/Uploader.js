@@ -212,6 +212,22 @@ FileManager.implement({
       }
     });
     
+    this.getFileTypes = function() {
+      var fileTypes = {};
+      if(this.options.filter == 'image')
+        fileTypes = {'Images (*.jpg, *.gif, *.png)': '*.jpg; *.jpeg; *.bmp; *.gif; *.png'};
+      if(this.options.filter == 'video')
+        fileTypes = {'Videos (*.avi, *.flv, *.mov, *.mpeg, *.mpg, *.wmv, *.mp4)': '*.avi; *.flv; *.fli; *.movie; *.mpe; *.qt; *.viv; *.mkv; *.vivo; *.mov; *.mpeg; *.mpg; *.wmv; *.mp4'};
+      if(this.options.filter == 'audio')
+        fileTypes = {'Audio (*.aif, *.mid, *.mp3, *.mpga, *.rm, *.wav)': '*.aif; *.aifc; *.aiff; *.aif; *.au; *.mka; *.kar; *.mid; *.midi; *.mp2; *.mp3; *.mpga; *.ra; *.ram; *.rm; *.rpm; *.snd; *.wav; *.tsi'};
+      if(this.options.filter == 'text')
+        fileTypes = {'Text (*.txt, *.rtf, *.rtx, *.html, *.htm, *.css, *.as, *.xml, *.tpl)': '*.txt; *.rtf; *.rtx; *.html; *.htm; *.css; *.as; *.xml; *.tpl'};
+      if(this.options.filter == 'application')
+        fileTypes = {'Application (*.bin, *.doc, *.exe, *.iso, *.js,*.odt, *.pdf, *.php, *.ppt, *.swf, *.rar, *.zip)': '*.ai; *.bin; *.ccad; *.class; *.cpt; *.dir; *.dms; *.drw; *.doc; *.dvi; *.dwg; *.eps; *.exe; *.gtar; *.gz; *.js; *.latex; *.lnk; *.lnk; *.oda; *.odt; *.ods; *.odp; *.odg; *.odc; *.odf; *.odb; *.odi; *.odm; *.ott; *.ots; *.otp; *.otg; *.pdf; *.php; *.pot; *.pps; *.ppt; *.ppz; *.pre; *.ps; *.rar; *.set; *.sh; *.skd; *.skm; *.smi; *.smil; *.spl; *.src; *.stl; *.swf; *.tar; *.tex; *.texi; *.texinfo; *.tsp; *.unv; *.vcd; *.vda; *.xlc; *.xll; *.xlm; *.xls; *.xlw; *.zip'};
+      
+  		return fileTypes;
+    };
+    
     this.swf = new Swiff.Uploader({
       id: 'SwiffFileManagerUpload',
       path: this.assetBasePath + 'Swiff.Uploader.swf',
@@ -222,6 +238,7 @@ FileManager.implement({
       fileClass: File,
       timeLimit: 260,
       fileSizeMax: 2600 * 2600 * 25,
+      typeFilter: this.getFileTypes(),
       zIndex: this.SwiffZIndex || 9999,
       onSelectSuccess: function(){
         self.fillInfo();

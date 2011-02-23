@@ -639,7 +639,7 @@ var MilkboxDisplay= new Class({
 		this.mainbox = new Element('div', {
 			'id':'mbox-mainbox',
 			'styles': {
-				'position':'absolute',
+				'position':'fixed',
 				'overflow':'hidden',
 				'display':'none',
 				'z-index':10000,

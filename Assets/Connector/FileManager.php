@@ -30,8 +30,6 @@ Options:
   - upload: (boolean, defaults to *true*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
   - destroy: (boolean, defaults to *true*) allow files get deleted, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
   - safe: (string, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps'
-  - filter: (string) If specified, the mimetypes to be allowed (for display and upload).
-    Example: "image/" allows all Image Mimetypes
   - chmod: (integeter, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
 */
 
@@ -63,7 +61,6 @@ class FileManager {
       'upload' => true,
       'destroy' => true,
       'safe' => true,
-      'filter' => null,
       'chmod' => 0777,
     ), $options);
     
@@ -73,6 +70,7 @@ class FileManager {
     $this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
     $this->length = strlen($this->basedir);
     $this->listType = ($_POST['type'] == 'list') ? 'list' : 'thumb';
+    $this->filter = (!empty($_POST['filter'])) ? $_POST['filter'].'/' : '';
 
     header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
     header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
@@ -97,7 +95,7 @@ class FileManager {
     foreach ($files as $file){
     
       $mime = $this->getMimeType($file);
-      if ($this->options['filter'] && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->options['filter']))
+      if ($this->filter && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->filter))
         continue;
       
       if(strpos($mime,'image') !== false)
@@ -228,6 +226,32 @@ class FileManager {
     mkdir($file,$this->options['chmod']);
     
     $this->onView();
+  }
+  
+  protected function onDownload() {
+    if(strpos($_GET['file'],'../') !== false) return;
+    if(strpos($_GET['file'],'./') !== false) return;
+    $path = $this->basedir.$_GET['file']; // change the path to fit your websites document structure
+    $path = preg_replace('#/+#','/',$path);
+    if ($fd = fopen ($path, "r")) {
+        $fsize = filesize($path);
+        $path_parts = pathinfo($path);
+        $ext = strtolower($path_parts["extension"]);
+        switch ($ext) {
+            case "pdf":
+            header("Content-type: application/pdf"); // add here more headers for diff. extensions
+            header("Content-Disposition: attachment; filename=\"".$path_parts["basename"]."\""); // use 'attachment' to force a download
+            break;
+            default;
+            header("Content-type: application/octet-stream");
+            header("Content-Disposition: filename=\"".$path_parts["basename"]."\"");
+        }
+        header("Content-length: $fsize");
+        header("Cache-control: private"); //use this to open files directly
+        
+        fpassthru($fd);
+        fclose ($fd);
+    }
   }
   
   protected function onUpload(){
@@ -399,7 +423,8 @@ class FileManager {
   
   protected function checkFile($file){
     $mimes = $this->getAllowedMimeTypes();
-    $hasFilter = $this->options['filter'] && count($mimes);
+
+    $hasFilter = $this->filter && count($mimes);
     if ($hasFilter) array_push($mimes, 'text/directory');
     return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file) || ($hasFilter && !in_array($this->getMimeType($file), $mimes)));
   }
@@ -409,7 +434,7 @@ class FileManager {
   }
   
   protected function getAllowedMimeTypes(){
-    $filter = $this->options['filter'];
+    $filter = $this->filter;
     
     if (!$filter) return null;
     if (!FileManagerUtility::endsWith($filter, '/')) return array($filter);

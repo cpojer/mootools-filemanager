@@ -29,6 +29,12 @@ options:
   - rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
   - download: (boolean, defaults to *false*) Whether to allow downloading of files or not
   - createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
+  - filter: (string) If specified, it reduces the shown and upload-able filetypes to these mimtypes. possible values are (only the strings in the quotes are possible):
+                     "image" = *.jpg; *.jpeg; *.bmp; *.gif; *.png
+                     "video" = *.avi; *.flv; *.fli; *.movie; *.mpe; *.qt; *.viv; *.mkv; *.vivo; *.mov; *.mpeg; *.mpg; *.wmv; *.mp4
+                     "audio" = *.aif; *.aifc; *.aiff; *.aif; *.au; *.mka; *.kar; *.mid; *.midi; *.mp2; *.mp3; *.mpga; *.ra; *.ram; *.rm; *.rpm; *.snd; *.wav; *.tsi
+                     "text" = *.txt; *.rtf; *.rtx; *.html; *.htm; *.css; *.as; *.xml; *.tpl
+                     "application" = *.ai; *.bin; *.ccad; *.class; *.cpt; *.dir; *.dms; *.drw; *.doc; *.dvi; *.dwg; *.eps; *.exe; *.gtar; *.gz; *.js; *.latex; *.lnk; *.lnk; *.oda; *.odt; *.ods; *.odp; *.odg; *.odc; *.odf; *.odb; *.odi; *.odm; *.ott; *.ots; *.otp; *.otg; *.pdf; *.php; *.pot; *.pps; *.ppt; *.ppz; *.pre; *.ps; *.rar; *.set; *.sh; *.skd; *.skm; *.smi; *.smil; *.spl; *.src; *.stl; *.swf; *.tar; *.tex; *.texi; *.texinfo; *.tsp; *.unv; *.vcd; *.vda; *.xlc; *.xll; *.xlm; *.xls; *.xlw; *.zip;
   - hideClose: (boolean, defaults to *false*) Whether to hide the close button in the right corner
   - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
   - hideOverlay: (boolean, defaults to *false*) When true, hides the background overlay
@@ -72,6 +78,7 @@ var FileManager = new Class({
     rename: false,
     download: false,
     createFolders: false,
+    filter: '',
     hideOnClick: false,
     hideClose: false,
     hideOverlay: false
@@ -427,7 +434,8 @@ var FileManager = new Class({
   download: function(e) {
     e.stop();
     if (!this.Current) return false;
-    window.open(this.normalize(this.Current.retrieve('file').path));
+    //window.open(this.normalize(this.Current.retrieve('file').path));
+    window.open(this.options.url + '?event=download&file='+this.normalize(this.Current.retrieve('file').path.replace(this.root,'')));
   },
 
   create: function(e){
@@ -498,7 +506,8 @@ var FileManager = new Class({
       }).bind(this),
       data: {
         directory: dir,
-        type: this.listType
+        type: this.listType,
+        filter: this.options.filter
       }
     }, this).send();
   },
@@ -517,7 +526,8 @@ var FileManager = new Class({
           url: self.options.url + '?event=destroy',
           data: {
             file: file.name,
-            directory: self.Directory
+            directory: self.Directory,
+            filter: this.options.filter
           },
           onSuccess: function(j){
             if (!j || j.content!='destroyed'){
@@ -576,7 +586,8 @@ var FileManager = new Class({
           data: {
             file: file.name,
             name: input.get('value'),
-            directory: self.Directory
+            directory: self.Directory,
+            filter: this.options.filter
           }
         }, self).send();
       }).bind(this)
@@ -711,7 +722,7 @@ var FileManager = new Class({
         icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
-          window.open(file.path);
+          window.open(this.options.url + '?event=download&file='+this.normalize(file.path.replace(this.root,'')));
         }).bind(this)).inject(el, 'top'));
 
       // rename, delete icon
@@ -827,6 +838,7 @@ var FileManager = new Class({
           url: self.options.url + '?event=move',
           data: {
             file: file.name,
+            filter: this.options.filter,
             directory: self.Directory,
             newDirectory: dir ? dir.dir + '/' + dir.name : self.Directory,
             copy: e.control || e.meta ? 1 : 0
@@ -924,7 +936,8 @@ var FileManager = new Class({
       }).bind(this),
       data: {
         directory: this.Directory,
-        file: file.name
+        file: file.name,
+        filter: this.options.filter
       }
     }, this).send();
     
