@@ -6,7 +6,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.3.3rc2
+  1.3.3rc3
 
 ### Author
  [Christoph Pojer](http://og5.net/christoph)
@@ -20,7 +20,7 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Upload Files via FancyUpload (integrated Feature)
 * Option to automatically resize big Images when uploading
 * Use it to select a File anywhere you need to specify one inside your Application's Backend
-* Use as a FileManager in TinyMCE
+* Use as a FileManager in TinyMCE or CKEditor
 * Provides your client with the most possible convenience ( ;D )
 * Create galleries using the Gallery-Plugin
 * History (youre able to use the forward and back button of your browser)
