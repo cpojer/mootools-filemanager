@@ -62,8 +62,8 @@ div.filemanager div.filemanager-menu {
   z-index: 2;
   position: absolute;
   height: 30px;
-  left: 40%;
-  width: 60%;
+  left: 35%;
+  width: 65%;
   bottom: 0;
   line-height: 30px;
   
@@ -194,7 +194,7 @@ div.filemanager ul li {
 
 div.filemanager div.filemanager-browsercontainer {
   height: 100%;
-  width: 40%;
+  width: 35%;
   border: 0;
   border-right: 1px solid #bebebe;
   background:#D7DEE8 url("../Images/filelist.png") repeat-x bottom left;
@@ -355,9 +355,9 @@ div.filemanager div.filemanager-close img {
 div.filemanager-infos {
   z-index: 0;
   position: absolute;
-  left: 40%;
+  left: 35%;
   top: 0;
-  width: 58%;
+  width: 63%;
   height: 92%;
   padding: 0px 1%;
   line-height: 1.6em;
