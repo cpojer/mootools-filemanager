@@ -6,9 +6,7 @@ div.filemanager-container, div.filemanager, div.filemanager button, div.filemana
   width: auto;
   margin: 0;
   
-  font-family: Tahoma, sans-serif;
-  font-size: 12px;
-  font-weight: normal;
+  font: normal 11px verdana, arial, Tahoma, sans-serif;
   text-transform: none;
   letter-spacing: 0;
 }
@@ -718,11 +716,12 @@ img.filemanager-clone {
   -webkit-border-radius: 5px;
   -o-border-radius: 5px;
   border-radius: 5px;
+  border: none;
 }
 
 .tip-filebrowser .tip-title {
   color: #fff;
-  font-size: 11px;
+  font: normal 9px verdana, arial, Tahoma, sans-serif;
   padding: 1px 4px;
   line-height: 21px;
   text-align: center;

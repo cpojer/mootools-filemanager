@@ -24,13 +24,14 @@ options:
   - assetBasePath: (string) The path to all images and swf files used by the filemanager
   - directory: (string, relative to the directory set in to the filemanager php class) Can be used to load a subfolder instead of the base folder
   - language: (string, defaults to *en*) The language used for the FileManager
-  - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
   - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
   - destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
   - rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
   - download: (boolean, defaults to *false*) Whether to allow downloading of files or not
   - createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
   - hideClose: (boolean, defaults to *false*) Whether to hide the close button in the right corner
+  - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
+  - hideOverlay: (boolean, defaults to *false*) When true, hides the background overlay
   
   // set in uploader.js
   - upload: (boolean, defaults to *true*)
@@ -65,14 +66,15 @@ var FileManager = new Class({
     directory: '',
     url: null,
     assetBasePath: null,
-    hideOnClick: false,
     language: 'en',
     selectable: false,
     destroy: false,
     rename: false,
     download: false,
     createFolders: false,
-    hideClose: false
+    hideOnClick: false,
+    hideClose: false,
+    hideOverlay: false
   },
   
   hooks: {
@@ -242,9 +244,11 @@ var FileManager = new Class({
     }).set('opacity', 0).set('tween',{duration:300}).inject(this.container);
     
     this.container.inject(document.body);
-    this.overlay = new Overlay(this.options.hideOnClick ? {
-      events: {click: this.hide.bind(this)}
-    } : null);
+    if(!this.options.hideOverlay) {
+      this.overlay = new Overlay(this.options.hideOnClick ? {
+        events: {click: this.hide.bind(this)}
+      } : null);
+    }
     
     this.bound = {
       keydown: (function(e){
@@ -283,7 +287,7 @@ var FileManager = new Class({
       }).bind(this)
     };
     
-    this.fitSizes = function(){
+    this.fitSizes = function() {
       this.filemanager.center(this.offsets);
       containerSize = this.filemanager.getSize();
       headerSize = this.browserheader.getSize();
@@ -303,7 +307,6 @@ var FileManager = new Class({
         }).bind(this));
       }
     }
-
   },
   
   hashHistory: function(vars) { // get called from the jsGET listener
@@ -312,7 +315,7 @@ var FileManager = new Class({
     if(vars.changed['fmPath'] == '')
       vars.changed['fmPath'] = '/';
     
-    Object.each(vars.changed,function(value,key) {        
+    Object.each(vars.changed,function(value,key) {     
         if(key == 'fmPath') {
           this.load(value);
         }
@@ -332,12 +335,11 @@ var FileManager = new Class({
     },this);
   },
   
-  show: function(e){
-    if (e) e.stop();
+  show: function(e) {
+    if(e) e.stop();
     if(this.fmShown) return;
     this.fmShown = true;
     this.onShow = false;
-    
     // get and set history
     if(typeof jsGET != 'undefined') {
       if(jsGET.get('fmFile') != null) this.onShow = true;
@@ -355,7 +357,8 @@ var FileManager = new Class({
     }
     
     this.load(this.Directory);
-    this.overlay.show();
+    if(!this.options.hideOverlay)
+      this.overlay.show();
 
     this.info.set('opacity', 0);
     this.container.set('opacity', 0);
@@ -376,7 +379,7 @@ var FileManager = new Class({
     else
      document.addEvent('keypress', this.bound.keyboardInput);
     this.container.tween('opacity',1);
-    
+   
     this.fitSizes();
     this.fireEvent('show');
     this.fireHooks('show');
@@ -390,10 +393,11 @@ var FileManager = new Class({
     // stop hashListener
     if(typeof jsGET != 'undefined') {
       jsGET.removeListener(this.hashListenerId);
-      jsGET.clear();
+      jsGET.remove(['fmID','fmPath','fmFile','fmListType']);
     }
     
-    this.overlay.hide();
+    if(!this.options.hideOverlay)
+      this.overlay.hide();
     this.tips.hide();
     this.browser.empty();
     this.container.setStyle('display', 'none');
@@ -406,7 +410,8 @@ var FileManager = new Class({
     else
      document.removeEvent('keypress', this.bound.keyboardInput);
      
-    this.fireHooks('cleanup').fireEvent('hide');
+    this.fireHooks('cleanup');
+    this.fireEvent('hide');
   },
 
   open: function(e){
@@ -485,6 +490,7 @@ var FileManager = new Class({
         this.fill(j, nofade);
       }).bind(this),
       onComplete: (function() {
+        this.fitSizes();
         this.browserLoader.fade(0);
       }).bind(this),
       onFailure: (function(xmlHttpRequest) {
@@ -1023,39 +1029,35 @@ Asset.javascript(__DIR__+'../Assets/js/jsGET.js', { events: {load: (function(){ 
 
 Element.implement({
   
-    appearOn: function(el) {
-      
-      var $defined = function(obj){ return (obj != undefined); };
-      
-      var params = Array.link(Array.from(arguments).erase(arguments[0]), {options: Type.isObject, opacity: $defined}),
-        opacity = typeOf(params.opacity) == 'array' ? [params.opacity[0] || 1, params.opacity[1] || 0] : [params.opacity || 1, 0];
-      
-      this.set({
-        opacity: opacity[1],
-        tween: params.options || {duration: 500}
-      });
+  appearOn: function(el) {
+    var $defined = function(obj){ return (obj != undefined); };
+    var params = Array.link(Array.from(arguments).erase(arguments[0]), {options: Type.isObject, opacity: $defined}),
+      opacity = typeOf(params.opacity) == 'array' ? [params.opacity[0] || 1, params.opacity[1] || 0] : [params.opacity || 1, 0];
+    
+    this.set({
+      opacity: opacity[1],
+      tween: params.options || {duration: 500}
+    });
 
-      $$(el).addEvents({
-        mouseenter: this.fade.pass(opacity[0],this),
-        mouseleave: this.fade.pass(opacity[1],this)
-      });
-      
-      return this;
-    },
+    $$(el).addEvents({
+      mouseenter: this.fade.pass(opacity[0],this),
+      mouseleave: this.fade.pass(opacity[1],this)
+    });
+    return this;
+  },
   
-  center: function(offsets){
+  center: function(offsets) {
     var scroll = document.getScroll(),
       offset = document.getSize(),
       size = this.getSize(),
       values = {x: 'left', y: 'top'};
     
-    if (!offsets) offsets = {};
+    if(!offsets) offsets = {};
     
     for (var z in values){
       var style = scroll[z] + (offset[z] - size[z]) / 2 + (offsets[z] || 0);
       this.setStyle(values[z], (z == 'y' && style < 30) ? 30 : style);
     }
-    
     return this;
   }
   
@@ -1099,6 +1101,7 @@ this.Dialog = new Class({
       new Element('button', {'class': 'dialog-' + v, text: this.options.language[v]}).addEvent('click', (function(e){
         if (e) e.stop();
         this.fireEvent(v).fireEvent('close');
+        //if(!this.options.hideOverlay)
         this.overlay.hide();
         this.destroy();
       }).bind(this)).inject(this.el);
@@ -1127,7 +1130,8 @@ this.Dialog = new Class({
   },
   
   show: function(){
-    this.overlay.show();
+    if(!this.options.hideOverlay)
+      this.overlay.show();
     var self = this.fireEvent('open');
     this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
       var button = this.element.getElement('button.dialog-confirm') || this.element.getElement('button');
@@ -1145,7 +1149,8 @@ this.Dialog = new Class({
   destroy: function() {    
     if (this.el)
       this.el.fade(0).get('tween').chain((function(){
-        this.overlay.destroy();
+        if(!this.options.hideOverlay)
+          this.overlay.destroy();
         this.el.destroy();
       }).bind(this));
       

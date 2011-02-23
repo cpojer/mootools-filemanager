@@ -230,7 +230,6 @@ FileManager.implement({
         self.upload.uploader.fade(1);
       },
       onComplete: function(){
-         
         self.load(self.Directory, true);
       },
       onFail: function(error) {

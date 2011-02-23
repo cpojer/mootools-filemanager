@@ -115,14 +115,14 @@ Swiff.Uploader = new Class({
     };
 
     var path = this.options.path;
-    if (!path.contains('?')) path += '?noCache=' + Date.now; // cache in IE
+    if (!path.contains('?')) path += '?noCache=' + Date.now(); // cache in IE
 
     // container options for Swiff class
     this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box',events: { click: function(e) { e.stopPropagation(); } }}).inject($(this.options.container) || document.body);
 
     // target 
     this.target = $(this.options.target);
-    if (this.target) {
+    if(this.target) {
       var scroll = window.getScroll();
       this.box.setStyles({
         position: 'absolute',
@@ -132,7 +132,7 @@ Swiff.Uploader = new Class({
         height: 1, width: 1,
         top: scroll.y, left: scroll.x
       });
-      
+
       // we force wMode to transparent for the overlay effect
       this.parent(path, {
         params: {
@@ -141,7 +141,7 @@ Swiff.Uploader = new Class({
         height: '100%',
         width: '100%'
       });
-      
+
       this.target.addEvent('mouseenter', this.reposition.bind(this));
       
       // button interactions, relayed to to the target
@@ -170,6 +170,11 @@ Swiff.Uploader = new Class({
       this.verifyLoad.delay(1000, this);
     }
   },
+  
+  // overwrite error in mootools 1.3 (append instead of extend)
+  remote: function(){
+		return Swiff.remote.apply(Swiff, [this.toElement()].append(arguments));
+	},
   
   verifyLoad: function() {
     if (this.loaded) return;
@@ -423,8 +428,6 @@ Swiff.Uploader.qualifyPath = (function() {
 Swiff.Uploader.File = new Class({
 
   Implements: Events,
-  
-  
 
   initialize: function(base, data) {
     this.base = base;
