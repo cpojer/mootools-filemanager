@@ -6,10 +6,11 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Version
-  1.3.3rc4
+  1.3.3rc5
 
 ### Author
- [Christoph Pojer](http://og5.net/christoph)
+* [Christoph Pojer](http://og5.net/christoph)
+* [Fabian Vogelsteller](http://frozeman.de)
 
 ### Features
 
@@ -71,13 +72,14 @@ How to use
     - thumbnail list
  - [Fabian Vogelsteller](http://frozeman.de)
     - extended thumbnails
+    - ported to mootools 1.3
     - now absolute and relative paths are possible
     - add clickable and selectable path in the header
     - add hiding of the thumbnail directory
     - a lot of bugfixes
     - add .htaccess to allow upload and resize of big files
     - made interface changes
-    - add SqueezeBox for preview of the images
+    - add MilkBox for preview of images
     - add keyboard navigation in the file browser
-    - ported to mootools 1.3
     - add error dialogs for php errors
+    - add a few new properties
