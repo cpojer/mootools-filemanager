@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(E_ALL);
+
 include('../Assets/Connector/FileManager.php');
 
 // Please add your own authentication here

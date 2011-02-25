@@ -434,7 +434,7 @@ var FileManager = new Class({
     window.open(this.options.url + '?event=download&file='+this.normalize(this.Current.retrieve('file').path.replace(this.root,'')));
   },
 
-  create: function(e){
+  create: function(e) {
     e.stop();
     var input = new Element('input', {'class': 'createDirectory','autofocus':'autofocus'});
     
@@ -457,7 +457,12 @@ var FileManager = new Class({
       onConfirm: function() {
         new FileManager.Request({
           url: self.options.url + '?event=create',
+          onRequest: self.browserLoader.set('opacity', 1),
           onSuccess: self.fill.bind(self),
+          onComplete: self.browserLoader.fade(0),
+          onFailure: (function(xmlHttpRequest) {
+            this.showError(xmlHttpRequest);
+          }).bind(self),
           data: {
             file: input.get('value'),
             directory: self.Directory,
@@ -470,11 +475,9 @@ var FileManager = new Class({
 
   deselect: function(el) {
     if (el && this.Current != el) return;
-    
     if (el) this.fillInfo();
     if (this.Current) this.Current.removeClass('selected');
     this.Current = null;
-
     this.switchButton();
   },
 
@@ -525,6 +528,7 @@ var FileManager = new Class({
             directory: self.Directory,
             filter: this.options.filter
           },
+          onRequest: self.browserLoader.set('opacity', 1),
           onSuccess: function(j){
             if (!j || j.content!='destroyed'){
               new Dialog(self.language.nodestroy, {language: {confirm: self.language.ok}, buttons: ['confirm']});
@@ -536,7 +540,11 @@ var FileManager = new Class({
               self.deselect(file.element);
               this.element.destroy();
             });
-          }
+          },
+          onComplete: self.browserLoader.fade(0),
+          onFailure: (function(xmlHttpRequest) {
+            this.showError(xmlHttpRequest);
+          }).bind(self)
         }).send();
       }
     });
@@ -568,6 +576,7 @@ var FileManager = new Class({
       onConfirm: (function(){
         new FileManager.Request({
           url: self.options.url + '?event=move',
+          onRequest: self.browserLoader.set('opacity', 1),
           onSuccess: (function(j){
             if (!j || !j.name) return;
             self.fireEvent('modify', [Object.clone(file)]);
@@ -576,6 +585,7 @@ var FileManager = new Class({
             file.name = j.name;
             self.fillInfo(file);
           }).bind(this),
+          onComplete: self.browserLoader.fade(0),
           onFailure: (function(xmlHttpRequest) {
             this.showError(xmlHttpRequest);
           }).bind(self),

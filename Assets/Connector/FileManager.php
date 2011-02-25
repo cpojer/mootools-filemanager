@@ -69,8 +69,8 @@ class FileManager {
     $this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
     $this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
     $this->length = strlen($this->basedir);
-    $this->listType = ($_POST['type'] == 'list') ? 'list' : 'thumb';
-    $this->filter = (!empty($_POST['filter'])) ? $_POST['filter'].'/' : '';
+    $this->listType = (isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb';
+    $this->filter = (isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : '';
 
     header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
     header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
@@ -435,6 +435,7 @@ class FileManager {
   
   protected function getAllowedMimeTypes(){
     $filter = $this->filter;
+    $mimeTypes = array();
     
     if (!$filter) return null;
     if (!FileManagerUtility::endsWith($filter, '/')) return array($filter);
