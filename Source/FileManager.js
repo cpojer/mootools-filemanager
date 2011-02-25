@@ -3,7 +3,7 @@
 description: FileManager
 
 requires:
-  core/1.3: '*'
+  core/1.3.1: '*'
   more/1.3.0.1: [Array.Extras, String.QueryString, Hash, Element.Delegation, Element.Measure, Fx.Scroll, Fx.SmoothScroll, Drag, Drag.Move, Assets, Tips ]
 
 provides:
@@ -11,10 +11,6 @@ provides:
 
 license:
   MIT-style license
-
-todo:
-  - Add Scroller.js (optional) for Drag&Drop in the Filelist
-  - exchange SqueezBox with MilkBox
 
 inspiration:
   - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)

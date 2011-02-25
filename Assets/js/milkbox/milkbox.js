@@ -323,6 +323,8 @@ this.Milkbox = new Class({
 		if(this.options.autoPlay){
 			this.galleries.each(function(g){ g.setOptions({autoplay:this.options.autoPlay,autoplay_delay:this.options.autoPlayDelay}); });
 		}
+		
+		//console.log(this.galleries);
 	},//getPageGalleries
 
 	reloadPageGalleries:function(){		
@@ -521,7 +523,8 @@ this.Milkbox = new Class({
 		
 		//keyboard next/prev/close
 		$(window.document).addEvent('keydown',function(e){
-			if(this.display.mode == 'single' || this.busy == true){ return; }
+			if(this.display.mode == 'single' || this.busy == true || this.closed){ return; }
+			e.preventDefault();
 			if(e.key == 'right' || e.key == 'space'){ this.navAux(e,'next'); }
 			else if(e.key == 'left'){ this.navAux(e,'prev'); }
 			else if(e.key == 'esc'){ this.close(true); }
@@ -639,7 +642,7 @@ var MilkboxDisplay= new Class({
 		this.mainbox = new Element('div', {
 			'id':'mbox-mainbox',
 			'styles': {
-				'position':'fixed',
+				'position':'absolute',
 				'overflow':'hidden',
 				'display':'none',
 				'z-index':10000,
