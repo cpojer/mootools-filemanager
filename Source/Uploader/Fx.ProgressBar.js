@@ -1,13 +1,20 @@
-/**
- * Fx.ProgressBar
- *
- * @version    1.1
- *
- * @license    MIT License
- *
- * @author    Harald Kirschner <mail [at] digitarald [dot] de>
- * @copyright  Authors
- */
+/*
+---
+description: Fx.Progressbar
+
+authors:
+  - Harald Kirschner
+
+requires:
+  core/1.3.1: '*'
+
+provides:
+  - filemanager.swiff.progressbar
+
+license:
+  MIT-style license
+...
+*/
 
 Fx.ProgressBar = new Class({
 

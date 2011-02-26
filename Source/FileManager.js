@@ -1,5 +1,5 @@
 /*
-
+---
 description: FileManager
 
 requires:
@@ -160,7 +160,7 @@ var FileManager = new Class({
         if(typeof jsGET != 'undefined') jsGET.set('fmListType=list');
       }
       this.load(this.Directory);
-    }
+    };
     
     this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
     this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
@@ -221,7 +221,7 @@ var FileManager = new Class({
         opacity: 0.5,
         title: this.language.close,
         events: {click: this.hide.bind(this)}
-      }).inject(this.filemanager).addEvent('mouseover',function(){this.fade(1)}).addEvent('mouseout',function(){this.fade(0.5)});
+      }).inject(this.filemanager).addEvent('mouseover',function(){this.fade(1);}).addEvent('mouseout',function(){this.fade(0.5);});
     }
     
     this.tips = new Tips({
@@ -419,7 +419,7 @@ var FileManager = new Class({
 
   open: function(e){
     e.stop();
-    if (!this.Current) return false;
+    if (!this.Current) return;
     this.fireEvent('complete', [
       this.normalize(this.Current.retrieve('file').path),
       this.Current.retrieve('file')
@@ -429,7 +429,7 @@ var FileManager = new Class({
   
   download: function(e) {
     e.stop();
-    if (!this.Current) return false;
+    if (!this.Current) return;
     //window.open(this.normalize(this.Current.retrieve('file').path));
     window.open(this.options.url + '?event=download&file='+this.normalize(this.Current.retrieve('file').path.replace(this.root,'')));
   },
@@ -633,7 +633,7 @@ var FileManager = new Class({
           var previous = current.getParent('li').getPrevious('li').getElement('span.fi');      
           previous.addClass('hover');
           if((current.getPosition(this.browserScroll).y) <= current.getSize().y) {
-            browserScrollFx.start(current.getPosition(this.browserScroll).x,(this.browserScroll.getScroll().y - this.browserScroll.getSize().y + (current.getSize().y*2)))
+            browserScrollFx.start(current.getPosition(this.browserScroll).x,(this.browserScroll.getScroll().y - this.browserScroll.getSize().y + (current.getSize().y*2)));
           }
         }
       
@@ -763,7 +763,7 @@ var FileManager = new Class({
     }, this);
     
     // -> cancel dragging
-    var self = this, revert = function(el) {
+    var revert = function(el) {
       el.set('opacity', 1).removeClass('drag').removeClass('move').setStyles({
         opacity: 1,
         'z-index': 'auto',
@@ -788,7 +788,7 @@ var FileManager = new Class({
       onDrag: function(el, e){
         self.imageadd.setStyles({
           'left': e.page.x + 25,
-          'top': e.page.y + 25,
+          'top': e.page.y + 25
         });
         self.imageadd.fade('in');
       },
@@ -1140,7 +1140,7 @@ this.Dialog = new Class({
       keyesc: (function(e){
         if (e.key == 'esc') {
           e.stopPropagation();
-          this.fireEvent('close').destroy()
+          this.fireEvent('close').destroy();
         };
       }).bind(this)
     };
