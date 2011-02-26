@@ -171,11 +171,6 @@ Swiff.Uploader = new Class({
     }
   },
   
-  // overwrite error in mootools 1.3 (append instead of extend)
-  remote: function(){
-		return Swiff.remote.apply(Swiff, [this.toElement()].append(arguments));
-	},
-  
   verifyLoad: function() {
     if (this.loaded) return;
     if (!this.object.parentNode) {
