@@ -11,11 +11,6 @@ requires: [Core/*]
 
 provides: Filemanager.Uploader
 
-options:
-  - upload: (boolean, defaults to *true*) 
-  - uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
-  - resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
-
 ...
 */
 

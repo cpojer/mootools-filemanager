@@ -11,35 +11,6 @@ provides: Filemanager
 
 license: MIT-style license
 
-inspiration: Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
-
-options:
-  - url: (string) The base url to a file with an instance of the FileManager php class (FileManager.php), without QueryString
-  - assetBasePath: (string) The path to all images and swf files used by the filemanager
-  - directory: (string, relative to the directory set in to the filemanager php class) Can be used to load a subfolder instead of the base folder
-  - language: (string, defaults to *en*) The language used for the FileManager
-  - selectable: (boolean, defaults to *false*) If true, provides a button to select a file
-  - destroy: (boolean, defaults to *false*) Whether to allow deletion of files or not
-  - rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
-  - download: (boolean, defaults to *false*) Whether to allow downloading of files or not
-  - createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
-  - filter: (string) If specified, it reduces the shown and upload-able filetypes to these mimtypes. possible options are:
-    - "image" = *.jpg; *.jpeg; *.bmp; *.gif; *.png
-    - "video" = *.avi; *.flv; *.fli; *.movie; *.mpe; *.qt; *.viv; *.mkv; *.vivo; *.mov; *.mpeg; *.mpg; *.wmv; *.mp4
-    - "audio" = *.aif; *.aifc; *.aiff; *.aif; *.au; *.mka; *.kar; *.mid; *.midi; *.mp2; *.mp3; *.mpga; *.ra; *.ram; *.rm; *.rpm; *.snd; *.wav; *.tsi
-    - "text" = *.txt; *.rtf; *.rtx; *.html; *.htm; *.css; *.as; *.xml; *.tpl
-    - "application" = *.ai; *.bin; *.ccad; *.class; *.cpt; *.dir; *.dms; *.drw; *.doc; *.dvi; *.dwg; *.eps; *.exe; *.gtar; *.gz; *.js; *.latex; *.lnk; *.lnk; *.oda; *.odt; *.ods; *.odp; *.odg; *.odc; *.odf; *.odb; *.odi; *.odm; *.ott; *.ots; *.otp; *.otg; *.pdf; *.php; *.pot; *.pps; *.ppt; *.ppz; *.pre; *.ps; *.rar; *.set; *.sh; *.skd; *.skm; *.smi; *.smil; *.spl; *.src; *.stl; *.swf; *.tar; *.tex; *.texi; *.texinfo; *.tsp; *.unv; *.vcd; *.vda; *.xlc; *.xll; *.xlm; *.xls; *.xlw; *.zip;
-  - hideClose: (boolean, defaults to *false*) Whether to hide the close button in the right corner
-  - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
-  - hideOverlay: (boolean, defaults to *false*) When true, hides the background overlay
-
-events:
-  - onComplete(path, file): fired when a file gets selected via the "Select file" button
-  - onModify(file): fired when a file gets renamed/deleted or modified in another way
-  - onShow: fired when the FileManager opens
-  - onHide: event fired when FileManager closes
-  - onPreview: event fired when the user clicks an image in the preview
-
 ...
 */
 
