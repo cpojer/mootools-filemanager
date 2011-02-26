@@ -9,8 +9,9 @@
  *
  * @link http://www.bin-co.com/php/scripts/classes/gd_image/ Based on work by "Binny V A"
  * 
- * @version 1.1
+ * @version 1.11
  * Changlog<br>
+ *    - 1.11 fixed $ratio in resize when both values are given 
  *    - 1.1 add real resizing, with comparison of ratio
  *    - 1.01 small fixes in process method and add set memory limit to a higher value
  */
@@ -217,10 +218,6 @@ class Image {
       // RATIO Y
       elseif(empty($y) && !empty($x) && ($x < $this->meta['width'] || $resizeWhenSmaller))
         $y = round($x / $ratioY);
-      else {
-        $y = $this->meta['height'];
-        $x = $this->meta['width'];
-      }
     }
 		//echo 'END: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
 		
