@@ -6,11 +6,9 @@ longdescription: Implements Upload functionality into the FileManager based on [
 authors:
   - Christoph Pojer
 
-requires:
-  core/1.2.4: '*'
+requires: [Core/*]
 
-provides:
-  - filemanager.uploader
+provides: Filemanager.Uploader
 
 license:
   MIT-style license

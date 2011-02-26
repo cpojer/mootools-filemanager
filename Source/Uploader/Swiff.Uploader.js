@@ -5,11 +5,9 @@ description: Swiff.Uploader
 authors:
   - Harald Kirschner
 
-requires:
-  core/1.3.1: '*'
+requires: [Core/*]
 
-provides:
-  - filemanager.swiff.uploader
+provides: FileManager.Swiff.Uploader
 
 license:
   MIT-style license

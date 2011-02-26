@@ -6,11 +6,9 @@ longdescription: Adds functionality to create a gallery out of a list of images
 authors:
   - Christoph Pojer
 
-requires:
-  core/1.2.4: '*'
+requires: [Core/*]
 
-provides:
-  - filemanager.gallery
+provides: FileManager.Gallery
 
 license:
   MIT-style license

@@ -6,11 +6,9 @@ longdescription: MooTools FileManager for integration with [TinyMCE](http://tiny
 authors:
   - Christoph Pojer
 
-requires:
-  core/1.3: '*'
+requires: [Core/*]
 
-provides:
-  - filemanager.tinymce
+provides: FileManager.TinyMCE
 
 license:
   MIT-style license

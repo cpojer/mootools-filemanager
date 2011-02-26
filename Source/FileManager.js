@@ -1,13 +1,13 @@
 /*
 ---
+
 description: FileManager
 
 requires:
   core/1.3.1: '*'
   more/1.3.1.1: [Array.Extras, String.QueryString, Hash, Element.Delegation, Element.Measure, Fx.Scroll, Fx.SmoothScroll, Drag, Drag.Move, Assets, Tips ]
 
-provides:
-  - filemanager
+provides: Filemanager
 
 license:
   MIT-style license
@@ -46,6 +46,7 @@ events:
   - onShow: fired when the FileManager opens
   - onHide: event fired when FileManager closes
   - onPreview: event fired when the user clicks an image in the preview
+
 ...
 */
 

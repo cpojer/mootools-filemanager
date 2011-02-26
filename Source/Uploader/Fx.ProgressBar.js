@@ -5,11 +5,9 @@ description: Fx.Progressbar
 authors:
   - Harald Kirschner
 
-requires:
-  core/1.3.1: '*'
+requires: [Core/*]
 
-provides:
-  - filemanager.swiff.progressbar
+provides: FileManager.Swiff.Progressbar
 
 license:
   MIT-style license
