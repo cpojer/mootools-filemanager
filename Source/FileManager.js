@@ -716,7 +716,7 @@ var FileManager = new Class({
       els[file.mime == 'text/directory' ? 1 : 0].push(el);
       //if (file.name == '..') el.set('opacity', 0.7);
       el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
-      icons = $$(icons.map(function(icon){return icon.appearOn(icon, [1, 0.7]);})).appearOn(el.getParent('li'), 0.7);
+      icons = $$(icons.map(function(icon){return icon.appearOn(icon, [0.5, 1]);})).appearOn(el.getParent('li'), 1);
       
       // ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
       if(this.onShow && typeof jsGET != 'undefined' && jsGET.get('fmFile') != null && file.name == jsGET.get('fmFile')) {
@@ -739,7 +739,6 @@ var FileManager = new Class({
         left: 0,
         top: 0
       }).inject(el.retrieve('parent'));
-      //el.getElements('img.browser-icon').set('opacity', 0);
       
       document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keydown);
       self.imageadd.fade(0);
@@ -1019,15 +1018,14 @@ Element.implement({
     var $defined = function(obj){ return (obj != undefined); };
     var params = Array.link(Array.from(arguments).erase(arguments[0]), {options: Type.isObject, opacity: $defined}),
       opacity = typeOf(params.opacity) == 'array' ? [params.opacity[0] || 1, params.opacity[1] || 0] : [params.opacity || 1, 0];
-    
+
     this.set({
       opacity: opacity[1],
-      tween: params.options || {duration: 500}
     });
 
-    $$(el).addEvents({
-      mouseenter: this.fade.pass(opacity[0],this),
-      mouseleave: this.fade.pass(opacity[1],this)
+    $(el).addEvents({
+      mouseenter: (function(){this.setStyle('opacity',opacity[0]);}).bind(this),
+      mouseleave: (function(){this.setStyle('opacity',opacity[1]);}).bind(this)
     });
     return this;
   },
