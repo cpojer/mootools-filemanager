@@ -79,5 +79,6 @@ How to use
     - made interface changes
     - add MilkBox for preview of images
     - add keyboard navigation in the file browser
+    - add usage of browser history with jsGET
     - add error dialogs for php errors
     - add a few new properties

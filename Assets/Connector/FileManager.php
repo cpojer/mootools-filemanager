@@ -162,23 +162,42 @@ class FileManager {
       $filecontent = file_get_contents($file, false, null, 0);
       if (!FileManagerUtility::isBinary($filecontent)) $content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent,ENT_QUOTES,'UTF-8')) . '</pre></div>';
     // zip
-    } elseif ($mime == 'application/zip'){
+    } elseif ($mime == 'application/zip') {
       require_once(dirname(__FILE__) . '/Assets/getid3/getid3.php');
       $out = array(array(), array());
       $getid3 = new getID3();
       $getid3->Analyze($file);
       foreach ($getid3->info['zip']['files'] as $name => $size){
-        $icon = is_array($size) ? 'dir' : $this->getIcon($name);
-        $out[($icon == 'dir') ? 0 : 1][$name] = '<li><a><img src="' . $this->options['assetBasePath'] . 'Images/Icons/' . $icon . '.png" alt="" /> ' . $name . '</a></li>';
+        $dir = is_array($size) ? true : true;
+        $out[($dir) ? 0 : 1][$name] = '<li><a><img src="'.$this->getIcon($name,true).'" alt="" /> ' . $name . '</a></li>';
       }
       natcasesort($out[0]);
       natcasesort($out[1]);
       $content = '<ul>' . implode(array_merge($out[0], $out[1])) . '</ul>';
-    // audio
-    }elseif (FileManagerUtility::startsWith($mime, 'audio/')){
+    // swf
+    } elseif ($mime == 'application/x-shockwave-flash') {
       require_once(dirname(__FILE__) . '/Assets/getid3/getid3.php');
       $getid3 = new getID3();
       $getid3->Analyze($file);
+      
+      $content = '<dl>
+          <dt>${width}</dt><dd>' . $getid3->info['swf']['header']['frame_width']/10 . 'px</dd>
+          <dt>${height}</dt><dd>' . $getid3->info['swf']['header']['frame_height']/10 . 'px</dd>
+          <dt>${length}</dt><dd>' . round(($getid3->info['swf']['header']['length']/$getid3->info['swf']['header']['frame_count'])) . 's</dd>
+        </dl>
+        <h2>${preview}</h2>
+        <div class="object">
+          <object type="application/x-shockwave-flash" data="'.str_replace($_SERVER['DOCUMENT_ROOT'],'',$file).'" width="500" height="400">
+            <param name="scale" value="noscale" />
+            <param name="movie" value="'.str_replace($_SERVER['DOCUMENT_ROOT'],'',$file).'" />
+          </object>
+        </div>';
+    // audio
+    } elseif (FileManagerUtility::startsWith($mime, 'audio/')){
+      require_once(dirname(__FILE__) . '/Assets/getid3/getid3.php');
+      $getid3 = new getID3();
+      $getid3->Analyze($file);
+      getid3_lib::CopyTagsToComments($getid3->info); 
       
       $content = '<dl>
           <dt>${title}</dt><dd>' . $getid3->info['comments']['title'][0] . '</dd>

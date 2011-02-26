@@ -523,8 +523,8 @@ this.Milkbox = new Class({
 		
 		//keyboard next/prev/close
 		$(window.document).addEvent('keydown',function(e){
-			if(this.display.mode == 'single' || this.busy == true || this.closed){ return; }
-			e.preventDefault();
+			if(this.display.mode == 'single' || this.busy == true || this.closed !== false){ return; }
+      e.preventDefault();
 			if(e.key == 'right' || e.key == 'space'){ this.navAux(e,'next'); }
 			else if(e.key == 'left'){ this.navAux(e,'prev'); }
 			else if(e.key == 'esc'){ this.close(true); }

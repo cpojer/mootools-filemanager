@@ -112,7 +112,7 @@
       manager2 = new FileManager({
         url: 'selectImage.php',
         language: 'en',
-        
+        filter: 'image',
         hideOnClick: true,
         assetBasePath: '../Assets',
         uploadAuthData: {session: 'MySessionId'},
@@ -154,6 +154,7 @@
       var manager4 = new FileManager.Gallery({
         url: 'selectImage.php',
         assetBasePath: '../Assets',
+        filter: 'image',
         hideOnClick: true,
         uploadAuthData: {session: 'MySessionId'},
         onShow: function(){
