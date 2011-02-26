@@ -2,15 +2,13 @@
 ---
 description: Fx.Progressbar
 
-authors:
-  - Harald Kirschner
+authors: Harald Kirschner
 
 requires: [Core/*]
 
 provides: FileManager.Swiff.Progressbar
 
-license:
-  MIT-style license
+license: MIT-style license
 ...
 */
 

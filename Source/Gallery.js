@@ -1,17 +1,16 @@
 /*
 ---
-description: FileManager.Gallery
-longdescription: Adds functionality to create a gallery out of a list of images
 
-authors:
-  - Christoph Pojer
+description: Adds functionality to create a gallery out of a list of images
+
+authors: Christoph Pojer (@cpojer)
+
+license: MIT-style license.
 
 requires: [Core/*]
 
 provides: FileManager.Gallery
 
-license:
-  MIT-style license
 ...
 */
 

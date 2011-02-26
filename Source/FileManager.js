@@ -9,11 +9,9 @@ requires:
 
 provides: Filemanager
 
-license:
-  MIT-style license
+license: MIT-style license
 
-inspiration:
-  - Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
+inspiration: Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)
 
 options:
   - url: (string) The base url to a file with an instance of the FileManager php class (FileManager.php), without QueryString
@@ -25,21 +23,16 @@ options:
   - rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
   - download: (boolean, defaults to *false*) Whether to allow downloading of files or not
   - createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
-  - filter: (string) If specified, it reduces the shown and upload-able filetypes to these mimtypes. possible values are (only the strings in the quotes are possible):
-                     "image" = *.jpg; *.jpeg; *.bmp; *.gif; *.png
-                     "video" = *.avi; *.flv; *.fli; *.movie; *.mpe; *.qt; *.viv; *.mkv; *.vivo; *.mov; *.mpeg; *.mpg; *.wmv; *.mp4
-                     "audio" = *.aif; *.aifc; *.aiff; *.aif; *.au; *.mka; *.kar; *.mid; *.midi; *.mp2; *.mp3; *.mpga; *.ra; *.ram; *.rm; *.rpm; *.snd; *.wav; *.tsi
-                     "text" = *.txt; *.rtf; *.rtx; *.html; *.htm; *.css; *.as; *.xml; *.tpl
-                     "application" = *.ai; *.bin; *.ccad; *.class; *.cpt; *.dir; *.dms; *.drw; *.doc; *.dvi; *.dwg; *.eps; *.exe; *.gtar; *.gz; *.js; *.latex; *.lnk; *.lnk; *.oda; *.odt; *.ods; *.odp; *.odg; *.odc; *.odf; *.odb; *.odi; *.odm; *.ott; *.ots; *.otp; *.otg; *.pdf; *.php; *.pot; *.pps; *.ppt; *.ppz; *.pre; *.ps; *.rar; *.set; *.sh; *.skd; *.skm; *.smi; *.smil; *.spl; *.src; *.stl; *.swf; *.tar; *.tex; *.texi; *.texinfo; *.tsp; *.unv; *.vcd; *.vda; *.xlc; *.xll; *.xlm; *.xls; *.xlw; *.zip;
+  - filter: (string) If specified, it reduces the shown and upload-able filetypes to these mimtypes. possible options are:
+    - "image" = *.jpg; *.jpeg; *.bmp; *.gif; *.png
+    - "video" = *.avi; *.flv; *.fli; *.movie; *.mpe; *.qt; *.viv; *.mkv; *.vivo; *.mov; *.mpeg; *.mpg; *.wmv; *.mp4
+    - "audio" = *.aif; *.aifc; *.aiff; *.aif; *.au; *.mka; *.kar; *.mid; *.midi; *.mp2; *.mp3; *.mpga; *.ra; *.ram; *.rm; *.rpm; *.snd; *.wav; *.tsi
+    - "text" = *.txt; *.rtf; *.rtx; *.html; *.htm; *.css; *.as; *.xml; *.tpl
+    - "application" = *.ai; *.bin; *.ccad; *.class; *.cpt; *.dir; *.dms; *.drw; *.doc; *.dvi; *.dwg; *.eps; *.exe; *.gtar; *.gz; *.js; *.latex; *.lnk; *.lnk; *.oda; *.odt; *.ods; *.odp; *.odg; *.odc; *.odf; *.odb; *.odi; *.odm; *.ott; *.ots; *.otp; *.otg; *.pdf; *.php; *.pot; *.pps; *.ppt; *.ppz; *.pre; *.ps; *.rar; *.set; *.sh; *.skd; *.skm; *.smi; *.smil; *.spl; *.src; *.stl; *.swf; *.tar; *.tex; *.texi; *.texinfo; *.tsp; *.unv; *.vcd; *.vda; *.xlc; *.xll; *.xlm; *.xls; *.xlw; *.zip;
   - hideClose: (boolean, defaults to *false*) Whether to hide the close button in the right corner
   - hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
   - hideOverlay: (boolean, defaults to *false*) When true, hides the background overlay
-  
-  // set in uploader.js
-  - upload: (boolean, defaults to *true*)
-  - uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
-  - resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
-  
+
 events:
   - onComplete(path, file): fired when a file gets selected via the "Select file" button
   - onModify(file): fired when a file gets renamed/deleted or modified in another way

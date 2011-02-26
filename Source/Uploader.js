@@ -1,22 +1,21 @@
 /*
 ---
-description: FileManager Uploader
-longdescription: Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
 
-authors:
-  - Christoph Pojer
+description: Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
+
+authors: Christoph Pojer (@cpojer)
+
+license: MIT-style license.
 
 requires: [Core/*]
 
 provides: Filemanager.Uploader
 
-license:
-  MIT-style license
-
 options:
   - upload: (boolean, defaults to *true*) 
   - uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
   - resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
+
 ...
 */
 

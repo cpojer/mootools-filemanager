@@ -1,17 +1,15 @@
 /*
 ---
-description: FileManager.TinyMCE
-longdescription: MooTools FileManager for integration with [TinyMCE](http://tinymce.moxiecode.com/)
 
-authors:
-  - Christoph Pojer
+description: MooTools FileManager for integration with [TinyMCE](http://tinymce.moxiecode.com/)
+
+authors: Christoph Pojer (@cpojer)
+
+license: MIT-style license.
 
 requires: [Core/*]
 
 provides: FileManager.TinyMCE
-
-license:
-  MIT-style license
 
 Usage:
   - Pass this to the "file_browser_callback"-option of TinyMCE: FileManager.TinyMCE(function(){ return {FileManagerOptions}; });

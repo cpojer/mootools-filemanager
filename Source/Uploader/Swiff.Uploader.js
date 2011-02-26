@@ -2,15 +2,13 @@
 ---
 description: Swiff.Uploader
 
-authors:
-  - Harald Kirschner
+authors: Harald Kirschner
 
 requires: [Core/*]
 
 provides: FileManager.Swiff.Uploader
 
-license:
-  MIT-style license
+license: MIT-style license
 ...
 */
 
