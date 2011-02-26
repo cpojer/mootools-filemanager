@@ -55,6 +55,7 @@ How to use
 ### Configurable Options
 
 Options
+
 * url: (string) The base url to a file with an instance of the FileManager php class (FileManager.php), without QueryString
 * assetBasePath: (string) The path to all images and swf files used by the filemanager
 * directory: (string, relative to the directory set in to the filemanager php class) Can be used to load a subfolder instead of the base folder
@@ -75,16 +76,20 @@ Options
 * hideOverlay: (boolean, defaults to *false*) When true, hides the background overlay
 
 Options if Uploader is included
+
 * upload: (boolean, defaults to *true*) 
 * uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
 * resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
 
 Events
+
 * onComplete(path, file): fired when a file gets selected via the "Select file" button
 * onModify(file): fired when a file gets renamed/deleted or modified in another way
 * onShow: fired when the FileManager opens
 * onHide: event fired when FileManager closes
 * onPreview: event fired when the user clicks an image in the preview
+
+Backend
 
 * See Backend/FileManager.php for all available server-side options
 
