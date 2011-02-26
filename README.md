@@ -33,6 +33,25 @@ How to use
 
 * Open the "Demos/" folder and have fun
 
+### Installation
+
+* First you need to include the follwing scripts
+  * Source/FileManager.js
+  * Source/Uploader/Fx.ProgressBar.js
+  * Source/Uploader/Swiff.Uploader.js
+  * Source/Uploader.js
+  * Source/Gallery.js (if you want to create a gallery, see example in the Demos/index.html)
+  * Language/Language.en.js (or the language(s) do you need)
+
+* Then you need to modify the "Demos/manager.php" or "Demos/selectImage.php" to set up your upload folder etc
+* See the "Demos/index.html" for examples, but basically you need to do the following:
+
+      var myFileManager = new FileManager({
+        url: 'path/to/the/manager.php',
+        assetBasePath: '../Assets'
+      });
+      myFileManager.show();
+
 ### Configurable Options
 
 Options
@@ -68,26 +87,6 @@ Events
 * onPreview: event fired when the user clicks an image in the preview
 
 * See Backend/FileManager.php for all available server-side options
-
-### Installation
-
-* First you need to include the follwing scripts
-  * Source/FileManager.js
-  * Source/Uploader/Fx.ProgressBar.js
-  * Source/Uploader/Swiff.Uploader.js
-  * Source/Uploader.js
-  * Source/Gallery.js (if you want to create a gallery, see example in the Demos/index.html)
-  * Language/Language.en.js (or the language(s) do you need)
-
-* Then you need to modify the "Demos/manager.php" or "Demos/selectImage.php" to set up your upload folder etc
-* See the "Demos/index.html" for examples, but basically you need to do the following:
-
-      var myFileManager = new FileManager({
-        url: 'path/to/the/manager.php',
-        assetBasePath: '../Assets'
-      });
-      myFileManager.show();
-
 
 ### Custom Authentication
 
