@@ -207,7 +207,7 @@ var FileManager = new Class({
       }
     });
     if(!this.options.hideClose)
-      this.tips.attach(this.closeIcon); //.appearOn(this.closeIcon, [1, 0.5]).appearOn(document, 0.5)
+      this.tips.attach(this.closeIcon);
     
     this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
       'class': 'browser-add'
@@ -716,7 +716,10 @@ var FileManager = new Class({
       els[file.mime == 'text/directory' ? 1 : 0].push(el);
       //if (file.name == '..') el.set('opacity', 0.7);
       el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
-      icons = $$(icons.map(function(icon){return icon.appearOn(icon, [0.5, 1]);})).appearOn(el.getParent('li'), 1);
+      icons = $$(icons.map((function(icon){
+        this.showFunctions(icon,icon,0.5,1);
+        this.showFunctions(icon,el.getParent('li'),1);
+      }).bind(this)));
       
       // ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
       if(this.onShow && typeof jsGET != 'undefined' && jsGET.get('fmFile') != null && file.name == jsGET.get('fmFile')) {
@@ -914,7 +917,20 @@ var FileManager = new Class({
     }, this).send();
     
   },
+  
+  showFunctions: function(icon,appearOn,opacityBefore,opacityAfter) {
+    var opacity = [opacityBefore || 1, opacityAfter || 0];
+    icon.set({
+      opacity: opacity[1],
+    });
 
+    $(appearOn).addEvents({
+      mouseenter: (function(){this.setStyle('opacity',opacity[0]);}).bind(icon),
+      mouseleave: (function(){this.setStyle('opacity',opacity[1]);}).bind(icon)
+    });
+    return icon;
+  }, 
+  
   size: function(size){
     var tab = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     for(var i = 0; size > 1024; i++)
@@ -1013,22 +1029,6 @@ Asset.css(__DIR__+'../Assets/Css/Additions.css');
 Asset.javascript(__DIR__+'../Assets/js/jsGET.js', { events: {load: (function(){ window.fireEvent('jsGETloaded'); }).bind(this)}});
 
 Element.implement({
-  
-  appearOn: function(el) {
-    var $defined = function(obj){ return (obj != undefined); };
-    var params = Array.link(Array.from(arguments).erase(arguments[0]), {options: Type.isObject, opacity: $defined}),
-      opacity = typeOf(params.opacity) == 'array' ? [params.opacity[0] || 1, params.opacity[1] || 0] : [params.opacity || 1, 0];
-
-    this.set({
-      opacity: opacity[1],
-    });
-
-    $(el).addEvents({
-      mouseenter: (function(){this.setStyle('opacity',opacity[0]);}).bind(this),
-      mouseleave: (function(){this.setStyle('opacity',opacity[1]);}).bind(this)
-    });
-    return this;
-  },
   
   center: function(offsets) {
     var scroll = document.getScroll(),
@@ -1177,10 +1177,15 @@ this.Overlay = new Class({
   },
   
   hide: function(){
-    this.el.fade(0).get('tween').chain((function(){
+    if(!Browser.ie) {
+      this.el.fade(0).get('tween').chain((function(){
+        this.revertObjects();
+        this.el.setStyle('display', 'none');
+      }).bind(this));
+    } else {
       this.revertObjects();
       this.el.setStyle('display', 'none');
-    }).bind(this));
+    }
     
     window.removeEvent('resize', this.resize);
     
