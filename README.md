@@ -1,12 +1,12 @@
-MooTools FileManager - Copyright (c) [Christoph Pojer](http://og5.net/christoph)
-=====================================================================================
+MooTools FileManager
+====================
 
 A filemanager for the web based on MooTools that allows you to (pre)view, upload and modify files and folders via your browser.
 
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Authors
-* [Christoph Pojer](http://og5.net/christoph)
+* [Christoph Pojer](http://cpojer.net)
 * [Fabian Vogelsteller](http://frozeman.de)
 
 ### Features
