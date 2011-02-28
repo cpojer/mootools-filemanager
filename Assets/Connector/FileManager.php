@@ -155,7 +155,7 @@ class FileManager {
           <dt>${height}</dt><dd>' . $size[1] . 'px</dd>
         </dl>
         <h2>${preview}</h2>
-        <a href="'.$url.'" data-milkbox="preview"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)).$randomImage.'" class="preview" alt="preview" /></a>
+        <a href="'.$url.'" data-milkbox="preview" title="'.str_replace($_SERVER['DOCUMENT_ROOT'],'',$file).'"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)).$randomImage.'" class="preview" alt="preview" /></a>
         ';
     // text preview
     }elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript') {

@@ -50,6 +50,7 @@ this.Milkbox = new Class({
 		this.activated;
 		this.busy = false;
 		this.paused = false;
+		this.closed = true;
 		this.intId;
 		this.loadCheckerId;
 		this.externalGalleries = [];
@@ -523,8 +524,8 @@ this.Milkbox = new Class({
 		
 		//keyboard next/prev/close
 		$(window.document).addEvent('keydown',function(e){
-			if(this.display.mode == 'single' || this.busy == true || this.closed !== false){ return; }
-      e.preventDefault();
+			if(this.display.mode == 'single' || this.busy == true || this.closed){ return; }
+			if(e.key == 'right' || e.key == 'left' || e.key == 'space'){ e.preventDefault(); }
 			if(e.key == 'right' || e.key == 'space'){ this.navAux(e,'next'); }
 			else if(e.key == 'left'){ this.navAux(e,'prev'); }
 			else if(e.key == 'esc'){ this.close(true); }
@@ -642,7 +643,7 @@ var MilkboxDisplay= new Class({
 		this.mainbox = new Element('div', {
 			'id':'mbox-mainbox',
 			'styles': {
-				'position':'absolute',
+				'position':(this.options.centered) ? 'fixed' : 'absolute',
 				'overflow':'hidden',
 				'display':'none',
 				'z-index':10000,
@@ -1077,5 +1078,5 @@ var MilkboxGallery = new Class({
 
 //Creating Milkbox instance: you can comment this code and instantiate Milkbox somewhere else instead.
 window.addEvent('domready', function(){ 
-	milkbox = new Milkbox({ centered:true });
+	milkbox = new Milkbox({ centered:false });
 });

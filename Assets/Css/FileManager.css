@@ -439,13 +439,13 @@ div.filemanager a.filemanager-dir-title:hover {
 }
 
 div.filemanager input.filemanager-dir {
-  margin-top: -5px;
+  margin-top: -4px;
   background-color: #fbfbfb;
   background-image: none !important;
   border: 1px solid #ccc;
   width: 70%;
-  padding: 2px 5px;
-  font-size: 15px;
+  padding: 1px 5px;
+  font-size: 14px;
 }
 
 div.filemanager span.filemanager-dir a.icon {
