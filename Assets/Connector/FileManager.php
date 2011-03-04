@@ -25,12 +25,12 @@ Options:
   - thumbnailPath: (string) The path where the thumbnails of the pictures will be saved
   - mimeTypesPath: (string, optional, relative path) The path to the MimTypes.ini file.
   - dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
-  - maxUploadSize: (integeter, defaults to *20280000* bytes) The maximum file size for upload in bytes
-  - maxImageSize: (integeter, default is 1024) The maximum number of pixels an image can have, if the user enables "resize on upload"
+  - maxUploadSize: (integer, defaults to *20280000* bytes) The maximum file size for upload in bytes
+  - maxImageSize: (integer, default is 1024) The maximum number of pixels an image can have, if the user enables "resize on upload"
   - upload: (boolean, defaults to *true*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
   - destroy: (boolean, defaults to *true*) allow files get deleted, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
   - safe: (string, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps'
-  - chmod: (integeter, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
+  - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
 */
 
 require_once(dirname(__FILE__) . '/Upload.php');
