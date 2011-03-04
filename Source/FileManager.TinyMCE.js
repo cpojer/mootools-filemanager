@@ -29,7 +29,7 @@ FileManager.TinyMCE = function(options){
     }, options(type)));
     manager.dragZIndex = 400002;
     manager.SwiffZIndex = 400003;
-    manager.el.setStyle('zIndex', 400001);
+    manager.filemanager.setStyle('zIndex', 400001);
     manager.overlay.el.setStyle('zIndex', 400000);
     document.id(manager.tips).setStyle('zIndex', 400010);
     manager.show();
