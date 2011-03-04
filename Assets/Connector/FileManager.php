@@ -66,6 +66,7 @@ class FileManager {
     
     $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'],$this->options['chmod']);
     $this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath'],$this->options['chmod']);
+    $this->options['directory'] = FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
     $this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
     $this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
     $this->length = strlen($this->basedir);
@@ -451,7 +452,7 @@ class FileManager {
   }
   
   protected function normalize($file){
-    return preg_replace('/\\\|\/{2,}/', '/', $file);
+    return preg_replace('/(\\\|\/){2,}/', '/', $file);
   }
   
   protected function getAllowedMimeTypes(){
