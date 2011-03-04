@@ -72,7 +72,7 @@ class FileManager {
     $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'],$this->options['chmod']);
     $this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath'],$this->options['chmod']);
     $this->options['directory'] = FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
-    $this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
+    $this->basedir = FileManagerUtility::getSiteRoot() . FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
     $this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
     $this->length = strlen($this->basedir);
     $this->listType = (isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb';
@@ -98,8 +98,8 @@ class FileManager {
     
     if ($dir != $this->basedir) array_unshift($files, $dir . '/..');
     natcasesort($files);
-    foreach ($files as $file){
-    
+    foreach ($files as $file)
+	{
       $mime = $this->getMimeType($file);
       if ($this->filter && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->filter))
         continue;
@@ -113,9 +113,9 @@ class FileManager {
         : $this->getIcon($this->normalize($file));
       
       // list files, except the thumbnail folder
-      if(str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file)) != substr($this->options['thumbnailPath'],0,-1)) {
+      if(str_replace(FileManagerUtility::getSiteRoot(),'',$this->normalize($file)) != substr($this->options['thumbnailPath'],0,-1)) {
         $out[is_dir($file) ? 0 : 1][] = array(
-          'path' => str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file)),
+          'path' => str_replace(FileManagerUtility::getSiteRoot(),'',$this->normalize($file)),
           'name' => pathinfo($file, PATHINFO_BASENAME),
           'date' => date($this->options['dateFormat'], filemtime($file)),
           'mime' => $this->getMimeType($file),
@@ -127,27 +127,31 @@ class FileManager {
     }
     echo json_encode(array(
         //'assetBasePath' => $this->options['assetBasePath'],
+	//'thumbnailPath' => $this->options['thumbnailPath'],
+	//'ia_directory' => $this->options['directory'],
+	//'ia_dir' => $dir,
         'root' => substr(FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']),1),
         'path' => $this->getPath($dir),
         'dir' => array(
-        'name' => pathinfo($dir, PATHINFO_BASENAME),
-        'date' => date($this->options['dateFormat'], filemtime($dir)),
-        'mime' => 'text/directory',
-        'thumbnail' => $this->getIcon($this->normalize($dir)),
-        'icon' => $this->getIcon($this->normalize($dir),true)
-      ),
+			'name' => pathinfo($dir, PATHINFO_BASENAME),
+			'date' => date($this->options['dateFormat'], filemtime($dir)),
+			'mime' => 'text/directory',
+			'thumbnail' => $this->getIcon($this->normalize($dir)),
+			'icon' => $this->getIcon($this->normalize($dir),true)
+		  ),
       'files' => array_merge(!empty($out[0]) ? $out[0] : array(), !empty($out[1]) ? $out[1] : array())
     ));
   }
   
-  protected function onDetail(){
+  protected function onDetail()
+  {
     if (empty($this->post['file'])) return;
     
     $file = $this->basedir . $this->post['directory'] . $this->post['file'];
     
     if (!$this->checkFile($file)) return;
     
-    $url = str_replace($_SERVER['DOCUMENT_ROOT'],'',$this->normalize($file));
+    $url = str_replace(FileManagerUtility::getSiteRoot(),'',$this->normalize($file));
     $mime = $this->getMimeType($file);
     $content = null;
 
@@ -161,7 +165,7 @@ class FileManager {
           <dt>${height}</dt><dd>' . $size[1] . 'px</dd>
         </dl>
         <h2>${preview}</h2>
-        <a href="'.$url.'" data-milkbox="preview" title="'.str_replace($_SERVER['DOCUMENT_ROOT'],'',$file).'"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)).$randomImage.'" class="preview" alt="preview" /></a>
+        <a href="'.$url.'" data-milkbox="preview" title="'.str_replace(FileManagerUtility::getSiteRoot(),'',$file).'"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)).$randomImage.'" class="preview" alt="preview" /></a>
         ';
     // text preview
     }elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript') {
@@ -193,9 +197,9 @@ class FileManager {
         </dl>
         <h2>${preview}</h2>
         <div class="object">
-          <object type="application/x-shockwave-flash" data="'.str_replace($_SERVER['DOCUMENT_ROOT'],'',$file).'" width="500" height="400">
+          <object type="application/x-shockwave-flash" data="'.str_replace(FileManagerUtility::getSiteRoot(),'',$file).'" width="500" height="400">
             <param name="scale" value="noscale" />
-            <param name="movie" value="'.str_replace($_SERVER['DOCUMENT_ROOT'],'',$file).'" />
+            <param name="movie" value="'.str_replace(FileManagerUtility::getSiteRoot(),'',$file).'" />
           </object>
         </div>';
     // audio
@@ -339,8 +343,8 @@ class FileManager {
       if (empty($this->post['name'])) return;
       $newname = $this->getName($this->post['name'], $dir);
       $fn = 'rename';
-      if(!$is_dir && file_exists($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file)))
-        unlink($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].$this->generateThumbName($file));
+      if(!$is_dir && file_exists(FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'].$this->generateThumbName($file)))
+        unlink(FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'].$this->generateThumbName($file));
     } else {
       $newname = $this->getName(pathinfo($file, PATHINFO_FILENAME), $this->getDir($this->post['newDirectory']));
       $fn = !empty($this->post['copy']) ? 'copy' : 'rename';
@@ -395,7 +399,7 @@ class FileManager {
     else $ext = pathinfo($file, PATHINFO_EXTENSION);
     
     $largeDir = ($smallIcon === false && $this->listType == 'thumb') ? 'Large/' : '';
-    $path = (is_file($_SERVER['DOCUMENT_ROOT'].$this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.$ext.'.png'))
+    $path = (is_file(FileManagerUtility::getSiteRoot().$this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.$ext.'.png'))
       ? $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.$ext.'.png'
       : $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.'default.png';
     
@@ -405,10 +409,10 @@ class FileManager {
   protected function getThumb($file)
   {
     $thumb = $this->generateThumbName($file);
-    $thumbPath = $_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'] . $thumb;
+    $thumbPath = FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'] . $thumb;
     if (is_file($thumbPath))
       return $thumb;
-    elseif(is_file($_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'].basename($file)))
+    elseif(is_file(FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'].basename($file)))
       return basename($file);
     else
       return $this->generateThumb($file,$thumbPath);
@@ -429,7 +433,7 @@ class FileManager {
   protected function deleteThumb($file)
   {
     $thumb = $this->generateThumbName($file);
-    $thumbPath = $_SERVER['DOCUMENT_ROOT'].$this->options['thumbnailPath'] . $thumb;
+    $thumbPath = FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'] . $thumb;
     if(is_file($thumbPath))
       @unlink($thumbPath);
   }
@@ -439,7 +443,7 @@ class FileManager {
   }
   
   protected function getDir($dir){  
-    $dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'].'/'.$dir,$this->options['chmod']);
+    $dir = FileManagerUtility::getSiteRoot().FileManagerUtility::getRealPath($this->options['directory'].'/'.$dir,$this->options['chmod']);
     return $this->checkFile($dir) ? $dir : $this->basedir;
   }
   
@@ -523,24 +527,103 @@ class FileManagerUtility {
     return false;
   }
   
-  public static function getPath(){
-    static $path;
-    return $path ? $path : $path = pathinfo(__FILE__, PATHINFO_DIRNAME);
+//  public static function getPath(){
+//    static $path;
+//    return $path ? $path : $path = pathinfo(str_replace('\\','/',__FILE__), PATHINFO_DIRNAME);
+//  }
+  
+  public static function getSiteRoot() 
+  {
+    $path = str_replace('\\','/',$_SERVER['DOCUMENT_ROOT']);
+    
+    return $path;
   }
   
-  public static function getRealPath($path,$chmod = 0777) {
+  public static function getRequestPath() 
+  {
+    $path = str_replace('\\','/',(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : $_SERVER['PHP_SELF']));
+	$root = FileManagerUtility::getSiteRoot();
+    $path = (!FileManagerUtility::startsWith($path, $root) ? $root . $path : $path);
+    $path = (FileManagerUtility::endsWith($path,'/')) ? substr($path, 0, -1) : $path;
     
+    return $path;
+  }
+  
+  public static function getRealPath($path, $chmod = 0777, $mkdir_if_notexist = true, $with_trailing_slash = true) 
+  {
     $path = str_replace('\\','/',$path);
-    $path = preg_replace('#/+#','/',$path);
-    $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
+    $path = preg_replace('/(\\\|\/){2,}/', '/', $path);
+	$root = FileManagerUtility::getSiteRoot();
+    $path = str_replace($root,'',$path);
     
-    if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path) && is_dir(dirname($path))) @mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realPath() function
-    $path = (FileManagerUtility::startsWith($path,'/')) ? $_SERVER['DOCUMENT_ROOT'].$path : $path;
-    if(!is_dir($path) && is_dir(dirname($path))) @mkdir($path,$chmod); // create folder if not existing
-    $path = (FileManagerUtility::startsWith($path,'../') || !FileManagerUtility::startsWith($path,'/')) ? realPath($path) : $path;
-    $path = str_replace('\\','/',$path);    
-    $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
-    $path = (FileManagerUtility::endsWith($path,'/')) ? $path : $path.'/';
+    //if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path) && is_dir(dirname($path))) @mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realpath() function
+    $path = (FileManagerUtility::startsWith($path,'/') ? $root . $path : FileManagerUtility::getRequestPath() . '/' . $path);
+	
+	// now fold '../' directory parts to prevent malicious paths such as 'a/../../../../../../../../../etc/' from succeeding
+	//
+	// to prevent screwups in the folding code, we FIRST clean out the './' directories, to prevent 'a/./.././.././.././.././.././.././.././.././../etc/' from succeeding:
+    $path = preg_replace('#/(\./)+#','/',$path);
+	
+	// no temporarily strip off the leading part up to the colon to prevent entries like '../d:/dir' to succeed when the site root is 'c:/', for example:
+	$pos = strpos($path, ':');
+	if ($pos === false)
+	{
+		$lead = '';
+	}
+	else
+	{
+		$lead = substr($path, 0, $pos + 1);
+		$path = substr($path, $pos + 1);
+	}
+		
+	while (($pos = strpos($path, '/../')) !== false)
+	{
+		$prev = substr($path, 0, $pos);
+		/*
+		on Windows, you get:
+		
+		dirname("/") = "\"
+		dirname("y/") = "."
+		dirname("/x") = "\"
+		
+		so we'd rather not use dirname()   :-(
+	    */
+		$p2 = strrpos($prev, '/');
+		if ($p2 === false)
+		{
+			throw new Exception('path tampering detected!');
+		}
+		$prev = substr($prev, 0, $p2);
+		$next = substr($path, $pos + 3);
+		$path = $prev . $next;
+	}
+	
+	$path = $lead . $path;
+	
+	// now, iff there was such a '../../../etc/' attempt, we'll know because the resulting path does NOT have the 'siteroot' prefix:
+    if (!FileManagerUtility::startsWith($path, $root))
+	{
+		throw new Exception('path tampering detected!');
+	}
+	
+    if(!is_dir($path) && is_dir(dirname($path)) && $mkdir_if_notexist) 
+	{
+		$rv = @mkdir($path,$chmod); // create last folder if not existing
+		if ($rv === false)
+		{
+			throw new Exception('cannot create directory "' . $path . '"');
+		}
+	}
+	
+	// now all there's left for realpath() to do is expand possible symbolic links in the path; don't make dependent on how the path looks:
+    $rv = realpath($path);
+	if ($rv === false)
+	{
+		throw new Exception('cannot process path "' . $path . '"');
+	}
+    $path = str_replace('\\','/',$rv);
+    $path = str_replace($root,'',$path);
+    $path = ($with_trailing_slash ? (FileManagerUtility::endsWith($path,'/') ? $path : $path.'/') : ((FileManagerUtility::endsWith($path,'/') && strlen($path) > 1) ? substr($path, 0, -1) : $path));
     
     return $path;
   }

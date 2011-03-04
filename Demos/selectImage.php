@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(E_ALL | E_STRICT);
+
 include('../Assets/Connector/FileManager.php');
 
 $browser = new FileManager(array(
