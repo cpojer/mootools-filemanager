@@ -295,7 +295,7 @@ class FileManager {
       if (FileManagerUtility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
         $img = new Image($file);
         $size = $img->getSize();
-        if ($size['width'] > $this->options['maxImageSize']) $img->resize($this->options['maxImageSize'])->save();
+        if ($size['width'] > $this->options['maxImageSize'] && $size['height'] <= $this->options['maxImageSize']) $img->resize($this->options['maxImageSize'])->save();   // [i_a] another case where portrait-sized images didn't get treated properly.
         elseif ($size['height'] > $this->options['maxImageSize']) $img->resize(null, $this->options['maxImageSize'])->save();
         unset($img);
       }
