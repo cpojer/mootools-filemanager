@@ -277,11 +277,13 @@ class FileManager {
     try{
       if (!$this->options['upload'])
         throw new FileManagerException('disabled');
+      if (!Upload::exists('Filedata'))
+        throw new FileManagerException('nofile');
       if ((function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this->get)))
         throw new FileManagerException('authenticated');
       
       $dir = $this->getDir($this->get['directory']);
-      $name = pathinfo((Upload::exists('Filedata')) ? $this->getName($_FILES['Filedata']['name'], $dir) : null, PATHINFO_FILENAME);
+      $name = pathinfo($this->getName($_FILES['Filedata']['name'], $dir), PATHINFO_FILENAME);
       $file = Upload::move('Filedata', $dir , array(
         'name' => $name,
         'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
