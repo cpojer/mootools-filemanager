@@ -60,11 +60,13 @@ class Image {
     echo "\n";
     */
 
+		$explarr = explode('/', $img['mime']); // make sure the end() call doesn't throw an error next in E_STRICT mode:
+		$ext_from_mime = end($explarr);
 		$this->meta = array(
 			'width' => $img[0],
 			'height' => $img[1],
 			'mime' => $img['mime'],
-			'ext' => end(explode('/', $img['mime'])),
+			'ext' => $ext_from_mime,
 		);
 		
 		if($this->meta['ext']=='jpg')
