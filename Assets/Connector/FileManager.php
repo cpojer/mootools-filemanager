@@ -301,7 +301,7 @@ class FileManager {
         throw new FileManagerException('disabled');
       if (!Upload::exists('Filedata'))
         throw new FileManagerException('nofile');
-      if ((function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this->get)))
+      if ((function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this)))
         throw new FileManagerException('authenticated');
       
       $dir = $this->getDir($this->get['directory']);
