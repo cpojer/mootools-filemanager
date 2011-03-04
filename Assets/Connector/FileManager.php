@@ -53,7 +53,7 @@ class FileManager {
     $this->options = array_merge(array(
       'directory' => 'Files/',
       'assetBasePath' => '../',
-      'thumbnailPath' => '../Thumbs/',
+      'thumbnailPath' => $path .'/../Thumbs/',
       'mimeTypesPath' => $path . '/MimeTypes.ini',
       'dateFormat' => 'j M Y - H:i',
       'maxUploadSize' => 2600 * 2600 * 3,
@@ -64,14 +64,16 @@ class FileManager {
       'chmod' => 0777,
     ), $options);
     
-    $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'],$this->options['chmod']);
-    $this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath'],$this->options['chmod']);
-    $this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
+    $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath']);
+    $this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath']);
+    $this->basedir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory']);
     $this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
     $this->length = strlen($this->basedir);
     $this->listType = (isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb';
     $this->filter = (isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : '';
-
+    
+    if(!is_dir($this->options['thumbnailPath'])) @mkdir($path,$this->options['chmod'],true); // create thumb folder if not existing
+    
     header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
     header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
 
@@ -121,7 +123,7 @@ class FileManager {
     }
     echo json_encode(array(
         //'assetBasePath' => $this->options['assetBasePath'],
-        'root' => substr(FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']),1),
+        'root' => substr(FileManagerUtility::getRealPath($this->options['directory']),1),
         'path' => $this->getPath($dir),
         'dir' => array(
         'name' => pathinfo($dir, PATHINFO_BASENAME),
@@ -426,21 +428,22 @@ class FileManager {
       @unlink($thumbPath);
   }
 
-  protected function getMimeType($file){
+  protected function getMimeType($file ){
     return is_dir($file) ? 'text/directory' : Upload::mime($file);
   }
   
-  protected function getDir($dir){  
-    $dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'].'/'.$dir,$this->options['chmod']);
+  protected function getDir($dir) {
+    if(empty($dir) || $dir == '/' || strpos($dir,'../') !== false) return $this->basedir;
+    $dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'].'/'.$dir);
     return $this->checkFile($dir) ? $dir : $this->basedir;
   }
   
-  protected function getPath($file){
+  protected function getPath($file) {
     $file = $this->normalize(substr($file, $this->length));
     return $file;
   }
   
-  protected function checkFile($file){
+  protected function checkFile($file) {
     $mimes = $this->getAllowedMimeTypes();
 
     $hasFilter = $this->filter && count($mimes);
@@ -448,7 +451,7 @@ class FileManager {
     return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file) || ($hasFilter && !in_array($this->getMimeType($file), $mimes)));
   }
   
-  protected function normalize($file){
+  protected function normalize($file) {
     return preg_replace('/\\\|\/{2,}/', '/', $file);
   }
   
@@ -520,15 +523,13 @@ class FileManagerUtility {
     return $path ? $path : $path = pathinfo(__FILE__, PATHINFO_DIRNAME);
   }
   
-  public static function getRealPath($path,$chmod = 0777) {
+  public static function getRealPath($path) {
     
     $path = str_replace('\\','/',$path);
     $path = preg_replace('#/+#','/',$path);
     $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
     
-    if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path) && is_dir(dirname($path))) @mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realPath() function
     $path = (FileManagerUtility::startsWith($path,'/')) ? $_SERVER['DOCUMENT_ROOT'].$path : $path;
-    if(!is_dir($path) && is_dir(dirname($path))) @mkdir($path,$chmod); // create folder if not existing
     $path = (FileManagerUtility::startsWith($path,'../') || !FileManagerUtility::startsWith($path,'/')) ? realPath($path) : $path;
     $path = str_replace('\\','/',$path);    
     $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
