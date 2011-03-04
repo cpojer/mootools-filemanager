@@ -33,8 +33,14 @@ Options:
   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
 */
 
-require_once(dirname(__FILE__) . '/Upload.php');
-require_once(dirname(__FILE__) . '/Image.class.php');
+if (!defined('MTFM_PATH'))
+{
+	$base = str_replace('\\','/',dirname(__FILE__));
+	define('MTFM_PATH', $base);
+}
+
+require_once(MTFM_PATH . '/Upload.php');
+require_once(MTFM_PATH . '/Image.class.php');
 
 class FileManager {
   
@@ -47,14 +53,13 @@ class FileManager {
   protected $get;
   protected $listType;
   
-  public function __construct($options){
-    $path = FileManagerUtility::getPath();
-    
+  public function __construct($options)
+  {
     $this->options = array_merge(array(
-      'directory' => 'Files/',
-      'assetBasePath' => '../',
-      'thumbnailPath' => '../Thumbs/',
-      'mimeTypesPath' => $path . '/MimeTypes.ini',
+      'directory' => MTFM_PATH . '/Files/',
+      'assetBasePath' => MTFM_PATH . '/../',
+      'thumbnailPath' => MTFM_PATH . '/../Thumbs/',
+      'mimeTypesPath' => MTFM_PATH . '/MimeTypes.ini',
       'dateFormat' => 'j M Y - H:i',
       'maxUploadSize' => 2600 * 2600 * 3,
       'maxImageSize' => 1024,
@@ -164,7 +169,7 @@ class FileManager {
       if (!FileManagerUtility::isBinary($filecontent)) $content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent,ENT_QUOTES,'UTF-8')) . '</pre></div>';
     // zip
     } elseif ($mime == 'application/zip') {
-      require_once(dirname(__FILE__) . '/Assets/getid3/getid3.php');
+      require_once(MTFM_PATH . '/Assets/getid3/getid3.php');
       $out = array(array(), array());
       $getid3 = new getID3();
       $getid3->Analyze($file);
@@ -177,7 +182,7 @@ class FileManager {
       $content = '<ul>' . implode(array_merge($out[0], $out[1])) . '</ul>';
     // swf
     } elseif ($mime == 'application/x-shockwave-flash') {
-      require_once(dirname(__FILE__) . '/Assets/getid3/getid3.php');
+      require_once(MTFM_PATH . '/Assets/getid3/getid3.php');
       $getid3 = new getID3();
       $getid3->Analyze($file);
       
@@ -195,7 +200,7 @@ class FileManager {
         </div>';
     // audio
     } elseif (FileManagerUtility::startsWith($mime, 'audio/')){
-      require_once(dirname(__FILE__) . '/Assets/getid3/getid3.php');
+      require_once(MTFM_PATH . '/Assets/getid3/getid3.php');
       $getid3 = new getID3();
       $getid3->Analyze($file);
       getid3_lib::CopyTagsToComments($getid3->info); 
