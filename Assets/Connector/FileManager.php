@@ -91,6 +91,18 @@ class FileManager {
     
     $this->{$event}();
   }
+
+  /**
+   * @return array the FileManager options and settings.
+   */
+  public function getSettings(){
+    return array_merge(array(
+		'basedir' => $this->basedir,
+		'basename' => $this->basename,
+		'listType' => $this->listType,
+		'filter' => $this->filter,
+    ), $this->options);
+  }
   
   protected function onView(){
     $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
@@ -279,7 +291,7 @@ class FileManager {
         header("Cache-control: private"); //use this to open files directly
         
         fpassthru($fd);
-        fclose ($fd);
+        fclose($fd);
     }
   }
   
@@ -430,6 +442,7 @@ class FileManager {
     unset($img);
     return basename($thumbPath);
   }
+  
   protected function deleteThumb($file)
   {
     $thumb = $this->generateThumbName($file);
@@ -438,7 +451,7 @@ class FileManager {
       @unlink($thumbPath);
   }
 
-  protected function getMimeType($file){
+  public function getMimeType($file){
     return is_dir($file) ? 'text/directory' : Upload::mime($file);
   }
   
@@ -464,15 +477,14 @@ class FileManager {
     return preg_replace('/(\\\|\/){2,}/', '/', $file);
   }
   
-  protected function getAllowedMimeTypes(){
-    $filter = $this->filter;
+  public function getAllowedMimeTypes($filter = null){
+    $filter = (!$filter ? $this->filter : $filter);
     $mimeTypes = array();
     
     if (!$filter) return null;
     if (!FileManagerUtility::endsWith($filter, '/')) return array($filter);
     
-    static $mimes;
-    if (!$mimes) $mimes = parse_ini_file($this->options['mimeTypesPath']);
+    $mimes = getMimeTypeDefinitions();
     
     foreach ($mimes as $mime)
       if (FileManagerUtility::startsWith($mime, $filter))
@@ -481,6 +493,12 @@ class FileManager {
     return $mimeTypes;
   }
 
+  public function getMimeTypeDefinitions(){
+    static $mimes;
+  
+    if (!$mimes) $mimes = parse_ini_file($this->options['mimeTypesPath']);
+	return $mimes;
+  }
 }
 
 class FileManagerException extends Exception {}
