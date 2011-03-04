@@ -55,30 +55,30 @@ this.Milkbox = new Class({
 		this.loadCheckerId;
 		this.externalGalleries = [];
 		this.singlePageLinkId = 0;
-		
+
 		this.currentIndex;
 		this.currentGallery;
 		this.fileReady;
 		this.loadedImages = [];
 		this.currentFile;
-		
+
 		this.display;
-		
+
 		this.getPageGalleries();
 		if(this.galleries.length != 0){ this.prepare(true); }
 	},
-	
+
 	prepare:function(checkForm){
 		if(checkForm){ this.checkFormElements(); }
 		this.prepareHTML();
 		this.prepareEventListeners();
 		this.activated = true;
 	},
-	
+
 	//utility
 	open:function(gallery,index){
 		if(!this.activated){ this.prepare(true); }
-	
+
 		var i = (index != undefined) ? index : 0;
 		var g = (instanceOf(gallery,MilkboxGallery)) ? gallery : this.getGallery(gallery);
 		if(!g) return;
@@ -86,22 +86,22 @@ this.Milkbox = new Class({
 		this.closed = false;
 		var item = g.get_item(index);
 		if(!item) return;
-		
+
 		this.currentGallery = g;
 		this.currentIndex = index;
-				
+
 		this.hideFormElements();
-		
+
 		this.display.set_mode(this.currentGallery.type);
 		this.display.appear();
-		
-		
+
+
 		if(this.options.autoPlay || g.options.autoplay){ this.startAutoPlay(true); }
 
 		this.loadFile(item,this.getPreloads());
 	},
-	
-	
+
+
 	//utility
 	close:function(hideDisplay){
 		if(hideDisplay){ this.display.disappear(); }
@@ -135,19 +135,19 @@ this.Milkbox = new Class({
 
 		this.paused = false;
 	},
-	
+
 	pauseAutoPlay:function(){
-		if(this.intId){ 
-			clearInterval(this.intId); 
-			this.intId = null; 
+		if(this.intId){
+			clearInterval(this.intId);
+			this.intId = null;
 		}
-		
+
 		this.paused = true;
 	},
-	
+
 	//utility
 	//list:Array of objects or an object > [ { gallery:'gall1', autoplay:true, delay:6 } ]
-	//to permanently define autoplay options for any gallery 
+	//to permanently define autoplay options for any gallery
 	setAutoPlay:function(list){
 		var l = (typeOf(list) == 'object') ? [list] : list;
 		l.each(function(item){
@@ -160,32 +160,32 @@ this.Milkbox = new Class({
 	},
 
 
-	//utility	
+	//utility
 	//{href:'file1.jpg',size:'width:900,height:100', title:'text'}
 	//show a file on the fly without gallery functionalities
 	openWithFile:function(file){
 		var g = new MilkboxGallery([file]);
 		this.open(g,0);
 	},
-	
+
 	getPreloads:function(){
 		var items = this.currentGallery.items;
 		var index = this.currentIndex;
 		if(items.length == 1) return null;
-		
+
 		var next = (index != items.length-1) ? items[index+1] : items[0];
 		var prev = (index != 0) ? items[index-1] : items[items.length-1];
 		var preloads = (prev == next) ? [prev] : [prev,next]; //if gallery.length == 2, then prev == next
-		return preloads;					
+		return preloads;
 	},
-	
+
 	//LOADING
 	loadFile:function(fileObj,preloads){
 
 		this.fileReady = false;
 		this.display.clear_content();
 		this.display.hide_bottom();
-		
+
 		if(this.checkFileType(fileObj,'swf')){
 			this.loadSwf(fileObj);
 		} else if (this.checkFileType(fileObj,'html')){
@@ -193,11 +193,11 @@ this.Milkbox = new Class({
 		} else {//filetype:image
 			this.loadImage(fileObj);
 		}
-		
+
 		if(!this.checkFileType(fileObj,'swf')) this.startLoadingCheck();
 		if(preloads){ this.preloadFiles(preloads); }
 	},
-	
+
 	//to prevent the loader to show if the file is cached
 	startLoadingCheck:function(){
 		var t = 0;
@@ -213,18 +213,18 @@ this.Milkbox = new Class({
 	stopLoadingCheck:function(){
 		clearInterval(this.loadCheckerId);
 	},
-	
+
 	preloadFiles:function(preloads){
 		preloads.each(function(fileObj,index){
-			if(!this.checkFileType(fileObj,"swf") && !this.checkFileType(fileObj,"html")){ 
-				this.preloadImage(fileObj.href); 
+			if(!this.checkFileType(fileObj,"swf") && !this.checkFileType(fileObj,"html")){
+				this.preloadImage(fileObj.href);
 			}
 		},this);
 	},
-	
+
 	preloadImage:function(file){
 		if(!this.loadedImages.contains(file)){
-			var imageAsset = new Asset.image(file, { 
+			var imageAsset = new Asset.image(file, {
 				onLoad:function(){
 					this.loadedImages.push(file);
 				}.bind(this)
@@ -234,7 +234,7 @@ this.Milkbox = new Class({
 
 	loadImage:function(fileObj){
 		var file = fileObj.href;
-		var imageAsset = new Asset.image(file, { 
+		var imageAsset = new Asset.image(file, {
 			onLoad:function(img){
 				if(!this.loadedImages.contains(file)){ this.loadedImages.push(file); };//see next/prev events
 				this.loadComplete(img,fileObj.caption);
@@ -249,17 +249,17 @@ this.Milkbox = new Class({
 			vars:fileObj.vars,
 			params:{ wMode:'opaque', swLiveConnect:'false' }
 		});
-		
+
 		this.loadComplete($(swfObj),fileObj.caption);
 	},
 
 	loadHtml:function(fileObj){
-		
+
 		var query = (fileObj.vars) ? Object.toQueryString(fileObj.vars) : '';
-		
+
 		var iFrame = new Element('iframe',{
 			src:fileObj.href+'?'+query,
-			styles:{ 
+			styles:{
 				'border-style':'solid',
 				'border-width':'0px'
 			}
@@ -271,16 +271,16 @@ this.Milkbox = new Class({
 				'height':fileObj.size.height
 			});
 		}
-		
+
 		this.loadComplete(iFrame,fileObj.caption);
 	},//loadHtml
 
 
 	//LOAD COMPLETE ********//
 	loadComplete:function(file,caption){
-		
+
 		if(this.closed) return;//if an onload event were still running
-		
+
 		this.fileReady = true;//the file is loaded and ready to be showed (see next_prev_aux())
 		this.stopLoadingCheck();
 		this.currentFile = file;
@@ -291,7 +291,7 @@ this.Milkbox = new Class({
 				clearInterval(timer);
 			}
 		}).periodical(100,this);
-		
+
 		this.fireEvent('fileReady');
 	},//end loadComplete
 
@@ -305,7 +305,7 @@ this.Milkbox = new Class({
 	getPageGalleries:function(){
 		var names = [];
 		var links = $$('a[data-milkbox]');
-		
+
 		//check names
 		links.each(function(link){
 			var name = link.get('data-milkbox');
@@ -315,31 +315,31 @@ this.Milkbox = new Class({
 				names.push(name);
 			}
 		},this);
-				
+
 		names.each(function(name){
 			this.galleries.push(new MilkboxGallery($$('a[data-milkbox='+name+']'),{ name:name }));
 		},this);
-		
+
 		//set default autoplay // override with setAutoPlay
 		if(this.options.autoPlay){
 			this.galleries.each(function(g){ g.setOptions({autoplay:this.options.autoPlay,autoplay_delay:this.options.autoPlayDelay}); });
 		}
-		
+
 		//console.log(this.galleries);
 	},//getPageGalleries
 
-	reloadPageGalleries:function(){		
+	reloadPageGalleries:function(){
 		//reload page galleries
 		this.removePageGalleryEvents();
 
 		this.galleries = this.galleries.filter(function(gallery){
 			if(!gallery.external) gallery.clear();
-			return gallery.external; 
+			return gallery.external;
 		});
-		
+
 		this.getPageGalleries();
 		this.addPageGalleriesEvents();
-		
+
 		if(!this.activated){ this.prepare(true); }
 	},//end reloadPageGalleries
 
@@ -365,7 +365,7 @@ this.Milkbox = new Class({
 		}
 		if(!this.activated){ this.prepare(true); }
 	},
-	
+
 	loadXml:function(xmlfile){
 		var r = new Request({
 			method:'get',
@@ -381,49 +381,49 @@ this.Milkbox = new Class({
 			onFailure:function(transport){ alert('Milkbox :: loadXml: XML file path error or local Ajax test: please test xml galleries on-line'); }
 		}).send();
 	},
-	
+
 	setXmlGalleries:function(container){
 		var c = container;
 		var xml_galleries = c.getElements('.gallery');
 		var links;
 		var aplist = [];
 		xml_galleries.each(function(xml_gallery,i){
-						
-			var options = { 
-				name:xml_gallery.getProperty('name'), 
+
+			var options = {
+				name:xml_gallery.getProperty('name'),
 				autoplay:Boolean(xml_gallery.getProperty('autoplay')),
 				autoplay_delay:Number(xml_gallery.getProperty('autoplay_delay'))
 			}
-			
-			var links = xml_gallery.getChildren('a').map(function(tag){ 
+
+			var links = xml_gallery.getChildren('a').map(function(tag){
 				return { href:tag.href, size:tag.get('data-milkbox-size'), title:tag.get('title') }
 			},this);
-			
+
 			this.galleries.push(new MilkboxGallery(links,options));
 		},this);
-			
+
 		this.fireEvent('xmlGalleries');
 	},//end setXmlGalleries
-	
-	//[{ name:'gall1', autoplay:true, autoplay_delay:7, files:[{href:'file1.jpg',size:'width:900,height:100', title:'text'},{href:'file2.html',size:'w:800,h:200', title:'text'}] },{...},{...}]	
+
+	//[{ name:'gall1', autoplay:true, autoplay_delay:7, files:[{href:'file1.jpg',size:'width:900,height:100', title:'text'},{href:'file2.html',size:'w:800,h:200', title:'text'}] },{...},{...}]
 	setObjectGalleries:function(data){
 		var array = (typeOf(data) == 'array') ? data : [data];
 		array.each(function(newobj){
 			var options = {
-				name:newobj.name, 
+				name:newobj.name,
 				autoplay:newobj.autoplay,
 				autoplay_delay:newobj.autoplay_delay
-			}			
+			}
 			this.galleries.push(new MilkboxGallery(newobj.files,options));
 		},this);
 	},
-	
+
 	//utility
 	getGallery:function(name){
 		var g = this.galleries.filter(function(gallery){ return gallery.name == name; },this);
 		return g[0] || null;
 	},
-	
+
 	//HTML
 	prepareHTML:function(){
 		this.display = new MilkboxDisplay({
@@ -452,12 +452,12 @@ this.Milkbox = new Class({
 			return elem;
 		});
 	},
-	
+
 	hideFormElements:function(){
 		if(this.formElements.length == 0) return;
 		this.formElements.each(function(elem){ elem.setStyle('display','none'); });
 	},
-	
+
 	showFormElements:function(){
 		if(this.formElements.length == 0) return;
 		this.formElements.each(function(elem){
@@ -465,7 +465,7 @@ this.Milkbox = new Class({
 			elem.setStyle('display',elem.retrieve('display'));
 		})
 	},
-	
+
 	//EVENTS
 	addPageGalleriesEvents:function(){
 		var pageGalleries = this.galleries.filter(function(gallery){ return !gallery.external });
@@ -478,7 +478,7 @@ this.Milkbox = new Class({
 			},this);
 		},this);
 	},
-	
+
 	removePageGalleryEvents:function(){
 		var pageGalleries = this.galleries.filter(function(gallery){ return !gallery.external });
 		pageGalleries.each(function(gallery){
@@ -489,17 +489,17 @@ this.Milkbox = new Class({
 	},
 
 	prepareEventListeners:function(){
-		
+
 		this.addPageGalleriesEvents();
-	
+
 		this.display.addEvent('nextClick',function(){
 			this.navAux(true,'next');
 		}.bind(this));
-		
+
 		this.display.addEvent('prevClick',function(){
 			this.navAux(true,'prev');
 		}.bind(this));
-		
+
 		this.display.addEvent('playPauseClick',function(){
 			if(this.paused){
 				this.startAutoPlay();
@@ -508,20 +508,20 @@ this.Milkbox = new Class({
 			}
 			this.display.set_paused(this.paused);
 		}.bind(this));
-		
+
 		this.display.addEvent('disappear',function(){
 			this.close(false);
 		}.bind(this));
-		
+
 		this.display.addEvent('resizeComplete',function(){
 			this.busy = false;//see navAux
 		}.bind(this));
-		
+
 		//reset overlay height and position onResize
 		window.addEvent('resize',function(){
 			if(this.display.ready){ this.display.resetOverlaySize(); }
 		}.bind(this));
-		
+
 		//keyboard next/prev/close
 		$(window.document).addEvent('keydown',function(e){
 			if(this.display.mode == 'single' || this.busy == true || this.closed){ return; }
@@ -533,7 +533,7 @@ this.Milkbox = new Class({
 	},
 
 	navAux:function(e,direction){
-				
+
 		if(e){//called from a button/key event
 			this.pauseAutoPlay();
 		} else {//called from autoplay
@@ -541,7 +541,7 @@ this.Milkbox = new Class({
 		}
 
 		this.busy = true; //for keyboard and autoplay
-		
+
 		var i, _i;
 
 		if(direction == "next"){
@@ -549,7 +549,7 @@ this.Milkbox = new Class({
 			_i= (this.currentIndex != this.currentGallery.items.length-1) ? this.currentIndex + 1 : 0;
 		} else {
 			i= (this.currentIndex != 0) ? this.currentIndex -= 1 : this.currentIndex = this.currentGallery.items.length-1;
-			_i= (this.currentIndex != 0) ? this.currentIndex - 1 : this.currentGallery.items.length-1;		
+			_i= (this.currentIndex != 0) ? this.currentIndex - 1 : this.currentGallery.items.length-1;
 		};
 
 		this.loadFile(this.currentGallery.get_item(i),[this.currentGallery.get_item(_i)]);
@@ -568,7 +568,7 @@ this.Milkbox = new Class({
 var MilkboxDisplay= new Class({
 
 	Implements:[Options,Events],
-	
+
 	options:{
 		init_width:100,
 		init_height:100,
@@ -588,10 +588,10 @@ var MilkboxDisplay= new Class({
 		onDisappear:function(){},
 		onResizeComplete:function(){}
 	},
-	
+
 	initialize: function(options){
 		this.setOptions(options);
-		
+
 		this.overlay;
 		this.mainbox;
 		this.filebox;
@@ -604,17 +604,17 @@ var MilkboxDisplay= new Class({
 		this.playpause;
 		this.paused = false;
 		this.count;
-		
+
 		this.mode = 'standard';
 		this.ready = false;//after overlay and mainbox become visible == true
-		
+
 		this.overlay_show_fx;
 		this.overlay_hide_fx;
 
 		this.mainbox_show_fx;
 		this.mainbox_hide_fx;
 		this.mainbox_resize_fx;
-		
+
 		this.current_file = null;
 
 		this.build_html();
@@ -622,9 +622,9 @@ var MilkboxDisplay= new Class({
 		this.prepare_events();
 
 	},//end init
-	
+
 	build_html:function(){
-		this.overlay = new Element('div', { 
+		this.overlay = new Element('div', {
 			'id':'mbox-overlay',
 			'styles':{
 				'visibility':'visible',
@@ -657,21 +657,21 @@ var MilkboxDisplay= new Class({
 				'top':(this.options.centered) ? '50%' : ''
 			}
 		}).inject($(document.body));
-		
+
 		this.filebox = new Element('div#mbox-filebox').inject(this.mainbox);
-		
+
 		this.bottom = new Element('div#mbox-bottom').setStyle('visibility','hidden').inject(this.mainbox);//;
 		this.controls = new Element('div#mbox-controls')//.setStyle('visibility','hidden');
 		this.caption = new Element('div#mbox-caption',{'html':'test'}).setStyle('display','none');
 
 		this.bottom.adopt(new Element('div.mbox-reset'),this.controls, this.caption, new Element('div.mbox-reset'));
-		
+
 		this.close = new Element('div#mbox-close');
 		this.next = new Element('div#mbox-next');
 		this.prev = new Element('div#mbox-prev');
 		this.playpause = new Element('div#mbox-playpause');
 		this.count = new Element('div#mbox-count');
-		
+
 		//$$(this.next, this.prev, this.count, this.playpause).setStyle('display','none');
 		$$(this.next, this.prev, this.close, this.playpause).setStyles({
 			'outline':'none',
@@ -680,9 +680,9 @@ var MilkboxDisplay= new Class({
 
 		this.controls.adopt(new Element('div.mbox-reset'), this.close, this.next, this.prev, this.playpause, new Element('div.mbox-reset'), this.count);
 	},
-	
+
 	prepare_effects:function(){
-		this.overlay_show_fx = new Fx.Tween(this.overlay,{ 
+		this.overlay_show_fx = new Fx.Tween(this.overlay,{
 				duration:'short',
 				link:'cancel',
 				property:'opacity',
@@ -700,7 +700,7 @@ var MilkboxDisplay= new Class({
 				}.bind(this)
 		});
 
-		this.overlay_hide_fx = new Fx.Tween(this.overlay,{ 
+		this.overlay_hide_fx = new Fx.Tween(this.overlay,{
 				duration:'short',
 				link:'cancel',
 				property:'opacity',
@@ -709,8 +709,8 @@ var MilkboxDisplay= new Class({
 					this.overlay.setStyle('display','none');
 				}.bind(this)
 		});
-		
-		this.mainbox_show_fx = new Fx.Tween(this.mainbox,{ 
+
+		this.mainbox_show_fx = new Fx.Tween(this.mainbox,{
 				duration:'short',
 				link:'cancel',
 				property:'opacity',
@@ -724,7 +724,7 @@ var MilkboxDisplay= new Class({
 				}.bind(this)
 		});
 
-		this.mainbox_hide_fx = new Fx.Tween(this.mainbox,{ 
+		this.mainbox_hide_fx = new Fx.Tween(this.mainbox,{
 				duration:'short',
 				link:'cancel',
 				property:'opacity',
@@ -735,9 +735,9 @@ var MilkboxDisplay= new Class({
 					this.overlay.setStyle('display','none');
 				}.bind(this)
 		});
-		
-		
-		this.mainbox_resize_fx = new Fx.Morph(this.mainbox,{ 
+
+
+		this.mainbox_resize_fx = new Fx.Morph(this.mainbox,{
 				duration:this.options.resize_duration*1000,
 				transition:this.options.resize_transition,
 				link:'cancel',
@@ -751,10 +751,10 @@ var MilkboxDisplay= new Class({
 					this.fireEvent('resizeComplete');
 				}.bind(this)
 		});
-		
+
 		this.filebox.set('tween',{ duration:'short', link:'chain' });
 	},//end prepare_effects
-	
+
 	prepare_events:function(){
 		$$(this.overlay,this.close).addEvent('click', function(){ this.disappear(); }.bind(this));
 		this.prev.addEvent('click',function(){ this.fireEvent('prevClick') }.bind(this));
@@ -766,7 +766,7 @@ var MilkboxDisplay= new Class({
 
 		//this.clear_display();
 		this.hide_loader();
-		
+
 		if(file.match && file.match('img') && (this.options.auto_size || this.options.centered)){
 			var file = this.get_resized_image(file);
 		};
@@ -774,13 +774,13 @@ var MilkboxDisplay= new Class({
 		var file_size = { w:file.width.toInt(), h:file.height.toInt() };
 		if(!file_size.w || !file_size.h){ alert('Milkbox error: you must pass size values if the file is swf or html or a free file (openWithFile)'); return; }//data-milkbox-size not passed
 		file_size = Object.map(file_size,function(value){ return value.toInt(); });
-		
+
 		this.caption.innerHTML = (caption) ? caption : '';
 		this.update_count(index,length);
-		
+
 		var filebox_addsize = this.filebox.getStyle('border-width').toInt()*2+this.filebox.getStyle('padding').toInt()*2;
 		var final_w = file_size.w+filebox_addsize;
-		
+
 		//so now I can predict the caption height
 		var caption_adds = this.caption.getStyles('paddingRight','marginRight');
 		this.caption.setStyle('width',final_w-caption_adds.paddingRight.toInt()-caption_adds.marginRight.toInt());
@@ -788,14 +788,14 @@ var MilkboxDisplay= new Class({
 		var mainbox_size = this.mainbox.getComputedSize();
 
 		var final_h = file_size.h+filebox_addsize+this.bottom.getComputedSize().totalHeight;
-		
-		var target_size = { 
+
+		var target_size = {
 			w:final_w,
 			h:final_h,
 			total_w:final_w+mainbox_size.totalWidth-mainbox_size.width,
 			total_h:final_h+mainbox_size.totalHeight-mainbox_size.height
 		}
-		
+
 		this.current_file = file;
 		this.resize_to(target_size);
 	},//show_file
@@ -806,13 +806,13 @@ var MilkboxDisplay= new Class({
 		var max_size;
 		var ratio;
 		var check;
-		
+
 		var i_size = { w:image.get('width').toInt(), h:image.get('height').toInt() };
-		
+
 		//cut out some pixels to make it better
 		var w_size = window.getSize();
-		var max_size = { 
-			w:w_size.x-60, 
+		var max_size = {
+			w:w_size.x-60,
 			h:w_size.y-68-this.options.margin_top*2
 		};
 
@@ -825,21 +825,21 @@ var MilkboxDisplay= new Class({
 			ratio = max_dim/i_size.h;
 			check = 'w';
 		}
-		
+
 		ratio = (ratio <= 1) ? ratio : 1;
-		
+
 		i_size = Object.map(i_size,function(value){ return Math.floor(value*ratio); });
-		
+
 		ratio = (max_size[check]/i_size[check] <= 1) ? max_size[check]/i_size[check] : 1;
 		i_size = Object.map(i_size,function(value){ return Math.floor(value*ratio); });
-		
+
 		if(this.options.autosize_max_height > 0){
 			ratio = (this.options.autosize_max_height/i_size.height < 1) ? this.options.autosize_max_height/i_size.height : 1;
 			i_size = Object.map(i_size,function(value){ return Math.floor(value*ratio); });
 		}
 
 		image.set({ 'width':i_size.w, 'height':i_size.h });
-		
+
 		return image;
 	},//get_resized_image
 
@@ -851,11 +851,11 @@ var MilkboxDisplay= new Class({
 			'marginTop':(this.options.centered) ? -(target_size.total_h/2).round() : ''
 		});
 	},
-	
+
 	show_loader:function(){
 		this.mainbox.addClass('mbox-loading');
 	},
-	
+
 	hide_loader:function(){
 		this.mainbox.removeClass('mbox-loading');
 	},
@@ -866,7 +866,7 @@ var MilkboxDisplay= new Class({
 		this.count.empty();
 		$$(this.bottom,this.controls).setStyle('height','');
 	},
-	
+
 	hide_bottom:function(){
 		this.caption.setStyle('display','none');
 		this.bottom.setStyle('visibility','hidden');
@@ -876,15 +876,15 @@ var MilkboxDisplay= new Class({
 		this.caption.setStyle('display','block');
 		this.bottom.setStyle('visibility','visible');
 	},
-	
+
 	appear:function(){
 		if(!this.options.centered){ this.mainbox.setStyle('top',$(window).getScroll().y+this.options.margin_top); }
 		this.overlay_show_fx.start(this.options.overlay_opacity);
 	},
-	
+
 	disappear:function(){
 		this.cancel_effects();
-		
+
 		this.current_file = null;
 		this.ready = false;
 		this.mode = 'standard';
@@ -895,10 +895,10 @@ var MilkboxDisplay= new Class({
 		this.count.empty();
 		this.caption.setStyle('display','none').empty();
 		this.bottom.setStyle('visibility','hidden');
-		
+
 		//TODO anche opacity a 0 se si usa un tween per il file
 		this.filebox.setStyle('height','').empty();
-		
+
 		this.mainbox.setStyles({
 			'opacity':0,
 			'display':'none',
@@ -908,12 +908,12 @@ var MilkboxDisplay= new Class({
 			'marginTop':(this.options.centered) ? -(this.options.init_height/2) : '',
 			'top':(this.options.centered) ? '50%' : ''
 		});
-		
+
 		this.overlay_hide_fx.start(0);
-		
+
 		this.fireEvent('disappear');
 	},//end disappear
-	
+
 	cancel_effects:function(){
 		[this.mainbox_resize_fx,
 		this.mainbox_hide_fx,
@@ -922,16 +922,16 @@ var MilkboxDisplay= new Class({
 		this.overlay_show_fx
 		].each(function(fx){ fx.cancel(); });
 	},
-	
+
 	set_mode:function(gallery_type){
- 		
+
 		this.mode = gallery_type;
 		var close_w = this.close.getComputedSize().width;
 		var prev_w = this.prev.getComputedSize().width;
 		var next_w = this.next.getComputedSize().width;
 		var playpause_w = this.playpause.getComputedSize().width;
 		var offset = this.mainbox.getStyle('border-right-width').toInt();//for design purposes
-		
+
 		switch(gallery_type){
 			case 'autoplay':
 				$$(this.playpause,this.close,this.next,this.prev,this.count).setStyle('display','block');
@@ -949,26 +949,26 @@ var MilkboxDisplay= new Class({
 			default:
 				return;
 		}
-	
+
 		this.caption.setStyle('margin-right',this.controls.getComputedSize().totalWidth);
 	},//end set_mode
-	
+
 	set_paused:function(paused){
 		this.paused = paused;
 		var pos = (this.paused) ? '0 -66px' : '';
 		this.playpause.setStyle('background-position',pos);
 	},
-	
+
 	update_count:function(index,length){
 		this.count.set('text',index+' '+this.options.image_of_text+' '+length);
 	},
-	
+
 	resetOverlaySize:function(){
 		if(this.overlay.getStyle('opacity') == 0){ return; };//resize only if visible
 		var h = $(window).getSize().y;
 		this.overlay.setStyles({ 'height':h });
 	}
-	
+
 });//END
 
 
@@ -976,7 +976,7 @@ var MilkboxDisplay= new Class({
 
 
 //Class: MilkboxGallery
-//args: source,options 
+//args: source,options
 //	*source: element, elements, array
 //	*options: name, autoplay, autoplay_delay
 
@@ -991,9 +991,9 @@ var MilkboxGallery = new Class({
 	},
 
 	initialize:function(source,options){
-		
+
 		this.setOptions(options);
-		
+
 		this.source = source;
 		this.external = false;
 		this.items = null;
@@ -1019,7 +1019,7 @@ var MilkboxGallery = new Class({
 				return;
 		}
 	},
-	
+
 	//turns everything into an object
 	prepare_elements:function(){
 		//console.log('items gallery', this.items);
@@ -1032,28 +1032,28 @@ var MilkboxGallery = new Class({
 			output.size = null;
 			output.caption = (output.element) ? output.element.get('title') : item.title;
 			var size_string = (output.element) ? output.element.get('data-milkbox-size') : item.size;
-			if(size_string){ output.size = Object.map(this.get_item_props(size_string),function(value,key){ return value.toInt(); }); }			
+			if(size_string){ output.size = Object.map(this.get_item_props(size_string),function(value,key){ return value.toInt(); }); }
 			return output;
 		},this);
-		
+
 		if(this.items.length == 0) return;
-		
+
 		this.type = (this.items.length == 1) ? 'single' : (this.options.autoplay) ? 'autoplay' : 'standard';
 	},
-	
+
 	check_extension:function(string){
 		return string.split('?')[0].test(/\.(gif|jpg|jpeg|png|swf|html)$/i);
 	},
-	
+
 	get_index_of:function(item){
 		var index = (typeOf(item) == 'string') ? this.items.indexOf(this.items.filter(function(i){ i.href == item })[0]) : this.items.indexOf(item);
 		return this.items.indexOf(item);
 	},
-	
+
 	get_item:function(index){
 		return this.items[index];
 	},
-	
+
 	get_item_props:function(prop_string){
 		var props = {};
 		var s = prop_string.split(',').each(function(p,i){
@@ -1062,11 +1062,11 @@ var MilkboxGallery = new Class({
 		},this);
 		return props;
 	},
-	
+
 	refresh:function(){
 		this.type = (this.items.length == 1) ? 'single' : (this.options.autoplay) ? 'autoplay' : 'standard';
 	},
-	
+
 	clear:function(){
 		this.source = null;
 		this.items = null;
@@ -1077,6 +1077,6 @@ var MilkboxGallery = new Class({
 
 
 //Creating Milkbox instance: you can comment this code and instantiate Milkbox somewhere else instead.
-window.addEvent('domready', function(){ 
+window.addEvent('domready', function(){
 	milkbox = new Milkbox({ centered:false });
 });
