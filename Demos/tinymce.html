@@ -87,7 +87,16 @@
 					assetBasePath: '../Assets',
 					language: 'de',
 					selectable: true,
-					uploadAuthData: {session: 'MySessionId'}
+          destroy: true,
+          upload: true,
+          rename: true,
+          download: true,
+          createFolders: true,
+          hideClose: false,
+          hideOverlay: false,
+					uploadAuthData: {
+						session: 'MySessionId'
+					}
 				};
 			})
 		});

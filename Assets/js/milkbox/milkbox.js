@@ -630,6 +630,7 @@ var MilkboxDisplay= new Class({
 				'visibility':'visible',
 				'position':'fixed',
 				'display':'none',
+				'z-index':410000,  // required to be a high number > 400000 as the 'filemanager as tinyMCE plugin' sits at z-index 400K+
 				'left':0,
 				'width':'100%',
 				'opacity':0,
@@ -646,7 +647,7 @@ var MilkboxDisplay= new Class({
 				'position':(this.options.centered) ? 'fixed' : 'absolute',
 				'overflow':'hidden',
 				'display':'none',
-				'z-index':10000,
+				'z-index':410001,   // required to be > overlay.z-index
 				'width':this.options.init_width,
 				'height':this.options.init_height,
 				'opacity':0,

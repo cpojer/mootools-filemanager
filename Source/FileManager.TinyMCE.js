@@ -29,8 +29,10 @@ FileManager.TinyMCE = function(options){
     }, options(type)));
     manager.dragZIndex = 400002;
     manager.SwiffZIndex = 400003;
+    manager.filemanager.setStyle('width','100%');
+    manager.filemanager.setStyle('height','95%');
     manager.filemanager.setStyle('zIndex', 400001);
-    manager.overlay.el.setStyle('zIndex', 400000);
+    if (manager.overlay) manager.overlay.el.setStyle('zIndex', 400000); // i.e. only do this when FileManager settings has 'hideOverlay: false' (default)
     document.id(manager.tips).setStyle('zIndex', 400010);
     manager.show();
     return manager;
@@ -40,13 +42,13 @@ FileManager.TinyMCE = function(options){
 FileManager.implement('SwiffZIndex', 400003);
 
 var Dialog = new Class({
-  
+
   Extends: Dialog,
-  
+
   initialize: function(text, options){
     this.parent(text, options);
     this.el.setStyle('zIndex', 400010);
     this.overlay.el.setStyle('zIndex', 400009);
   }
-  
+
 });
