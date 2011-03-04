@@ -1,4 +1,4 @@
-&.bak
+*.bak
 *~
 Demos/Files/*
 Assets/Thumbs/*
