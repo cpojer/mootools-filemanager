@@ -264,7 +264,7 @@ class FileManager {
     $file = $this->getName($this->post['file'], $this->getDir($this->post['directory']));
     if (!$file) return;
     
-    mkdir($file,$this->options['chmod']);
+    @mkdir($file,$this->options['chmod']);
     
     $this->onView();
   }
@@ -354,9 +354,10 @@ class FileManager {
     if($rename || $is_dir){
       if (empty($this->post['name'])) return;
       $newname = $this->getName($this->post['name'], $dir);
-      $fn = 'rename';
-      if(!$is_dir && file_exists(FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'].$this->generateThumbName($file)))
-        unlink(FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'].$this->generateThumbName($file));
+      $fn = 'rename';            
+      $tnfn = FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'].$this->generateThumbName($file);
+      if(!$is_dir && file_exists($tnfn))
+        @unlink($tnfn);
     } else {
       $newname = $this->getName(pathinfo($file, PATHINFO_FILENAME), $this->getDir($this->post['newDirectory']));
       $fn = !empty($this->post['copy']) ? 'copy' : 'rename';
@@ -367,7 +368,7 @@ class FileManager {
     $extOld = pathinfo($file, PATHINFO_EXTENSION);
     $extNew = pathinfo($newname, PATHINFO_EXTENSION);
     if ($extOld != $extNew) $newname .= '.' . $extOld;
-    $fn($file, $newname);
+    @$fn($file, $newname);
     
     echo json_encode(array(
       'name' => pathinfo($this->normalize($newname), PATHINFO_BASENAME),
