@@ -174,11 +174,13 @@ class Image {
 	 * Resizes the image to the given size, automatically calculates
 	 * the new ratio if parameter {@link $ratio} is set to true
 	 *
-	 * @param int $x
-	 * @param int $y
-	 * @param bool $ratio
+	 * @param int $x the maximum width after resizing has been done
+	 * @param int $y the maximum height after resizing has been done
+	 * @param bool $ratio set to FALSE if the image ratio is solely to be determined
+	 *                    by the $x and $y parameter values; when TRUE (the default)
+	 *                    the resize operation will keep the image aspect ratio intact
 	 * @param bool $resizeWhenSmaller if FALSE the images will not be resized when already smaller, if TRUE the images will always be resized
-	 * @return false|resource Image resource or fals, if it couldnt be resized
+	 * @return false|resource Image resource or false, if it couldn't be resized
 	 */
 	public function resize($x = null, $y = null, $ratio = true, $resizeWhenSmaller = true){
 		if(empty($this->image) || (empty($x) && empty($y))) return false;
@@ -193,10 +195,10 @@ class Image {
       //echo 'BEGINN: <br>'.$this->meta['width'].'x'."<br>".$this->meta['height'].'y'."<br><br>"; 
         // -> align to WIDTH
         if(!empty($x) && ($x < $this->meta['width'] || $resizeWhenSmaller))
-          $y = round($x / $ratioX);
+          $y = $x / $ratioX;
         // -> align to HEIGHT
         elseif(!empty($y) && ($y < $this->meta['height'] || $resizeWhenSmaller))
-          $x = round($y / $ratioY);
+          $x = $y / $ratioY;
         else {
           $y = $this->meta['height'];
           $x = $this->meta['width'];
@@ -206,21 +208,24 @@ class Image {
       if((!empty($yStart) && $y > $yStart) || (!empty($xStart) && $x > $xStart)) {
         if($y > $yStart) {
           $y = $yStart;
-          $x = round($y / $ratioY);
+          $x = $y / $ratioY;
         } elseif($x > $xStart) {
           $x = $xStart;
-          $y = round($x / $ratioX);
+          $y = $x / $ratioX;
         }
       }
-    // ->> DONT keep the RATIO (but keep ration when, only width OR height is set)
+    // ->> DONT keep the RATIO (but keep ration when only width OR height is set)
     } else {
       // RATIO X
       if(!empty($y) && empty($x) && ($y < $this->meta['height'] || $resizeWhenSmaller))
-        $x = round($y / $ratioX);
+        $x = $y / $ratioX;
       // RATIO Y
       elseif(empty($y) && !empty($x) && ($x < $this->meta['width'] || $resizeWhenSmaller))
-        $y = round($x / $ratioY);
+        $y = $x / $ratioY;
     }
+    $x = round($x);
+    $y = round($y);
+    
 		//echo 'END: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
 		
 		$new = $this->create($x, $y);
