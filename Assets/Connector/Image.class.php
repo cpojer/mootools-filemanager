@@ -43,24 +43,43 @@ class Image {
 	 */
 	public function __construct($file){
 	  ini_set('memory_limit', '64M'); //  handle large images
-	  
-	  $file = str_replace('\\','/',$file);
-    $file = preg_replace('#/+#','/',$file);
-    $file = str_replace($_SERVER['DOCUMENT_ROOT'],'',$file);
-	  $file = $_SERVER['DOCUMENT_ROOT'].$file;
-		$file = realpath($file);
-    if(!file_exists($file))
-			return;
-		
+
+		$finfo = self::guestimateRequiredMemorySpace($file);
+		$file = $finfo['path'];
+
+		// is it a valid file existing on disk?
+		if (!isset($finfo['imageinfo']))
+			throw new Exception('corrupt image or not an image file at all');
+
 		$this->file = $file;
-		$img = getimagesize($file);
-		
-		/*
-		echo basename($file)."\n";
-		var_dump(filesize($file));
-		$this->showMemoryUsage();
-    echo "\n";
-    */
+		$img = $finfo['imageinfo'];
+
+		if (0)
+		{
+			$finfostr = '';
+			foreach($finfo as $k => $v)
+			{
+				if (is_array($v))
+				{
+					$s = "  '$k' => [\n";
+					foreach($v as $k2 => $v2)
+					{
+						$s .= "    '$k2' => '$v2'\n";
+					}
+					$s .= "  ]\n";
+				}
+				else
+				{
+					$s = "  '$k' => '$v'\n";
+				}
+				$finfostr .= $s;
+			}
+			echo sprintf("(%s, %s, %d, %s, %s)\n", __FUNCTION__, __FILE__, __LINE__, $file, $finfostr);
+		}
+
+		// and will it fit in available memory if we go and load the bugger?
+		if (!$finfo['will_fit'])
+			throw new Exception('image does not fit in available RAM; minimum required (estimate): ' . round(($finfo['usage_min_advised'] + 9.9E5) / 1E6) . ' MByte');
 
 		$explarr = explode('/', $img['mime']); // make sure the end() call doesn't throw an error next in E_STRICT mode:
 		$ext_from_mime = end($explarr);
@@ -74,16 +93,22 @@ class Image {
 		if($this->meta['ext']=='jpg')
 			$this->meta['ext'] = 'jpeg';
 		if(!in_array($this->meta['ext'], array('gif', 'png', 'jpeg')))
-			return;
-		
+			throw new Exception('unsupported image format (' . $this->meta['ext'] . ')');
+
 		if(in_array($this->meta['ext'], array('gif', 'png'))){
 			$this->image = $this->create();
 
 			$fn = 'imagecreatefrom'.$this->meta['ext'];
-			$original = $fn($file);
-			imagecopyresampled($this->image, $original, 0, 0, 0, 0, $this->meta['width'], $this->meta['height'], $this->meta['width'], $this->meta['height']);
+			$original = @$fn($file);
+			if (!$original) throw new Exception('imagecreate_failed');
+
+			if (!@imagecopyresampled($this->image, $original, 0, 0, 0, 0, $this->meta['width'], $this->meta['height'], $this->meta['width'], $this->meta['height']))
+				throw new Exception('cvt2truecolor_failed: ' . $this->meta['width'] . ' x ' . $this->meta['height']);
+			imagedestroy($original);
+			unset($original);
 		} else {
-			$this->image = imagecreatefromjpeg($file);
+			$this->image = @imagecreatefromjpeg($file);
+			if (!$this->image) throw new Exception('imagecreate_failed');
 		}
 	}
 
@@ -214,11 +239,15 @@ class Image {
 		if(!$x) $x = $this->meta['width'];
 		if(!$y) $y = $this->meta['height'];
 
-		$image = imagecreatetruecolor($x, $y);
+		$image = @imagecreatetruecolor($x, $y);
+		if (!$image) throw new Exception('imagecreatetruecolor_failed');
 		if(!$ext) $ext = $this->meta['ext'];
 		if($ext=='png'){
-			imagealphablending($image, false);
-			imagefilledrectangle($image, 0, 0, $x, $y, imagecolorallocatealpha($image, 0, 0, 0, 127));
+			if (!@imagealphablending($image, false))
+				throw new Exception('imagealphablending_failed');
+			$alpha = @imagecolorallocatealpha($image, 0, 0, 0, 127);
+			if (!$alpha) throw new Exception('imageallocalpha50pctgrey_failed');
+			imagefilledrectangle($image, 0, 0, $x, $y, $alpha);
 		}
 
 		return $image;
@@ -265,7 +294,12 @@ class Image {
 	public function rotate($angle, $bgcolor = null){
 		if(empty($this->image) || !$angle || $angle>=360) return $this;
 
-		$this->set(imagerotate($this->image, $angle, is_array($bgcolor) ? imagecolorallocatealpha($this->image, $bgcolor[0], $bgcolor[1], $bgcolor[2], !empty($bgcolor[3]) ? $bgcolor[3] : null) : $bgcolor));
+		$alpha = (is_array($bgcolor) ? @imagecolorallocatealpha($this->image, $bgcolor[0], $bgcolor[1], $bgcolor[2], !empty($bgcolor[3]) ? $bgcolor[3] : null) : $bgcolor);
+		if (!$alpha) throw new Exception('imagecolorallocatealpha_failed');
+		$img = @imagerotate($this->image, $angle, $alpha);
+		if (!$img) throw new Exception('imagerotate_failed');
+		$this->set($img);
+		unset($img);
 
 		return $this;
 	}
@@ -279,8 +313,9 @@ class Image {
 	 * @param bool $ratio set to FALSE if the image ratio is solely to be determined
 	 *                    by the $x and $y parameter values; when TRUE (the default)
 	 *                    the resize operation will keep the image aspect ratio intact
-	 * @param bool $resizeWhenSmaller if FALSE the images will not be resized when already smaller, if TRUE the images will always be resized
-	 * @return false|resource Image resource or false, if it couldn't be resized
+	 * @param bool $resizeWhenSmaller if FALSE the images will not be resized when
+	 *                    already smaller, if TRUE the images will always be resized
+	 * @return resource Image resource on success; throws an exception on failure
 	 */
 	public function resize($x = null, $y = null, $ratio = true, $resizeWhenSmaller = true){
 		if(empty($this->image) || (empty($x) && empty($y))) return false;
@@ -328,14 +363,22 @@ class Image {
 
 		//echo 'END: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
 
+		// speedup? only do the resize operation when it must happen:
+		if ($x != $this->meta['width'] || $y != $this->meta['height'])
+		{
 			$new = $this->create($x, $y);
-			if(imagecopyresampled($new, $this->image, 0, 0, 0, 0, $x, $y, $this->meta['width'], $this->meta['height'])) {
+			if(@imagecopyresampled($new, $this->image, 0, 0, 0, 0, $x, $y, $this->meta['width'], $this->meta['height'])) {
 				$this->set($new);
+				unset($new);
+			}
 			return $this;
-  	} else
-  	 return false;
+		}
+		else
+		{
+			throw new Exception('imagecopyresampled_failed');
+		}
 	}
-	
+
 	/**
 	 * Crops the image. The values are given like margin/padding values in css
 	 *
@@ -373,14 +416,18 @@ class Image {
 		if($x<0 || $y<0) return $this;
 
 		$new = $this->create($x, $y);
-		imagecopy($new, $this->image, 0, 0, $left, $top, $x, $y);
+		if (!@imagecopy($new, $this->image, 0, 0, $left, $top, $x, $y))
+			throw new Exception('imagecopy_failed');
+
 		$this->set($new);
+		unset($new);
 
 		return $this;
 	}
 
 	/**
-	 * Flips the image horizontally or vertically. To Flip both just use ->rotate(180)
+	 * Flips the image horizontally or vertically. To Flip both copy multiple single pixel strips around instead
+	 * of just using ->rotate(180): no image distortion this way.
 	 *
 	 * @see Image::rotate()
 	 * @param string $type Either horizontal or vertical
@@ -392,13 +439,24 @@ class Image {
 		$new = $this->create();
 
 		if($type=='horizontal')
+		{
 			for($x=0;$x<$this->meta['width'];$x++)
-				imagecopy($new, $this->image, $this->meta['width']-$x-1, 0, $x, 0, 1, $this->meta['height']);
+			{
+				if (!@imagecopy($new, $this->image, $this->meta['width']-$x-1, 0, $x, 0, 1, $this->meta['height']))
+					throw new Exception('imageflip_failed');
+			}
+		}
 		elseif($type=='vertical')
+		{
 			for($y=0;$y<$this->meta['height'];$y++)
-				imagecopy($new, $this->image, 0, $this->meta['height']-$y-1, 0, $y, $this->meta['width'], 1);
-		
+			{
+				if (!@imagecopy($new, $this->image, 0, $this->meta['height']-$y-1, 0, $y, $this->meta['width'], 1))
+					throw new Exception('imageflip_failed');
+			}
+		}
+
 		$this->set($new);
+		unset($new);
 
 		return $this;
 	}
@@ -408,28 +466,34 @@ class Image {
 	 *
 	 * @param string $ext
 	 * @param string $file
+	 * @param int $quality the amount of lossy compression to apply to the saved file
+	 * @return Image object
 	 */
-	public function process($ext = null, $file = null){
-	  if(!empty($this->image)) {
+	public function process($ext = null, $file = null, $quality = 100){
+		if(empty($this->image)) return $this;
+
 		if(!$ext) $ext = $this->meta['ext'];
-  		if($ext=='jpg')	$ext = 'jpeg';
+		if($ext=='jpg') $ext = 'jpeg';
 		if($ext=='png') imagesavealpha($this->image, true);
 
 		if($file == null)
 		  $file = $this->file;
+		if(!$file) throw new Exception('process_nofile');
 
 		$fn = 'image'.$ext;
 		if($ext == 'jpeg')
-  		  $fn($this->image, $file,100);
+		  $rv = @$fn($this->image, $file, $quality);
+		elseif($ext == 'png')
+		  $rv = @$fn($this->image, $file, 9); // PNG is lossless: always maximum compression!
 		else
-  		  $fn($this->image, $file);
-  		  
+		  $rv = @$fn($this->image, $file);
+		if (!$rv)
+		  throw new Exception($fn . '_failed');
 
 		// If there is a new filename change the internal name too
-  		if($file) $this->file = $file;
-  		return true;
-		} else
-		  return false;
+		$this->file = $file;
+
+		return $this;
 	}
 
 	/**
@@ -454,13 +518,11 @@ class Image {
 		if(!in_array($ext, array('png', 'jpeg', 'gif')))
 			return $this;
 
-		$this->process($ext, $file);
-		
-		return $this;
+		return $this->process($ext, $file);
 	}
 
 	/**
-	 * Outputs the manipulated image
+	 * Outputs the manipulated image. Implicitly overwrites the old one on disk.
 	 *
 	 * @return Image
 	 */
@@ -468,8 +530,6 @@ class Image {
 		if(empty($this->image)) return $this;
 
 		header('Content-type: '.$this->meta['mime']);
-		$this->process();
-		
-		return $this;
+		return $this->process();
 	}
 }
