@@ -669,6 +669,7 @@ class FileManagerUtility
   public static function getSiteRoot()
   {
     $path = str_replace('\\','/',$_SERVER['DOCUMENT_ROOT']);
+    $path = (FileManagerUtility::endsWith($path,'/')) ? substr($path, 0, -1) : $path;
 
     return $path;
   }
@@ -683,9 +684,10 @@ class FileManagerUtility
    */
   public static function getRequestPath()
   {
-    $path = str_replace('\\','/',(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : $_SERVER['PHP_SELF']));
+    // see also: http://php.about.com/od/learnphp/qt/_SERVER_PHP.htm
+    $path = str_replace('\\','/', $_SERVER['SCRIPT_NAME']);
     $root = FileManagerUtility::getSiteRoot();
-    $path = (!FileManagerUtility::startsWith($path, $root) ? $root . $path : $path);
+    $path = dirname(!FileManagerUtility::startsWith($path, $root) ? $root . (!FileManagerUtility::startsWith($path, '/') ? '/' : '') . $path : $path);
     $path = (FileManagerUtility::endsWith($path,'/')) ? substr($path, 0, -1) : $path;
 
     return $path;
