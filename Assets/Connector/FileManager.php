@@ -579,7 +579,7 @@ class FileManager {
     if (!$filter) return null;
     if (!FileManagerUtility::endsWith($filter, '/')) return array($filter);
 
-    $mimes = getMimeTypeDefinitions();
+    $mimes = $this->getMimeTypeDefinitions();
 
     foreach ($mimes as $mime)
       if (FileManagerUtility::startsWith($mime, $filter))
@@ -592,6 +592,7 @@ class FileManager {
     static $mimes;
 
     if (!$mimes) $mimes = parse_ini_file($this->options['mimeTypesPath']);
+    if (!$mimes) $mimes = array(); // prevent faulty mimetype ini file from b0rking other code sections.
     return $mimes;
   }
 }
