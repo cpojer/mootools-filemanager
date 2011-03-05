@@ -30,7 +30,8 @@ class Upload {
 			'chmod' => 0777,
 			'overwrite' => false,
 			'mimes' => array(),
-		), $options);
+			'ext2mime_map' => null
+		), (is_array($options) ? $options : array()));
 		
 		$file = $_FILES[$file];
 		
@@ -46,7 +47,7 @@ class Upload {
 			$mime = self::mime($file['tmp_name'], array(
 				'default' => $file['type'],
 				'extension' => $pathinfo['extension'],
-			));
+			), $options['ext2mime_map']);
 			
 			if(!$mime || !in_array($mime, $options['mimes']))
 				throw new UploadException('extension');
@@ -85,12 +86,15 @@ class Upload {
 	 *
 	 * @param string $file
 	 * @param array $options
+	 * @param array $ext2mimetype_arr optional externally specified array for mapping file extensions
+	 *                                to mime types. May be specified as a temporary alternative to
+	 *                                using the local MimeTypes.ini file.
 	 */
-	public static function mime($file, $options = array()){
+	public static function mime($file, $options = array(), $ext2mimetype_arr = null){
 		$file = realpath($file);
 		$options = array_merge(array(
-			'default' => null,
-			'extension' => strtolower(pathinfo($file, PATHINFO_EXTENSION)),
+				'default' => null,
+				'extension' => strtolower(pathinfo($file, PATHINFO_EXTENSION)),
 		), $options);
 		
 		$mime = null;
@@ -110,15 +114,17 @@ class Upload {
 		if(!$mime && $options['default']) $mime = $options['default'];
 		
 		if((!$mime || $mime=='application/octet-stream') && $options['extension']){
-			static $mimes;
-			if(!$mimes) $mimes = parse_ini_file(pathinfo(__FILE__, PATHINFO_DIRNAME).'/MimeTypes.ini');
+			if (!is_array($ext2mimetype_arr)){
+				static $mimes;
+				if(!$mimes) $mimes = parse_ini_file(pathinfo(__FILE__, PATHINFO_DIRNAME).'/MimeTypes.ini');
+				$ext2mimetype_arr = $mimes;
+			}
 			
-			if(!empty($mimes[$options['extension']])) return $mimes[$options['extension']];
+			if(!empty($ext2mimetype_arr[$options['extension']])) return $ext2mimetype_arr[$options['extension']];
 		}
 		
 		return $mime;
 	}
-	
 }
 
 class UploadException extends Exception {}
