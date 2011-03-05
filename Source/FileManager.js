@@ -635,6 +635,14 @@ var FileManager = new Class({
 
     this.CurrentPath = this.root + this.Directory;
     var text = [], pre = [];
+	// on error reported by backend, there WON'T be a JSON 'root' element at all times:
+	//
+	// TODO: how to handle that error condition correctly?
+	if (!j.root)
+	{
+		new Dialog(('${error}: ' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+		return;
+	}
     var rootPath = j.root.slice(0,-1).split('/');
     rootPath.pop();
     this.CurrentPath.split('/').each(function(folderName){

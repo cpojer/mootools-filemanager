@@ -5,8 +5,8 @@ Script: FileManager.php
 
 Authors:
  - Christoph Pojer (http://cpojer.net) (author)
- - James Ehly (http://www.devtrench.com) 
- - Fabian Vogelsteller (http://frozeman.de) 
+ - James Ehly (http://www.devtrench.com)
+ - Fabian Vogelsteller (http://frozeman.de)
 
 License:
   MIT-style license.
