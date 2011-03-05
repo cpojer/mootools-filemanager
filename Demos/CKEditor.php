@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta http-equiv="content-language" content="<?php echo $_GET['langCode']; ?>" />
   
-  <title>MooTools FileManger CKEditor example</title>
+  <title>MooTools FileManager CKEditor example</title>
   
   <!-- thirdparty/MooTools -->
   <script type="text/javascript" src="mootools-core-1.3.js"></script>
