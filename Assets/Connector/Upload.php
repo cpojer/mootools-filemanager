@@ -77,7 +77,7 @@ class Upload {
 	 * @return bool
 	 */
 	public static function exists($file){
-		return !(empty($_FILES[$file]['name']) || empty($_FILES[$file]['size']));
+		return isset($_FILES) && !empty($_FILES[$file]) && !empty($_FILES[$file]['name']) && !empty($_FILES[$file]['size']);
 	}
 	
 	/**
