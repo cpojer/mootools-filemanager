@@ -236,7 +236,6 @@ var FileManager = new Class({
       }).bind(this),
       keyboardInput: (function(e) {
         if(this.dialogOpen) return;
-
         if (e.key=='esc') this.hide();
         if (e.key=='up') {
           e.preventDefault();
