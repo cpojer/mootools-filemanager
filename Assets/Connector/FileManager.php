@@ -565,7 +565,9 @@ class FileManager {
 
     $hasFilter = $this->filter && count($mimes);
     if ($hasFilter) array_push($mimes, 'text/directory');
-    return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file) || ($hasFilter && !in_array($this->getMimeType($file), $mimes)));
+    //return !(!$file || !FileManagerUtility::startsWith($file, $this->basedir) || !file_exists($file) || ($hasFilter && !in_array($this->getMimeType($file), $mimes)));
+    // applied boolean logic for easier grokking of same:
+    return !empty($file) && FileManagerUtility::startsWith($file, $this->basedir) && file_exists($file) && (!$hasFilter || in_array($this->getMimeType($file), $mimes));
   }
 
   protected function normalize($file){
