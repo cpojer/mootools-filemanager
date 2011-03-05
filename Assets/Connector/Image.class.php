@@ -91,7 +91,105 @@ class Image {
 		if(!empty($this->image)) imagedestroy($this->image);
 		unset($this->image);
 	}
-	
+
+	/**
+	 * Guestimates how much RAM memory must be available to be able to process the given image file.
+	 *
+	 * @return an array with key,value pairs: 'needed' specifies the guestimated minimum amount of free
+	 *         memory required for the given file, 'memory_limit' is an integer value representing the total
+	 *         amount of bytes reserved for PHP script, while 'will_fit' is a boolean which indicates whether
+	 *         the given image file could potentially be loaded and processed without causing fatal out-of-memory
+	 *         errors.
+	 *         The directory separator and path-corrected filespec is returned in the 'path' value.
+	 *
+	 * @note The given image file must exist on disk; if it does not, 'needed' and 'will_fit' keys will not
+	 *       be present in the returned array.
+	 */
+	public static function guestimateRequiredMemorySpace($file)
+	{
+		$val = trim(ini_get('memory_limit'));
+		$last = strtoupper(substr($val, -1, 1));
+		$val = floatval($val); // discards the KMG postfix, allow $val to carry values beyond 2..4G
+		switch($last)
+		{
+		// The 'G' modifier is available since PHP 5.1.0
+		case 'G':
+			$val *= 1024.0;
+		case 'M':
+			$val *= 1024.0;
+		case 'K':
+			$val *= 1024.0;
+			break;
+		}
+		$limit = $val;
+
+		$in_use = (function_exists('memory_get_usage') ? memory_get_usage() : 1000000 /* take a wild guess, er, excuse me, 'apply a heuristic' */ );
+
+
+		$file = str_replace('\\','/',$file);
+		$file = preg_replace('#/+#','/',$file);
+		$file = str_replace($_SERVER['DOCUMENT_ROOT'],'',$file);
+		$file = $_SERVER['DOCUMENT_ROOT'].$file;
+		$file = str_replace('\\','/',$file);
+		$file = preg_replace('#/+#','/',$file);
+		$file = realpath($file);
+		$file = str_replace('\\','/',$file);
+
+		$rv = array(
+			'memory_limit' => $limit,
+			'mem_in_use' => $in_use,
+			'path' => $file
+			);
+
+		if(file_exists($file))
+		{
+			$raw_size = @filesize($file);
+			$rv['filesize'] = $raw_size;
+
+			$img = @getimagesize($file, $info_ex);
+			if ($img)
+			{
+				$width = $img[0];
+				$height = $img[1];
+				$rv['imageinfo'] = $img;
+				$rv['imageinfo_extra'] = $info_ex;
+
+				// assume RGBA8, i.e. 4 bytes per pixel
+				// ... having had a good look with memory_get_usage() and memory_get_peak_usage(), it turns out we need
+				// a 'fudge factor' a.k.a. heuristic as the '4 bytes per pixel' estimate is off by quite a bit (if we have
+				// to believe the numbers following a single GD image load operation):
+				$needed = 4.0 * $width * $height;
+				$needed *= 34.0 / 27.0;
+				$rv['needed'] = $needed;
+
+				// since many operations require a source and destination buffer, that'll be 2 of them buffers, thank you very much:
+				// ... however, having had a good look with memory_get_usage() and memory_get_peak_usage(), it turns out
+				// we need about triple!
+				$will_eat = $needed * 2.8;
+				// ^^^ factor = 2.8 : for very large images the estimation error is now ~ +1..8% too pessimistic. Soit!
+				//     (tested with PNG images which consumed up to 475MB RAM to have their thumbnail created. This took a few
+				//      seconds per image, so you might ask yourself if being able to serve such memory megalodons would be,
+				//      ah, desirable, when considered from this perspective.)
+
+				// and 'worst case' (ahem) we've got the file itself loaded in memory as well (on initial load and later save):
+				// ... but this is more than covered by the 'triple charge' already, so we ditch this one from the heuristics.
+				if (0) $will_eat += $raw_size;
+				$rv['usage_guestimate'] = $will_eat;
+
+				// now we know what we about need for this bugger, see if we got enough:
+				$does_fit = ($limit - $in_use > $will_eat);
+				$rv['usage_min_advised'] = $will_eat + $in_use;
+				$rv['will_fit'] = $does_fit;
+			}
+			else
+			{
+				// else: this is not a valid image file!
+				$rv['not_an_image_file'] = true;
+			}
+		}
+		return $rv;
+	}
+
 	/**
 	 * Returns the size of the image
 	 *
