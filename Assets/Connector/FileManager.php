@@ -85,14 +85,24 @@ class FileManager {
       'maxImageSize' => 1024,
       'upload' => true,
       'destroy' => true,
+      'create' => true,
+      'move' => true,
+      'download' => true,
+      /* ^^^ this last one is easily circumnavigated if it's about images: when you can view 'em, you can 'download' them anyway.
+       *     However, for other mime types which are not previewable / viewable 'in their full bluntal nugity' ;-) , this will
+       *     be a strong deterent.
+       *
+       *     Think Springer Verlag and PDFs, for instance. You can have 'em, but only /after/ you've ...
+       */
       'safe' => true,
       'chmod' => 0777
     ), (is_array($options) ? $options : array()));
 
-    $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'],$this->options['chmod']);
-    $this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath'],$this->options['chmod']);
-    $this->options['directory'] = FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
-    $this->basedir = FileManagerUtility::getSiteRoot() . FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']);
+    $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'], $this->options['chmod'], true); // create path if nonexistent
+    $this->options['assetBasePath'] = FileManagerUtility::getRealPath($this->options['assetBasePath']);
+    $this->options['mimeTypesPath'] = FileManagerUtility::getSiteRoot() . FileManagerUtility::getRealPath($this->options['mimeTypesPath'], 0, false, false); // filespec, not a dirspec!
+    $this->options['directory'] = FileManagerUtility::getRealPath($this->options['directory']);
+    $this->basedir = FileManagerUtility::getSiteRoot() . $this->options['directory'];
     $this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
     $this->length = strlen($this->basedir);
     $this->listType = (isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb';
@@ -124,68 +134,143 @@ class FileManager {
     ), $this->options);
   }
 
-  protected function onView(){
-    $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-    $files = ($files = glob($dir . '/*')) ? $files : array();
-    
-    if ($dir != $this->basedir) array_unshift($files, $dir . '/..');
+  protected function _onView($dir, $json = null)
+  {
+    $files = ($files = glob($dir . '*')) ? $files : array();
+
+    if ($dir != $this->basedir) array_unshift($files, $dir . '..');
     natcasesort($files);
     foreach ($files as $file)
     {
+      $file = $this->normalize($file);
+      $url = str_replace(FileManagerUtility::getSiteRoot(),'',$this->normalize($file));
+
       $mime = $this->getMimeType($file);
       if ($this->filter && $mime != 'text/directory' && !FileManagerUtility::startsWith($mime, $this->filter))
         continue;
 
-      if(strpos($mime,'image') !== false)
-        $this->getThumb($this->normalize($file));
+      /*
+       * each image we inspect may throw an exception due to a out of memory warning
+       * (which is far better than without those: a silent fatal abort!)
+       *
+       * However, now that we do have a way to check most memory failures occurring in here (due to large images
+       * and too little available RAM) we /still/ want a directory view; we just want to skip/ignore/mark those
+       * overly large ones.
+       */
+      $thumb = false;
+      try
+      {
+        // access the image and create a thumbnail image; this can fail dramatically
+        if(strpos($mime,'image') !== false)
+          $thumb = $this->getThumb($file);
+      }
+      catch (Exception $e)
+      {
+         // do nothing, except mark image as 'not suitable for thumbnailing'
+      }
 
-      
-      $icon = ($this->listType == 'thumb' && strpos($mime,'image') !== false )
-        ? $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file))
-        : $this->getIcon($this->normalize($file));
-      
+      $icon = ($this->listType == 'thumb' && $thumb)
+        ? $this->options['thumbnailPath'] . $thumb
+        : $this->getIcon($file); // TODO: add extra icons for those bad format and superlarge images with make us b0rk?
+
       // list files, except the thumbnail folder
-      if(str_replace(FileManagerUtility::getSiteRoot(),'',$this->normalize($file)) != substr($this->options['thumbnailPath'],0,-1)) {
+      if($url != substr($this->options['thumbnailPath'],0,-1)) {
         $out[is_dir($file) ? 0 : 1][] = array(
-          'path' => str_replace(FileManagerUtility::getSiteRoot(),'',$this->normalize($file)),
+          'path' => FileManagerUtility::rawurlencode_path($url),
           'name' => pathinfo($file, PATHINFO_BASENAME),
           'date' => date($this->options['dateFormat'], filemtime($file)),
-          'mime' => $this->getMimeType($file),
-          'thumbnail' => $icon,
-          'icon' => $this->getIcon($this->normalize($file),true),
+          'mime' => $mime,
+          'thumbnail' => FileManagerUtility::rawurlencode_path($icon),
+          'icon' => FileManagerUtility::rawurlencode_path($this->getIcon($file,true)),
           'size' => filesize($file)
         );
       }
     }
-    echo json_encode(array(
+    return array_merge((is_array($json) ? $json : array()), array(
         //'assetBasePath' => $this->options['assetBasePath'],
         //'thumbnailPath' => $this->options['thumbnailPath'],
         //'ia_directory' => $this->options['directory'],
         //'ia_dir' => $dir,
-        'root' => substr(FileManagerUtility::getRealPath($this->options['directory'],$this->options['chmod']),1),
+        'root' => substr($this->options['directory'], 1),
         'path' => $this->getPath($dir),
         'dir' => array(
             'name' => pathinfo($dir, PATHINFO_BASENAME),
             'date' => date($this->options['dateFormat'], filemtime($dir)),
             'mime' => 'text/directory',
-		'thumbnail' => $this->getIcon($this->normalize($dir)),
-		'icon' => $this->getIcon($this->normalize($dir),true)
+            'thumbnail' => $this->getIcon($dir),
+            'icon' => $this->getIcon($dir,true)
           ),
       'files' => array_merge(!empty($out[0]) ? $out[0] : array(), !empty($out[1]) ? $out[1] : array())
     ));
   }
 
+  protected function onView()
+  {
+    try
+    {
+        $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
+        $rv = $this->_onView($dir);
+        echo json_encode($rv);
+    }
+    catch(FileManagerException $e)
+    {
+        $emsg = explode(':', $e->getMessage(), 2);
+        $jserr = array(
+                'status' => 0,
+                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+            );
+        // and fall back to showing the root directory
+        try
+        {
+            $dir = $this->getDir();
+            $rv = $this->_onView($dir, $jserr);
+            echo json_encode($rv);
+        }
+        catch (Exception $e)
+        {
+            // when we fail here, it's pretty darn bad and nothing to it.
+            // just push the error JSON as go.
+            echo json_encode($jserr);
+        }
+    }
+    catch(Exception $e)
+    {
+        // catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
+        $jserr = array(
+                'status' => 0,
+                'error' => $e->getMessage()
+            );
+        // and fall back to showing the root directory
+        try
+        {
+            $dir = $this->getDir();
+            $rv = $this->_onView($dir, $jserr);
+            echo json_encode($rv);
+        }
+        catch (Exception $e)
+        {
+            // when we fail here, it's pretty darn bad and nothing to it.
+            // just push the error JSON as go.
+            echo json_encode($jserr);
+        }
+    }
+  }
 
   protected function onDetail()
   {
+  try
+  {
     if (empty($this->post['file'])) return;
 
-    $file = $this->basedir . $this->post['directory'] . $this->post['file'];
+    $url = FileManagerUtility::getRealPath($this->basedir . $this->post['directory'] . $this->post['file'], 0, false, false);
+    $file = FileManagerUtility::getSiteRoot() . $url;
 
     if (!$this->checkFile($file)) return;
 
+    $url_fname = pathinfo($url, PATHINFO_BASENAME);
 
-    $url = str_replace(FileManagerUtility::getSiteRoot(),'',$this->normalize($file));
+    // spare the '/' dir separators from URL encoding:
+    $encoded_url = FileManagerUtility::rawurlencode_path($url);
 
     $mime = $this->getMimeType($file);
     $content = null;
@@ -194,14 +279,32 @@ class FileManager {
     if (FileManagerUtility::startsWith($mime, 'image/')) {
       // generates a random number to put on the end of the image, to prevent caching
       $randomImage = '?'.md5(uniqid(rand(),1));
-      $size = getimagesize($file);
+      $size = @getimagesize($file);
+      // check for badly formatted image files (corruption); we'll handle the overly large ones next
+      if (!$size) throw new FileManagerException('corrupt_img');
+      $thumbfile = $this->options['thumbnailPath'] . $this->getThumb($file);
+      try
+      {
           $content = '<dl>
               <dt>${width}</dt><dd>' . $size[0] . 'px</dd>
               <dt>${height}</dt><dd>' . $size[1] . 'px</dd>
+              <dt>mem usage:</dt><dd>' . number_format(memory_get_usage() / 1E6, 2) . ' MB : ' . number_format(memory_get_peak_usage() / 1E6, 2) . ' MB</dd>
             </dl>
             <h2>${preview}</h2>
-        <a href="'.$url.'" data-milkbox="preview" title="'.str_replace(FileManagerUtility::getSiteRoot(),'',$file).'"><img src="' . $this->options['thumbnailPath'] . $this->getThumb($this->normalize($file)).$randomImage.'" class="preview" alt="preview" /></a>
+            <a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($url_fname, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) . $randomImage . '" class="preview" alt="preview" /></a>
             ';
+      }
+      catch (Exception $e)
+      {
+          $content = '<dl>
+              <dt>${width}</dt><dd>' . $size[0] . 'px</dd>
+              <dt>${height}</dt><dd>' . $size[1] . 'px</dd>
+              <dt>mem usage:</dt><dd>' . number_format(memory_get_usage() / 1E6, 2) . ' MB : ' . number_format(memory_get_peak_usage() / 1E6, 2) . ' MB</dd>
+            </dl>
+            <h2>${preview}</h2>
+            <a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($url_fname, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($file)).$randomImage . '" class="preview" alt="preview" /></a>
+            ';
+      }
     // text preview
     }elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript') {
       $filecontent = file_get_contents($file, false, null, 0);
@@ -214,7 +317,7 @@ class FileManager {
       $getid3->Analyze($file);
       foreach ($getid3->info['zip']['files'] as $name => $size){
         $dir = is_array($size) ? true : true;
-        $out[($dir) ? 0 : 1][$name] = '<li><a><img src="'.$this->getIcon($name,true).'" alt="" /> ' . $name . '</a></li>';
+        $out[($dir) ? 0 : 1][$name] = '<li><a><img src="'.FileManagerUtility::rawurlencode_path($this->getIcon($name,true)).'" alt="" /> ' . $name . '</a></li>';
       }
       natcasesort($out[0]);
       natcasesort($out[1]);
@@ -232,9 +335,9 @@ class FileManager {
         </dl>
         <h2>${preview}</h2>
         <div class="object">
-          <object type="application/x-shockwave-flash" data="'.str_replace(FileManagerUtility::getSiteRoot(),'',$file).'" width="500" height="400">
+          <object type="application/x-shockwave-flash" data="'.FileManagerUtility::rawurlencode_path($url).'" width="500" height="400">
             <param name="scale" value="noscale" />
-            <param name="movie" value="'.str_replace(FileManagerUtility::getSiteRoot(),'',$file).'" />
+            <param name="movie" value="'.FileManagerUtility::rawurlencode_path($url).'" />
           </object>
         </div>';
     // audio
@@ -244,6 +347,7 @@ class FileManager {
       $getid3->Analyze($file);
       getid3_lib::CopyTagsToComments($getid3->info);
 
+      $dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
       $content = '<dl>
           <dt>${title}</dt><dd>' . $getid3->info['comments']['title'][0] . '</dd>
           <dt>${artist}</dt><dd>' . $getid3->info['comments']['artist'][0] . '</dd>
@@ -253,59 +357,172 @@ class FileManager {
         </dl>
         <h2>${preview}</h2>
         <div class="object">
-          <object type="application/x-shockwave-flash" data="' . $this->options['assetBasePath'] . '/dewplayer.swf" width="200" height="20" id="dewplayer" name="dewplayer">
+          <object type="application/x-shockwave-flash" data="' . $dewplayer . '" width="200" height="20" id="dewplayer" name="dewplayer">
             <param name="wmode" value="transparent" />
-            <param name="movie" value="' . $this->options['assetBasePath'] . '/dewplayer.swf" />
-            <param name="flashvars" value="mp3=' . rawurlencode($url) . '&amp;volume=50&amp;showtime=1" />
+            <param name="movie" value="' . $dewplayer . '" />
+            <param name="flashvars" value="mp3=' . FileManagerUtility::rawurlencode_path($url) . '&amp;volume=50&amp;showtime=1" />
           </object>
         </div>';
     }
 
     echo json_encode(array(
+      'status' => 1,
       'content' => $content ? $content : '<div class="margin">
         ${nopreview}
       </div>'//<br/><button value="' . $url . '">${download}</button>
     ));
+    }
+    catch(FileManagerException $e)
+    {
+        $emsg = explode(':', $e->getMessage(), 2);
+        echo json_encode(array(
+                'status' => 0,
+                'content' => '<div class="margin">
+                  ${nopreview}
+                  <div class="failure_notice">
+                    <h3>${error}</h3>
+                    <p>mem usage: ' . number_format(memory_get_usage() / 1E6, 2) . ' MB : ' . number_format(memory_get_peak_usage() / 1E6, 2) . ' MB</p>
+                    <p>${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '') . '</p>
+                  </div>
+                </div>'       // <br/><button value="' . $url . '">${download}</button>
+            ));
+    }
+    catch(Exception $e)
+    {
+        // catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
+        echo json_encode(array(
+                'status' => 0,
+                'content' => '<div class="margin">
+                  ${nopreview}
+                  <div class="failure_notice">
+                    <h3>${error}</h3>
+                    <p>mem usage: ' . number_format(memory_get_usage() / 1E6, 2) . ' MB : ' . number_format(memory_get_peak_usage() / 1E6, 2) . ' MB</p>
+                    <p>' . $e->getMessage() . '</p>
+                  </div>
+                </div>'       // <br/><button value="' . $url . '">${download}</button>
+            ));
+    }
   }
 
-  protected function onDestroy(){
-    if (!$this->options['destroy'] || empty($this->post['file'])) return;
+  protected function onDestroy()
+  {
+    try
+    {
+        if (!$this->options['destroy'])
+            throw new FileManagerException('disabled');
+        if (empty($this->post['file']))
+            throw new FileManagerException('nofile');
 
-    $file = $this->basedir . $this->post['directory'] . $this->post['file'];
+        $dir = $this->getDir($this->post['directory']);
+        $file = $dir . $this->post['file'];
 
+        $name = pathinfo($file, PATHINFO_FILENAME);
+        $fileinfo = array(
+            'dir' => $dir,
+            'file' => $file,
+            'name' => $name
+        );
+        if (!empty($this->options['DestroyIsAuthenticated_cb']) && function_exists($this->options['DestroyIsAuthenticated_cb']) && !$this->options['DestroyIsAuthenticated_cb']($this, 'destroy', $fileinfo))
+            throw new FileManagerException('authenticated');
 
-    if (!$this->checkFile($file)) return;
+        if (!$this->checkFile($file))
+            throw new FileManagerException('nofile');
 
         $this->unlink($file);
 
         echo json_encode(array(
           'content' => 'destroyed'
         ));
+    }
+    catch(FileManagerException $e)
+    {
+        $emsg = explode(':', $e->getMessage(), 2);
+        echo json_encode(array(
+                'status' => 0,
+                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+            ));
+    }
+    catch(Exception $e)
+    {
+        // catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
+        echo json_encode(array(
+                'status' => 0,
+                'error' => $e->getMessage()
+            ));
+    }
   }
 
-  protected function onCreate(){
+  protected function onCreate()
+  {
+    try
+    {
+        if (!$this->options['create'])
+            throw new FileManagerException('disabled');
         if (empty($this->post['file']))
-    		return;
+            throw new FileManagerException('nofile');
 
-    $file = $this->getName($this->post['file'], $this->getDir($this->post['directory']));
+        $dir = $this->getDir($this->post['directory']);
+        $file = $this->getName($this->post['file'], $dir);
         if (!$file)
-    		return;
+            throw new FileManagerException('nofile');
 
+        $name = pathinfo($file, PATHINFO_FILENAME);
+        $fileinfo = array(
+            'dir' => $dir,
+            'file' => $file,
+            'name' => $name,
+            'chmod' => $this->options['chmod']
+        );
+        if (!empty($this->options['CreateIsAuthenticated_cb']) && function_exists($this->options['CreateIsAuthenticated_cb']) && !$this->options['CreateIsAuthenticated_cb']($this, 'create', $fileinfo))
+            throw new FileManagerException('authenticated');
 
-    @mkdir($file,$this->options['chmod']);
+        if (!@mkdir($file, $fileinfo['chmod']))
+            throw new FileManagerException('nofile');
 
         $this->onView();
+    }
+    catch(FileManagerException $e)
+    {
+        $emsg = explode(':', $e->getMessage(), 2);
+        echo json_encode(array(
+                'status' => 0,
+                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+            ));
+    }
+    catch(Exception $e)
+    {
+        // catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
+        echo json_encode(array(
+                'status' => 0,
+                'error' => $e->getMessage()
+            ));
+    }
   }
 
   protected function onDownload() {
+    try
+    {
+        if (!$this->options['download'])
+            throw new FileManagerException('disabled');
+        if (empty($_GET['file']))
+            throw new FileManagerException('nofile');
         if(strpos($_GET['file'],'../') !== false)
-    		return;
+            throw new FileManagerException('nofile');
         if(strpos($_GET['file'],'./') !== false)
-	    	return;
+            throw new FileManagerException('nofile');
 
         $path = $this->basedir . $_GET['file']; // change the path to fit your websites document structure
-    $path = preg_replace('#/+#','/',$path);
+        $path = FileManagerUtility::getSiteRoot() . FileManagerUtility::getRealPath($path, 0, false, false);
+        if (!file_exists($path))
+            throw new FileManagerException('nofile');
 
+        $name = pathinfo($path, PATHINFO_FILENAME);
+        $fileinfo = array(
+            'file' => $path,
+            'name' => $name
+        );
+        if (!empty($this->options['DownloadIsAuthenticated_cb']) && function_exists($this->options['DownloadIsAuthenticated_cb']) && !$this->options['DownloadIsAuthenticated_cb']($this, 'download', $fileinfo))
+            throw new FileManagerException('authenticated');
 
         if ($fd = fopen($path, "r"))
         {
@@ -328,6 +545,33 @@ class FileManager {
 
             fpassthru($fd);
             fclose($fd);
+        }
+    }
+    catch(FileManagerException $e)
+    {
+        // we don't care whether it's a 404, a 403 or something else entirely: we feed 'em a 403 and that's final!
+        if (function_exists('send_response_status_header'))
+        {
+            send_response_status_header(403);
+        }
+        else
+        {
+            // no smarties detection whether we're running on fcgi or bare iron, we assume the latter:
+            header('HTTP/1.0 403 Forbidden', true, 403);
+        }
+    }
+    catch(Exception $e)
+    {
+        // we don't care whether it's a 404, a 403 or something else entirely: we feed 'em a 403 and that's final!
+        if (function_exists('send_response_status_header'))
+        {
+            send_response_status_header(403);
+        }
+        else
+        {
+            // no smarties detection whether we're running on fcgi or bare iron, we assume the latter:
+            header('HTTP/1.0 403 Forbidden', true, 403);
+        }
     }
   }
 
@@ -337,24 +581,37 @@ class FileManager {
         throw new FileManagerException('disabled');
       if (!Upload::exists('Filedata'))
         throw new FileManagerException('nofile');
-      if ((function_exists('UploadIsAuthenticated') && !UploadIsAuthenticated($this)))
-        throw new FileManagerException('authenticated');
 
       $dir = $this->getDir($this->get['directory']);
       $name = pathinfo($this->getName($_FILES['Filedata']['name'], $dir), PATHINFO_FILENAME);
-      $file = Upload::move('Filedata', $dir , array(
+      $fileinfo = array(
+        'dir' => $dir,
         'name' => $name,
         'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
         'size' => $this->options['maxUploadSize'],
         'mimes' => $this->getAllowedMimeTypes(),
+        'ext2mime_map' => $this->getMimeTypeDefinitions(),
         'chmod' => $this->options['chmod']
-      ));
-      
-      if (FileManagerUtility::startsWith(Upload::mime($file), 'image/') && !empty($this->get['resize'])){
+      );
+      if (!empty($this->options['UploadIsAuthenticated_cb']) && function_exists($this->options['UploadIsAuthenticated_cb']) && !$this->options['UploadIsAuthenticated_cb']($this, 'upload', $fileinfo))
+        throw new FileManagerException('authenticated');
+
+      $file = Upload::move('Filedata', $dir, $fileinfo);
+
+      /*
+       * NOTE: you /can/ (and should be able to, IMHO) upload 'overly large' image files to your site, but the thumbnailing process step
+       *       happening here will fail; we have memory usage estimators in place to make the fatal crash a non-silent one, i,e, one
+       *       where we still have a very high probability of NOT fatally crashing the PHP iunterpreter but catching a suitable exception
+       *       instead.
+       *       Having uploaded such huge images, a developer/somebody can always go in later and up the memory limit if the site admins
+       *       feel it is deserved. Until then, no thumbnails of such images (though you /should/ be able to milkbox-view the real thing!)
+       */
+      if (FileManagerUtility::startsWith($this->getMimeType($file), 'image/') && !empty($this->get['resize'])){
         $img = new Image($file);
         $size = $img->getSize();
-        if ($size['width'] > $this->options['maxImageSize'] && $size['height'] <= $this->options['maxImageSize']) $img->resize($this->options['maxImageSize'])->save();   // [i_a] another case where portrait-sized images didn't get treated properly.
-        elseif ($size['height'] > $this->options['maxImageSize']) $img->resize(null, $this->options['maxImageSize'])->save();
+        // Image::resize() takes care to maintain the proper aspect ratio, so this is easy:
+        if ($size['width'] > $this->options['maxImageSize'] || $size['height'] > $this->options['maxImageSize'])
+          $img->resize($this->options['maxImageSize'], $this->options['maxImageSize'])->save();
         unset($img);
       }
 
@@ -368,9 +625,16 @@ class FileManager {
         'error' => class_exists('ValidatorException') ? strip_tags($e->getMessage()) : '${upload.' . $e->getMessage() . '}' // This is for Styx :)
       ));
     }catch(FileManagerException $e){
+        $emsg = explode(':', $e->getMessage(), 2);
+        echo json_encode(array(
+                'status' => 0,
+                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+            ));
+    }catch(Exception $e){
+      // catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
       echo json_encode(array(
         'status' => 0,
-        'error' => '${upload.' . $e->getMessage() . '}'
+        'error' => $e->getMessage()
       ));
     }
   }
@@ -378,48 +642,86 @@ class FileManager {
   /* This method is used by both move and rename */
   protected function onMove()
   {
+    try
+    {
+        if (!$this->options['move'])
+            throw new FileManagerException('disabled');
         if (empty($this->post['file']))
-		    return;
+            throw new FileManagerException('nofile');
 
         $rename = empty($this->post['newDirectory']) && !empty($this->post['name']);
         $dir = $this->getDir($this->post['directory']);
         $file = $dir . $this->post['file'];
 
         $is_dir = is_dir($file);
+        $fn = !empty($this->post['copy']) ? 'copy' : 'rename';
+
+        $name = pathinfo($file, PATHINFO_FILENAME);
+        $fileinfo = array(
+            'dir' => $dir,
+            'file' => $file,
+            'name' => $name,
+            'newdir' => (!empty($this->post['newDirectory']) ? $this->post['newDirectory'] : '(null)'),
+            'newname' => (!empty($this->post['name']) ? $this->post['name'] : '(null)'),
+            'rename' => $rename,
+            'is_dir' => $is_dir,
+            'function' => $fn
+        );
+        if (!empty($this->options['MoveIsAuthenticated_cb']) && function_exists($this->options['MoveIsAuthenticated_cb']) && !$this->options['MoveIsAuthenticated_cb']($this, 'move', $fileinfo))
+            throw new FileManagerException('authenticated');
 
         if (!$this->checkFile($file) || (!$rename && $is_dir))
-		      return;
+            throw new FileManagerException('nofile');
 
         if($rename || $is_dir)
         {
             if (empty($this->post['name']))
-		      	return;
+                throw new FileManagerException('nonewfile');
 
             $newname = $this->getName($this->post['name'], $dir);
             $fn = 'rename';
-      $tnfn = FileManagerUtility::getSiteRoot().$this->options['thumbnailPath'].$this->generateThumbName($file);
+            $tnfn = FileManagerUtility::getSiteRoot() . $this->options['thumbnailPath'] . $this->generateThumbName($file);
             if(!$is_dir && file_exists($tnfn))
             {
-		        @unlink($tnfn);
+                if (!@unlink($tnfn))
+                    throw new FileManagerException('delete_thumbnail_failed');
             }
         }
         else
         {
             $newname = $this->getName(pathinfo($file, PATHINFO_FILENAME), $this->getDir($this->post['newDirectory']));
-            $fn = !empty($this->post['copy']) ? 'copy' : 'rename';
+            //$fn = !empty($this->post['copy']) ? 'copy' : 'rename';
         }
 
         if (!$newname)
-		    return;
+            throw new FileManagerException('nofile');
 
         $extOld = pathinfo($file, PATHINFO_EXTENSION);
         $extNew = pathinfo($newname, PATHINFO_EXTENSION);
         if ($extOld != $extNew) $newname .= '.' . $extOld;
-    @$fn($file, $newname);
+        if (!@$fn($file, $newname))
+            throw new FileManagerException($fn . '_failed');
 
         echo json_encode(array(
             'name' => pathinfo($this->normalize($newname), PATHINFO_BASENAME),
         ));
+    }
+    catch(FileManagerException $e)
+    {
+        $emsg = explode(':', $e->getMessage(), 2);
+        echo json_encode(array(
+                'status' => 0,
+                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+            ));
+    }
+    catch(Exception $e)
+    {
+        // catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
+        echo json_encode(array(
+                'status' => 0,
+                'error' => $e->getMessage()
+            ));
+    }
   }
 
 
@@ -518,8 +820,7 @@ class FileManager {
   protected function generateThumb($file,$thumbPath)
   {
     $img = new Image($file);
-    $size = $img->resize(250,250,true,false);
-    $img->process('png',$thumbPath);
+    $img->resize(250,250,true,false)->process('png',$thumbPath); // TODO: save as lossy / lower-Q jpeg to reduce filesize?
     unset($img);
     return basename($thumbPath);
   }
@@ -533,7 +834,7 @@ class FileManager {
   }
 
   public function getMimeType($file){
-    return is_dir($file) ? 'text/directory' : Upload::mime($file);
+    return is_dir($file) ? 'text/directory' : Upload::mime($file, null, $this->getMimeTypeDefinitions());
   }
 
   /**
@@ -776,5 +1077,22 @@ class FileManagerUtility
 
     return $path;
   }
-  
+
+  /**
+   * Apply rawurlencode() to each of the elements of the given path
+   *
+   * @note
+   *   this method is provided as rawurlencode() tself also encodes the '/' separators in a path/string
+   *   and we do NOT want to 'revert' such change with the risk of also picking up other %2F bits in
+   *   the string (this assumes crafted paths can be fed to us).
+   */
+  public static function rawurlencode_path($path)
+  {
+    $encoded_path = explode('/', $path);
+    array_walk($encoded_path, function(&$value, $key)
+        {
+            $value = rawurlencode($value);
+        });
+    return implode('/', $encoded_path);
+  }
 }

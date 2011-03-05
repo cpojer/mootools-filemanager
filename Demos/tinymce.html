@@ -80,11 +80,14 @@
 			width: '100%',
 			height: '300px',
 			
+			// document_base_url: 'yada yoda/etc etc',
+			
 			/* Here goes the Magic */
 			file_browser_callback: FileManager.TinyMCE(function(type){
 				return {
-					url: type=='image' ? 'selectImage.php' : 'manager.php',
-					assetBasePath: '../Assets',
+					url: (type=='image' ? 'selectImage.php' : 'manager.php'),
+					// baseURL: '/yada yada yada/',
+					assetBasePath: '../Assets', // '/c/lib/includes/js/mootools-filemanager/Assets',
 					language: 'de',
 					selectable: true,
           destroy: true,

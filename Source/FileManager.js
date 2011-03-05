@@ -897,6 +897,12 @@ var FileManager = new Class({
         this.previewLoader.fade(0).get('tween').chain((function() {
           this.previewLoader.dispose();
 
+		  if (0)   // debugging only:
+		    if (j && !j.status)
+		    {
+		      new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+		    }
+
           var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
           if (prev) prev.addEvent('load', function(){
             this.setStyle('background', 'none');
