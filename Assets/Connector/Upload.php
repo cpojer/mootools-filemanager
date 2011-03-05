@@ -111,8 +111,6 @@ class Upload {
 				$mime = $image['mime'];
 		}
 		
-		if(!$mime && $options['default']) $mime = $options['default'];
-		
 		if((!$mime || $mime=='application/octet-stream') && $options['extension']){
 			if (!is_array($ext2mimetype_arr)){
 				static $mimes;
@@ -122,6 +120,8 @@ class Upload {
 			
 			if(!empty($ext2mimetype_arr[$options['extension']])) return $ext2mimetype_arr[$options['extension']];
 		}
+		
+		if(!$mime && $options['default']) $mime = $options['default'];
 		
 		return $mime;
 	}
