@@ -458,15 +458,31 @@ class FileManager {
    */
   protected function getName($file, $dir)
   {
-    $files = array();
-    foreach ((array)glob($dir . '/*') as $f)
-      $files[] = pathinfo($f, PATHINFO_FILENAME);
+    if (!FileManagerUtility::endsWith($dir, '/')) $dir .= '/';
+
+    if (!$file || !FileManagerUtility::startsWith($dir, $this->basedir)) return null;
 
     $pathinfo = pathinfo($file);
 
-    $file = $dir . FileManagerUtility::pagetitle($pathinfo['filename'], $files).(!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
+    /*
+    since 'pagetitle()' is used to produce a unique, non-existing filename, we can forego the dirscan
+    and simply check whether the constructed filename/path exists or not and bump the suffix number
+    by 1 until it does not, thus quickly producing a unique filename.
 
-    return !$file || !FileManagerUtility::startsWith($file, $this->basedir) || file_exists($file) ? null : $file;
+    This is faster than using a dirscan to collect a set of existing filenames and feeding them as
+    an option array to pagetitle(), particularly for large directories.
+    */
+    $filename = FileManagerUtility::pagetitle($pathinfo['filename']);
+    // make sure the generated filename is SAFE:
+    $file = $dir . $filename . (!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
+    for ($i = 0; ; $i++)
+    {
+        $file = $dir . $filename . ($i ? '_' . $i : '') . (!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
+        if (!file_exists($file))
+            break;
+    }
+
+    return $file;
   }
 
   protected function getIcon($file,$smallIcon = false)
@@ -527,8 +543,8 @@ class FileManager {
    *
    * When the directory does not exist or does not match other restricting criteria, the basedir path (abs path eqv. to options['directory']) is returned instead.
    */
-  protected function getDir($dir){  
-    $dir = FileManagerUtility::getSiteRoot().FileManagerUtility::getRealPath($this->options['directory'].'/'.$dir,$this->options['chmod']);
+  protected function getDir($dir = null){
+    $dir = FileManagerUtility::getSiteRoot() . FileManagerUtility::getRealPath($this->options['directory'] . $dir);
     return $this->checkFile($dir) ? $dir : $this->basedir;
   }
 
@@ -621,9 +637,10 @@ class FileManagerUtility
   protected static function checkTitle($data, $options = array(), $i = 0){
     if (!is_array($options)) return $data;
 
+    $lwr_data = strtolower($data);
 
     foreach ($options as $content)
-      if ($content && strtolower($content) == strtolower($data.($i ? '_' . $i : '')))
+      if ($content && strtolower($content) == $lwr_data . ($i ? '_' . $i : ''))
         return self::checkTitle($data, $options, ++$i);
 
     return $data.($i ? '_' . $i : '');
@@ -674,7 +691,7 @@ class FileManagerUtility
     return $path;
   }
 
-  public static function getRealPath($path, $chmod = 0777, $mkdir_if_notexist = true, $with_trailing_slash = true) 
+  public static function getRealPath($path, $chmod = 0777, $mkdir_if_notexist = false, $with_trailing_slash = true)
   {
     $path = str_replace('\\','/',$path);
     $path = preg_replace('/(\\\|\/){2,}/', '/', $path);
@@ -690,18 +707,16 @@ class FileManagerUtility
     $path = preg_replace('#/(\./)+#','/',$path);
 
     // now temporarily strip off the leading part up to the colon to prevent entries like '../d:/dir' to succeed when the site root is 'c:/', for example:
-	$pos = strpos($path, ':');
-	if ($pos === false)
-	{
-		$lead = '';
-	}
-	else
-	{
-		$lead = substr($path, 0, $pos + 1);
-		$path = substr($path, $pos + 1);
-	}
+    $lead = '';
+    // the leading part may NOT contain any directory separators, as it's for drive letters only.
+    // So we must check in order to prevent malice like /../../../../../../../c:/dir from making it through.
+    if (preg_match('#^([A-Za-z]:)?/(.*)$#', $path, $matches))
+    {
+        $lead = $matches[1];
+        $path = '/' . $matches[2];
+    }
 
-    while (($pos = strpos($path, '/../')) !== false)
+    while (($pos = strpos($path, '/..')) !== false)
     {
         $prev = substr($path, 0, $pos);
         /*
@@ -716,10 +731,14 @@ class FileManagerUtility
         $p2 = strrpos($prev, '/');
         if ($p2 === false)
         {
-			throw new Exception('path tampering detected!');
+            throw new FileManagerException('path_tampering');
         }
         $prev = substr($prev, 0, $p2);
         $next = substr($path, $pos + 3);
+        if ($next && $next[0] != '/')
+        {
+            throw new FileManagerException('path_tampering');
+        }
         $path = $prev . $next;
     }
 
@@ -728,7 +747,7 @@ class FileManagerUtility
     // now, iff there was such a '../../../etc/' attempt, we'll know because the resulting path does NOT have the 'siteroot' prefix:
     if (!FileManagerUtility::startsWith($path, $root))
     {
-		throw new Exception('path tampering detected!');
+        throw new FileManagerException('path_tampering');
     }
 
     if(!is_dir($path) && is_dir(dirname($path)) && $mkdir_if_notexist)
@@ -736,7 +755,7 @@ class FileManagerUtility
         $rv = @mkdir($path,$chmod); // create last folder if not existing
         if ($rv === false)
         {
-			throw new Exception('cannot create directory "' . $path . '"');
+            throw new FileManagerException('mkdir:' . $path);
         }
     }
 
@@ -744,7 +763,7 @@ class FileManagerUtility
     $rv = realpath($path);
     if ($rv === false)
     {
-		throw new Exception('cannot process path "' . $path . '"');
+        throw new FileManagerException('realpath:' . $path);
     }
     $path = str_replace('\\','/',$rv);
     $path = str_replace($root,'',$path);
