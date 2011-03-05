@@ -90,12 +90,12 @@ class Upload {
 	 *                                to mime types. May be specified as a temporary alternative to
 	 *                                using the local MimeTypes.ini file.
 	 */
-	public static function mime($file, $options = array(), $ext2mimetype_arr = null){
+	public static function mime($file, $options = null, $ext2mimetype_arr = null){
 		$file = realpath($file);
 		$options = array_merge(array(
 				'default' => null,
 				'extension' => strtolower(pathinfo($file, PATHINFO_EXTENSION)),
-		), $options);
+			), (is_array($options) ? $options : array()));
 		
 		$mime = null;
 		$ini = error_reporting(0);
@@ -106,8 +106,8 @@ class Upload {
 		error_reporting($ini);
 		
 		if(!$mime && in_array(strtolower($options['extension']), array('gif', 'jpg', 'jpeg', 'png'))){
-			$image = getimagesize($file);
-			if(!empty($image['mime']))
+			$image = @getimagesize($file);
+			if($image !== false && !empty($image['mime']))
 				$mime = $image['mime'];
 		}
 		
