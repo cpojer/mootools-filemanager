@@ -844,7 +844,7 @@ class FileManager {
         'size' => $this->options['maxUploadSize'],
         'mimes' => $this->getAllowedMimeTypes(),
         'ext2mime_map' => $this->getMimeTypeDefinitions(),
-        'chmod' => $this->options['chmod']
+        'chmod' => $this->options['chmod'] & 0666   // security: never make those files 'executable'!
       );
       if (!empty($this->options['UploadIsAuthenticated_cb']) && function_exists($this->options['UploadIsAuthenticated_cb']) && !$this->options['UploadIsAuthenticated_cb']($this, 'upload', $fileinfo))
         throw new FileManagerException('authenticated');
