@@ -220,7 +220,6 @@ FileManager.Gallery = new Class({
       })
     ).inject(this.gallery);
     
-    this.tips.attach(img.appearOn(li));
     this.switchButton();
     
     return true;
