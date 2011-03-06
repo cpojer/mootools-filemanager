@@ -220,7 +220,11 @@ FileManager.Gallery = new Class({
       })
     ).inject(this.gallery);
 
-    this.tips.attach(img.appearOn(li));
+	// [i_a] I don't know why, but img.appearOn is NOT a member of img (error reported by FF3.6.14 Firebug)
+	//
+	// this is a HACK to make the remainder of this stuff work now!
+	if (img.appearOn)
+      this.tips.attach(img.appearOn(li));
     this.switchButton();
 
     return true;
