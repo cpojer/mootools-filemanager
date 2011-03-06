@@ -42,7 +42,6 @@ class Image {
 	 * @param string $file The path to the image file
 	 */
 	public function __construct($file){
-	  ini_set('memory_limit', '64M'); //  handle large images
 
 		$finfo = self::guestimateRequiredMemorySpace($file);
 		$file = $finfo['path'];
@@ -51,6 +50,12 @@ class Image {
 		if (!isset($finfo['imageinfo']))
 			throw new Exception('corrupt image or not an image file at all');
 
+		// only set the new memory limit of 64MB when the configured one is smaller:
+		if ($finfo['memory_limit'] < 64 * 1024 * 1024)
+		{		
+			ini_set('memory_limit', '64M'); //  handle large images
+		}
+			
 		$this->file = $file;
 		$img = $finfo['imageinfo'];
 
