@@ -193,8 +193,9 @@ class FileManager {
         ? $this->options['thumbnailPath'] . $thumb
         : $this->getIcon($file, $list_type != 'thumb'); // TODO: add extra icons for those bad format and superlarge images with make us b0rk?
 
-      // list files, except the thumbnail folder
-      if($url != substr($this->options['thumbnailPath'],0,-1)) {
+      // list files, except the thumbnail folder itself or any file in it:
+      if(!FileManagerUtility::startswith($url, substr($this->options['thumbnailPath'],0,-1)))
+      {
         $out[is_dir($file) ? 0 : 1][] = array(
           'path' => FileManagerUtility::rawurlencode_path($url),
           'name' => pathinfo($file, PATHINFO_BASENAME),
