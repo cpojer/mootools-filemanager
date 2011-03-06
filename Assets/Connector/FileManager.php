@@ -47,17 +47,17 @@ Notes on relative paths and safety / security:
   '../../../../../../../../../etc/passwd' for example. In more complex rigs, the attack may be assisted through attacks at these options' paths,
   so these are subjected to the same scrutiny in here.)
 
-  All paths, absolute or relative, as passed to the event handlers (see the onXXX methods of this class) are ENFORCED TO ABIDE THE RULE 
+  All paths, absolute or relative, as passed to the event handlers (see the onXXX methods of this class) are ENFORCED TO ABIDE THE RULE
   'every path resides within the BASEDIR rooted tree' without exception.
   When paths apparently don't, they are forcibly coerced into adherence to this rule. Because we can do without exceptions to important rules. ;-)
-  
-  BASEDIR equals the path pointed at by the options['directory'] setting. It is therefore imperative that you ensure this value is 
+
+  BASEDIR equals the path pointed at by the options['directory'] setting. It is therefore imperative that you ensure this value is
   correctly set up; worst case, this setting will equal DocumentRoot.
   In other words: you'll never be able to reach any file or directory outside this site's DocumentRoot directory tree, ever.
 
 
   When you need your paths to be restricted to the bounds of the options['directory'] tree (which is a subtree of the DocumentRoot based
-  tree), you may wish to use the CheckFile(), getPath() and getDir() methods instead of getRealPath() and getRealDir(), as the latter 
+  tree), you may wish to use the CheckFile(), getPath() and getDir() methods instead of getRealPath() and getRealDir(), as the latter
   restrict targets to within the DocumentRoot tree only.
 
   getPath() and getRealPath() both deliver absolute paths relative to DocumentRoot, hence suitable for use in URIs and feeding to client side
@@ -1464,19 +1464,19 @@ class FileManagerUtility
         });
     return implode('/', $encoded_path);
   }
-  
+
   /**
-   * Convert a number (representing number of bytes) to a formatted string representing GB .. bytes, 
+   * Convert a number (representing number of bytes) to a formatted string representing GB .. bytes,
    * depending on the size of the value.
    */
-  public static function fmt_bytecount($val, $precision = 1) 
+  public static function fmt_bytecount($val, $precision = 1)
   {
     $unit = array('TB', 'GB', 'MB', 'KB', 'bytes');
     for ($x = count($unit) - 1; $val >= 1024 && $x > 0; $x--)
-	{ 
-		$val /= 1024.0; 
-	}
+    {
+        $val /= 1024.0;
+    }
     $val = round($val, ($x > 0 ? $precision : 0));
-	return $val . '&#160;' . $unit[$x];
+    return $val . '&#160;' . $unit[$x];
   }
 }
