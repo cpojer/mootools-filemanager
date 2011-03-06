@@ -1268,8 +1268,10 @@ class FileManagerUtility
         explode(' ', 'Ae ae Oe oe ss Ue ue Oe oe Ae ae A A A A A A A A C C C D D D E E E E E E G I I I I I L L L N N N O O O O O O O R R S S S T T U U U U U U Y Z Z Z a a a a a a a a c c c d d e e e e e e g i i i i i l l l n n n o o o o o o o o r r s s s t t u u u u u u y y z z z'),
       );
     }
-    
-    $data = trim(substr(preg_replace('/(?:[^A-z0-9]|_|\^)+/i', '_', str_replace($regex[0], $regex[1], $data)), 0, 64), '_');
+
+    // accepts dots and several other characters, but do NOT tolerate dots or underscores at the start or end, i.e. no 'hidden file names' accepted, for example!
+    $data = trim(preg_replace('/[^A-Za-z0-9., \[\]\(\)~&!@#_+-]+/', '_', str_replace($regex[0], $regex[1], $data)), '_.,&+');
+    //$data = trim(substr(preg_replace('/(?:[^A-z0-9]|_|\^)+/i', '_', str_replace($regex[0], $regex[1], $data)), 0, 64), '_');
     return !empty($options) ? self::checkTitle($data, $options) : $data;
   }
 
