@@ -79,8 +79,8 @@ if (!defined('MTFM_PATH'))
 require_once(MTFM_PATH . '/Upload.php');
 require_once(MTFM_PATH . '/Image.class.php');
 
-class FileManager {
-
+class FileManager
+{
   protected $path = null;
   protected $length = null;
   protected $basedir = null;                    // absolute path equivalent, filesystem-wise, for options['directory']
@@ -135,7 +135,8 @@ class FileManager {
     $this->post = $_POST;
   }
 
-  public function fireEvent($event){
+  public function fireEvent($event)
+  {
     $event = $event ? 'on' . ucfirst($event) : null;
     if (!$event || !method_exists($this, $event)) $event = 'onView';
 
@@ -145,7 +146,8 @@ class FileManager {
   /**
    * @return array the FileManager options and settings.
    */
-  public function getSettings(){
+  public function getSettings()
+  {
     return array_merge(array(
         'basedir' => $this->basedir,
         'basename' => $this->basename
@@ -371,7 +373,6 @@ class FileManager {
       $content = '<dl>
           <dt>${width}</dt><dd>' . $size[0] . 'px</dd>
           <dt>${height}</dt><dd>' . $size[1] . 'px</dd>
-          <dt>mem usage:</dt><dd>' . number_format(memory_get_usage() / 1E6, 2) . ' MB : ' . number_format(memory_get_peak_usage() / 1E6, 2) . ' MB</dd>
         </dl>
         <h2>${preview}</h2>
         ';
@@ -393,13 +394,7 @@ class FileManager {
       {
         $content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent,ENT_QUOTES,'UTF-8')) . '</pre></div>';
       }
-      else
-      {
-        $fsize = filesize($dir);
-        $content = '<div class="textpreview">
-            <p>${size} ' . FileManagerUtility::fmt_bytecount($fsize) . ' (' . $fsize . ' Bytes)</p>
-            </div>';
-      }
+      // else: fall back to 'no preview available'
     // zip
     }
     elseif ($mime == 'application/zip')
@@ -463,19 +458,13 @@ class FileManager {
           </object>
         </div>';
     }
-    else
-    {
-        $fsize = @filesize($dir);
-        $content = '<div class="textpreview">
-            <p>${size} ' . FileManagerUtility::fmt_bytecount($fsize) . ' (' . $fsize . ' Bytes)</p>
-            </div>';
-    }
+    // else: fall back to 'no preview available'
 
     echo json_encode(array(
       'status' => 1,
       'content' => $content ? $content : '<div class="margin">
         ${nopreview}
-      </div>'//<br/><button value="' . $url . '">${download}</button>
+      </div>'                 //<br/><button value="' . $url . '">${download}</button>
     ));
     }
     catch(FileManagerException $e)
@@ -1078,13 +1067,13 @@ class FileManager {
     $pathinfo = pathinfo($file);
 
     /*
-    since 'pagetitle()' is used to produce a unique, non-existing filename, we can forego the dirscan
-    and simply check whether the constructed filename/path exists or not and bump the suffix number
-    by 1 until it does not, thus quickly producing a unique filename.
-
-    This is faster than using a dirscan to collect a set of existing filenames and feeding them as
-    an option array to pagetitle(), particularly for large directories.
-    */
+     * since 'pagetitle()' is used to produce a unique, non-existing filename, we can forego the dirscan
+     * and simply check whether the constructed filename/path exists or not and bump the suffix number
+     * by 1 until it does not, thus quickly producing a unique filename.
+     *
+     * This is faster than using a dirscan to collect a set of existing filenames and feeding them as
+     * an option array to pagetitle(), particularly for large directories.
+     */
     $filename = FileManagerUtility::pagetitle($pathinfo['filename']);
     // make sure the generated filename is SAFE:
     $file = $dir . $filename . (!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
@@ -1480,3 +1469,5 @@ class FileManagerUtility
     return $val . '&#160;' . $unit[$x];
   }
 }
+
+?>

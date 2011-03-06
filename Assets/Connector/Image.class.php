@@ -54,29 +54,6 @@ class Image {
 		$this->file = $file;
 		$img = $finfo['imageinfo'];
 
-		if (0)
-		{
-			$finfostr = '';
-			foreach($finfo as $k => $v)
-			{
-				if (is_array($v))
-				{
-					$s = "  '$k' => [\n";
-					foreach($v as $k2 => $v2)
-					{
-						$s .= "    '$k2' => '$v2'\n";
-					}
-					$s .= "  ]\n";
-				}
-				else
-				{
-					$s = "  '$k' => '$v'\n";
-				}
-				$finfostr .= $s;
-			}
-			echo sprintf("(%s, %s, %d, %s, %s)\n", __FUNCTION__, __FILE__, __LINE__, $file, $finfostr);
-		}
-
 		// and will it fit in available memory if we go and load the bugger?
 		if (!$finfo['will_fit'])
 			throw new Exception('image does not fit in available RAM; minimum required (estimate): ' . round(($finfo['usage_min_advised'] + 9.9E5) / 1E6) . ' MByte');
@@ -532,4 +509,5 @@ class Image {
 		header('Content-type: '.$this->meta['mime']);
 		return $this->process();
 	}
-}
+} 
+?>
