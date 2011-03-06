@@ -515,4 +515,3 @@ class Image {
 		return $this->process();
 	}
 } 
-?>

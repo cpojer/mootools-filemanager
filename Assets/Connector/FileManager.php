@@ -1470,4 +1470,3 @@ class FileManagerUtility
   }
 }
 
-?>

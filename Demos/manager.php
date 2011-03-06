@@ -215,4 +215,3 @@ $browser = new FileManager(array(
 
 
 $browser->fireEvent(!empty($_GET['event']) ? $_GET['event'] : null);
-?>
