@@ -76,9 +76,13 @@ class FileManager {
   public function __construct($options)
   {
     $this->options = array_merge(array(
-      'directory' => MTFM_PATH . '/Files/',     // DocumentRoot based (this is corrected below using getRealPath())
-      'assetBasePath' => '../../Assets/',
-      'thumbnailPath' => '../Thumbs/',
+      /*
+       * Note that all default paths as listed below are transformed to DocumentRoot-based paths 
+       * through the getRealPath() invocations further below:
+       */
+      'directory' => MTFM_PATH . '/Files/',
+      'assetBasePath' => MTFM_PATH . '/../../Assets/',
+      'thumbnailPath' => MTFM_PATH . '/../../Assets/Thumbs/',  // written like this so we're completely clear on where the default thumbnails directory will be
       'mimeTypesPath' => MTFM_PATH . '/MimeTypes.ini',
       'dateFormat' => 'j M Y - H:i',
       'maxUploadSize' => 2600 * 2600 * 3,
@@ -842,26 +846,20 @@ class FileManager {
    *
    * The directory is enforced to sit within the directory tree rooted by options['directory']
    *
-   * When the directory does not exist or does not match other restricting criteria, the basedir path (abs path eqv. to options['directory']) is returned instead.
+   * When the directory does not exist or does not match other restricting criteria, the 
+   * basedir path (abs path eqv. to options['directory']) is returned instead.
    */
   protected function getDir($dir = null){
     $dir = FileManagerUtility::getSiteRoot() . FileManagerUtility::getRealPath($this->options['directory'] . $dir);
     return $this->checkFile($dir) ? $dir : $this->basedir;
   }
-
-  protected function getPath($file){
+  
+  protected function getPath($file) {
     $file = $this->normalize(substr($file, $this->length));
     return $file;
   }
-
-  /**
-   * Determine whether the specified file or directory is not nil,
-   * exists within the directory tree rooted by options['directory'] and
-   * matches the permitted mimetypes restriction (option: filter)
-   *
-   * @return TRUE when all criteria are met, FALSE otherwise.
-   */
-  protected function checkFile($file){
+  
+  protected function checkFile($file) {
     $mimes = $this->getAllowedMimeTypes();
 
     $hasFilter = $this->filter && count($mimes);
@@ -870,9 +868,9 @@ class FileManager {
     // applied boolean logic for easier grokking of same:
     return !empty($file) && FileManagerUtility::startsWith($file, $this->basedir) && file_exists($file) && (!$hasFilter || in_array($this->getMimeType($file), $mimes));
   }
-
-  protected function normalize($file){
-    return preg_replace('/(\\\|\/){2,}/', '/', $file);
+  
+  protected function normalize($file) {
+    return preg_replace('/\\\|\/{2,}/', '/', $file);
   }
 
   public function getAllowedMimeTypes($filter = null){
@@ -903,7 +901,7 @@ class FileManager {
 class FileManagerException extends Exception {}
 
 /* Stripped-down version of some Styx PHP Framework-Functionality bundled with this FileBrowser. Styx is located at: http://styx.og5.net */
-class FileManagerUtility 
+class FileManagerUtility
 {
   public static function endsWith($string, $look){
     return strrpos($string, $look)===strlen($string)-strlen($look);
@@ -977,104 +975,19 @@ class FileManagerUtility
 
     return $path;
   }
-
-  /**
-   * Return the filesystem absolute path to the directory pointed at by the current URI request.
-   * For example, if the request was 'http://site.org/dir1/dir2/script', then this method will
-   * return '<DocumentRoot>/dir1/dir2' where <DocumentRoot> is the filesystem path pointing
-   * at this site's DocumentRoot.
-   *
-   * Note that the path is returned WITHOUT a trailing slash '/'.
-   */
-  public static function getRequestPath()
-  {
-    // see also: http://php.about.com/od/learnphp/qt/_SERVER_PHP.htm
-    $path = str_replace('\\','/', $_SERVER['SCRIPT_NAME']);
-    $root = FileManagerUtility::getSiteRoot();
-    $path = dirname(!FileManagerUtility::startsWith($path, $root) ? $root . (!FileManagerUtility::startsWith($path, '/') ? '/' : '') . $path : $path);
-    $path = (FileManagerUtility::endsWith($path,'/')) ? substr($path, 0, -1) : $path;
-
-    return $path;
-  }
-
-  public static function getRealPath($path, $chmod = 0777, $mkdir_if_notexist = false, $with_trailing_slash = true)
-  {
+  
+  public static function getRealPath($path) {
+    
     $path = str_replace('\\','/',$path);
-    $path = preg_replace('/(\\\|\/){2,}/', '/', $path);
-    $root = FileManagerUtility::getSiteRoot();
-    $path = str_replace($root,'',$path);
-
-    //if(!FileManagerUtility::startsWith($path,'../') && !FileManagerUtility::startsWith($path,'/') && !is_dir($path) && is_dir(dirname($path))) @mkdir($path,$chmod); // create folder if not existing before, to prevent failure in realpath() function
-    $path = (FileManagerUtility::startsWith($path,'/') ? $root . $path : FileManagerUtility::getRequestPath() . '/' . $path);
-
-    // now fold '../' directory parts to prevent malicious paths such as 'a/../../../../../../../../../etc/' from succeeding
-    //
-    // to prevent screwups in the folding code, we FIRST clean out the './' directories, to prevent 'a/./.././.././.././.././.././.././.././.././../etc/' from succeeding:
-    $path = preg_replace('#/(\./)+#','/',$path);
-
-    // now temporarily strip off the leading part up to the colon to prevent entries like '../d:/dir' to succeed when the site root is 'c:/', for example:
-    $lead = '';
-    // the leading part may NOT contain any directory separators, as it's for drive letters only.
-    // So we must check in order to prevent malice like /../../../../../../../c:/dir from making it through.
-    if (preg_match('#^([A-Za-z]:)?/(.*)$#', $path, $matches))
-    {
-        $lead = $matches[1];
-        $path = '/' . $matches[2];
-    }
-
-    while (($pos = strpos($path, '/..')) !== false)
-    {
-        $prev = substr($path, 0, $pos);
-        /*
-         * on Windows, you get:
-         *
-         * dirname("/") = "\"
-         * dirname("y/") = "."
-         * dirname("/x") = "\"
-         *
-         * so we'd rather not use dirname()   :-(
-         */
-        $p2 = strrpos($prev, '/');
-        if ($p2 === false)
-        {
-            throw new FileManagerException('path_tampering');
-        }
-        $prev = substr($prev, 0, $p2);
-        $next = substr($path, $pos + 3);
-        if ($next && $next[0] != '/')
-        {
-            throw new FileManagerException('path_tampering');
-        }
-        $path = $prev . $next;
-    }
-
-    $path = $lead . $path;
-
-    // now, iff there was such a '../../../etc/' attempt, we'll know because the resulting path does NOT have the 'siteroot' prefix:
-    if (!FileManagerUtility::startsWith($path, $root))
-    {
-        throw new FileManagerException('path_tampering');
-    }
-
-    if(!is_dir($path) && is_dir(dirname($path)) && $mkdir_if_notexist)
-    {
-        $rv = @mkdir($path,$chmod); // create last folder if not existing
-        if ($rv === false)
-        {
-            throw new FileManagerException('mkdir:' . $path);
-        }
-    }
-
-    // now all there's left for realpath() to do is expand possible symbolic links in the path; don't make that dependent on how the path looks:
-    $rv = realpath($path);
-    if ($rv === false)
-    {
-        throw new FileManagerException('realpath:' . $path);
-    }
-    $path = str_replace('\\','/',$rv);
-    $path = str_replace($root,'',$path);
-    $path = ($with_trailing_slash ? (FileManagerUtility::endsWith($path,'/') ? $path : $path.'/') : ((FileManagerUtility::endsWith($path,'/') && strlen($path) > 1) ? substr($path, 0, -1) : $path));
-
+    $path = preg_replace('#/+#','/',$path);
+    $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
+    
+    $path = (FileManagerUtility::startsWith($path,'/')) ? $_SERVER['DOCUMENT_ROOT'].$path : $path;
+    $path = (FileManagerUtility::startsWith($path,'../') || !FileManagerUtility::startsWith($path,'/')) ? realPath($path) : $path;
+    $path = str_replace('\\','/',$path);    
+    $path = str_replace($_SERVER['DOCUMENT_ROOT'],'',$path);
+    $path = (FileManagerUtility::endsWith($path,'/')) ? $path : $path.'/';
+    
     return $path;
   }
 
