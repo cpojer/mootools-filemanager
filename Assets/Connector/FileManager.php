@@ -433,7 +433,7 @@ class FileManager {
   }
   
   protected function getDir($dir) {
-    if(empty($dir) || $dir == '/' || strpos($dir,'../') !== false) return $this->basedir;
+    if(empty($dir) || $dir == '/' || strpos($dir,'../') !== false || $dir  == '..' || $dir  == '/..') return $this->basedir;
     $dir = $_SERVER['DOCUMENT_ROOT'].FileManagerUtility::getRealPath($this->options['directory'].'/'.$dir);
     return $this->checkFile($dir) ? $dir : $this->basedir;
   }

@@ -98,7 +98,6 @@ var FileManager = new Class({
         this.eliminate('edit');
         return;
       }
-      
       if (file.mime == 'text/directory'){
         this.addClass('selected');
         self.load(self.Directory + file.name);
@@ -234,9 +233,12 @@ var FileManager = new Class({
           this.toggleList();
         }
       }).bind(this),
-      keyboardInput: (function(e) {
+      keyesc:( function(e) {
         if(this.dialogOpen) return;
         if (e.key=='esc') this.hide();
+      }).bind(this),
+      keyboardInput: (function(e) {
+        if(this.dialogOpen) return;
         if (e.key=='up') {
           e.preventDefault();
           this.browserSelection('up');
@@ -337,16 +339,17 @@ var FileManager = new Class({
         display: 'block'
       });
 
-    window.addEvents({
+    $(window).addEvents({
       'scroll': this.bound.scroll,
       'resize': this.bound.scroll
     });
     // add keyboard navigation
-    document.addEvent('keydown', this.bound.toggleList);
+    $(window.document).addEvent('keydown', this.bound.toggleList);
+    $(window).addEvent('keydown', this.bound.keyesc);
     if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
-     document.addEvent('keydown', this.bound.keyboardInput);
+     $(window.document).addEvent('keydown', this.bound.keyboardInput);
     else
-     document.addEvent('keypress', this.bound.keyboardInput);
+     $(window.document).addEvent('keypress', this.bound.keyboardInput);
     this.container.tween('opacity',1);
    
     this.fitSizes();
@@ -372,12 +375,13 @@ var FileManager = new Class({
     this.container.setStyle('display', 'none');
 
     // add keyboard navigation
-    window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
-    document.removeEvent('keydown', this.bound.toggleList);
+    $(window).removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
+    $(window.document).removeEvent('keydown', this.bound.toggleList);
+    $(window).removeEvent('keydown', this.bound.keyesc);
     if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
-     document.removeEvent('keydown', this.bound.keyboardInput);
+     $(window.document).removeEvent('keydown', this.bound.keyboardInput);
     else
-     document.removeEvent('keypress', this.bound.keyboardInput);
+     $(window.document).removeEvent('keypress', this.bound.keyboardInput);
      
     this.fireHooks('cleanup');
     this.fireEvent('hide');
@@ -702,7 +706,7 @@ var FileManager = new Class({
         }).bind(this)).inject(el, 'top'));
 
       // rename, delete icon
-      if(file.name != '..') {       
+      if(file.name != '..') {
         var editButtons = new Array();
         if(this.options.rename) editButtons.push('rename');
         if(this.options.destroy) editButtons.push('destroy');
@@ -746,7 +750,7 @@ var FileManager = new Class({
         top: 0
       }).inject(el.retrieve('parent'));
       
-      document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keydown);
+      $(window.document).removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keyup);
       self.imageadd.fade(0);
 
       self.relayClick.apply(el);
@@ -782,7 +786,7 @@ var FileManager = new Class({
 
       onStart: function(el){
         el.set('opacity', 0.7).addClass('move');
-        document.addEvents({
+        $(window.document).addEvents({
           keydown: self.bound.keydown,
           keyup: self.bound.keyup
         });
@@ -1130,7 +1134,7 @@ this.Dialog = new Class({
       self.fireEvent('show');
     });
     
-    document.addEvents({
+    $(window.document).addEvents({
       'scroll': this.bound.scroll,
       'resize': this.bound.scroll,
       'keyup': this.bound.keyesc
@@ -1145,7 +1149,7 @@ this.Dialog = new Class({
         this.el.destroy();
       }).bind(this));
       
-      document.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
+      $(window.document).removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
   }
   
 });
