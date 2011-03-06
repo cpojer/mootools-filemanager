@@ -152,14 +152,14 @@ FileManager.Gallery = new Class({
     if (this.files.contains(name)) return true;
     this.files.push(name);
 
-    var img = new Asset.image(this.assetBasePath + 'Images/destroy.png').set({
+    var destroyIcon = new Asset.image(this.assetBasePath + 'Images/destroy.png').set({
       'class': 'filemanager-remove',
       title: this.language.gallery.remove,
       events: {click: this.removePicture}
     }).store('gallery', this);
 
     var li = new Element('li').store('file', file).adopt(
-      img,
+      destroyIcon,
       new Asset.image(file.path, {
         onload: function(){
           var el = this;
@@ -219,8 +219,8 @@ FileManager.Gallery = new Class({
         }
       })
     ).inject(this.gallery);
-    this.showFunctions(img,li,1);
-    this.tips.attach(img);
+    this.showFunctions(destroyIcon,li,1);
+    this.tips.attach(destroyIcon);
     this.switchButton();
     
     return true;
