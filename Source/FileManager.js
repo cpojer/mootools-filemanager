@@ -98,7 +98,6 @@ var FileManager = new Class({
         this.eliminate('edit');
         return;
       }
-
       if (file.mime == 'text/directory'){
         this.addClass('selected');
         self.load(self.Directory + file.name);
@@ -234,10 +233,13 @@ var FileManager = new Class({
           this.toggleList();
         }
       }).bind(this),
-      keyboardInput: (function(e) {
+      keyesc:( function(e) {
         if(this.dialogOpen) return;
 
         if (e.key=='esc') this.hide();
+      }).bind(this),
+      keyboardInput: (function(e) {
+        if(this.dialogOpen) return;
         if (e.key=='up') {
           e.preventDefault();
           this.browserSelection('up');
@@ -344,6 +346,7 @@ var FileManager = new Class({
     });
     // add keyboard navigation
     document.addEvent('keydown', this.bound.toggleList);
+    window.addEvent('keydown', this.bound.keyesc);
     if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
      document.addEvent('keydown', this.bound.keyboardInput);
     else
@@ -375,6 +378,7 @@ var FileManager = new Class({
     // add keyboard navigation
     window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
     document.removeEvent('keydown', this.bound.toggleList);
+    window.removeEvent('keydown', this.bound.keyesc);
     if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
      document.removeEvent('keydown', this.bound.keyboardInput);
     else
@@ -754,7 +758,7 @@ var FileManager = new Class({
         top: 0
       }).inject(el.retrieve('parent'));
 
-      document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keydown);
+      document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keyup);
       self.imageadd.fade(0);
 
       self.relayClick.apply(el);
