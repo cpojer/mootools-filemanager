@@ -29,7 +29,10 @@ Options:
   - maxImageSize: (integer, default is 1024) The maximum number of pixels an image can have, if the user enables "resize on upload"
   - upload: (boolean, defaults to *true*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
   - destroy: (boolean, defaults to *true*) allow files to get deleted, this is also set in the FileManager.js (this here is only for security protection when file/directory delete operations should be deactivated)
-  - safe: (string, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
+  - create: (boolean, defaults to *true*) allow creating new subdirectories, this is also set in the FileManager.js (this here is only for security protection when dir creates should be deactivated)
+  - move: (boolean, defaults to *true*) allow file and directory move/rename and copy, this is also set in the FileManager.js (this here is only for security protection when rename/move/copy should be deactivated)
+  - download: (boolean, defaults to *true*) allow downloads, this is also set in the FileManager.js (this here is only for security protection when downloads should be deactivated)
+  - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
 
 Notes on relative paths and safety / security:
@@ -1046,7 +1049,7 @@ class FileManager
   }
 
   /**
-   * Make a unique filename
+   * Make a cleaned-up, unique filename
    *
    * Return the file (dir + name + ext), or a unique, yet non-existing, variant thereof, where the filename
    * is appended with a '_' and a number, e.g. '_1', when the file itself already exists in the given
@@ -1084,6 +1087,7 @@ class FileManager
             break;
     }
 
+    // $file is now guaranteed to NOT exist
     return $file;
   }
 

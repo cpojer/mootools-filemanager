@@ -5,47 +5,109 @@ error_reporting(E_ALL | E_STRICT);
 require_once('../Assets/Connector/FileManager.php');
 
 
-// FileManager event callback: Please add your own authentication here
-function FM_IsAuthenticated($mgr, $action, $info)
+define('DEVELOPMENT', 01);   // set to 01 / 1 to enable logging of each incoming event request.
+
+
+// dumper useful in development
+function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase = null)
 {
-	$settings = $mgr->getSettings();
+	if (DEVELOPMENT)
+	{
+		if (!is_string($filenamebase)) $filenamebase = basename(__FILE__);
+
+		if ($mgr)
+			$settings = $mgr->getSettings();
+		else
+			$settings = null;
+
+		//$mimetdefs = $mgr->getMimeTypeDefinitions();
+
+		// log request data:
+		ob_start();
+			echo "FileManager::action:\n";
+			var_dump($action);
+			echo "\n\nFileManager::info:\n";
+			var_dump($info);
+			echo "\n\nFileManager::settings:\n";
+			var_dump($settings);
+
+			if (0) // set to 'if (01)' if you want this bit dumped as well; fastest back-n-forth edit that way :-)
+			{
+				echo "\n\n_SERVER:\n";
+				var_dump($_SERVER);
+			}
+			if (0)
+			{
+				echo "\n\n_ENV:\n";
+				if (isset($_ENV)) var_dump($_ENV); else echo "(null)\n";
+			}
+			if (0)
+			{
+				echo "\n\n_GET:\n";
+				if (isset($_GET)) var_dump($_GET); else echo "(null)\n";
+			}
+			if (0)
+			{
+				echo "\n\n_POST:\n";
+				if (isset($_POST)) var_dump($_POST); else echo "(null)\n";
+			}
+			if (0)
+			{
+				echo "\n\n_REQUEST:\n";
+				if (isset($_REQUEST)) var_dump($_REQUEST); else echo "(null)\n";
+			}
+			if (0)
+			{
+				echo "\n\n_FILES:\n";
+				if (isset($_FILES)) var_dump($_FILES); else echo "(null)\n";
+			}
+			if (0)
+			{
+				echo "\n\n_COOKIES:\n";
+				if (isset($_COOKIES)) var_dump($_COOKIES); else echo "(null)\n";
+			}
+			if (0)
+			{
+				echo "\n\n_SESSION:\n";
+				if (isset($_SESSION)) var_dump($_SESSION); else echo "(null)\n";
+			}
+		$dump = ob_get_clean();
+		static $count;
+		if (!$count) $count = 1; else $count++;
+		@file_put_contents((!empty($filenamebase) ? $filenamebase . '.' : '') . date('Ymd-His') . '.' . fmod(microtime(true), 1) . '-' . $action . '-' . $count . '.log', html_entity_decode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8'));
+	}
+}
+
+
+
+
+/*
+ * FileManager event callback: Please add your own authentication / authorization here.
+ *
+ * Note that this function serves as a custom callback for all FileManager
+ * authentication/authorization requests, but you may of course provide
+ * different functions for each of the FM callbacks.
+ *
+ * Return TRUE when the session/client is authorizaed to execute the action, FALSE
+ * otherwise.
+ */
+function FM_IsAuthorized($mgr, $action, $info)
+{
+	//$settings = $mgr->getSettings();
 	//$mimetdefs = $mgr->getMimeTypeDefinitions();
 
 	// log request data:
-	ob_start();
-		echo "FileManager::action:\n";
-		var_dump($action);
-		echo "\n\nFileManager::info:\n";
-		var_dump($info);
-		echo "\n\nFileManager::settings:\n";
-		var_dump($settings);
-
-		echo "\n\n_SERVER:\n";
-		var_dump($_SERVER);
-		echo "\n\n_ENV:\n";
-		if (isset($_ENV)) var_dump($_ENV); else echo "(null)\n";
-		echo "\n\n_GET:\n";
-		if (isset($_GET)) var_dump($_GET); else echo "(null)\n";
-		echo "\n\n_POST:\n";
-		if (isset($_POST)) var_dump($_POST); else echo "(null)\n";
-		echo "\n\n_REQUEST:\n";
-		if (isset($_REQUEST)) var_dump($_REQUEST); else echo "(null)\n";
-		echo "\n\n_FILES:\n";
-		if (isset($_FILES)) var_dump($_FILES); else echo "(null)\n";
-		echo "\n\n_COOKIES:\n";
-		if (isset($_COOKIES)) var_dump($_COOKIES); else echo "(null)\n";
-		echo "\n\n_SESSION:\n";
-		if (isset($_SESSION)) var_dump($_SESSION); else echo "(null)\n";
-	$dump = ob_get_clean();
-	// MD5(json_encode(...)) is just a way to generate different filenames for different input which happen within the same second:
-	file_put_contents('selectImage.' . date('YmdHis') . (isset($_FILES) ? '-' . md5(json_encode($_FILES)) : '') . '.log', html_entity_decode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8'));
+	FM_vardumper($mgr, $action, $info);
 
 
-	// authenticate: this sample is a bogus authentication, but you can perform simple to highly
-	// sophisticated authentications here, e.g. even authentications which also check permissions
-	// related to what is being uploaded right now (different permissions required for file mimetypes,
-	// e.g. images:any authenticated user; other file types which are more susceptible to carrying
-	// illicit payloads requiring at least 'power/trusted user' permissions, ...)
+	/*
+	 * authenticate / authorize:
+	 * this sample is a bogus authorization, but you can perform simple to highly
+	 * sophisticated authentications / authorizations here, e.g. even ones which also check permissions
+	 * related to what is being uploaded right now (different permissions required for file mimetypes,
+	 * e.g. images: any authenticated user; while other file types which are more susceptible to carrying
+	 * illicit payloads requiring at least 'power/trusted user' permissions, ...)
+	 */
 
 	switch ($action)
 	{
@@ -112,7 +174,7 @@ function FM_IsAuthenticated($mgr, $action, $info)
 
 	default:
 		return false;
-	  }
+	}
 }
 
 
@@ -159,7 +221,8 @@ if (01) // debugging
 			echo "\nORIG: [" . htmlentities($t) . "]\nRES:  [" . htmlentities($r) . "]\n";
 		}
 	}
-	
+
+	// fake a POST submit through a GET request so we can easily diag/debug event requests:
 	if (!isset($_POST)) $_POST = array();
 	foreach($_GET as $k => $v)
 	{
@@ -169,49 +232,32 @@ if (01) // debugging
 
 
 $browser = new FileManager(array(
-	'directory' => 'Files/',
+	'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__)
 	'thumbnailPath' => 'Files/Thumbnails/',
 	'assetBasePath' => '../Assets',
 	'chmod' => 0777,
 	//'maxUploadSize' => 1024 * 1024 * 5,
 	//'upload' => false,
 	//'destroy' => false,
+	//'create' => false,
+	//'move' => false,
+	//'download' => false,
 	//'filter' => 'image/',
-	'UploadIsAuthenticated_cb' => 'FM_IsAuthenticated',
-	'DownloadIsAuthenticated_cb' => 'FM_IsAuthenticated',
-	'CreateIsAuthenticated_cb' => 'FM_IsAuthenticated',
-	'DestroyIsAuthenticated_cb' => 'FM_IsAuthenticated',
-	'MoveIsAuthenticated_cb' => 'FM_IsAuthenticated'
+	'UploadIsAuthenticated_cb' => 'FM_IsAuthorized',
+	'DownloadIsAuthenticated_cb' => 'FM_IsAuthorized',
+	'CreateIsAuthenticated_cb' => 'FM_IsAuthorized',
+	'DestroyIsAuthenticated_cb' => 'FM_IsAuthorized',
+	'MoveIsAuthenticated_cb' => 'FM_IsAuthorized'
 ));
 
 
 
 
-	// log request data:
-	ob_start();
-		echo "\n\nFileManager::settings:\n";
-		var_dump($browser->getSettings());
+// log request data:
+FM_vardumper($browser, 'init');
 
-		echo "\n\n_SERVER:\n";
-		var_dump($_SERVER);
-		echo "\n\n_ENV:\n";
-		if (isset($_ENV)) var_dump($_ENV); else echo "(null)\n";
-		echo "\n\n_GET:\n";
-		if (isset($_GET)) var_dump($_GET); else echo "(null)\n";
-		echo "\n\n_POST:\n";
-		if (isset($_POST)) var_dump($_POST); else echo "(null)\n";
-		echo "\n\n_REQUEST:\n";
-		if (isset($_REQUEST)) var_dump($_REQUEST); else echo "(null)\n";
-		echo "\n\n_FILES:\n";
-		if (isset($_FILES)) var_dump($_FILES); else echo "(null)\n";
-		echo "\n\n_COOKIES:\n";
-		if (isset($_COOKIES)) var_dump($_COOKIES); else echo "(null)\n";
-		echo "\n\n_SESSION:\n";
-		if (isset($_SESSION)) var_dump($_SESSION); else echo "(null)\n";
-	$dump = ob_get_clean();
-	// MD5(json_encode(...)) is just a way to generate different filenames for different input which happen within the same second:
-	file_put_contents('request.' . date('YmdHis') . (isset($_FILES) ? '-' . md5(json_encode($_FILES)) : '') . '.log', html_entity_decode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8'));
 
 
 
 $browser->fireEvent(!empty($_GET['event']) ? $_GET['event'] : null);
+

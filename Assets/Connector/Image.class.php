@@ -52,10 +52,10 @@ class Image {
 
 		// only set the new memory limit of 64MB when the configured one is smaller:
 		if ($finfo['memory_limit'] < 64 * 1024 * 1024)
-		{		
+		{
 			ini_set('memory_limit', '64M'); //  handle large images
 		}
-			
+
 		$this->file = $file;
 		$img = $finfo['imageinfo'];
 
@@ -514,4 +514,4 @@ class Image {
 		header('Content-type: '.$this->meta['mime']);
 		return $this->process();
 	}
-} 
+}
