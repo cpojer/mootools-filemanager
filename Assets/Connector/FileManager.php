@@ -409,7 +409,7 @@ class FileManager {
       $getid3->Analyze($dir);
       foreach ($getid3->info['zip']['files'] as $name => $size)
       {
-        $isdir = is_array($size) ? true : true;
+        $isdir = is_array($size) ? true : false;
         $out[($isdir) ? 0 : 1][$name] = '<li><a><img src="'.FileManagerUtility::rawurlencode_path($this->getIcon($name,true)).'" alt="" /> ' . $name . '</a></li>';
       }
       natcasesort($out[0]);
