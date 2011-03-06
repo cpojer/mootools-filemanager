@@ -826,7 +826,7 @@ var FileManager = new Class({
             file: file.name,
             filter: this.options.filter,
             directory: self.Directory,
-            newDirectory: dir ? dir.dir + '/' + dir.name : self.Directory,
+            newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : self.Directory,
             copy: e.control || e.meta ? 1 : 0
           },
           onSuccess: function(){

@@ -156,8 +156,8 @@ class FileManager {
   {
     $files = ($files = glob($dir . '*')) ? $files : array();
 
-	$root = FileManagerUtility::getSiteRoot();
-	
+    $root = FileManagerUtility::getSiteRoot();
+
     if ($dir != $this->basedir) array_unshift($files, $dir . '..');
     natcasesort($files);
     foreach ($files as $file)
@@ -212,8 +212,10 @@ class FileManager {
         //'thumbnailPath' => $this->options['thumbnailPath'],
         //'ia_directory' => $this->options['directory'],
         //'ia_dir' => $dir,
+        //'ia_root' => $root,
+        //'ia_basedir' => $this->basedir,
         'root' => substr($this->options['directory'], 1),
-        'path' => str_replace($root,'',$dir),
+        'path' => str_replace($this->basedir,'',$dir),               // is relative to 'root'
         'dir' => array(
             'name' => pathinfo($dir, PATHINFO_BASENAME),
             'date' => date($this->options['dateFormat'], filemtime($dir)),
@@ -337,16 +339,16 @@ class FileManager {
   {
   try
   {
-    if (empty($this->post['directory']) || empty($this->post['file']))
+    if (empty($this->post['file']))
         throw new FileManagerException('nofile');
 
-    $url = $this->getPath($this->post['directory']);
+    $url = $this->getPath(!empty($this->post['directory']) ? $this->post['directory'] : null);
     $dir = FileManagerUtility::getSiteRoot() . $url;
-	$file = pathinfo($this->post['file'], PATHINFO_BASENAME);
+    $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
 
-	$dir .= $file;
-	$url .= $file;
-	
+    $dir .= $file;
+    $url .= $file;
+
     if (!$this->checkFile($dir))
         throw new FileManagerException('nofile');
 
@@ -379,7 +381,7 @@ class FileManager {
       }
       catch (Exception $e)
       {
-          $tnc = '<a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($file, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($file)).$randomImage . '" class="preview" alt="preview" /></a>';
+          $tnc = '<a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($file, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($dir)).$randomImage . '" class="preview" alt="preview" /></a>';
       }
       $content .= $tnc;
     // text preview
@@ -393,7 +395,7 @@ class FileManager {
       }
       else
       {
-	    $fsize = filesize($dir);
+        $fsize = filesize($dir);
         $content = '<div class="textpreview">
             <p>${size} ' . FileManagerUtility::fmt_bytecount($fsize) . ' (' . $fsize . ' Bytes)</p>
             </div>';
@@ -410,7 +412,7 @@ class FileManager {
       foreach ($getid3->info['zip']['files'] as $name => $size)
       {
         $isdir = is_array($size) ? true : false;
-        $out[($isdir) ? 0 : 1][$name] = '<li><a><img src="'.FileManagerUtility::rawurlencode_path($this->getIcon($name,true)).'" alt="" /> ' . $name . '</a></li>';
+        $out[($isdir) ? 0 : 1][$name] = '<li><a><img src="'.FileManagerUtility::rawurlencode_path($this->getIcon($dir,true)).'" alt="" /> ' . $name . '</a></li>';
       }
       natcasesort($out[0]);
       natcasesort($out[1]);
@@ -463,7 +465,7 @@ class FileManager {
     }
     else
     {
-	    $fsize = @filesize($dir);
+        $fsize = @filesize($dir);
         $content = '<div class="textpreview">
             <p>${size} ' . FileManagerUtility::fmt_bytecount($fsize) . ' (' . $fsize . ' Bytes)</p>
             </div>';
@@ -539,11 +541,11 @@ class FileManager {
             throw new FileManagerException('nofile');
 
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-		$file = pathinfo($this->post['file'], PATHINFO_BASENAME);
+        $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
 
         $name = pathinfo($file, PATHINFO_FILENAME);
         $fileinfo = array(
-			'dir' => $dir,
+            'dir' => $dir,
             'file' => $file,
             'name' => $name
         );
@@ -627,12 +629,12 @@ class FileManager {
             throw new FileManagerException('nofile');
 
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-		$file = pathinfo($this->post['file'], PATHINFO_BASENAME);
+        $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
 
         $name = pathinfo($file, PATHINFO_FILENAME);
         $fileinfo = array(
             'dir' => $dir,
-			'subdir' => $file,
+            'subdir' => $file,
             'name' => $name,
             'chmod' => $this->options['chmod']
         );
@@ -977,7 +979,8 @@ class FileManager {
         }
         else
         {
-            $newname = $this->getName($file, $this->getDir($this->post['newDirectory']));
+            $newdir = $this->getDir($this->post['newDirectory']);
+            $newname = $this->getName($file, $newdir);
             //$fn = !empty($this->post['copy']) ? 'copy' : 'rename';
         }
 
@@ -987,7 +990,7 @@ class FileManager {
         $extOld = pathinfo($file, PATHINFO_EXTENSION);
         $extNew = pathinfo($newname, PATHINFO_EXTENSION);
         if ($extOld != $extNew) $newname .= '.' . $extOld;
-        if (!@$fn($file, $newname))
+        if (!@$fn($dir . $file, $newname))
             throw new FileManagerException($fn . '_failed');
 
         echo json_encode(array(
@@ -1163,8 +1166,8 @@ class FileManager {
   {
     $dir = str_replace('\\','/', $dir);
     $basedir = $this->basedir;
-	$root = FileManagerUtility::getSiteRoot();
-    $dir = (!FileManagerUtility::startsWith($dir, '/') ? $basedir : $root . $dir);
+    $root = FileManagerUtility::getSiteRoot();
+    $dir = (!FileManagerUtility::startsWith($dir, '/') ? $basedir : $root) . $dir;
     $dir = FileManagerUtility::getRealDir($dir, $chmod, $mkdir_if_notexist, $with_trailing_slash);
     return $this->checkFile($mkdir_if_notexist ? dirname($dir) : $dir) ? $dir : $this->basedir;
   }
