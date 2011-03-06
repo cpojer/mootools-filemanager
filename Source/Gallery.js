@@ -219,7 +219,8 @@ FileManager.Gallery = new Class({
         }
       })
     ).inject(this.gallery);
-    
+    this.showFunctions(img,li,1);
+    this.tips.attach(img);
     this.switchButton();
     
     return true;
