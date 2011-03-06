@@ -397,8 +397,7 @@ var FileManager = new Class({
   download: function(e) {
     e.stop();
     if (!this.Current) return;
-    //window.open(this.normalize(this.Current.retrieve('file').path));
-    window.open(this.options.url + '?event=download&file='+this.normalize(this.Current.retrieve('file').path.replace(this.root,'')));
+    window.open(this.options.url + '?event=download&file='+this.normalize(this.Current.retrieve('file').path));
   },
 
   create: function(e) {
@@ -707,7 +706,7 @@ var FileManager = new Class({
         icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
-          window.open(this.options.url + '?event=download&file='+this.normalize(file.path.replace(this.root,'')));
+          window.open(this.options.url + '?event=download&file='+this.normalize(file.path));
         }).bind(this)).inject(el, 'top'));
 
       // rename, delete icon

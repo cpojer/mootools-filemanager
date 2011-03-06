@@ -67,6 +67,7 @@ function FM_IsAuthenticated($mgr, $action, $info)
 	case 'download':
 		/*
 		 *     $fileinfo = array(
+		 *         'dir' => $dir,
 		 *         'file' => $path,
 		 *         'name' => $name
 		 *     );
@@ -77,7 +78,7 @@ function FM_IsAuthenticated($mgr, $action, $info)
 		/*
 		 *     $fileinfo = array(
 		 *         'dir' => $dir,
-		 *         'file' => $file,
+		 *         'subdir' => $file,
 		 *         'name' => $name,
 		 *         'chmod' => $this->options['chmod']
 		 *     );
