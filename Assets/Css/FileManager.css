@@ -659,8 +659,8 @@ div.filemanager-gallery ul li img {
 
 div.filemanager-gallery ul li img.filemanager-remove {
   position: absolute;
-  right: -7px;
-  top: -7px;
+  right: -5px;
+  top: -5px;
   width: 16px;
   height: 16px;
 }
