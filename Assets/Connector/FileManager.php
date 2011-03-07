@@ -1,78 +1,112 @@
 <?php
 /*
-Script: FileManager.php
-  MooTools FileManager - Backend for the FileManager Script
+ * Script: FileManager.php
+ *   MooTools FileManager - Backend for the FileManager Script
+ * 
+ * Authors:
+ *  - Christoph Pojer (http://cpojer.net) (author)
+ *  - James Ehly (http://www.devtrench.com)
+ *  - Fabian Vogelsteller (http://frozeman.de)
+ * 
+ * License:
+ *   MIT-style license.
+ * 
+ * Copyright:
+ *   Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
+ * 
+ * Dependencies:
+ *   - Upload.php
+ *   - Image.class.php
+ *   - getId3 Library
+ * 
+ * Options:
+ *   - directory: (string) The base directory to be used for the FileManager
+ *   - assetBasePath: (string, optional) The path to all images and swf files used by the filemanager
+ *   - thumbnailPath: (string) The path where the thumbnails of the pictures will be saved
+ *   - mimeTypesPath: (string, optional) The path to the MimeTypes.ini file.
+ *   - dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
+ *   - maxUploadSize: (integer, defaults to *20280000* bytes) The maximum file size for upload in bytes
+ *   - maxImageSize: (integer, default is 1024) The maximum number of pixels in both height and width an image can have, if the user enables "resize on upload"
+ *   - upload: (boolean, defaults to *true*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
+ *   - destroy: (boolean, defaults to *true*) allow files to get deleted, this is also set in the FileManager.js (this here is only for security protection when file/directory delete operations should be deactivated)
+ *   - create: (boolean, defaults to *true*) allow creating new subdirectories, this is also set in the FileManager.js (this here is only for security protection when dir creates should be deactivated)
+ *   - move: (boolean, defaults to *true*) allow file and directory move/rename and copy, this is also set in the FileManager.js (this here is only for security protection when rename/move/copy should be deactivated)
+ *   - download: (boolean, defaults to *true*) allow downloads, this is also set in the FileManager.js (this here is only for security protection when downloads should be deactivated)
+ *   - allowExtChange: (boolean, defaults to *false*) allow the file extension to be changed when performing a rename operation.
+ *   - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
+ *   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
+ *   - UploadIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be uploaded.
+ *     The parameter $action = 'upload'.
+ *   - DownloadIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be downloaded.
+ *     The parameter $action = 'download'.
+ *   - CreateIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given subdirectory may be created.
+ *     The parameter $action = 'create'.
+ *   - DestroyIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file / subdirectory tree may be deleted.
+ *     The parameter $action = 'destroy'.
+ *   - MoveIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file / subdirectory may be renamed, moved or copied.
+ *     Note that currently support for copying subdirectories is missing.
+ *     The parameter $action = 'move'.
+ * 
+ * For all authorization hooks (callback functions) the following applies:
+ * 
+ *     The callback should return TRUE for yes (permission granted), FALSE for no (permission denied).
+ *     Parameters sent to the callback are:
+ *       ($this, $action, $fileinfo)
+ *     where $fileinfo is an array containing info about the file being uploaded, $action is a (string) identifying the current operation, $this is a reference to this FileManager instance.
+ *     $action was included as a redundant parameter to each callback as a simple means to allow users to hook a single callback function to all the authorization hooks, without the need to create a wrapper function for each.
+ * 
+ *     For more info about the hook parameter $fileinfo contents and a basic implementation, see Demos/manager.php and Demos/selectImage.php
+ * 
+ * Notes on relative paths and safety / security:
+ * 
+ *   If any option is specifying a relative path, e.g. '../Assets' or 'Media/Stuff/', this is assumed to be relative to the request URI path,
+ *   i.e. dirname($_SERVER['SCRIPT_NAME']).
+ * 
+ *   Requests may post/submit relative paths as arguments to their FileManager events/actions in $_GET/$_POST, and those relative paths will be
+ *   regarded as relative to the request URI handling script path, i.e. dirname($_SERVER['SCRIPT_NAME']) to make the most
+ *   sense from bother server and client coding perspective.
+ * 
+ * 
+ *   We also assume that any of the paths may be specified from the outside, so each path is processed and filtered to prevent malicious intent
+ *   from succeeding. (An example of such would be an attacker posting his own 'destroy' event request requesting the destruction of
+ *   '../../../../../../../../../etc/passwd' for example. In more complex rigs, the attack may be assisted through attacks at these options' paths,
+ *   so these are subjected to the same scrutiny in here.)
+ * 
+ *   All paths, absolute or relative, as passed to the event handlers (see the onXXX methods of this class) are ENFORCED TO ABIDE THE RULE
+ *   'every path resides within the BASEDIR rooted tree' without exception.
+ *   When paths apparently don't, they are forcibly coerced into adherence to this rule. Because we can do without exceptions to important rules. ;-)
+ * 
+ *   BASEDIR equals the path pointed at by the options['directory'] setting. It is therefore imperative that you ensure this value is
+ *   correctly set up; worst case, this setting will equal DocumentRoot.
+ *   In other words: you'll never be able to reach any file or directory outside this site's DocumentRoot directory tree, ever.
+ * 
+ * 
+ *   When you need your paths to be restricted to the bounds of the options['directory'] tree (which is a subtree of the DocumentRoot based
+ *   tree), you may wish to use the CheckFile(), getPath() and getDir() methods instead of getRealPath() and getRealDir(), as the latter
+ *   restrict targets to within the DocumentRoot tree only.
+ * 
+ *   getPath() and getRealPath() both deliver absolute paths relative to DocumentRoot, hence suitable for use in URIs and feeding to client side
+ *   scripts, while getRealDir() and getDir() both return absolute paths in the server filesystem perspective, i.e. the latter are suitable for
+ *   server side script based file operation functions.
+ */
 
-Authors:
- - Christoph Pojer (http://cpojer.net) (author)
- - James Ehly (http://www.devtrench.com)
- - Fabian Vogelsteller (http://frozeman.de)
-
-License:
-  MIT-style license.
-
-Copyright:
-  Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
-
-Dependencies:
-  - Upload.php
-  - Image.class.php
-  - getId3 Library
-
-Options:
-  - directory: (string) The base directory to be used for the FileManager
-  - assetBasePath: (string, optional) The path to all images and swf files used by the filemanager
-  - thumbnailPath: (string) The path where the thumbnails of the pictures will be saved
-  - mimeTypesPath: (string, optional) The path to the MimeTypes.ini file.
-  - dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
-  - maxUploadSize: (integer, defaults to *20280000* bytes) The maximum file size for upload in bytes
-  - maxImageSize: (integer, default is 1024) The maximum number of pixels an image can have, if the user enables "resize on upload"
-  - upload: (boolean, defaults to *true*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
-  - destroy: (boolean, defaults to *true*) allow files to get deleted, this is also set in the FileManager.js (this here is only for security protection when file/directory delete operations should be deactivated)
-  - create: (boolean, defaults to *true*) allow creating new subdirectories, this is also set in the FileManager.js (this here is only for security protection when dir creates should be deactivated)
-  - move: (boolean, defaults to *true*) allow file and directory move/rename and copy, this is also set in the FileManager.js (this here is only for security protection when rename/move/copy should be deactivated)
-  - download: (boolean, defaults to *true*) allow downloads, this is also set in the FileManager.js (this here is only for security protection when downloads should be deactivated)
-  - allowExtChange: (boolean, defaults to *false*) allow the file extension to be changed when performing a rename operation.
-  - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
-  - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
-
-Notes on relative paths and safety / security:
-
-  If any option is specifying a relative path, e.g. '../Assets' or 'Media/Stuff/', this is assumed to be relative to the request URI path,
-  i.e. dirname($_SERVER['SCRIPT_NAME']).
-
-  Requests may post/submit relative paths as arguments to their FileManager events/actions in $_GET/$_POST, and those relative paths will be
-  regarded as relative to the request URI handling script path, i.e. dirname($_SERVER['SCRIPT_NAME']) to make the most
-  sense from bother server and client coding perspective.
-
-
-  We also assume that any of the paths may be specified from the outside, so each path is processed and filtered to prevent malicious intent
-  from succeeding. (An example of such would be an attacker posting his own 'destroy' event request requesting the destruction of
-  '../../../../../../../../../etc/passwd' for example. In more complex rigs, the attack may be assisted through attacks at these options' paths,
-  so these are subjected to the same scrutiny in here.)
-
-  All paths, absolute or relative, as passed to the event handlers (see the onXXX methods of this class) are ENFORCED TO ABIDE THE RULE
-  'every path resides within the BASEDIR rooted tree' without exception.
-  When paths apparently don't, they are forcibly coerced into adherence to this rule. Because we can do without exceptions to important rules. ;-)
-
-  BASEDIR equals the path pointed at by the options['directory'] setting. It is therefore imperative that you ensure this value is
-  correctly set up; worst case, this setting will equal DocumentRoot.
-  In other words: you'll never be able to reach any file or directory outside this site's DocumentRoot directory tree, ever.
-
-
-  When you need your paths to be restricted to the bounds of the options['directory'] tree (which is a subtree of the DocumentRoot based
-  tree), you may wish to use the CheckFile(), getPath() and getDir() methods instead of getRealPath() and getRealDir(), as the latter
-  restrict targets to within the DocumentRoot tree only.
-
-  getPath() and getRealPath() both deliver absolute paths relative to DocumentRoot, hence suitable for use in URIs and feeding to client side
-  scripts, while getRealDir() and getDir() both return absolute paths in the server filesystem perspective, i.e. the latter are suitable for
-  server side script based file operation functions.
-*/
-
+// ----------- compatibility checks ----------------------------------------------------------------------------
 if (version_compare(PHP_VERSION, '5.2.0') < 0)
 {
-    die('FileManager requires PHP 5.2.0 or later');
+    // die horribly: server does not match our requirements!
+    header('HTTP/1.0 500 FileManager requires PHP 5.2.0 or later', true, 500); // Internal server error
+    throw Exception('FileManager requires PHP 5.2.0 or later');   // this exception will most probably not be caught; that's our intent!
 }
+
+if (function_exists('UploadIsAuthenticated'))
+{
+    // die horribly: user has not upgraded his callback hook(s)!
+    header('HTTP/1.0 500 FileManager callback has not been upgraded!', true, 500); // Internal server error
+    throw Exception('FileManager callback has not been upgraded!');   // this exception will most probably not be caught; that's our intent!
+}
+
+//-------------------------------------------------------------------------------------------------------------
+
 
 if (!defined('MTFM_PATH'))
 {

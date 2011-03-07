@@ -78,7 +78,7 @@ Options
 
 Options if Uploader is included
 
-* upload: (boolean, defaults to *true*) 
+* upload: (boolean, defaults to *true*)
 * uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
 * resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
 
@@ -94,11 +94,24 @@ Backend
 
 * See Backend/FileManager.php for all available server-side options
 
-### Custom Authentication
+### Custom Authentication and Authorization
 
 * As Flash and therefore the Uploader ignores authenticated clients[*] you need to specify your own authentication / session initialization. In order to do this you need to provide custom code in the "UploadIsAuthorized" callback function on the serverside and you need to specify "uploadAuthData" on the client.
 
-  [*] More specifically: Flash does not pass along any cookies, hence the PHP session ID cookie is not sent along with any upload request. The elements is 'uploadAuthData' are sent to the server as part of the request URI and will show up in the $_GET[] array, where you can extract them and manually initialize and start your session-based authentication.
+  [*] More specifically: Flash does not pass along any cookies, hence the PHP session ID cookie is not sent along with any upload request. The elements in 'uploadAuthData' are sent to the server as part of the request URI and will show up in the $_GET[] array, where you can extract them and manually initialize and start your session-based authentication.
+
+* FM now provides a server-side callback hook for each 'intrusive' request so you can apply your own business logic to determine if a given (file or directory, user context) mix is indeed permitted to upload / create / delete / move / rename / copy / download.
+
+  These hooks can be configured as part of the server-side options for the Backend/FileManager instance. For more info and a sample see the Demos/manager.php and Demos/selectImage.php files.
+
+  Server-side authorization hooks:
+
+  * UploadIsAuthorized_cb
+  * DownloadIsAuthorized_cb
+  * CreateIsAuthorized_cb
+  * DestroyIsAuthorized_cb
+  * MoveIsAuthorized_cb
+
 
 ### Credits
 

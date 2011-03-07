@@ -95,8 +95,11 @@ function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase =
  *
  * Return TRUE when the session/client is authorizaed to execute the action, FALSE
  * otherwise.
+ *
+ * TODO: allow customer code in here to edit the $fileinfo items and have those edits picked up by FM.
+ *       E.g. changing the filename on write/move, fixing filename extensions based on file content sniffed mimetype, etc.
  */
-function FM_IsAuthorized($mgr, $action, $info)
+function FM_IsAuthorized($mgr, $action, &$info)
 {
 	//$settings = $mgr->getSettings();
 	//$mimetdefs = $mgr->getMimeTypeDefinitions();
@@ -186,6 +189,7 @@ function FM_IsAuthorized($mgr, $action, $info)
 		return true;
 
 	default:
+		// unknown operation. Internal server error.
 		return false;
 	}
 }
