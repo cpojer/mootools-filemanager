@@ -1312,7 +1312,7 @@ class FileManager
 
     foreach ($mimes as $mime)
       if (FileManagerUtility::startsWith($mime, $mime_filter))
-        $mimeTypes[] = strtolower($mime);
+        $mimeTypes[] = $mime;
 
     return $mimeTypes;
   }
