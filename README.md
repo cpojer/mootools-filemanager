@@ -74,6 +74,7 @@ Options
 * hideClose: (boolean, defaults to *false*) Whether to hide the close button in the right corner
 * hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
 * hideOverlay: (boolean, defaults to *false*) When true, hides the background overlay
+* hideQonDelete: (boolean, defaults to *false*) When true, hides the Dialog asking 'are you sure' when you have clicked on any 'delete file/directory' button
 
 Options if Uploader is included
 
@@ -95,7 +96,10 @@ Backend
 
 ### Custom Authentication
 
-* As Flash and therefore the Uploader ignores authenticated clients you need to specify your own authentication. In order to do this you need to provide a custom "UploadIsAuthenticated" function on the serverside and you need to specify "uploadAuthData" on the client.
+* As Flash and therefore the Uploader ignores authenticated clients[*] you need to specify your own authentication / session initialization. In order to do this you need to provide custom code in the "UploadIsAuthorized" callback function on the serverside and you need to specify "uploadAuthData" on the client.
+
+  [*] More specifically: Flash does not pass along any cookies, hence the PHP session ID cookie is not sent along with any upload request. The elements is 'uploadAuthData' are sent to the server as part of the request URI and will show up in the $_GET[] array, where you can extract them and manually initialize and start your session-based authentication.
 
 ### Credits
+
 Loosely based on a Script by [Yannick Croissant](http://dev.k1der.net/dev/brooser-un-browser-de-fichier-pour-mootools/)

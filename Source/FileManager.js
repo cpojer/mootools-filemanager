@@ -838,7 +838,7 @@ var FileManager = new Class({
           url: self.options.url + '?event=move',
           data: {
             file: file.name,
-            filter: this.options.filter,
+            filter: self.options.filter,
             directory: self.Directory,
             newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : self.Directory,
             copy: e.control || e.meta ? 1 : 0
