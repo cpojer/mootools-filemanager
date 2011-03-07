@@ -117,7 +117,8 @@ function FM_IsAuthorized($mgr, $action, $info)
 		 *     'dir' => $dir,
 		 *     'name' => $name,
 		 *     'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
-		 *     'size' => $this->options['maxUploadSize'],
+		 *     'size' => fielsize
+		 *     'maxsize' => $this->options['maxUploadSize'],
 		 *     'mimes' => $this->getAllowedMimeTypes(),
 		 *     'chmod' => $this->options['chmod']
 		 *   );

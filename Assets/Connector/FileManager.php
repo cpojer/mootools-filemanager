@@ -116,7 +116,12 @@ class FileManager
        *     Think Springer Verlag and PDFs, for instance. You can have 'em, but only /after/ you've ...
        */
       'safe' => true,
-      'chmod' => 0777
+      'chmod' => 0777,
+      'UploadIsAuthenticated_cb' => null,
+      'DownloadIsAuthenticated_cb' => null,
+      'CreateIsAuthenticated_cb' => null,
+      'DestroyIsAuthenticated_cb' => null,
+      'MoveIsAuthenticated_cb' => null
     ), (is_array($options) ? $options : array()));
 
     $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'], $this->options['chmod'], true); // create path if nonexistent
