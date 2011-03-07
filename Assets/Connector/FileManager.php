@@ -202,11 +202,11 @@ class FileManager
         $out[is_dir($file) ? 0 : 1][] = array(
           'path' => FileManagerUtility::rawurlencode_path($url),
           'name' => pathinfo($file, PATHINFO_BASENAME),
-          'date' => date($this->options['dateFormat'], filemtime($file)),
+          'date' => date($this->options['dateFormat'], @filemtime($file)),
           'mime' => $mime,
           'thumbnail' => FileManagerUtility::rawurlencode_path($icon),
           'icon' => FileManagerUtility::rawurlencode_path($this->getIcon($file,true)),
-          'size' => filesize($file)
+          'size' => @filesize($file)
         );
       }
     }
@@ -221,7 +221,7 @@ class FileManager
         'path' => str_replace($this->basedir,'',$dir),               // is relative to 'root'
         'dir' => array(
             'name' => pathinfo($dir, PATHINFO_BASENAME),
-            'date' => date($this->options['dateFormat'], filemtime($dir)),
+            'date' => date($this->options['dateFormat'], @filemtime($dir)),
             'mime' => 'text/directory',
             'thumbnail' => $this->getIcon($dir),
             'icon' => $this->getIcon($dir,true)
@@ -255,68 +255,93 @@ class FileManager
    * error                   error message
    *
    * Next to these, the JSON encoded output will, with high probability, include a
-   * list view of the 'basedir' as a fast and easy fallback mechanism for client side
+   * list view of the parent or 'basedir' as a fast and easy fallback mechanism for client side
    * viewing code. However, severe and repetitive errors may not produce this
    * 'fallback view list' so proper client code should check the 'status' field in the
    * JSON output.
    */
   protected function onView()
   {
+    // try to produce the view; if it b0rks, retry with the parent, until we've arrived at the basedir:
+    // then we fail more severely.
+
+    $mime_filter = null;
+    $list_type = null;
+    $emsg = null;
+    $jserr = array(
+            'status' => 1
+        );
+    $bottomdir = $this->basedir;
+
     try
     {
         $mime_filter = ((isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : null);
         $list_type = ((isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb');
 
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-
-        $jsok = array(
-                'status' => 1
-            );
-        $rv = $this->_onView($dir, $jsok, $mime_filter, $list_type);
-        echo json_encode($rv);
     }
     catch(FileManagerException $e)
     {
-        $emsg = explode(':', $e->getMessage(), 2);
-        $jserr = array(
-                'status' => 0,
-                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
-            );
-        // and fall back to showing the root directory
-        try
-        {
-            $dir = $this->getDir();
-            $rv = $this->_onView($dir, $jserr, $mime_filter, $list_type);
-            echo json_encode($rv);
-        }
-        catch (Exception $e)
-        {
-            // when we fail here, it's pretty darn bad and nothing to it.
-            // just push the error JSON as go.
-            echo json_encode($jserr);
-        }
+        $emsg = $e->getMessage();
+        $dir = $this->basedir;
     }
     catch(Exception $e)
     {
-        // catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
-        $jserr = array(
-                'status' => 0,
-                'error' => $e->getMessage()
-            );
-        // and fall back to showing the root directory
+        // catching other severe failures; since this can be anything it may not be a translation keyword in the message...
+        $emsg = $e->getMessage();
+        $dir = $this->basedir;
+    }
+
+    // loop until we drop below the bottomdir; meanwhile getDir() above guarantees that $dir is a subdir of bottomdir, hence dir >= bottomdir.
+    do
+    {
         try
         {
-            $dir = $this->getDir();
             $rv = $this->_onView($dir, $jserr, $mime_filter, $list_type);
             echo json_encode($rv);
+            return;
         }
-        catch (Exception $e)
+        catch(FileManagerException $e)
         {
-            // when we fail here, it's pretty darn bad and nothing to it.
-            // just push the error JSON as go.
-            echo json_encode($jserr);
+            $emsg = $e->getMessage();
         }
-    }
+        catch(Exception $e)
+        {
+            // catching other severe failures; since this can be anything it may not be a translation keyword in the message...
+            $emsg = $e->getMessage();
+        }
+
+        // only set up the new json error report array when this is the first exception we got:
+        if ($jserr['status'])
+        {
+            // check the error message and see if it is a translation code word (with or without parameters) or just a generic error report string
+            $e = explode(':', $emsg, 2);
+            if (preg_match('/[^A-Za-z0-9_-]/', $e[0]))
+            {
+                // generic message. ouch.
+                $jserr = array(
+                        'status' => 0,
+                        'error' => $emsg
+                    );
+            }
+            else
+            {
+                $jserr = array(
+                        'status' => 0,
+                        'error' => '${upload.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : '')
+                    );
+            }
+        }
+
+        // step down to the parent dir and retry:
+        $dir = dirname($dir);
+        if (!FileManagerUtility::endsWith($dir, '/')) $dir .= '/';
+
+    } while (strcmp($dir, $bottomdir) >= 0);
+
+    // when we fail here, it's pretty darn bad and nothing to it.
+    // just push the error JSON as go.
+    echo json_encode($jserr);
   }
 
   /**
