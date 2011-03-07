@@ -26,7 +26,7 @@ class Upload {
 		$options = array_merge(array(
 			'name' => null,
 			'extension' => null,
-			'size' => null,
+			'maxsize' => null,
 			'chmod' => 0777,
 			'overwrite' => false,
 			'mimes' => array(),
@@ -35,7 +35,7 @@ class Upload {
 
 		$file = $_FILES[$file];
 
-		if($options['size'] && $file['size']>$options['size'])
+		if($options['maxsize'] && $file['size'] > $options['maxsize'])
 			throw new UploadException('size');
 
 		$pathinfo = pathinfo($file['name']);

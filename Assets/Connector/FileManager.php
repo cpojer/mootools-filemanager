@@ -612,13 +612,13 @@ class FileManager
             throw new FileManagerException('nofile');
 
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-        $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
+        $file = pathinfo($this->getName($this->post['file'], $dir), PATHINFO_FILENAME);
+        if (!$file)
+            throw new FileManagerException('nofile');
 
-        $name = pathinfo($file, PATHINFO_FILENAME);
         $fileinfo = array(
             'dir' => $dir,
-            'subdir' => $file,
-            'name' => $name,
+            'file' => $file,
             'chmod' => $this->options['chmod']
         );
         if (!empty($this->options['CreateIsAuthenticated_cb']) && function_exists($this->options['CreateIsAuthenticated_cb']) && !$this->options['CreateIsAuthenticated_cb']($this, 'create', $fileinfo))
@@ -817,12 +817,34 @@ class FileManager
         throw new FileManagerException('nofile');
 
       $dir = $this->getDir(!empty($this->get['directory']) ? $this->get['directory'] : null);
-      $name = pathinfo($this->getName($_FILES['Filedata']['name'], $dir), PATHINFO_FILENAME);
+      $file = $this->getName($_FILES['Filedata']['name'], $dir);
+      if (!$file)
+        throw new FileManagerException('nofile');
+      $fi = pathinfo($file);
+
+      /*
+      Security:
+
+      Upload::move() processes the unfiltered version of $_FILES[]['name'], at least to get the extension,
+      unless we ALWAYS override the filename and extension in the options array below. That's why we
+      calculate the extension at all times here.
+      */
+      if ($this->options['safe'] && in_array(strtolower($fi['extension']), array('exe', 'dll', 'com', 'php', 'php3', 'php4', 'php5', 'phps')))
+      {
+        $fi['extension'] = 'txt';
+      }
+      else if (!is_string($fi['extension']) || strlen($fi['extension']) == 0) // can't use 'empty()' as "0" is a valid extension itself.
+      {
+        //enforce a mandatory extension, even when there isn't one (due to filtering or original input producing none)
+        $fi['extension'] = 'txt';
+      }
+
       $fileinfo = array(
         'dir' => $dir,
-        'name' => $name,
-        'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
-        'size' => $this->options['maxUploadSize'],
+        'name' => $fi['basename'],
+        'extension' => $fi['extension'],
+        'size' => $_FILES['Filedata']['size'],
+        'maxsize' => $this->options['maxUploadSize'],
         'mimes' => $this->getAllowedMimeTypes(),
         'ext2mime_map' => $this->getMimeTypeDefinitions(),
         'chmod' => $this->options['chmod'] & 0666   // security: never make those files 'executable'!
@@ -831,6 +853,7 @@ class FileManager
         throw new FileManagerException('authenticated');
 
       $file = Upload::move('Filedata', $dir, $fileinfo);
+      $file = self::normalize($file);
 
       /*
        * NOTE: you /can/ (and should be able to, IMHO) upload 'overly large' image files to your site, but the thumbnailing process step
@@ -917,63 +940,66 @@ class FileManager
         if (empty($this->post['file']))
             throw new FileManagerException('nofile');
 
-        $rename = empty($this->post['newDirectory']) && !empty($this->post['name']);
+        $rename = empty($this->post['newDirectory']) && !empty($this->post['name']) && empty($this->post['copy']);
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
         $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
 
         $is_dir = is_dir($dir . $file);
-        $fn = !empty($this->post['copy']) ? 'copy' : 'rename';
 
-        $name = pathinfo($file, PATHINFO_FILENAME);
+        // note: we do not support copying entire directories, though directory rename/move is okay
+        if (!$this->checkFile($dir . $file) || (!$rename && $is_dir))
+            throw new FileManagerException('nofile');
+
+        if($rename)
+        {
+            $fn = 'rename';
+            $newdir = null;
+            $newname = $this->getName($this->post['name'], $dir);
+        }
+        else
+        {
+            $fn = 'copy';
+            $newdir = $this->getDir(!empty($this->post['newDirectory']) ? $this->post['newDirectory'] : null);
+            $newname = $this->getName($file, $newdir);
+        }
+
+        if (!$newname)
+            throw new FileManagerException('nonewfile');
+
+        // when the new name seems to have a different extension, make sure the extension doesn't change after all:
+        $extOld = pathinfo($file, PATHINFO_EXTENSION);
+        $extNew = pathinfo($newname, PATHINFO_EXTENSION);
+        if ($extOld != $extNew) $newname .= '.' . $extOld;
+
         $fileinfo = array(
             'dir' => $dir,
             'file' => $file,
-            'name' => $name,
-            'newdir' => (!empty($this->post['newDirectory']) ? $this->post['newDirectory'] : '(null)'),
-            'newname' => (!empty($this->post['name']) ? $this->post['name'] : '(null)'),
+            'newdir' => $newdir,
+            'newname' => $newname,
             'rename' => $rename,
             'is_dir' => $is_dir,
             'function' => $fn
         );
 
-        if (!$this->checkFile($dir . $file) || (!$rename && $is_dir))
-            throw new FileManagerException('nofile');
-
         if (!empty($this->options['MoveIsAuthenticated_cb']) && function_exists($this->options['MoveIsAuthenticated_cb']) && !$this->options['MoveIsAuthenticated_cb']($this, 'move', $fileinfo))
             throw new FileManagerException('authenticated');
 
-        if($rename || $is_dir)
+        if($rename)
         {
-            if (empty($this->post['name']))
-                throw new FileManagerException('nonewfile');
-
-            $newname = $this->getName($this->post['name'], $dir);
-            $fn = 'rename';
+            // try to remove the thumbnail related to the original file; don't mind if it doesn't exist
             if(!$is_dir)
             {
                 if (!$this->deleteThumb($dir . $file))
                     throw new FileManagerException('delete_thumbnail_failed');
             }
         }
-        else
-        {
-            $newdir = $this->getDir($this->post['newDirectory']);
-            $newname = $this->getName($file, $newdir);
-            //$fn = !empty($this->post['copy']) ? 'copy' : 'rename';
-        }
 
-        if (!$newname)
-            throw new FileManagerException('nonewfile');
-
-        $extOld = pathinfo($file, PATHINFO_EXTENSION);
-        $extNew = pathinfo($newname, PATHINFO_EXTENSION);
-        if ($extOld != $extNew) $newname .= '.' . $extOld;
         if (!@$fn($dir . $file, $newname))
-            throw new FileManagerException($fn . '_failed');
+            throw new FileManagerException($fn . '_failed:' . $dir . $file . ':' . $newname);
 
         echo json_encode(array(
             'status' => 1,
-            'name' => pathinfo(self::normalize($newname), PATHINFO_BASENAME)
+            'name' => pathinfo($newname, PATHINFO_BASENAME)
         ));
     }
     catch(FileManagerException $e)
@@ -1063,14 +1089,41 @@ class FileManager
      * This is faster than using a dirscan to collect a set of existing filenames and feeding them as
      * an option array to pagetitle(), particularly for large directories.
      */
-    $filename = FileManagerUtility::pagetitle($pathinfo['filename']);
+    $filename = FileManagerUtility::pagetitle($pathinfo['filename'], null, '-_., []()~!@+' /* . '#&' */, '-_,~@+#&');
+    // also clean up the extension: only allow alphanumerics in there!
+    $ext = FileManagerUtility::pagetitle((!empty($pathinfo['extension']) ? $pathinfo['extension'] : null));
+    $ext = (!empty($ext) ? '.' . $ext : null);
     // make sure the generated filename is SAFE:
-    $file = $dir . $filename . (!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
-    for ($i = 0; ; $i++)
+    $file = $dir . $filename . $ext;
+    if (file_exists($file))
     {
-        $file = $dir . $filename . ($i ? '_' . $i : '') . (!empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : null);
-        if (!file_exists($file))
-            break;
+        /*
+         * make a unique name. Do this by postfixing the filename with '_X' where X is a sequential number.
+         *
+         * Note that when the input name is already such a 'sequenced' name, the sequence number is
+         * extracted from it and sequencing continues from there, hence input 'file_5' would, if it already
+         * existed, thus be bumped up to become 'file_6' and so on, until a filename is found which
+         * does not yet exist in the designated directory.
+         */
+        $i = 1;
+        if (preg_match('/^(.*)_([1-9][0-9]*)$/', $filename, $matches))
+        {
+            $i = intval($matches[2]);
+            if ('P'.$i != 'P'.$matches[2] || $i > 100000)
+            {
+                // very large number: not a sequence number!
+                $i = 1;
+            }
+            else
+            {
+                $filename = $matches[1];
+            }
+        }
+        do
+        {
+            $file = $dir . $filename . ($i ? '_' . $i : '') . $ext;
+            $i++;
+        } while (file_exists($file));
     }
 
     // $file is now guaranteed to NOT exist
@@ -1231,7 +1284,16 @@ class FileManagerUtility
   }
 
   /**
-   * Check a given name $data against an optional set of names ($options array)
+   * Cleanup and check against 'already known names' in optional $options array.
+   * Return a uniquified name equal to or derived from the original ($data).
+   *
+   * First clean up the given name ($data): by default all characters not part of the
+   * set [A-Za-z0-9_] are converted to an underscore '_'; series of these underscores
+   * are reduced to a single one, and characters in the set [_.,&+ ] are stripped from
+   * the lead and tail of the given name, e.g. '__name' would therefor be reduced to
+   * 'name'.
+   *
+   * Next, check the now cleaned-up name $data against an optional set of names ($options array)
    * and return the name itself when it does not exist in the set,
    * otherwise return an augmented name such that it does not exist in the set
    * while having been constructed as name plus '_' plus an integer number,
@@ -1241,8 +1303,28 @@ class FileManagerUtility
    * If the set is {'file', 'file_1', 'file_3'} then $data = 'file' will return
    * the string 'file_2' instead, while $data = 'fileX' will return that same
    * value: 'fileX'.
+   *
+   * @param string $data     the name to be cleaned and checked/uniquified
+   * @param array $options   an optional array of strings to check the given name $data against
+   * @param string $extra_allowed_chars     optional set of additional characters which should pass
+   *                                        unaltered through the cleanup stage. a dash '-' can be
+   *                                        used to denote a character range, while the literal
+   *                                        dash '-' itself, when included, should be positioned
+   *                                        at the very start or end of the string.
+   *
+   *                                        Note that ] must NOT need to be escaped; we do this
+   *                                        ourselves.
+   * @param string $trim_chars              optional set of additional characters which are trimmed off the
+   *                                        start and end of the name ($data); note that de dash
+   *                                        '-' is always treated as a literal dash here; no
+   *                                        range feature!
+   *                                        The basic set of characters trimmed off the name is
+   *                                        [. ]; this set cannot be reduced, only extended.
+   *
+   * @return cleaned-up and uniquified name derived from ($data).
    */
-  public static function pagetitle($data, $options = array()){
+  public static function pagetitle($data, $options = null, $extra_allowed_chars = null, $trim_chars = null)
+  {
     static $regex;
     if (!$regex){
       $regex = array(
@@ -1251,8 +1333,26 @@ class FileManagerUtility
       );
     }
 
+    // fixup $extra_allowed_chars to ensure it's suitable as a character sequence for a set in a regex:
+    //
+    // Note:
+    //   caller must ensure a dash '-', when to be treated as a separate character, is at the very end of the string
+    if (is_string($extra_allowed_chars))
+    {
+        $extra_allowed_chars = str_replace(']', '\]', $extra_allowed_chars);
+        if (strpos($extra_allowed_chars, '-') === 0)
+        {
+            $extra_allowed_chars = substr($extra_allowed_chars, 1) . (strpos($extra_allowed_chars, '-') != strlen($extra_allowed_chars) - 1 ? '-' : '');
+        }
+    }
+    else
+    {
+        $extra_allowed_chars = '';
+    }
     // accepts dots and several other characters, but do NOT tolerate dots or underscores at the start or end, i.e. no 'hidden file names' accepted, for example!
-    $data = trim(preg_replace('/[^A-Za-z0-9., \[\]\(\)~&!@#_+-]+/', '_', str_replace($regex[0], $regex[1], $data)), '_.,&+');
+    $data = preg_replace('/[^A-Za-z0-9' . $extra_allowed_chars . ']+/', '_', str_replace($regex[0], $regex[1], $data));
+    $data = trim($data, '_. ' . $trim_chars);
+
     //$data = trim(substr(preg_replace('/(?:[^A-z0-9]|_|\^)+/i', '_', str_replace($regex[0], $regex[1], $data)), 0, 64), '_');
     return !empty($options) ? self::checkTitle($data, $options) : $data;
   }
