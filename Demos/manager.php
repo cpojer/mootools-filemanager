@@ -131,7 +131,6 @@ function FM_IsAuthorized($mgr, $action, $info)
 		 *     $fileinfo = array(
 		 *         'dir' => $dir,
 		 *         'file' => $path,
-		 *         'name' => $name
 		 *     );
 		 */
 		return true;
@@ -140,8 +139,7 @@ function FM_IsAuthorized($mgr, $action, $info)
 		/*
 		 *     $fileinfo = array(
 		 *         'dir' => $dir,
-		 *         'subdir' => $file,
-		 *         'name' => $name,
+		 *         'file' => $file,
 		 *         'chmod' => $this->options['chmod']
 		 *     );
 		 */
@@ -152,7 +150,6 @@ function FM_IsAuthorized($mgr, $action, $info)
 		 *     $fileinfo = array(
 		 *         'dir' => $dir,
 		 *         'file' => $file,
-		 *         'name' => $name
 		 *     );
 		 */
 		return true;
@@ -162,7 +159,6 @@ function FM_IsAuthorized($mgr, $action, $info)
 		 *     $fileinfo = array(
 		 *         'dir' => $dir,
 		 *         'file' => $file,
-		 *         'name' => $name,
 		 *         'newdir' => (!empty($this->post['newDirectory']) ? $this->post['newDirectory'] : '(null)'),
 		 *         'newname' => (!empty($this->post['name']) ? $this->post['name'] : '(null)'),
 		 *         'rename' => $rename,

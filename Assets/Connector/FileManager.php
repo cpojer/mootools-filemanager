@@ -85,9 +85,7 @@ require_once(MTFM_PATH . '/Image.class.php');
 class FileManager
 {
   protected $path = null;
-  protected $length = null;
   protected $basedir = null;                    // absolute path equivalent, filesystem-wise, for options['directory']
-  protected $basename = null;                   // currently unused
   protected $options;
   protected $post;
   protected $get;
@@ -126,10 +124,6 @@ class FileManager
     $this->options['mimeTypesPath'] = FileManagerUtility::getRealDir($this->options['mimeTypesPath'], 0, false, false); // filespec, not a dirspec!
     $this->options['directory'] = FileManagerUtility::getRealPath($this->options['directory']);
     $this->basedir = FileManagerUtility::getSiteRoot() . $this->options['directory'];
-    $this->basename = pathinfo($this->basedir, PATHINFO_BASENAME) . '/';
-    $this->length = strlen($this->basedir);
-    //$this->listType = (isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb';          // wrong place for this; do it in the event handler methods!
-    //$this->filter = (isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : '';  // wrong place for this; do it in the event handler methods!
 
     header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
     header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
@@ -152,8 +146,7 @@ class FileManager
   public function getSettings()
   {
     return array_merge(array(
-        'basedir' => $this->basedir,
-        'basename' => $this->basename
+        'basedir' => $this->basedir
     ), $this->options);
   }
 
@@ -535,11 +528,9 @@ class FileManager
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
         $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
 
-        $name = pathinfo($file, PATHINFO_FILENAME);
         $fileinfo = array(
             'dir' => $dir,
-            'file' => $file,
-            'name' => $name
+            'file' => $file
         );
 
         if (!$this->checkFile($dir . $file))
@@ -617,7 +608,7 @@ class FileManager
 
         if (!$this->options['create'])
             throw new FileManagerException('disabled');
-        if (empty($this->post['directory']) || empty($this->post['file']))
+        if (empty($this->post['file']))
             throw new FileManagerException('nofile');
 
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
@@ -634,7 +625,7 @@ class FileManager
             throw new FileManagerException('authenticated');
 
         if (!@mkdir($dir . $file, $fileinfo['chmod']))
-            throw new FileManagerException('mkdir_failed');
+            throw new FileManagerException('mkdir_failed:' . $file);
 
         // success, now show the new directory as a list view:
         $jsok = array(
@@ -726,20 +717,15 @@ class FileManager
             throw new FileManagerException('disabled');
         if (empty($_GET['file']))
             throw new FileManagerException('nofile');
-        if(strpos($_GET['file'],'../') !== false)
-            throw new FileManagerException('nofile');
-        if(strpos($_GET['file'],'./') !== false)
-            throw new FileManagerException('nofile');
+        // no need to check explicitly for '../' and './' here as getDir() will take care of it all!
 
         // change the path to fit your websites document structure
         $path = $this->getDir($_GET['file'], 0, false, false);
         if (!is_file($path))
             throw new FileManagerException('nofile');
 
-        $name = pathinfo($path, PATHINFO_FILENAME);
         $fileinfo = array(
-            'file' => $path,
-            'name' => $name
+            'file' => $path
         );
         if (!empty($this->options['DownloadIsAuthenticated_cb']) && function_exists($this->options['DownloadIsAuthenticated_cb']) && !$this->options['DownloadIsAuthenticated_cb']($this, 'download', $fileinfo))
             throw new FileManagerException('authenticated');
