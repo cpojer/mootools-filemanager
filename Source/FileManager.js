@@ -774,9 +774,9 @@ var FileManager = new Class({
       self.relayClick.apply(el);
     };
 
-    // -> make dragable
-    $$(els[0]).makeDraggable({
-      droppables: $$(this.droppables.combine(els[1])),
+    // -> make draggable
+    var draggable_settings = {
+      //droppables: $$(this.droppables.combine(els[1])),
       //stopPropagation: true,
 
       onDrag: function(el, e){
@@ -838,7 +838,7 @@ var FileManager = new Class({
           url: self.options.url + '?event=move',
           data: {
             file: file.name,
-            filter: this.options.filter,
+            filter: self.options.filter,
             directory: self.Directory,
             newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : self.Directory,
             copy: e.control || e.meta ? 1 : 0
@@ -860,7 +860,20 @@ var FileManager = new Class({
             el.getParent().destroy();
           });
       }
-    });
+    };
+	// files:
+	$$(els[0]).makeDraggable(Object.merge({
+		droppables: $$(this.droppables.combine(els[1]))
+	  },
+	  draggable_settings));
+	// directories go a little different: remove the item
+	// itself from the droppable list to prevent oddities in the UI
+	$$(els[1]).each(function(el){
+	  el.makeDraggable(Object.merge({
+		droppables: $$(self.droppables.combine(els[1]).erase(el))
+	  },
+	  draggable_settings));
+	});
 
     $$(els[0].combine(els[1])).setStyles({'left': 0, 'top': 0});
 
