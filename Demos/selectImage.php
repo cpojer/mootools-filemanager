@@ -110,7 +110,7 @@ function FM_IsAuthorized($mgr, $action, $info)
 	 * this sample is a bogus authorization, but you can perform simple to highly
 	 * sophisticated authentications / authorizations here, e.g. even ones which also check permissions
 	 * related to what is being uploaded right now (different permissions required for file mimetypes,
-	 * e.g. images: any authenticated user; while other file types which are more susceptible to carrying
+	 * e.g. images: any authorized user; while other file types which are more susceptible to carrying
 	 * illicit payloads requiring at least 'power/trusted user' permissions, ...)
 	 */
 
@@ -206,11 +206,11 @@ $browser = new FileManager(array(
 	//'move' => false,
 	//'download' => false,
 	'filter' => 'image/',
-	'UploadIsAuthenticated_cb' => 'FM_IsAuthorized',
-	'DownloadIsAuthenticated_cb' => 'FM_IsAuthorized',
-	'CreateIsAuthenticated_cb' => 'FM_IsAuthorized',
-	'DestroyIsAuthenticated_cb' => 'FM_IsAuthorized',
-	'MoveIsAuthenticated_cb' => 'FM_IsAuthorized'
+	'UploadIsAuthorized_cb' => 'FM_IsAuthorized',
+	'DownloadIsAuthorized_cb' => 'FM_IsAuthorized',
+	'CreateIsAuthorized_cb' => 'FM_IsAuthorized',
+	'DestroyIsAuthorized_cb' => 'FM_IsAuthorized',
+	'MoveIsAuthorized_cb' => 'FM_IsAuthorized'
 ));
 
 

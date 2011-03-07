@@ -119,11 +119,11 @@ class FileManager
       'allowExtChange' => false,
       'safe' => true,
       'chmod' => 0777,
-      'UploadIsAuthenticated_cb' => null,
-      'DownloadIsAuthenticated_cb' => null,
-      'CreateIsAuthenticated_cb' => null,
-      'DestroyIsAuthenticated_cb' => null,
-      'MoveIsAuthenticated_cb' => null
+      'UploadIsAuthorized_cb' => null,
+      'DownloadIsAuthorized_cb' => null,
+      'CreateIsAuthorized_cb' => null,
+      'DestroyIsAuthorized_cb' => null,
+      'MoveIsAuthorized_cb' => null
     ), (is_array($options) ? $options : array()));
 
     $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'], $this->options['chmod'], true); // create path if nonexistent
@@ -568,8 +568,8 @@ class FileManager
         if (!$this->checkFile($dir . $file))
             throw new FileManagerException('nofile');
 
-        if (!empty($this->options['DestroyIsAuthenticated_cb']) && function_exists($this->options['DestroyIsAuthenticated_cb']) && !$this->options['DestroyIsAuthenticated_cb']($this, 'destroy', $fileinfo))
-            throw new FileManagerException('authenticated');
+        if (!empty($this->options['DestroyIsAuthorized_cb']) && function_exists($this->options['DestroyIsAuthorized_cb']) && !$this->options['DestroyIsAuthorized_cb']($this, 'destroy', $fileinfo))
+            throw new FileManagerException('authorized');
 
         if (!$this->unlink($dir . $file))
             throw new FileManagerException('unlink_failed');
@@ -653,8 +653,8 @@ class FileManager
             'file' => $file,
             'chmod' => $this->options['chmod']
         );
-        if (!empty($this->options['CreateIsAuthenticated_cb']) && function_exists($this->options['CreateIsAuthenticated_cb']) && !$this->options['CreateIsAuthenticated_cb']($this, 'create', $fileinfo))
-            throw new FileManagerException('authenticated');
+        if (!empty($this->options['CreateIsAuthorized_cb']) && function_exists($this->options['CreateIsAuthorized_cb']) && !$this->options['CreateIsAuthorized_cb']($this, 'create', $fileinfo))
+            throw new FileManagerException('authorized');
 
         if (!@mkdir($file, $fileinfo['chmod']))
             throw new FileManagerException('mkdir_failed:' . $file);
@@ -759,8 +759,8 @@ class FileManager
         $fileinfo = array(
             'file' => $path
         );
-        if (!empty($this->options['DownloadIsAuthenticated_cb']) && function_exists($this->options['DownloadIsAuthenticated_cb']) && !$this->options['DownloadIsAuthenticated_cb']($this, 'download', $fileinfo))
-            throw new FileManagerException('authenticated');
+        if (!empty($this->options['DownloadIsAuthorized_cb']) && function_exists($this->options['DownloadIsAuthorized_cb']) && !$this->options['DownloadIsAuthorized_cb']($this, 'download', $fileinfo))
+            throw new FileManagerException('authorized');
 
         if ($fd = fopen($path, "r"))
         {
@@ -883,8 +883,8 @@ class FileManager
         'ext2mime_map' => $this->getMimeTypeDefinitions(),
         'chmod' => $this->options['chmod'] & 0666   // security: never make those files 'executable'!
       );
-      if (!empty($this->options['UploadIsAuthenticated_cb']) && function_exists($this->options['UploadIsAuthenticated_cb']) && !$this->options['UploadIsAuthenticated_cb']($this, 'upload', $fileinfo))
-        throw new FileManagerException('authenticated');
+      if (!empty($this->options['UploadIsAuthorized_cb']) && function_exists($this->options['UploadIsAuthorized_cb']) && !$this->options['UploadIsAuthorized_cb']($this, 'upload', $fileinfo))
+        throw new FileManagerException('authorized');
 
       $file = Upload::move('Filedata', $dir, $fileinfo);
       $file = self::normalize($file);
@@ -1025,8 +1025,8 @@ class FileManager
             'function' => $fn
         );
 
-        if (!empty($this->options['MoveIsAuthenticated_cb']) && function_exists($this->options['MoveIsAuthenticated_cb']) && !$this->options['MoveIsAuthenticated_cb']($this, 'move', $fileinfo))
-            throw new FileManagerException('authenticated');
+        if (!empty($this->options['MoveIsAuthorized_cb']) && function_exists($this->options['MoveIsAuthorized_cb']) && !$this->options['MoveIsAuthorized_cb']($this, 'move', $fileinfo))
+            throw new FileManagerException('authorized');
 
         if($rename)
         {
