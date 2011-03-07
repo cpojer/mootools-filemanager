@@ -48,7 +48,7 @@ class Image {
 
 		// is it a valid file existing on disk?
 		if (!isset($finfo['imageinfo']))
-			throw new Exception('corrupt image or not an image file at all');
+			throw new Exception('no_imageinfo');
 
 		// only set the new memory limit of 64MB when the configured one is smaller:
 		if ($finfo['memory_limit'] < 64 * 1024 * 1024)
@@ -61,7 +61,7 @@ class Image {
 
 		// and will it fit in available memory if we go and load the bugger?
 		if (!$finfo['will_fit'])
-			throw new Exception('image does not fit in available RAM; minimum required (estimate): ' . round(($finfo['usage_min_advised'] + 9.9E5) / 1E6) . ' MByte');
+			throw new Exception('img_will_not_fit:' . round(($finfo['usage_min_advised'] + 9.9E5) / 1E6) . ' MByte');
 
 		$explarr = explode('/', $img['mime']); // make sure the end() call doesn't throw an error next in E_STRICT mode:
 		$ext_from_mime = end($explarr);
@@ -75,7 +75,7 @@ class Image {
 		if($this->meta['ext']=='jpg')
 			$this->meta['ext'] = 'jpeg';
 		if(!in_array($this->meta['ext'], array('gif', 'png', 'jpeg')))
-			throw new Exception('unsupported image format (' . $this->meta['ext'] . ')');
+			throw new Exception('unsupported_imgfmt:' . $this->meta['ext']);
 
 		if(in_array($this->meta['ext'], array('gif', 'png'))){
 			$this->image = $this->create();
@@ -85,7 +85,7 @@ class Image {
 			if (!$original) throw new Exception('imagecreate_failed');
 
 			if (!@imagecopyresampled($this->image, $original, 0, 0, 0, 0, $this->meta['width'], $this->meta['height'], $this->meta['width'], $this->meta['height']))
-				throw new Exception('cvt2truecolor_failed: ' . $this->meta['width'] . ' x ' . $this->meta['height']);
+				throw new Exception('cvt2truecolor_failed:' . $this->meta['width'] . ' x ' . $this->meta['height']);
 			imagedestroy($original);
 			unset($original);
 		} else {

@@ -330,7 +330,7 @@ class FileManager
             {
                 $jserr = array(
                         'status' => 0,
-                        'error' => '${upload.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : '')
+                        'error' => '${backend.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : '')
                     );
             }
         }
@@ -505,7 +505,7 @@ class FileManager
                   <div class="failure_notice">
                     <h3>${error}</h3>
                     <p>mem usage: ' . number_format(memory_get_usage() / 1E6, 2) . ' MB : ' . number_format(memory_get_peak_usage() / 1E6, 2) . ' MB</p>
-                    <p>${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '') . '</p>
+                    <p>${backend.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '') . '</p>
                   </div>
                 </div>'       // <br/><button value="' . $url . '">${download}</button>
             ));
@@ -572,7 +572,7 @@ class FileManager
             throw new FileManagerException('authorized');
 
         if (!$this->unlink($dir . $file))
-            throw new FileManagerException('unlink_failed');
+            throw new FileManagerException('unlink_failed:' . $dir . $file);
 
         echo json_encode(array(
           'status' => 1,
@@ -584,7 +584,7 @@ class FileManager
         $emsg = explode(':', $e->getMessage(), 2);
         echo json_encode(array(
                 'status' => 0,
-                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+                'error' => '${backend.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
             ));
     }
     catch(Exception $e)
@@ -671,7 +671,7 @@ class FileManager
         $emsg = explode(':', $e->getMessage(), 2);
         $jserr = array(
                 'status' => 0,
-                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+                'error' => '${backend.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
             );
         // and fall back to showing the PARENT directory
         try
@@ -916,7 +916,7 @@ class FileManager
     {
       echo json_encode(array(
         'status' => 0,
-        'error' => class_exists('ValidatorException') ? strip_tags($e->getMessage()) : '${upload.' . $e->getMessage() . '}' // This is for Styx :)
+        'error' => class_exists('ValidatorException') ? strip_tags($e->getMessage()) : '${backend.' . $e->getMessage() . '}' // This is for Styx :)
       ));
     }
     catch(FileManagerException $e)
@@ -924,7 +924,7 @@ class FileManager
         $emsg = explode(':', $e->getMessage(), 2);
         echo json_encode(array(
                 'status' => 0,
-                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+                'error' => '${backend.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
             ));
     }
     catch(Exception $e)
@@ -1051,7 +1051,7 @@ class FileManager
         $emsg = explode(':', $e->getMessage(), 2);
         echo json_encode(array(
                 'status' => 0,
-                'error' => '${upload.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
+                'error' => '${backend.' . $emsg[0] . '}' . (isset($emsg[1]) ? $emsg[1] : '')
             ));
     }
     catch(Exception $e)
