@@ -523,7 +523,7 @@ this.Milkbox = new Class({
 		}.bind(this));
 
 		//keyboard next/prev/close
-		$(window.document).addEvent('keydown',function(e){
+		window.document.addEvent('keydown',function(e){
 			if(this.busy == true || this.closed){ return; }
 			if(e.key == 'right' || e.key == 'left' || e.key == 'space'){ e.preventDefault(); }
 			if(e.key == 'right' || e.key == 'space'){ this.navAux(e,'next'); }
@@ -690,8 +690,8 @@ var MilkboxDisplay= new Class({
 				onStart:function(){
 					//console.log('overlay_show_fx start');
 					this.element.setStyles({
-						'top':-$(window).getScroll().y,
-						'height':$(window).getScrollSize().y+$(window).getScroll().y,
+						'top':-window.getScroll().y,
+						'height':window.getScrollSize().y + window.getScroll().y,
 						'display':'block'
 					});
 				},
@@ -879,7 +879,7 @@ var MilkboxDisplay= new Class({
 	},
 
 	appear:function(){
-		if(!this.options.centered){ this.mainbox.setStyle('top',$(window).getScroll().y+this.options.margin_top); }
+		if(!this.options.centered){ this.mainbox.setStyle('top',window.getScroll().y+this.options.margin_top); }
 		this.overlay_show_fx.start(this.options.overlay_opacity);
 	},
 
@@ -966,7 +966,7 @@ var MilkboxDisplay= new Class({
 
 	resetOverlaySize:function(){
 		if(this.overlay.getStyle('opacity') == 0){ return; };//resize only if visible
-		var h = $(window).getSize().y;
+		var h = window.getSize().y;
 		this.overlay.setStyles({ 'height':h });
 	}
 
