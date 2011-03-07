@@ -642,7 +642,7 @@ class FileManager
             throw new FileManagerException('nofile');
 
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-        $file = pathinfo($this->getName($this->post['file'], $dir), PATHINFO_FILENAME);
+        $file = $this->getName(array('filename' => $this->post['file']), $dir);  // a directory has no 'extension'!
         if (!$file)
             throw new FileManagerException('nofile');
 
@@ -654,14 +654,14 @@ class FileManager
         if (!empty($this->options['CreateIsAuthenticated_cb']) && function_exists($this->options['CreateIsAuthenticated_cb']) && !$this->options['CreateIsAuthenticated_cb']($this, 'create', $fileinfo))
             throw new FileManagerException('authenticated');
 
-        if (!@mkdir($dir . $file, $fileinfo['chmod']))
+        if (!@mkdir($file, $fileinfo['chmod']))
             throw new FileManagerException('mkdir_failed:' . $file);
 
         // success, now show the new directory as a list view:
         $jsok = array(
                 'status' => 1
             );
-        $rv = $this->_onView($dir . $file . '/', $jsok, $mime_filter, $list_type);
+        $rv = $this->_onView($file . '/', $jsok, $mime_filter, $list_type);
         echo json_encode($rv);
     }
     catch(FileManagerException $e)
@@ -851,6 +851,8 @@ class FileManager
       if (!$file)
         throw new FileManagerException('nofile');
       $fi = pathinfo($file);
+      if (!$fi['filename'])
+        throw new FileManagerException('nofile');
 
       /*
       Security:
@@ -859,19 +861,19 @@ class FileManager
       unless we ALWAYS override the filename and extension in the options array below. That's why we
       calculate the extension at all times here.
       */
-      if ($this->options['safe'] && in_array(strtolower($fi['extension']), array('exe', 'dll', 'com', 'php', 'php3', 'php4', 'php5', 'phps')))
-      {
-        $fi['extension'] = 'txt';
-      }
-      else if (!is_string($fi['extension']) || strlen($fi['extension']) == 0) // can't use 'empty()' as "0" is a valid extension itself.
+      if (!is_string($fi['extension']) || strlen($fi['extension']) == 0) // can't use 'empty()' as "0" is a valid extension itself.
       {
         //enforce a mandatory extension, even when there isn't one (due to filtering or original input producing none)
+        $fi['extension'] = 'txt';
+      }
+      else if ($this->options['safe'] && in_array(strtolower($fi['extension']), array('exe', 'dll', 'com', 'php', 'php3', 'php4', 'php5', 'phps')))
+      {
         $fi['extension'] = 'txt';
       }
 
       $fileinfo = array(
         'dir' => $dir,
-        'name' => $fi['basename'],
+        'name' => $fi['filename'],
         'extension' => $fi['extension'],
         'size' => $_FILES['Filedata']['size'],
         'maxsize' => $this->options['maxUploadSize'],
@@ -951,9 +953,10 @@ class FileManager
    *
    * Destination filespec:
    *
-   *   $_POST['newDirectory']  path relative to basedir a.k.a. options['directory'] root
+   *   $_POST['newDirectory']  path relative to basedir a.k.a. options['directory'] root;
+   *                           target directory where the file must be moved / copied
    *
-   *   $_POST['name']          target name of the file/subdirectory to be renamed/copied
+   *   $_POST['name']          target name of the file/subdirectory to be renamed
    *
    * Errors will produce a JSON encoded error report, including at least two fields:
    *
@@ -970,36 +973,45 @@ class FileManager
         if (empty($this->post['file']))
             throw new FileManagerException('nofile');
 
-        $rename = empty($this->post['newDirectory']) && !empty($this->post['name']) && empty($this->post['copy']);
+        $rename = empty($this->post['newDirectory']) && !empty($this->post['name']);
+        $is_copy = (!empty($this->post['copy'])  && $this->post['copy']);
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
         $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
 
         $is_dir = is_dir($dir . $file);
 
         // note: we do not support copying entire directories, though directory rename/move is okay
-        if (!$this->checkFile($dir . $file) || (!$rename && $is_dir))
+        if (!$this->checkFile($dir . $file) || ($is_copy && $is_dir))
             throw new FileManagerException('nofile');
 
         if($rename)
         {
             $fn = 'rename';
             $newdir = null;
-            $newname = $this->getName($this->post['name'], $dir);
+            if ($is_dir)
+                $newname = $this->getName(array('filename' => $this->post['name']), $dir);  // a directory has no 'extension'
+            else
+                $newname = $this->getName($this->post['name'], $dir);
+
+            // when the new name seems to have a different extension, make sure the extension doesn't change after all:
+            // Note: - if it's only 'case' we're changing here, then exchange the extension instead of appending it.
+            //       - directories do not have extensions
+            $extOld = pathinfo($file, PATHINFO_EXTENSION);
+            $extNew = pathinfo($newname, PATHINFO_EXTENSION);
+            if (!$is_dir && empty($extNew) && !empty($extOld) && strtolower($extOld) != strtolower($extNew))
+            {
+                $newname .= '.' . $extOld;
+            }
         }
         else
         {
-            $fn = 'copy';
+            $fn = ($is_copy ? 'copy' : 'rename' /* 'move' */);
             $newdir = $this->getDir(!empty($this->post['newDirectory']) ? $this->post['newDirectory'] : null);
             $newname = $this->getName($file, $newdir);
         }
 
         if (!$newname)
             throw new FileManagerException('nonewfile');
-
-        // when the new name seems to have a different extension, make sure the extension doesn't change after all:
-        $extOld = pathinfo($file, PATHINFO_EXTENSION);
-        $extNew = pathinfo($newname, PATHINFO_EXTENSION);
-        if ($extOld != $extNew) $newname .= '.' . $extOld;
 
         $fileinfo = array(
             'dir' => $dir,
@@ -1100,16 +1112,26 @@ class FileManager
    * Return NULL when $file is empty or when the specified directory does not reside within the
    * directory tree rooted by options['directory']
    *
-   * Note that the given filename $file will be converted to a legal filename, containing a filesystem-legal
+   * Note that the given filename will be converted to a legal filename, containing a filesystem-legal
    * subset of ASCII characters only, before being used and returned by this function.
+   *
+   * @param mixed $fileinfo     either a string containing a filename+ext or an array as produced by pathinfo().
+   * @daram string $dir         path pointing at where the given file may exist.
+   *
+   * @return a filepath consisting of $dir and the cleaned up and possibly sequenced filename and file extension
+   *         as provided by $fileinfo.
    */
-  protected function getName($file, $dir)
+  protected function getName($fileinfo, $dir)
   {
     if (!FileManagerUtility::endsWith($dir, '/')) $dir .= '/';
 
-    if (!$file || !FileManagerUtility::startsWith($dir, $this->basedir)) return null;
+    if (is_string($fileinfo))
+    {
+        $fileinfo = pathinfo($fileinfo);
+    }
 
-    $pathinfo = pathinfo($file);
+    if (!is_array($fileinfo) || !$fileinfo['filename'] || !FileManagerUtility::startsWith($dir, $this->basedir)) return null;
+
 
     /*
      * since 'pagetitle()' is used to produce a unique, non-existing filename, we can forego the dirscan
@@ -1119,9 +1141,12 @@ class FileManager
      * This is faster than using a dirscan to collect a set of existing filenames and feeding them as
      * an option array to pagetitle(), particularly for large directories.
      */
-    $filename = FileManagerUtility::pagetitle($pathinfo['filename'], null, '-_., []()~!@+' /* . '#&' */, '-_,~@+#&');
+    $filename = FileManagerUtility::pagetitle($fileinfo['filename'], null, '-_., []()~!@+' /* . '#&' */, '-_,~@+#&');
+    if (!$filename)
+        return null;
+
     // also clean up the extension: only allow alphanumerics in there!
-    $ext = FileManagerUtility::pagetitle((!empty($pathinfo['extension']) ? $pathinfo['extension'] : null));
+    $ext = FileManagerUtility::pagetitle(!empty($fileinfo['extension']) ? $fileinfo['extension'] : null);
     $ext = (!empty($ext) ? '.' . $ext : null);
     // make sure the generated filename is SAFE:
     $file = $dir . $filename . $ext;
@@ -1362,6 +1387,9 @@ class FileManagerUtility
         explode(' ', 'Ae ae Oe oe ss Ue ue Oe oe Ae ae A A A A A A A A C C C D D D E E E E E E G I I I I I L L L N N N O O O O O O O R R S S S T T U U U U U U Y Z Z Z a a a a a a a a c c c d d e e e e e e g i i i i i l l l n n n o o o o o o o o r r s s s t t u u u u u u y y z z z'),
       );
     }
+
+    if (empty($data))
+        return $data;
 
     // fixup $extra_allowed_chars to ensure it's suitable as a character sequence for a set in a regex:
     //

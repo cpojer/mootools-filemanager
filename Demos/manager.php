@@ -13,7 +13,10 @@ function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase =
 {
 	if (DEVELOPMENT)
 	{
-		if (!is_string($filenamebase)) $filenamebase = basename(__FILE__);
+		if (!is_string($filenamebase))
+		{
+			$filenamebase = basename(__FILE__);
+		}
 
 		if ($mgr)
 			$settings = $mgr->getSettings();
@@ -41,22 +44,22 @@ function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase =
 				echo "\n\n_ENV:\n";
 				if (isset($_ENV)) var_dump($_ENV); else echo "(null)\n";
 			}
-			if (0)
+			if (01)
 			{
 				echo "\n\n_GET:\n";
 				if (isset($_GET)) var_dump($_GET); else echo "(null)\n";
 			}
-			if (0)
+			if (01)
 			{
 				echo "\n\n_POST:\n";
 				if (isset($_POST)) var_dump($_POST); else echo "(null)\n";
 			}
-			if (0)
+			if (01)
 			{
 				echo "\n\n_REQUEST:\n";
 				if (isset($_REQUEST)) var_dump($_REQUEST); else echo "(null)\n";
 			}
-			if (0)
+			if (01)
 			{
 				echo "\n\n_FILES:\n";
 				if (isset($_FILES)) var_dump($_FILES); else echo "(null)\n";
@@ -74,7 +77,9 @@ function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase =
 		$dump = ob_get_clean();
 		static $count;
 		if (!$count) $count = 1; else $count++;
-		@file_put_contents((!empty($filenamebase) ? $filenamebase . '.' : '') . date('Ymd-His') . '.' . fmod(microtime(true), 1) . '-' . $action . '-' . $count . '.log', html_entity_decode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8'));
+		$dst = ((!empty($filenamebase) ? $filenamebase . '.' : '') . date('Ymd-His') . '.' . fmod(microtime(true), 1) . '-' . $action . '-' . $count . '.log');
+		$dst = preg_replace('/[^A-Za-z0-9-_.]+/', '_', $dst);    // make suitable for filesystem
+		@file_put_contents($dst, html_entity_decode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8'));
 	}
 }
 
@@ -251,7 +256,7 @@ $browser = new FileManager(array(
 
 
 // log request data:
-FM_vardumper($browser, 'init');
+FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
 
 
 
