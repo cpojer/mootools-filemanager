@@ -44,7 +44,8 @@ var FileManager = new Class({
     filter: '',
     hideOnClick: false,
     hideClose: false,
-    hideOverlay: false
+    hideOverlay: false,
+	hideQonDelete: false
   },
 
   hooks: {
@@ -483,45 +484,54 @@ var FileManager = new Class({
     }, this).send();
   },
 
+  destroy_noQasked: function(file) {
+    var self = this;
+	new FileManager.Request({
+	  url: self.options.url + '?event=destroy',
+	  data: {
+		file: file.name,
+		directory: self.Directory,
+		filter: self.options.filter
+	  },
+	  onRequest: self.browserLoader.set('opacity', 1),
+	  onSuccess: function(j){
+		if (!j || j.content!='destroyed'){
+		  new Dialog(self.language.nodestroy, {language: {confirm: self.language.ok}, buttons: ['confirm']});
+		  return;
+		}
+
+		self.fireEvent('modify', [Object.clone(file)]);
+		file.element.getParent().fade(0).get('tween').chain(function(){
+		  self.deselect(file.element);
+		  this.element.destroy();
+		});
+	  },
+	  onComplete: self.browserLoader.fade(0),
+	  onError: (function(xmlHttpRequest) {
+		this.showError(xmlHttpRequest);
+		this.browserLoader.fade(0);
+	  }).bind(self)
+	}).send();
+  },
+
   destroy: function(file){
     var self = this;
-    new Dialog(this.language.destroyfile, {
-      language: {
-        confirm: this.language.destroy,
-        decline: this.language.cancel
-      },
-      onOpen: this.onDialogOpen.bind(this),
-      onClose: this.onDialogClose.bind(this),
-      onConfirm: function() {
-        new FileManager.Request({
-          url: self.options.url + '?event=destroy',
-          data: {
-            file: file.name,
-            directory: self.Directory,
-            filter: this.options.filter
-          },
-          onRequest: self.browserLoader.set('opacity', 1),
-          onSuccess: function(j){
-            if (!j || j.content!='destroyed'){
-              new Dialog(self.language.nodestroy, {language: {confirm: self.language.ok}, buttons: ['confirm']});
-              return;
-            }
-
-            self.fireEvent('modify', [Object.clone(file)]);
-            file.element.getParent().fade(0).get('tween').chain(function(){
-              self.deselect(file.element);
-              this.element.destroy();
-            });
-          },
-          onComplete: self.browserLoader.fade(0),
-          onError: (function(xmlHttpRequest) {
-            this.showError(xmlHttpRequest);
-            this.browserLoader.fade(0);
-          }).bind(self)
-        }).send();
-      }
-    });
-
+	if (self.options.hideQonDelete) {
+	  self.destroy_noQasked(file);
+	}
+	else {
+		new Dialog(this.language.destroyfile, {
+		  language: {
+			confirm: this.language.destroy,
+			decline: this.language.cancel
+		  },
+		  onOpen: this.onDialogOpen.bind(this),
+		  onClose: this.onDialogClose.bind(this),
+		  onConfirm: function() {
+			self.destroy_noQasked(file);
+		  }
+		});
+	}
   },
 
   rename: function(file) {
