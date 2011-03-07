@@ -245,6 +245,7 @@ $browser = new FileManager(array(
 	//'move' => false,
 	//'download' => false,
 	//'filter' => 'image/',
+	'allowExtChange' => true,                  // allow file name extensions to be changed; the default however is: NO (FALSE)
 	'UploadIsAuthenticated_cb' => 'FM_IsAuthorized',
 	'DownloadIsAuthenticated_cb' => 'FM_IsAuthorized',
 	'CreateIsAuthenticated_cb' => 'FM_IsAuthorized',

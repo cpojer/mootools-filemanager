@@ -32,6 +32,7 @@ Options:
   - create: (boolean, defaults to *true*) allow creating new subdirectories, this is also set in the FileManager.js (this here is only for security protection when dir creates should be deactivated)
   - move: (boolean, defaults to *true*) allow file and directory move/rename and copy, this is also set in the FileManager.js (this here is only for security protection when rename/move/copy should be deactivated)
   - download: (boolean, defaults to *true*) allow downloads, this is also set in the FileManager.js (this here is only for security protection when downloads should be deactivated)
+  - allowExtChange: (boolean, defaults to *false*) allow the file extension to be changed when performing a rename operation.
   - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
 
@@ -115,6 +116,7 @@ class FileManager
        *
        *     Think Springer Verlag and PDFs, for instance. You can have 'em, but only /after/ you've ...
        */
+      'allowExtChange' => false,
       'safe' => true,
       'chmod' => 0777,
       'UploadIsAuthenticated_cb' => null,
@@ -998,7 +1000,7 @@ class FileManager
             //       - directories do not have extensions
             $extOld = pathinfo($file, PATHINFO_EXTENSION);
             $extNew = pathinfo($newname, PATHINFO_EXTENSION);
-            if (!$is_dir && empty($extNew) && !empty($extOld) && strtolower($extOld) != strtolower($extNew))
+            if ((!$this->options['allowExtChange'] || (!$is_dir && empty($extNew))) && !empty($extOld) && strtolower($extOld) != strtolower($extNew))
             {
                 $newname .= '.' . $extOld;
             }
