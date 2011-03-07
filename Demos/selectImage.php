@@ -119,13 +119,22 @@ function FM_IsAuthorized($mgr, $action, $info)
 	case 'upload':
 		/*
 		 *   $fileinfo = array(
-		 *     'dir' => $dir,
-		 *     'name' => $name,
-		 *     'extension' => $this->options['safe'] && $name && in_array(strtolower(pathinfo($_FILES['Filedata']['name'], PATHINFO_EXTENSION)), array('exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps')) ? 'txt' : null,
-		 *     'size' => $this->options['maxUploadSize'],
-		 *     'mimes' => $this->getAllowedMimeTypes(),
-		 *     'chmod' => $this->options['chmod']
+		 *     'dir' => (string) directory where the uploaded file will be stored (filesystem absolute)
+		 *     'name' => (string) the filename of the uploaded file (already cleaned and resequenced, without the file name extension
+		 *     'extension' => (string) the file name extension (already cleaned as well, including 'safe' mode processing, i.e. any uploaded binary executable will have been assigned the extension '.txt' already)
+		 *     'size' => (integer) number of bytes of the uploaded file
+		 *     'maxsize' => (integer) the configured maximum number of bytes for any single upload
+		 *     'mimes' => NULL or an array of mime types which are permitted to be uploaded. This is a reference to the array produced by $mgr->getAllowedMimeTypes().
+		 *     'ext2mime_map' => an array of (key, value) pairs which can be used to map a file name extension (key) to a mime type (value). This is a reference to the array produced by $mgr->getAllowedMimeTypes().
+		 *     'chmod' => (integer) UNIX access rights (default: 0666) for the directory-to-be-created (RW for user,group,world). Note that the eXecutable bits have already been stripped before the callback was invoked.
 		 *   );
+		 *
+		 * Note that this request originates from a Macromedia Flash client: hence you'll need to use the
+		 * $_GET['session'] value to manually set the PHP session_id() before you start your your session
+		 * again. (Of course, this assumes you've set up the client side FileManager JS object to pass the
+		 * session_id() in this 'session' request parameter.
+		 *
+		 * In examples provided with mootools_filemanager itself, the value is set to 'MySessionId'.
 		 */
 		if(!empty($_GET['session'])) return true;
 
@@ -134,9 +143,7 @@ function FM_IsAuthorized($mgr, $action, $info)
 	case 'download':
 		/*
 		 *     $fileinfo = array(
-		 *         'dir' => $dir,
-		 *         'file' => $path,
-		 *         'name' => $name
+		 *         'file' => (string) full path of the file (filesystem absolute)
 		 *     );
 		 */
 		return true;
@@ -144,10 +151,9 @@ function FM_IsAuthorized($mgr, $action, $info)
 	case 'create': // create directory
 		/*
 		 *     $fileinfo = array(
-		 *         'dir' => $dir,
-		 *         'subdir' => $file,
-		 *         'name' => $name,
-		 *         'chmod' => $this->options['chmod']
+		 *         'dir' => (string) parent directory: directory where the directory-to-be-created will exist (filesystem absolute)
+		 *         'file' => (string) full path of the directory-to-be-created itself (filesystem absolute)
+		 *         'chmod' => (integer) UNIX access rights (default: 0777) for the directory-to-be-created (RWX for user,group,world)
 		 *     );
 		 */
 		return true;
@@ -155,9 +161,8 @@ function FM_IsAuthorized($mgr, $action, $info)
 	case 'destroy':
 		/*
 		 *     $fileinfo = array(
-		 *         'dir' => $dir,
-		 *         'file' => $file,
-		 *         'name' => $name
+		 *         'dir' => (string) directory where the file / directory-to-be-deleted exists (filesystem absolute)
+		 *         'file' => (string) the filename (with extension) of the file / directory to be deleted
 		 *     );
 		 */
 		return true;
@@ -165,15 +170,18 @@ function FM_IsAuthorized($mgr, $action, $info)
 	case 'move':  // move or copy!
 		/*
 		 *     $fileinfo = array(
-		 *         'dir' => $dir,
-		 *         'file' => $file,
-		 *         'name' => $name,
-		 *         'newdir' => (!empty($this->post['newDirectory']) ? $this->post['newDirectory'] : '(null)'),
-		 *         'newname' => (!empty($this->post['name']) ? $this->post['name'] : '(null)'),
-		 *         'rename' => $rename,
-		 *         'is_dir' => $is_dir,
-		 *         'function' => $fn
+		 *         'dir' => (string) directory where the file / directory-to-be-moved/copied exists (filesystem absolute)
+		 *         'file' => (string) the filename (with extension) of the file / directory to be moved/copied
+		 *         'newdir' => NULL or (string) target directory: full path of directory where the file/directory will be moved/copied to. (filesystem absolute)
+		 *         'newname' => NULL or (string) target path: full path of file/directory. This is the file location the file/.directory should be renamed/moved to. (filesystem absolute)
+		 *         'rename' => (boolean) TRUE when a file/directory RENAME operation is requested (name change, staying within the same parent directory). FALSE otherwise.
+		 *         'is_dir' => (boolean) TRUE when the subject is a directory itself, FALSE when it is a regular file.
+		 *         'function' => (string) PHP call which will perform the operation. ('rename' or 'copy')
 		 *     );
+		 *
+		 * on RENAME these path elements will be set: 'dir', 'file'            'newname'; 'rename' = TRUE, 'function' = 'rename'
+		 * on MOVE   these path elements will be set: 'dir', 'file', 'newdir', 'newname'; 'rename' = TRUE, 'function' = 'rename'
+		 * on COPY   these path elements will be set: 'dir', 'file'  'newdir', 'newname'; 'rename' = TRUE, 'function' = 'copy'
 		 */
 		return true;
 
@@ -206,6 +214,7 @@ $browser = new FileManager(array(
 	//'move' => false,
 	//'download' => false,
 	'filter' => 'image/',
+	//'allowExtChange' => true,
 	'UploadIsAuthorized_cb' => 'FM_IsAuthorized',
 	'DownloadIsAuthorized_cb' => 'FM_IsAuthorized',
 	'CreateIsAuthorized_cb' => 'FM_IsAuthorized',
