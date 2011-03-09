@@ -1,4 +1,8 @@
 <?php
+
+/* make sure no-one can run anything here if they didn't arrive through 'proper channels' */
+if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
+
 /**
  * Image - Provides an Interface to the GD-Library for image manipulation
  *
@@ -6,11 +10,13 @@
  * @license MIT-style License
  * @author Christoph Pojer <christoph.pojer@gmail.com>
  * @author Additions: Fabian Vogelsteller <fabian.vogelsteller@gmail.com>
+ * @author Additions: Ger Hobbelt <ger@hobbelt.com>
  *
  * @link http://www.bin-co.com/php/scripts/classes/gd_image/ Based on work by "Binny V A"
  *
- * @version 1.11
- * Changlog<br>
+ * @version 1.12
+ * Changelog
+ *    - 1.12 added memory usage guestimator to warn you when attempting to process overlarge images which will silently but fataly crash PHP
  *    - 1.11 fixed $ratio in resize when both values are given
  *    - 1.1 add real resizing, with comparison of ratio
  *    - 1.01 small fixes in process method and add set memory limit to a higher value
@@ -215,7 +221,7 @@ class Image {
 	 * @param int $x
 	 * @param int $y
 	 * @param string $ext
-	 * @return resource
+	 * @return resource GD image handle on success; throws an exception on failure
 	 */
 	private function create($x = null, $y = null, $ext = null){
 		if(!$x) $x = $this->meta['width'];
@@ -271,7 +277,7 @@ class Image {
 	 *
 	 * @param int $angle
 	 * @param array $bgcolor An indexed array with red/green/blue/alpha values
-	 * @return Image
+	 * @return resource Image resource on success; throws an exception on failure
 	 */
 	public function rotate($angle, $bgcolor = null){
 		if(empty($this->image) || !$angle || $angle>=360) return $this;
@@ -352,12 +358,14 @@ class Image {
 			if(@imagecopyresampled($new, $this->image, 0, 0, 0, 0, $x, $y, $this->meta['width'], $this->meta['height'])) {
 				$this->set($new);
 				unset($new);
+				return $this;
 			}
-			return $this;
+			unset($new);
+			throw new Exception('imagecopyresampled_failed:' . $this->meta['width'] . ' x ' . $this->meta['height']);
 		}
 		else
 		{
-			throw new Exception('imagecopyresampled_failed');
+			return $this;
 		}
 	}
 

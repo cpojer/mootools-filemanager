@@ -1050,7 +1050,7 @@ FileManager.Language = {};
 
 (function(){
 
-// ->> load DEPENCIES
+// ->> load DEPENDENCIES
 var __DIR__ = (function() {
     var scripts = document.getElementsByTagName('script');
     var script = scripts[scripts.length - 1].src;

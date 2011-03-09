@@ -1,4 +1,8 @@
 <?php
+
+/* make sure no-one can run anything here if they didn't arrive through 'proper channels' */
+if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
+
 /*
  * Script: FileManager.php
  *   MooTools FileManager - Backend for the FileManager Script
@@ -7,12 +11,13 @@
  *  - Christoph Pojer (http://cpojer.net) (author)
  *  - James Ehly (http://www.devtrench.com)
  *  - Fabian Vogelsteller (http://frozeman.de)
+ *  - Ger Hobbelt (http://hebbut.net)
  * 
  * License:
  *   MIT-style license.
  * 
  * Copyright:
- *   Copyright (c) 2009 [Christoph Pojer](http://cpojer.net)
+ *   Copyright (c) 2009-2011 [Christoph Pojer](http://cpojer.net)
  * 
  * Dependencies:
  *   - Upload.php
@@ -114,8 +119,11 @@ if (!defined('MTFM_PATH'))
     define('MTFM_PATH', $base);
 }
 
+require_once(MTFM_PATH . '/Tooling.php');
 require_once(MTFM_PATH . '/Upload.php');
 require_once(MTFM_PATH . '/Image.class.php');
+
+
 
 class FileManager
 {
@@ -193,7 +201,7 @@ class FileManager
 
   private function _onView($dir, $json, $mime_filter, $list_type)
   {
-    $files = ($files = glob($dir . '*')) ? $files : array();
+    $files = ($files = safe_glob($dir . '*', GLOB_PATH | GLOB_NOSORT)) ? $files : array();
 
     $root = FileManagerUtility::getSiteRoot();
 
@@ -1117,7 +1125,7 @@ class FileManager
     $rv = true;
     if(is_dir($file))
     {
-      $files = glob($file . '/*');
+      $files = safe_glob($file . '/*', GLOB_NODOTS | GLOB_PATH | GLOB_NOSORT);
       if (is_array($files))
         foreach ($files as $f)
         {

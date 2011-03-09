@@ -73,7 +73,7 @@ FileManager.Language.cs = {
 	'backend.imageallocalpha50pctgrey_failed': 'The image processing unit failed: cannot allocate space for the alpha channel and the 50% background.',
 	'backend.imagecolorallocatealpha_failed': 'The image processing unit failed: cannot allocate space for the alpha channel for this color image.',
 	'backend.imagerotate_failed': 'The image processing unit failed: GD imagerotate() failed.',
-	'backend.imagecopyresampled_failed': 'The image processing unit failed: GD imagecopyresampled() failed.',
+	'backend.imagecopyresampled_failed': 'The image processing unit failed: GD imagecopyresampled() failed. Image resolution: ', /* x * y */
 	'backend.imagecopy_failed': 'The image processing unit failed: GD imagecopy() failed.',
 	'backend.imageflip_failed': 'The image processing unit failed: cannot flip the image.',
 	'backend.imagejpeg_failed': 'The image processing unit failed: GD imagejpeg() failed.',

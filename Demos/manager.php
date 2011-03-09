@@ -8,6 +8,8 @@ require_once('../Assets/Connector/FileManager.php');
 define('DEVELOPMENT', 01);   // set to 01 / 1 to enable logging of each incoming event request.
 
 
+
+
 // dumper useful in development
 function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase = null)
 {
@@ -64,10 +66,10 @@ function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase =
 				echo "\n\n_FILES:\n";
 				if (isset($_FILES)) var_dump($_FILES); else echo "(null)\n";
 			}
-			if (0)
+			if (01)
 			{
-				echo "\n\n_COOKIES:\n";
-				if (isset($_COOKIES)) var_dump($_COOKIES); else echo "(null)\n";
+				echo "\n\n_COOKIE:\n";
+				if (isset($_COOKIE)) var_dump($_COOKIE); else echo "(null)\n";
 			}
 			if (0)
 			{

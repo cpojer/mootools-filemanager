@@ -72,6 +72,7 @@
       /* Simple Example */
       var manager1 = new FileManager({
         url: 'manager.php',
+		baseURL: '/c/',
         language: 'en',
         hideOnClick: true,
         assetBasePath: '../Assets',
@@ -112,6 +113,7 @@
       
       manager2 = new FileManager({
         url: 'selectImage.php',
+		baseURL: '/c/',
         language: 'en',
         filter: 'image',
         hideOnClick: true,
@@ -137,6 +139,7 @@
       /* Localized Example */
       var manager3 = new FileManager({
         url: 'manager.php',
+		baseURL: '/c/',
         language: 'de',
         hideOnClick: true,
         assetBasePath: '../Assets',
@@ -154,6 +157,7 @@
       var example4 = $('myGallery');
       var manager4 = new FileManager.Gallery({
         url: 'selectImage.php',
+		baseURL: '/c/',
         assetBasePath: '../Assets',
         filter: 'image',
         hideOnClick: true,
@@ -182,6 +186,10 @@
   </div>
   <div class="example">
     <a href="#" id="example3" class="BrowseExample">Open File-Manager from a link (German)</a>
+  </div>
+
+  <div class="example">
+    <a href="tinymce.html">Open File-Manager from TinyMCE (editor) - separate test page</a>
   </div>
 
   <div class="example">
