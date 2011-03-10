@@ -899,7 +899,7 @@ class getid3_lib
 		if (function_exists('iconv')) {
 
 			ob_start();
-			if ($converted_string = iconv($in_charset, $out_charset.'//TRANSLIT', $string)) {
+			if ($converted_string = @iconv($in_charset, $out_charset.'//TRANSLIT', $string)) {
 				ob_end_clean();
 				switch ($out_charset) {
 					case 'ISO-8859-1':
