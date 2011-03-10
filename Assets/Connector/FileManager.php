@@ -221,20 +221,26 @@ class FileManager
        * overly large ones.
        */
       $thumb = false;
-      try
+      $iconfile = $file;
+      // if(strpos($mime,'image') !== false)
+      if (/* $list_type == 'thumb' && */ in_array($mime, array('image/gif', 'image/jpeg', 'image/png')))
       {
-        // access the image and create a thumbnail image; this can fail dramatically
-        if(strpos($mime,'image') !== false)
-          $thumb = $this->getThumb($file);
-      }
-      catch (Exception $e)
-      {
-         // do nothing, except mark image as 'not suitable for thumbnailing'
+        // speed up 'list' view when it's not a thumbanils view: don't precalc the thumbnails!
+        try
+        {
+          // access the image and create a thumbnail image; this can fail dramatically
+          $thumb = $this->options['thumbnailPath'] . $this->getThumb($file);
+        }
+        catch (Exception $e)
+        {
+          // do nothing, except mark image as 'not suitable for thumbnailing'
+          $iconfile = 'badly.broken_img';
+        }
       }
 
       $icon = ($list_type == 'thumb' && $thumb)
-        ? $this->options['thumbnailPath'] . $thumb
-        : $this->getIcon($file, $list_type != 'thumb'); // TODO: add extra icons for those bad format and superlarge images with make us b0rk?
+        ? $thumb
+        : $this->getIcon($iconfile, $list_type != 'thumb'); // TODO: add extra icons for those bad format and superlarge images with make us b0rk?
 
       // list files, except the thumbnail folder itself or any file in it:
       if(!FileManagerUtility::startswith($url, substr($this->options['thumbnailPath'],0,-1)))
@@ -245,7 +251,7 @@ class FileManager
           'date' => date($this->options['dateFormat'], @filemtime($file)),
           'mime' => $mime,
           'thumbnail' => FileManagerUtility::rawurlencode_path($icon),
-          'icon' => FileManagerUtility::rawurlencode_path($this->getIcon($file,true)),
+          'icon' => FileManagerUtility::rawurlencode_path($this->getIcon($iconfile,true)),
           'size' => @filesize($file)
         );
       }
@@ -435,7 +441,6 @@ class FileManager
       // check for badly formatted image files (corruption); we'll handle the overly large ones next
       if (!$size)
         throw new FileManagerException('corrupt_img:' . $url);
-      $thumbfile = $this->options['thumbnailPath'] . $this->getThumb($dir);
       $content = '<dl>
           <dt>${width}</dt><dd>' . $size[0] . 'px</dd>
           <dt>${height}</dt><dd>' . $size[1] . 'px</dd>
@@ -444,24 +449,23 @@ class FileManager
         ';
       try
       {
-          $tnc = '<a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($file, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) . $randomImage . '" class="preview" alt="preview" /></a>';
+          $thumbfile = $this->options['thumbnailPath'] . $this->getThumb($dir);
       }
       catch (Exception $e)
       {
-          $tnc = '<a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($file, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($dir)).$randomImage . '" class="preview" alt="preview" /></a>';
+          $thumbfile = $this->getIcon('badly.broken_img');
       }
-      $content .= $tnc;
-    // text preview
+      $content .= '<a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($file, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) . $randomImage . '" class="preview" alt="preview" /></a>';
     }
     elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript')
     {
+      // text preview:
       $filecontent = file_get_contents($dir, false, null, 0);
       if (!FileManagerUtility::isBinary($filecontent))
       {
         $content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent,ENT_QUOTES,'UTF-8')) . '</pre></div>';
       }
       // else: fall back to 'no preview available'
-    // zip
     }
     elseif ($mime == 'application/zip')
     {
