@@ -148,7 +148,11 @@
         upload: true,
         destroy: true,
         rename: true,
-        createFolders: true
+        createFolders: true,
+		// and a couple of extra user defined parameters sent with EVERY request:
+		propagateData: {
+			origin: 'demo-clickedLink'
+		}
       });
       $('example3').addEvent('click', manager3.show.bind(manager3));
 
