@@ -197,7 +197,7 @@ class FileManager
 
   private function _onView($dir, $json, $mime_filter, $list_type)
   {
-    $files = ($files = safe_glob($dir . '*', GLOB_PATH | GLOB_NOSORT)) ? $files : array();
+    $files = ($files = safe_glob($dir . '*', GLOB_NODOTS | GLOB_PATH | GLOB_NOSORT)) ? $files : array();
 
     $root = FileManagerUtility::getSiteRoot();
 
