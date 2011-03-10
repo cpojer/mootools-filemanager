@@ -316,7 +316,7 @@ class FileManager
     try
     {
         $mime_filter = ((isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : null);
-        $list_type = ((isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb');
+        $list_type = ((isset($_POST['type']) && $_POST['type'] != 'thumb') ? 'list' : 'thumb');
 
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
     }
@@ -674,7 +674,7 @@ class FileManager
     try
     {
         $mime_filter = ((isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : null);
-        $list_type = ((isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb');
+        $list_type = ((isset($_POST['type']) && $_POST['type'] != 'thumb') ? 'list' : 'thumb');
 
         if (!$this->options['create'])
             throw new FileManagerException('disabled');
@@ -1231,7 +1231,7 @@ class FileManager
     elseif (is_dir($file)) $ext = 'dir';
     else $ext = pathinfo($file, PATHINFO_EXTENSION);
 
-    $largeDir = ($smallIcon === false ? 'Large/' : '');
+    $largeDir = (!$smallIcon ? 'Large/' : '');
     $path = (is_file(FileManagerUtility::getSiteRoot() . $this->options['assetBasePath'] . 'Images/Icons/' .$largeDir.$ext.'.png'))
       ? $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.$ext.'.png'
       : $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.'default.png';
