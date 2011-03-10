@@ -248,17 +248,14 @@ var FileManager = new Class({
       keyboardInput: (function(e) {
 		if (console && console.log) console.log('key press: ' + e.key);
         if(this.dialogOpen) return;
-        if (e.key=='up') {
+		switch (e.key) {
+		case 'up':
+		case 'down':
+		case 'enter':
+		case 'delete':
           e.preventDefault();
-          this.browserSelection('up');
-        }
-        if (e.key=='down') {
-          e.preventDefault();
-          this.browserSelection('down');
-        }
-        if (e.key=='enter') {
-          e.preventDefault();
-          this.browserSelection('enter');
+          this.browserSelection(e.key);
+		  break;
         }
       }).bind(this),
       scroll: (function(){
@@ -666,6 +663,18 @@ var FileManager = new Class({
         else {
           this.fillInfo(currentFile);
         }
+		break;
+
+	  // delete file/directory:
+	  case 'delete':
+        this.storeHistory = true;
+        this.Current = current;
+        if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
+          this.browser.getElement('span.fi.selected').removeClass('selected');
+        current.addClass('selected');
+        var currentFile = current.retrieve('file');
+		if (console && console.log) console.log('on key DELETE file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
+        this.destroy(currentFile);
 		break;
       }
     }
