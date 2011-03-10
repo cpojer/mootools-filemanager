@@ -29,8 +29,8 @@ FileManager.TinyMCE = function(options){
     }, options(type)));
     manager.dragZIndex = 400002;
     manager.SwiffZIndex = 400003;
-    manager.filemanager.setStyle('width','100%');
-    manager.filemanager.setStyle('height','95%');
+    manager.filemanager.setStyle('width','90%');
+    manager.filemanager.setStyle('height','90%');
     manager.filemanager.setStyle('zIndex', 400001);
     if (manager.overlay) manager.overlay.el.setStyle('zIndex', 400000); // i.e. only do this when FileManager settings has 'hideOverlay: false' (default)
     document.id(manager.tips).setStyle('zIndex', 400010);
