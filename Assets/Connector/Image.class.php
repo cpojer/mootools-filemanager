@@ -1,8 +1,4 @@
 <?php
-
-/* make sure no-one can run anything here if they didn't arrive through 'proper channels' */
-if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
-
 /**
  * Image - Provides an Interface to the GD-Library for image manipulation
  *

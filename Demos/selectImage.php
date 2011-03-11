@@ -2,8 +2,6 @@
 
 error_reporting(E_ALL | E_STRICT);
 
-define("COMPACTCMS_CODE", true);
-
 require_once('../Assets/Connector/FileManager.php');
 
 

@@ -17,10 +17,6 @@
  */
 
 
-/* make sure no-one can run anything here if they didn't arrive through 'proper channels' */
-if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
-
-
 
 
 if (!function_exists('safe_glob'))
