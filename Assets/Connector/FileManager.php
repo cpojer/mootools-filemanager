@@ -130,8 +130,6 @@ class FileManager
   protected $path = null;
   protected $basedir = null;                    // absolute path equivalent, filesystem-wise, for options['directory']
   protected $options;
-  protected $post;
-  protected $get;
 
   public function __construct($options)
   {
@@ -176,9 +174,6 @@ class FileManager
 
     header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
     header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
-
-    $this->get = $_GET;
-    $this->post = $_POST;
   }
 
   public function fireEvent($event)
@@ -315,20 +310,19 @@ class FileManager
     // try to produce the view; if it b0rks, retry with the parent, until we've arrived at the basedir:
     // then we fail more severely.
 
-    $mime_filter = null;
-    $list_type = null;
     $emsg = null;
     $jserr = array(
             'status' => 1
         );
     $bottomdir = $this->basedir;
 
+    $mime_filter = self::getPOSTparam('filter', null);
+    $list_type = (self::getPOSTparam('type') != 'thumb' ? 'list' : 'thumb');
+
     try
     {
-        $mime_filter = ((isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : null);
-        $list_type = ((isset($_POST['type']) && $_POST['type'] != 'thumb') ? 'list' : 'thumb');
-
-        $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
+        $dir_arg = self::getPOSTparam('directory');
+        $dir = $this->getDir($dir_arg);
     }
     catch(FileManagerException $e)
     {
@@ -417,12 +411,14 @@ class FileManager
   {
   try
   {
-    if (empty($this->post['file']))
+    $file_arg = self::getPOSTparam('file');
+    if (empty($file_arg))
         throw new FileManagerException('nofile');
 
-    $url = $this->getPath(!empty($this->post['directory']) ? $this->post['directory'] : null);
+    $dir_arg = self::getPOSTparam('directory');
+    $url = $this->getPath($dir_arg);
     $dir = FileManagerUtility::getSiteRoot() . $url;
-    $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
+    $file = pathinfo($file_arg, PATHINFO_BASENAME);
 
     $dir .= $file;
     $url .= $file;
@@ -659,11 +655,13 @@ class FileManager
     {
         if (!$this->options['destroy'])
             throw new FileManagerException('disabled');
-        if (empty($this->post['file']))
+        $file_arg = self::getPOSTparam('file');
+        if (empty($file_arg))
             throw new FileManagerException('nofile');
 
-        $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-        $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
+        $dir_arg = self::getPOSTparam('directory');
+        $dir = $this->getDir($dir_arg);
+        $file = pathinfo($file_arg, PATHINFO_BASENAME);
 
         $fileinfo = array(
             'dir' => $dir,
@@ -740,16 +738,18 @@ class FileManager
   {
     try
     {
-        $mime_filter = ((isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : null);
-        $list_type = ((isset($_POST['type']) && $_POST['type'] != 'thumb') ? 'list' : 'thumb');
+        $mime_filter = self::getPOSTparam('filter', null);
+        $list_type = (self::getPOSTparam('type') != 'thumb' ? 'list' : 'thumb');
 
         if (!$this->options['create'])
             throw new FileManagerException('disabled');
-        if (empty($this->post['file']))
+        $file_arg = self::getPOSTparam('file');
+        if (empty($file_arg))
             throw new FileManagerException('nofile');
 
-        $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-        $file = $this->getName(array('filename' => $this->post['file']), $dir);  // a directory has no 'extension'!
+        $dir_arg = self::getPOSTparam('directory');
+        $dir = $this->getDir($dir_arg);
+        $file = $this->getName(array('filename' => $file_arg), $dir);  // a directory has no 'extension'!
         if (!$file)
             throw new FileManagerException('nofile');
 
@@ -852,13 +852,17 @@ class FileManager
     {
         if (!$this->options['download'])
             throw new FileManagerException('disabled');
-        if (empty($_GET['file']))
+        $file_arg = self::getGETparam('file');
+        if (empty($file_arg))
             throw new FileManagerException('nofile');
-        // no need to check explicitly for '../' and './' here as getDir() will take care of it all!
 
         // change the path to fit your websites document structure
-        $path = $this->getDir($_GET['file'], 0, false, false);
+        $path = $this->getDir($file_arg, 0, false, false);
         if (!is_file($path))
+            throw new FileManagerException('nofile');
+
+        $mime_filter = self::getGETparam('filter', null);
+        if (!$this->checkFile($path, $mime_filter))
             throw new FileManagerException('nofile');
 
         $fileinfo = array(
@@ -953,7 +957,8 @@ class FileManager
       if (!Upload::exists('Filedata'))
         throw new FileManagerException('nofile');
 
-      $dir = $this->getDir(!empty($this->get['directory']) ? $this->get['directory'] : null);
+      $dir_arg = self::getGETparam('directory');
+      $dir = $this->getDir($dir_arg);
       $file = $this->getName($_FILES['Filedata']['name'], $dir);
       if (!$file)
         throw new FileManagerException('nofile');
@@ -1077,13 +1082,18 @@ class FileManager
     {
         if (!$this->options['move'])
             throw new FileManagerException('disabled');
-        if (empty($this->post['file']))
+        $file_arg = self::getPOSTparam('file');
+        if (empty($file_arg))
             throw new FileManagerException('nofile');
 
-        $rename = empty($this->post['newDirectory']) && !empty($this->post['name']);
-        $is_copy = (!empty($this->post['copy'])  && $this->post['copy']);
-        $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
-        $file = pathinfo($this->post['file'], PATHINFO_BASENAME);
+        $newdir_arg = self::getPOSTparam('newDirectory');
+        $name_arg = self::getPOSTparam('name');
+        $rename = (empty($newdir_arg) && !empty($name_arg));
+        $is_copy = !!self::getPOSTparam('copy');
+        $dir_arg = self::getPOSTparam('directory');
+        $dir = $this->getDir($dir_arg);
+        $file_arg = self::getPOSTparam('file');
+        $file = pathinfo($file_arg, PATHINFO_BASENAME);
 
         $is_dir = is_dir($dir . $file);
 
@@ -1096,9 +1106,9 @@ class FileManager
             $fn = 'rename';
             $newdir = null;
             if ($is_dir)
-                $newname = $this->getName(array('filename' => $this->post['name']), $dir);  // a directory has no 'extension'
+                $newname = $this->getName(array('filename' => $name_arg), $dir);  // a directory has no 'extension'
             else
-                $newname = $this->getName($this->post['name'], $dir);
+                $newname = $this->getName($name_arg, $dir);
 
             // when the new name seems to have a different extension, make sure the extension doesn't change after all:
             // Note: - if it's only 'case' we're changing here, then exchange the extension instead of appending it.
@@ -1113,7 +1123,7 @@ class FileManager
         else
         {
             $fn = ($is_copy ? 'copy' : 'rename' /* 'move' */);
-            $newdir = $this->getDir(!empty($this->post['newDirectory']) ? $this->post['newDirectory'] : null);
+            $newdir = $this->getDir($newdir_arg);
             $newname = $this->getName($file, $newdir);
         }
 
@@ -1464,6 +1474,36 @@ class FileManager
     if (!$mimes) $mimes = parse_ini_file($this->options['mimeTypesPath']);
     if (!$mimes) $mimes = array(); // prevent faulty mimetype ini file from b0rking other code sections.
     return $mimes;
+  }
+
+  protected static function getGETparam($name, $default_value = null)
+  {
+    if (is_array($_GET) && !empty($_GET[$name]))
+    {
+        $rv = $_GET[$name];
+
+        // see if there's any stuff in there which we don't like
+        if (!preg_match('/[^A-Za-z0-9\/~!@#$%^&*()_+{}[]\'",.?]/', $rv))
+        {
+            return $rv;
+        }
+    }
+    return $default_value;
+  }
+
+  protected static function getPOSTparam($name, $default_value = null)
+  {
+    if (is_array($_POST) && !empty($_POST[$name]))
+    {
+        $rv = $_POST[$name];
+
+        // see if there's any stuff in there which we don't like
+        if (!preg_match('/[^A-Za-z0-9\/~!@#$%^&*()_+{}[]\'",.?]/', $rv))
+        {
+            return $rv;
+        }
+    }
+    return $default_value;
   }
 }
 
