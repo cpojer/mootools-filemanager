@@ -45,7 +45,8 @@ var FileManager = new Class({
     hideOnClick: false,
     hideClose: false,
     hideOverlay: false,
-	hideQonDelete: false
+	hideQonDelete: false,
+	propagateData: {}       // extra query parameters sent with every request to the backend
   },
 
   hooks: {
@@ -95,6 +96,7 @@ var FileManager = new Class({
       self.storeHistory = true;
 
       var file = this.retrieve('file');
+	  if (console && console.log) console.log('on relayClick file = ' + file.mime + ': ' + file.path + ' : ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
       if (this.retrieve('edit')) {
         this.eliminate('edit');
         return;
@@ -113,6 +115,7 @@ var FileManager = new Class({
     };
 
     this.toggleList = function(e) {
+		if (console && console.log) console.log('togglelist: key press: ' + e.key);
       if(e) e.stop();
       $$('.filemanager-browserheader a').set('opacity',0.5);
       if(!this.browserMenu_thumb.retrieve('set',false)) {
@@ -126,6 +129,7 @@ var FileManager = new Class({
         this.listType = 'list';
         if(typeof jsGET != 'undefined') jsGET.set('fmListType=list');
       }
+	  if (console && console.log) console.log('on toggleList dir = ' + this.Directory + ', source = ' + '---');
       this.load(this.Directory);
     };
 
@@ -228,6 +232,7 @@ var FileManager = new Class({
         this.imageadd.fade(0);
       }).bind(this),
       toggleList: (function(e){
+		if (console && console.log) console.log('toggleList 2 key press: ' + e.key);
         if(this.dialogOpen) return;
         if(e.key=='tab') {
           e.preventDefault();
@@ -235,23 +240,22 @@ var FileManager = new Class({
         }
       }).bind(this),
       keyesc:( function(e) {
+		if (console && console.log) console.log('keyEsc 2 key press: ' + e.key);
         if(this.dialogOpen) return;
 
         if (e.key=='esc') this.hide();
       }).bind(this),
       keyboardInput: (function(e) {
+		if (console && console.log) console.log('key press: ' + e.key);
         if(this.dialogOpen) return;
-        if (e.key=='up') {
+		switch (e.key) {
+		case 'up':
+		case 'down':
+		case 'enter':
+		case 'delete':
           e.preventDefault();
-          this.browserSelection('up');
-        }
-        if (e.key=='down') {
-          e.preventDefault();
-          this.browserSelection('down');
-        }
-        if (e.key=='enter') {
-          e.preventDefault();
-          this.browserSelection('enter');
+          this.browserSelection(e.key);
+		  break;
         }
       }).bind(this),
       scroll: (function(){
@@ -289,6 +293,7 @@ var FileManager = new Class({
       vars.changed['fmPath'] = '/';
 
     Object.each(vars.changed,function(value,key) {
+	    if (console && console.log) console.log('on hashHistory key = ' + key + ', value = ' + value + ', source = ' + '---');
         if(key == 'fmPath') {
           this.load(value);
         }
@@ -329,6 +334,7 @@ var FileManager = new Class({
       this.hashListenerId = jsGET.addListener(this.hashHistory,false,this);
     }
 
+	if (console && console.log) console.log('on show file = ' + this.Directory + ', source = ' + '---');
     this.load(this.Directory);
     if(!this.options.hideOverlay)
       this.overlay.show();
@@ -402,7 +408,13 @@ var FileManager = new Class({
   download: function(e) {
     e.stop();
     if (!this.Current) return;
-    window.open(this.options.url + '?event=download&file='+this.normalize(this.Current.retrieve('file').path));
+	//alert('download: ' + this.Current.retrieve('file').path + ', ' + this.normalize(this.Current.retrieve('file').path));
+	var file = this.Current.retrieve('file');
+    window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+	  event: 'download',
+	  file: this.normalize(file.dir + file.name),
+	  filter: this.options.filter
+	})));
   },
 
   create: function(e) {
@@ -427,7 +439,9 @@ var FileManager = new Class({
       },
       onConfirm: function() {
         new FileManager.Request({
-          url: self.options.url + '?event=create',
+          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+			event: 'create'
+		  })),
           onRequest: self.browserLoader.set('opacity', 1),
           onSuccess: self.fill.bind(self),
           onComplete: self.browserLoader.fade(0),
@@ -438,9 +452,10 @@ var FileManager = new Class({
           data: {
             file: input.get('value'),
             directory: self.Directory,
-            type: self.listType
+            type: self.listType,
+			filter: self.options.filter
           }
-        }).send();
+        }, self).send();
       }
     });
   },
@@ -460,8 +475,13 @@ var FileManager = new Class({
 
     if (this.Request) this.Request.cancel();
 
+	if (console && console.log) console.log('view URI: ' + this.options.url + ', ' + (this.options.url.indexOf('?') == -1 ? '?' : '&') + ', ' + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+		event: 'view'
+	  })));
     this.Request = new FileManager.Request({
-      url: this.options.url,
+	  url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+		event: 'view'
+	  })),
       onRequest: (function(){
         this.browserLoader.set('opacity', 1);
       }).bind(this),
@@ -487,7 +507,9 @@ var FileManager = new Class({
   destroy_noQasked: function(file) {
     var self = this;
 	new FileManager.Request({
-	  url: self.options.url + '?event=destroy',
+	  url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+		event: 'destroy'
+	  })),
 	  data: {
 		file: file.name,
 		directory: self.Directory,
@@ -503,7 +525,7 @@ var FileManager = new Class({
 		self.fireEvent('modify', [Object.clone(file)]);
 		file.element.getParent().fade(0).get('tween').chain(function(){
 		  self.deselect(file.element);
-		  this.element.destroy();
+		  self.element.destroy();
 		});
 	  },
 	  onComplete: self.browserLoader.fade(0),
@@ -511,7 +533,7 @@ var FileManager = new Class({
 		this.showError(xmlHttpRequest);
 		this.browserLoader.fade(0);
 	  }).bind(self)
-	}).send();
+	}, this).send();
   },
 
   destroy: function(file){
@@ -539,7 +561,7 @@ var FileManager = new Class({
     var name = file.name;
     var input = new Element('input', {'class': 'rename', value: name,'autofocus':'autofocus'});
 
-    if (file.mime != 'text/directory') name = name.replace(/\..*$/, '');
+    // if (file.mime != 'text/directory') name = name.replace(/\..*$/, '');     -- unused
 
     new Dialog(this.language.renamefile, {
       language: {
@@ -558,7 +580,9 @@ var FileManager = new Class({
       },
       onConfirm: (function(){
         new FileManager.Request({
-          url: self.options.url + '?event=move',
+          url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+			event: 'move'
+		  })),
           onRequest: self.browserLoader.set('opacity', 1),
           onSuccess: (function(j){
             if (!j || !j.name) return;
@@ -577,7 +601,7 @@ var FileManager = new Class({
             file: file.name,
             name: input.get('value'),
             directory: self.Directory,
-            filter: this.options.filter
+            filter: self.options.filter
           }
         }, self).send();
       }).bind(this)
@@ -601,8 +625,9 @@ var FileManager = new Class({
         current = this.browser.getElement('span.fi.hover');
       var browserScrollFx = new Fx.Scroll(this.browserScroll,{duration: 150}); //offset: {x:0,y:-(this.browserScroll.getSize().y / 4)},
 
+	  switch (direction) {
       // go down
-      if(direction == 'down') {
+      case 'down':
         if(current.getParent('li').getNext('li') != null) {
           current.removeClass('hover');
           var next = current.getParent('li').getNext('li').getElement('span.fi');
@@ -610,8 +635,10 @@ var FileManager = new Class({
           if((current.getPosition(this.browserScroll).y + (current.getSize().y*2)) >= this.browserScroll.getSize().y)
             browserScrollFx.toElement(current);
         }
+		break;
+
       // go up
-      } else if(direction == 'up') {
+      case 'up':
         if(current.getParent('li').getPrevious('li') != null) {
           current.removeClass('hover');
           var previous = current.getParent('li').getPrevious('li').getElement('span.fi');
@@ -620,20 +647,35 @@ var FileManager = new Class({
             browserScrollFx.start(current.getPosition(this.browserScroll).x,(this.browserScroll.getScroll().y - this.browserScroll.getSize().y + (current.getSize().y*2)));
           }
         }
+		break;
 
       // select
-      } else if(direction == 'enter') {
+      case 'enter':
         this.storeHistory = true;
         this.Current = current;
         if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
           this.browser.getElement('span.fi.selected').removeClass('selected');
         current.addClass('selected');
         var currentFile = current.retrieve('file');
+		if (console && console.log) console.log('on key ENTER file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
         if(currentFile.mime == 'text/directory')
-          this.load(currentFile.path.replace(this.root,''));
+          this.load(currentFile.dir + currentFile.name /*.replace(this.root,'')*/);
         else {
           this.fillInfo(currentFile);
         }
+		break;
+
+	  // delete file/directory:
+	  case 'delete':
+        this.storeHistory = true;
+        this.Current = current;
+        if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
+          this.browser.getElement('span.fi.selected').removeClass('selected');
+        current.addClass('selected');
+        var currentFile = current.retrieve('file');
+		if (console && console.log) console.log('on key DELETE file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
+        this.destroy(currentFile);
+		break;
       }
     }
   },
@@ -667,6 +709,7 @@ var FileManager = new Class({
 
       pre.push(folderName);
       var path = ('/'+pre.join('/')+'/').replace(j.root,'');
+	  if (console && console.log) console.log('on fill file = ' + j.root + ' : ' + path + ' : ' + folderName + ', source = ' + 'JSON');
       // add non-clickable path
       if(rootPath.contains(folderName)) {
         text.push(new Element('span', {'class': 'icon',text: folderName}));
@@ -720,7 +763,12 @@ var FileManager = new Class({
         icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
-          window.open(this.options.url + '?event=download&file='+this.normalize(file.path));
+		  //alert('download: ' + file.path + ', ' + this.normalize(file.path));
+		  window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+			event: 'download',
+			file: this.normalize(file.dir + file.name),
+			filter: this.options.filter
+		  })));
         }).bind(this)).inject(el, 'top'));
 
       // rename, delete icon
@@ -831,11 +879,15 @@ var FileManager = new Class({
           if (self.onDragComplete(el, droppable)) return;
 
           dir = droppable.retrieve('file');
+		  if (console && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
         }
         var file = el.retrieve('file');
+	    if (console && console.log) console.log('on drop file = ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
 
         new FileManager.Request({
-          url: self.options.url + '?event=move',
+          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+			event: 'move'
+		  })),
           data: {
             file: file.name,
             filter: self.options.filter,
@@ -847,8 +899,8 @@ var FileManager = new Class({
             if (!dir) self.load(self.Directory);
           },
           onError: (function(xmlHttpRequest) {
-            this.showError(xmlHttpRequest);
-            this.browserLoader.fade(0);
+            self.showError(xmlHttpRequest);
+            self.browserLoader.fade(0);
           }).bind(self)
         }, self).send();
 
@@ -905,7 +957,9 @@ var FileManager = new Class({
     if (this.Request) this.Request.cancel();
 
     this.Request = new FileManager.Request({
-      url: this.options.url + '?event=detail',
+	  url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+		event: 'detail'
+	  })),
       onRequest: (function() {
         this.previewLoader.inject(this.preview);
         this.previewLoader.set('opacity', 1);
@@ -1138,6 +1192,7 @@ this.Dialog = new Class({
         else this.el.center();
       }).bind(this),
       keyesc: (function(e){
+		if (console && console.log) console.log('keyEsc: key press: ' + e.key);
         if (e.key == 'esc') {
           e.stopPropagation();
           this.fireEvent('close').destroy();

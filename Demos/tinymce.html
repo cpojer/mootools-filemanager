@@ -88,21 +88,25 @@
 			/* Here goes the Magic */
 			file_browser_callback: FileManager.TinyMCE(function(type){
 				return {
-					url: (type=='image' ? 'selectImage.php' : 'manager.php'),
-					baseURL: '/c/',
+					url: 'manager.php?exhibit=A', // 'manager.php', but with a bogus query parameter included: latest FM can cope with such an URI
 					assetBasePath: '../Assets', // '/c/lib/includes/js/mootools-filemanager/Assets',
-					language: 'en',
+					language: 'de',
 					selectable: true,
-          destroy: true,
-          upload: true,
-          rename: true,
-          download: true,
-          createFolders: true,
-          hideClose: false,
-          hideOverlay: false,
+					destroy: true,
+					upload: true,
+					rename: true,
+					download: true,
+					createFolders: true,
+					hideClose: false,
+					hideOverlay: false,
 					uploadAuthData: {
 						session: 'MySessionId'
-					}
+					},
+					// and a couple of extra user defined parameters sent with EVERY request:
+                    propagateData: {
+                        editor_reqtype: type,
+						origin: 'demo-tinyMCE'
+                    }
 				};
 			})
 		});

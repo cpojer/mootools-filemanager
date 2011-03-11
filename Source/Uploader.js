@@ -93,9 +93,10 @@ FileManager.implement({
         this.parent(base, data);
 
         this.setOptions({
-          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.uploadAuthData, {
+          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.uploadAuthData, self.options.propagateData, {
             event: 'upload',
             directory: self.normalize(self.Directory),
+			filter: self.options.filter,
             resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0
           }))
         });

@@ -6,24 +6,24 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
 /*
  * Script: FileManager.php
  *   MooTools FileManager - Backend for the FileManager Script
- * 
+ *
  * Authors:
  *  - Christoph Pojer (http://cpojer.net) (author)
  *  - James Ehly (http://www.devtrench.com)
  *  - Fabian Vogelsteller (http://frozeman.de)
  *  - Ger Hobbelt (http://hebbut.net)
- * 
+ *
  * License:
  *   MIT-style license.
- * 
+ *
  * Copyright:
  *   Copyright (c) 2009-2011 [Christoph Pojer](http://cpojer.net)
- * 
+ *
  * Dependencies:
  *   - Upload.php
  *   - Image.class.php
  *   - getId3 Library
- * 
+ *
  * Options:
  *   - directory: (string) The base directory to be used for the FileManager
  *   - assetBasePath: (string, optional) The path to all images and swf files used by the filemanager
@@ -51,45 +51,45 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *   - MoveIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file / subdirectory may be renamed, moved or copied.
  *     Note that currently support for copying subdirectories is missing.
  *     The parameter $action = 'move'.
- * 
+ *
  * For all authorization hooks (callback functions) the following applies:
- * 
+ *
  *     The callback should return TRUE for yes (permission granted), FALSE for no (permission denied).
  *     Parameters sent to the callback are:
  *       ($this, $action, $fileinfo)
  *     where $fileinfo is an array containing info about the file being uploaded, $action is a (string) identifying the current operation, $this is a reference to this FileManager instance.
  *     $action was included as a redundant parameter to each callback as a simple means to allow users to hook a single callback function to all the authorization hooks, without the need to create a wrapper function for each.
- * 
+ *
  *     For more info about the hook parameter $fileinfo contents and a basic implementation, see Demos/manager.php and Demos/selectImage.php
- * 
+ *
  * Notes on relative paths and safety / security:
- * 
+ *
  *   If any option is specifying a relative path, e.g. '../Assets' or 'Media/Stuff/', this is assumed to be relative to the request URI path,
  *   i.e. dirname($_SERVER['SCRIPT_NAME']).
- * 
+ *
  *   Requests may post/submit relative paths as arguments to their FileManager events/actions in $_GET/$_POST, and those relative paths will be
  *   regarded as relative to the request URI handling script path, i.e. dirname($_SERVER['SCRIPT_NAME']) to make the most
  *   sense from bother server and client coding perspective.
- * 
- * 
+ *
+ *
  *   We also assume that any of the paths may be specified from the outside, so each path is processed and filtered to prevent malicious intent
  *   from succeeding. (An example of such would be an attacker posting his own 'destroy' event request requesting the destruction of
  *   '../../../../../../../../../etc/passwd' for example. In more complex rigs, the attack may be assisted through attacks at these options' paths,
  *   so these are subjected to the same scrutiny in here.)
- * 
+ *
  *   All paths, absolute or relative, as passed to the event handlers (see the onXXX methods of this class) are ENFORCED TO ABIDE THE RULE
  *   'every path resides within the BASEDIR rooted tree' without exception.
  *   When paths apparently don't, they are forcibly coerced into adherence to this rule. Because we can do without exceptions to important rules. ;-)
- * 
+ *
  *   BASEDIR equals the path pointed at by the options['directory'] setting. It is therefore imperative that you ensure this value is
  *   correctly set up; worst case, this setting will equal DocumentRoot.
  *   In other words: you'll never be able to reach any file or directory outside this site's DocumentRoot directory tree, ever.
- * 
- * 
+ *
+ *
  *   When you need your paths to be restricted to the bounds of the options['directory'] tree (which is a subtree of the DocumentRoot based
  *   tree), you may wish to use the CheckFile(), getPath() and getDir() methods instead of getRealPath() and getRealDir(), as the latter
  *   restrict targets to within the DocumentRoot tree only.
- * 
+ *
  *   getPath() and getRealPath() both deliver absolute paths relative to DocumentRoot, hence suitable for use in URIs and feeding to client side
  *   scripts, while getRealDir() and getDir() both return absolute paths in the server filesystem perspective, i.e. the latter are suitable for
  *   server side script based file operation functions.
@@ -201,7 +201,7 @@ class FileManager
 
   private function _onView($dir, $json, $mime_filter, $list_type)
   {
-    $files = ($files = safe_glob($dir . '*', GLOB_PATH | GLOB_NOSORT)) ? $files : array();
+    $files = ($files = safe_glob($dir . '*', GLOB_NODOTS | GLOB_PATH | GLOB_NOSORT)) ? $files : array();
 
     $root = FileManagerUtility::getSiteRoot();
 
@@ -225,20 +225,26 @@ class FileManager
        * overly large ones.
        */
       $thumb = false;
-      try
+      $iconfile = $file;
+      // if(strpos($mime,'image') !== false)
+      if (/* $list_type == 'thumb' && */ in_array($mime, array('image/gif', 'image/jpeg', 'image/png')))
       {
-        // access the image and create a thumbnail image; this can fail dramatically
-        if(strpos($mime,'image') !== false)
-          $thumb = $this->getThumb($file);
-      }
-      catch (Exception $e)
-      {
-         // do nothing, except mark image as 'not suitable for thumbnailing'
+        // speed up 'list' view when it's not a thumbanils view: don't precalc the thumbnails!
+        try
+        {
+          // access the image and create a thumbnail image; this can fail dramatically
+          $thumb = $this->options['thumbnailPath'] . $this->getThumb($file);
+        }
+        catch (Exception $e)
+        {
+          // do nothing, except mark image as 'not suitable for thumbnailing'
+          $iconfile = 'badly.broken_img';
+        }
       }
 
       $icon = ($list_type == 'thumb' && $thumb)
-        ? $this->options['thumbnailPath'] . $thumb
-        : $this->getIcon($file, $list_type != 'thumb'); // TODO: add extra icons for those bad format and superlarge images with make us b0rk?
+        ? $thumb
+        : $this->getIcon($iconfile, $list_type != 'thumb'); // TODO: add extra icons for those bad format and superlarge images with make us b0rk?
 
       // list files, except the thumbnail folder itself or any file in it:
       if(!FileManagerUtility::startswith($url, substr($this->options['thumbnailPath'],0,-1)))
@@ -249,7 +255,7 @@ class FileManager
           'date' => date($this->options['dateFormat'], @filemtime($file)),
           'mime' => $mime,
           'thumbnail' => FileManagerUtility::rawurlencode_path($icon),
-          'icon' => FileManagerUtility::rawurlencode_path($this->getIcon($file,true)),
+          'icon' => FileManagerUtility::rawurlencode_path($this->getIcon($iconfile,true)),
           'size' => @filesize($file)
         );
       }
@@ -320,7 +326,7 @@ class FileManager
     try
     {
         $mime_filter = ((isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : null);
-        $list_type = ((isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb');
+        $list_type = ((isset($_POST['type']) && $_POST['type'] != 'thumb') ? 'list' : 'thumb');
 
         $dir = $this->getDir(!empty($this->post['directory']) ? $this->post['directory'] : null);
     }
@@ -430,7 +436,6 @@ class FileManager
     $mime = $this->getMimeType($dir);
     $content = null;
 
-    // image
     if (FileManagerUtility::startsWith($mime, 'image/'))
     {
       // generates a random number to put on the end of the image, to prevent caching
@@ -439,7 +444,6 @@ class FileManager
       // check for badly formatted image files (corruption); we'll handle the overly large ones next
       if (!$size)
         throw new FileManagerException('corrupt_img:' . $url);
-      $thumbfile = $this->options['thumbnailPath'] . $this->getThumb($dir);
       $content = '<dl>
           <dt>${width}</dt><dd>' . $size[0] . 'px</dd>
           <dt>${height}</dt><dd>' . $size[1] . 'px</dd>
@@ -448,24 +452,23 @@ class FileManager
         ';
       try
       {
-          $tnc = '<a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($file, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) . $randomImage . '" class="preview" alt="preview" /></a>';
+          $thumbfile = $this->options['thumbnailPath'] . $this->getThumb($dir);
       }
       catch (Exception $e)
       {
-          $tnc = '<a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($file, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($dir)).$randomImage . '" class="preview" alt="preview" /></a>';
+          $thumbfile = $this->getIcon('badly.broken_img');
       }
-      $content .= $tnc;
-    // text preview
+      $content .= '<a href="'.$encoded_url.'" data-milkbox="preview" title="'.htmlentities($file, ENT_QUOTES, 'UTF-8').'"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) . $randomImage . '" class="preview" alt="preview" /></a>';
     }
     elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript')
     {
+      // text preview:
       $filecontent = file_get_contents($dir, false, null, 0);
       if (!FileManagerUtility::isBinary($filecontent))
       {
         $content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent,ENT_QUOTES,'UTF-8')) . '</pre></div>';
       }
       // else: fall back to 'no preview available'
-    // zip
     }
     elseif ($mime == 'application/zip')
     {
@@ -474,15 +477,18 @@ class FileManager
       $out = array(array(), array());
       $getid3 = new getID3();
       $getid3->Analyze($dir);
-      foreach ($getid3->info['zip']['files'] as $name => $size)
+      $info = self::getID3infoItem($getid3, null, 'zip', 'files');
+      if (is_array($info))
       {
-        $isdir = is_array($size) ? true : false;
-        $out[($isdir) ? 0 : 1][$name] = '<li><a><img src="'.FileManagerUtility::rawurlencode_path($this->getIcon($dir,true)).'" alt="" /> ' . $name . '</a></li>';
+          foreach ($info as $name => $size)
+          {
+            $isdir = is_array($size) ? true : false;
+            $out[($isdir) ? 0 : 1][$name] = '<li><a><img src="'.FileManagerUtility::rawurlencode_path($this->getIcon($dir,true)).'" alt="" /> ' . $name . '</a></li>';
+          }
+          natcasesort($out[0]);
+          natcasesort($out[1]);
+          $content = '<ul>' . implode(array_merge($out[0], $out[1])) . '</ul>';
       }
-      natcasesort($out[0]);
-      natcasesort($out[1]);
-      $content = '<ul>' . implode(array_merge($out[0], $out[1])) . '</ul>';
-    // swf
     }
     elseif ($mime == 'application/x-shockwave-flash')
     {
@@ -490,19 +496,25 @@ class FileManager
       $getid3 = new getID3();
       $getid3->Analyze($dir);
 
-      $content = '<dl>
-          <dt>${width}</dt><dd>' . $getid3->info['swf']['header']['frame_width']/10 . 'px</dd>
-          <dt>${height}</dt><dd>' . $getid3->info['swf']['header']['frame_height']/10 . 'px</dd>
-          <dt>${length}</dt><dd>' . round(($getid3->info['swf']['header']['length']/$getid3->info['swf']['header']['frame_count'])) . 's</dd>
-        </dl>
-        <h2>${preview}</h2>
-        <div class="object">
-          <object type="application/x-shockwave-flash" data="'.FileManagerUtility::rawurlencode_path($url).'" width="500" height="400">
-            <param name="scale" value="noscale" />
-            <param name="movie" value="'.FileManagerUtility::rawurlencode_path($url).'" />
-          </object>
-        </div>';
-    // audio
+      $info = self::getID3infoItem($getid3, null, 'swf', 'header');
+      if (is_array($info))
+      {
+          // Note: preview data= urls were formatted like this in CCMS:
+          // $this->options['assetBasePath'] . '/dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30'
+
+          $content = '<dl>
+              <dt>${width}</dt><dd>' . self::getID3infoItem($getid3, 0, 'swf', 'header', 'frame_width') / 10 . 'px</dd>
+              <dt>${height}</dt><dd>' . self::getID3infoItem($getid3, 0, 'swf', 'header', 'frame_height') / 10 . 'px</dd>
+              <dt>${length}</dt><dd>' . round(self::getID3infoItem($getid3, 0, 'swf', 'header', 'length') / self::getID3infoItem($getid3, 25, 'swf', 'header', 'frame_count')) . 's</dd>
+            </dl>
+            <h2>${preview}</h2>
+            <div class="object">
+              <object type="application/x-shockwave-flash" data="'.FileManagerUtility::rawurlencode_path($url).'" width="500" height="400">
+                <param name="scale" value="noscale" />
+                <param name="movie" value="'.FileManagerUtility::rawurlencode_path($url).'" />
+              </object>
+            </div>';
+      }
     }
     elseif (FileManagerUtility::startsWith($mime, 'audio/'))
     {
@@ -512,12 +524,17 @@ class FileManager
       getid3_lib::CopyTagsToComments($getid3->info);
 
       $dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
+      // Note: these next several indexed array fetches were marked with @ in CCMS to catch some failures...
+      //
+      // TODO: do it cleaner then that!
+      //
+      // DONE!
       $content = '<dl>
-          <dt>${title}</dt><dd>' . $getid3->info['comments']['title'][0] . '</dd>
-          <dt>${artist}</dt><dd>' . $getid3->info['comments']['artist'][0] . '</dd>
-          <dt>${album}</dt><dd>' . $getid3->info['comments']['album'][0] . '</dd>
-          <dt>${length}</dt><dd>' . $getid3->info['playtime_string'] . '</dd>
-          <dt>${bitrate}</dt><dd>' . round($getid3->info['bitrate']/1000) . 'kbps</dd>
+          <dt>${title}</dt><dd>' . self::getID3infoItem($getid3, '???', 'comments', 'title', 0) . '</dd>
+          <dt>${artist}</dt><dd>' . self::getID3infoItem($getid3, '???', 'comments', 'artist', 0) . '</dd>
+          <dt>${album}</dt><dd>' . self::getID3infoItem($getid3, '???', 'comments', 'album', 0) . '</dd>
+          <dt>${length}</dt><dd>' . self::getID3infoItem($getid3, '???', 'playtime_string') . '</dd>
+          <dt>${bitrate}</dt><dd>' . round(self::getID3infoItem($getid3, 0, 'bitrate') / 1000) . 'kbps</dd>
         </dl>
         <h2>${preview}</h2>
         <div class="object">
@@ -528,11 +545,57 @@ class FileManager
           </object>
         </div>';
     }
-    // else: fall back to 'no preview available'
+    else
+    {
+        // else: fall back to 'no preview available'
+      require_once(MTFM_PATH . '/Assets/getid3/getid3.php');
+
+      try
+      {
+        $getid3 = new getID3();
+        $getid3->encoding = 'UTF-8';
+        $getid3->Analyze($dir);
+        ob_start();
+          var_dump($getid3->info);
+        $dump = ob_get_clean();
+        // $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
+
+        // strip the NULs out:
+        $dump = str_replace('&#0;', '?', $dump);
+        //$dump = html_entity_decode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
+        //@file_put_contents('getid3.raw.log', $dump);
+        // since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
+        $dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
+        // and reduce long sequences of unknown charcodes:
+        $dump = preg_replace('/\?{8,}/', '???????', $dump);
+
+        $content = '<div class="margin">
+                    <h2>${preview}</h2>
+                    <pre>' . "\n" . $dump . "\n" . '</pre></div>';
+        //@file_put_contents('getid3.log', $dump);
+      }
+      catch(Exception $e)
+      {
+        // ignore
+        $content = $e->getMessage();
+        $content = 'b';
+      }
+      //$content = 'hello';
+
+        echo json_encode(array(
+          'status' => 2,
+          'mimetype' => $mime,
+          'content' => '<div class="margin">
+            ${nopreview} ' . $content . '
+          </div>'                 //<br/><button value="' . $url . '">${download}</button>
+        ));
+        die();
+    }
 
     echo json_encode(array(
       'status' => 1,
-      'content' => $content ? $content : '<div class="margin">
+      'mimetype' => $mime,
+      'content' => !empty($content) ? $content : '<div class="margin">
         ${nopreview}
       </div>'                 //<br/><button value="' . $url . '">${download}</button>
     ));
@@ -678,7 +741,7 @@ class FileManager
     try
     {
         $mime_filter = ((isset($_POST['filter']) && !empty($_POST['filter'])) ? $_POST['filter'].'/' : null);
-        $list_type = ((isset($_POST['type']) && $_POST['type'] == 'list') ? 'list' : 'thumb');
+        $list_type = ((isset($_POST['type']) && $_POST['type'] != 'thumb') ? 'list' : 'thumb');
 
         if (!$this->options['create'])
             throw new FileManagerException('disabled');
@@ -1107,6 +1170,41 @@ class FileManager
   }
 
 
+  /**
+   * Traverse the getID3 info[] array tree and fetch the item pointed at by the variable number of indices specified
+   * as additional parameters to this function.
+   *
+   * Return the default value when the indicated element does not exist in the info[] set; otherwise return the located item.
+   *
+   * The purpose of this method is to act as a safe go-in-between for the fileManager to collect arbitrary getID3 data and
+   * not get a PHP error when some item in there does not exist.
+   */
+  public static function getID3infoItem($getid3_obj, $default_value /* , ... */ )
+  {
+    $rv = false;
+    $o = $getid3_obj->info;
+    $argc = func_num_args();
+
+    for ($i = 2; $i < $argc; $i++)
+    {
+        if (!is_array($o))
+        {
+            return $default_value;
+        }
+
+        $index = func_get_arg($i);
+        if (array_key_exists($index, $o))
+        {
+            $o = $o[$index];
+        }
+        else
+        {
+            return $default_value;
+        }
+    }
+    return $o;
+  }
+
 
   /**
    * Delete a file or directory, inclusing subdirectories and files.
@@ -1235,7 +1333,7 @@ class FileManager
     elseif (is_dir($file)) $ext = 'dir';
     else $ext = pathinfo($file, PATHINFO_EXTENSION);
 
-    $largeDir = ($smallIcon === false ? 'Large/' : '');
+    $largeDir = (!$smallIcon ? 'Large/' : '');
     $path = (is_file(FileManagerUtility::getSiteRoot() . $this->options['assetBasePath'] . 'Images/Icons/' .$largeDir.$ext.'.png'))
       ? $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.$ext.'.png'
       : $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.'default.png';

@@ -72,7 +72,6 @@
       /* Simple Example */
       var manager1 = new FileManager({
         url: 'manager.php',
-		baseURL: '/c/',
         language: 'en',
         hideOnClick: true,
         assetBasePath: '../Assets',
@@ -113,7 +112,6 @@
       
       manager2 = new FileManager({
         url: 'selectImage.php',
-		baseURL: '/c/',
         language: 'en',
         filter: 'image',
         hideOnClick: true,
@@ -124,7 +122,11 @@
         destroy: true,
         rename: true,
         createFolders: true,
-        onComplete: complete
+        onComplete: complete,
+		// and a couple of extra user defined parameters sent with EVERY request:
+		propagateData: {
+			origin: 'demo-selectFile'
+		}
       });
       
       el.setStyle('display', 'none');
@@ -139,7 +141,6 @@
       /* Localized Example */
       var manager3 = new FileManager({
         url: 'manager.php',
-		baseURL: '/c/',
         language: 'de',
         hideOnClick: true,
         assetBasePath: '../Assets',
@@ -147,7 +148,11 @@
         upload: true,
         destroy: true,
         rename: true,
-        createFolders: true
+        createFolders: true,
+		// and a couple of extra user defined parameters sent with EVERY request:
+		propagateData: {
+			origin: 'demo-clickedLink'
+		}
       });
       $('example3').addEvent('click', manager3.show.bind(manager3));
 
@@ -156,12 +161,14 @@
       var global = this;
       var example4 = $('myGallery');
       var manager4 = new FileManager.Gallery({
-        url: 'selectImage.php',
-		baseURL: '/c/',
+        url: 'selectImage.php?exhibit=A', // 'manager.php', but with a bogus query parameter included: latest FM can cope with such an URI
         assetBasePath: '../Assets',
         filter: 'image',
         hideOnClick: true,
         uploadAuthData: {session: 'MySessionId'},
+		propagateData: {
+			origin: 'demo-Gallery'
+		},
         onShow: function(){
           var obj;
           Function.attempt(function(){ obj = JSON.decode(example4.get('value')); });
