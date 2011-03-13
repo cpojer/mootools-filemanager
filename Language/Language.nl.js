@@ -45,6 +45,9 @@ FileManager.Language.nl = {
 
 	nodestroy: 'Het is niet mogelijk bestanden te verwijderen op deze server.',
 
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'Deze operatie is uitgeschakeld op deze server.',
 	'backend.authorized': 'Je hebt geen toestemming om deze aktie uit te voeren.',
 	'backend.path': 'Deze map bestaat niet.  Contacteer de beheerder van deze website voor hulp.',
@@ -99,4 +102,12 @@ FileManager.Language.nl = {
 	},
 
 	resizeImages: 'Pas de dimensies van grote afbeeldingen aan'
+
+	serialize: 'Save gallery',
+	gallery: {
+		text: 'Image caption',
+		save: 'Save',
+		remove: 'Remove from gallery',
+		drag: 'Drag items here to create a gallery...'
+	}
 };

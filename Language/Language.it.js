@@ -10,7 +10,7 @@ FileManager.Language.it = {
 	more: 'Dettagli',
 	width: 'Larghezza:',
 	height: 'Altezza:',
-	
+
 	ok: 'Ok',
 	open: 'Seleziona file',
 	upload: 'Upload',
@@ -18,7 +18,7 @@ FileManager.Language.it = {
 	createdir: 'Specifica il nome della cartella:',
 	cancel: 'Annulla',
 	error: 'Errore',
-	
+
 	information: 'Informazioni',
 	type: 'Tipo:',
 	size: 'Dimensione:',
@@ -28,23 +28,26 @@ FileManager.Language.it = {
 	close: 'Chiudi',
 	destroy: 'Cancella',
 	destroyfile: 'Sei sicuro di voler cancellare questo file?',
-	
+
 	rename: 'Rinomina',
 	renamefile: 'Scrivi un nuovo nome per il file:',
-	
+
 	download: 'Download',
 	nopreview: '<i>Non sono disponibili anteprime</i>',
-	
+
 	title: 'Titolo:',
 	artist: 'Artista:',
 	album: 'Album:',
 	length: 'Lunghezza:',
 	bitrate: 'Bitrate:',
-	
+
 	deselect: 'Deseleziona',
-	
+
 	nodestroy: 'La cancellazioni dei file è disabilitata.',
-	
+
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'L Upload dei file è disabilitato.',
 	'backend.authorized': 'Non sei autorizzato a fare l upload dei file.',
 	'backend.path': 'La cartella degli upload non esiste. Contattare il webmaster.',
@@ -55,7 +58,7 @@ FileManager.Language.it = {
 	'backend.partial': 'Il file è stato parzialmente caricato. Per favore, prova a ricaricarlo.',
 	'backend.nofile': 'Non è stato specificato alcun file da caricare.',
 	'backend.default': 'Mi spiace, l operazione non è andata a buon fine.',
-	
+
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
@@ -84,20 +87,20 @@ FileManager.Language.it = {
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
 	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
-	
+
 	/* FU */
 	uploader: {
 		unknown: 'Errore sconosciuto',
 		sizeLimitMin: 'Non puoi caricare "<em>${name}</em>" (${size}), la dimensione minima del file è <strong>${size_min}</strong>!',
 		sizeLimitMax: 'Non puoi caricare "<em>${name}</em>" (${size}), la dimensione massima del file è <strong>${size_max}</strong>!'
 	},
-	
+
 	flash: {
 		hidden: 'To enable the embedded uploader, unblock it in your browser and refresh (see Adblock).',
 		disabled: 'To enable the embedded uploader, enable the blocked Flash movie  and refresh (see Flashblock).',
 		flash: 'In order to upload files you need to install <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
 	},
-	
+
 	resizeImages: 'Ridimensiona immagini grandi',
 
 	serialize: 'Salva galleria',

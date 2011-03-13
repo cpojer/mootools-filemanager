@@ -10,7 +10,7 @@ FileManager.Language.fr = {
 	more: 'Détails',
 	width: 'Largeur :',
 	height: 'Hauteur :',
-	
+
 	ok: 'Ok',
 	open: 'Sélectionner un fichier',
 	upload: 'Téléverser',
@@ -18,7 +18,7 @@ FileManager.Language.fr = {
 	createdir: 'Merci de spécifier un nom de dossier :',
 	cancel: 'Annuler',
 	error: 'Erreur',
-	
+
 	information: 'Informations',
 	type: 'Type :',
 	size: 'Taille :',
@@ -28,23 +28,26 @@ FileManager.Language.fr = {
 	close: 'Fermer',
 	destroy: 'Supprimer',
 	destroyfile: 'Voulez-vous vraiment supprimer ce fichier ?',
-	
+
 	rename: 'Renommer',
 	renamefile: 'Merci de spécifier un nouveau nom de fichier :',
-	
+
 	download: 'Télécharger',
 	nopreview: '<i>Aucun aperçu disponible</i>',
-	
+
 	title: 'Titre :',
 	artist: 'Artiste :',
 	album: 'Album :',
 	length: 'Durée :',
 	bitrate: 'Débit :',
-	
+
 	deselect: 'Désélectionner',
-	
+
 	nodestroy: 'La suppression de fichier a été désactivée sur ce serveur.',
-	
+
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'Le téléversement de fichier a été désactivé sur ce serveur.',
 	'backend.authorized': 'Vous n\'êtes pas authentifié et ne pouvez pas téléverser de fichier.',
 	'backend.path': 'Le répertoire de téléversement spécifié n\'existe pas. Merci de contacter l\'administrateur de ce site Internet.',
@@ -55,7 +58,7 @@ FileManager.Language.fr = {
 	'backend.partial': 'Le fichier a été partiellement téléversé, merci de recommencer l\'opération.',
 	'backend.nofile': 'Aucun fichier n\'a été spécifié.',
 	'backend.default': 'Une erreur s\'est produite.',
-	
+
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
@@ -84,7 +87,7 @@ FileManager.Language.fr = {
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
 	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
-	
+
 	/* FU */
 	uploader: {
 		unknown: 'Erreur inconnue',
@@ -92,12 +95,20 @@ FileManager.Language.fr = {
 		sizeLimitMin: 'Vous ne pouvez pas ajouter "<em>${name}</em>" (${size}), la taille minimale des fichiers est de <strong>${size_min}</strong>!',
 		sizeLimitMax: 'Vous ne pouvez pas ajouter "<em>${name}</em>" (${size}), la taille maximale des fichiers est de <strong>${size_max}</strong>!'
 	},
-	
+
 	flash: {
 		hidden: null,
 		disabled: null,
 		flash: 'Dans le but de téléverser des fichiers, vous devez installer <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
 	},
-	
+
 	resizeImages: 'Redimensionner les images pendant le téléversement'
+
+	serialize: 'Save gallery',
+	gallery: {
+		text: 'Image caption',
+		save: 'Save',
+		remove: 'Remove from gallery',
+		drag: 'Drag items here to create a gallery...'
+	}
 };
