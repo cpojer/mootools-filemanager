@@ -140,14 +140,14 @@ var FileManager = new Class({
       this.browser.getElements('span.fi.hover').each(function(span){ span.removeClass('hover'); });
     }).bind(this));
     this.browserMenu_thumb = new Element('a',{
-        'id':'togggle_side_boxes',
+        'id':'toggle_side_boxes',
         'class':'listType',
         'style' : 'margin-right: 10px;'
       }).set('opacity',0.5).addEvents({
         click: this.toggleList.bind(this)
       });
     this.browserMenu_list = new Element('a',{
-        'id':'togggle_side_list',
+        'id':'toggle_side_list',
         'class':'listType'
       }).set('opacity',1).addEvents({
         click: this.toggleList.bind(this)
