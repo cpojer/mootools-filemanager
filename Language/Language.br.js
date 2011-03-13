@@ -10,7 +10,7 @@ FileManager.Language.br = {
 	more: 'Detalhes',
 	width: 'Largura:',
 	height: 'Altura:',
-	
+
 	ok: 'Ok',
 	open: 'Selecione o arquivo',
 	upload: 'Upload',
@@ -18,7 +18,7 @@ FileManager.Language.br = {
 	createdir: 'Por favor especifique o nome da pasta:',
 	cancel: 'Cancelar',
 	error: 'Erro',
-	
+
 	information: 'Informação',
 	type: 'Tipo:',
 	size: 'Tamanho:',
@@ -28,23 +28,26 @@ FileManager.Language.br = {
 	close: 'Fechar',
 	destroy: 'Apagar',
 	destroyfile: 'Tem certeza que deseja apagar este arquivo?',
-	
+
 	rename: 'Renomear',
 	renamefile: 'Por favor especifique o novo nome do arquivo:',
-	
+
 	download: 'Download',
 	nopreview: '<i>Pré-visualização indisponível</i>',
-	
+
 	title: 'Título:',
 	artist: 'Artista:',
 	album: 'Album:',
 	length: 'Tamanho:',
 	bitrate: 'Bitrate:',
-	
+
 	deselect: 'Desfazer',
-	
+
 	nodestroy: 'Apagar arquivos está desabilitado neste servidor.',
-	
+
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'Não é permitido enviar arquivos neste servidor.',
 	'backend.authorized': 'Você não está autenticado para enviar arquivos neste servidor.',
 	'backend.path': 'A pasta especificada não existe. Por favor contate o administrador do site.',
@@ -55,7 +58,7 @@ FileManager.Language.br = {
 	'backend.partial': 'O arquivo enviado foi corrompido, por favor envie o arquivo novamente.',
 	'backend.nofile': 'Não existe arquivo especificado para ser enviado.',
 	'backend.default': 'Erro no envio do arquivo.',
-	
+
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
@@ -84,19 +87,27 @@ FileManager.Language.br = {
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
 	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
-	
+
 	/* FU */
 	uploader: {
 		unknown: 'Erro desconhecido',
 		sizeLimitMin: 'Não é permitido anexar "<em>${name}</em>" (${size}), o tamanho mínimo para o arquivo é de <strong>${size_min}</strong>!',
 		sizeLimitMax: 'Não é permitido anexar "<em>${name}</em>" (${size}), o tamanho máximo para o arquivo é de <strong>${size_max}</strong>!'
 	},
-	
+
 	flash: {
 		hidden: 'Para habilitar o uploader, desbloqueie a função em seu browser e recarregue a página (veja Adblock).',
 		disabled: 'Para habilitar o uploader, habilite o arquivo Flash e recarregue a página (veja Flashblock).',
 		flash: 'Para enviar arquivos é necessário instalar o <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash Player</a>.'
 	},
-	
+
 	resizeImages: 'Redimensionar imagens grandes ao enviar'
+
+	serialize: 'Save gallery',
+	gallery: {
+		text: 'Image caption',
+		save: 'Save',
+		remove: 'Remove from gallery',
+		drag: 'Drag items here to create a gallery...'
+	}
 };

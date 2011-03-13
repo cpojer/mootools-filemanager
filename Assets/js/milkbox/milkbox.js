@@ -84,11 +84,11 @@ this.Milkbox = new Class({
 		if(!g) return;
 
 		this.closed = false;
-		var item = g.get_item(index);
+		var item = g.get_item(i);   // [i_a] index is undefined
 		if(!item) return;
 
 		this.currentGallery = g;
-		this.currentIndex = index;
+		this.currentIndex = i;      // [i_a]
 
 		this.hideFormElements();
 

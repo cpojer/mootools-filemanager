@@ -72,6 +72,7 @@ class Image {
 			'height' => $img[1],
 			'mime' => $img['mime'],
 			'ext' => $ext_from_mime,
+			'fileinfo' => $finfo
 		);
 
 		if($this->meta['ext']=='jpg')
@@ -134,15 +135,18 @@ class Image {
 
 		$in_use = (function_exists('memory_get_usage') ? memory_get_usage() : 1000000 /* take a wild guess, er, excuse me, 'apply a heuristic' */ );
 
-
-		$file = str_replace('\\','/',$file);
-		$file = preg_replace('#/+#','/',$file);
-		$file = str_replace($_SERVER['DOCUMENT_ROOT'],'',$file);
-		$file = $_SERVER['DOCUMENT_ROOT'].$file;
-		$file = str_replace('\\','/',$file);
-		$file = preg_replace('#/+#','/',$file);
-		$file = realpath($file);
-		$file = str_replace('\\','/',$file);
+		// we'll assume the $file path fed to us is CLEAN and CORRECT; the code below will b0rk evverything no end in Alias-ed web sites anyway!
+		if (0)
+		{
+			$file = str_replace('\\','/',$file);
+			$file = preg_replace('#/+#','/',$file);
+			$file = str_replace($_SERVER['DOCUMENT_ROOT'],'',$file);
+			$file = $_SERVER['DOCUMENT_ROOT'].$file;
+			$file = str_replace('\\','/',$file);
+			$file = preg_replace('#/+#','/',$file);
+			$file = realpath($file);
+			$file = str_replace('\\','/',$file);
+		}
 
 		$rv = array(
 			'memory_limit' => $limit,
@@ -210,6 +214,16 @@ class Image {
 			'height' => $this->meta['height'],
 		);
 	}
+
+	/**
+	 * Returns a copy of the meta information of the image
+	 *
+	 * @return array
+	 */
+	public function getMetaInfo(){
+		return array_merge(array(), (is_array($this->meta) ? $this->meta : array()));
+	}
+
 
 	/**
 	 * Creates a new, empty image with the desired size
@@ -465,6 +479,8 @@ class Image {
 		if($file == null)
 		  $file = $this->file;
 		if(!$file) throw new Exception('process_nofile');
+		if(!is_dir(dirname($file))) throw new Exception('process_nodir');
+		
 
 		$fn = 'image'.$ext;
 		if($ext == 'jpeg')

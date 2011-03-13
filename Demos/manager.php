@@ -2,10 +2,12 @@
 
 error_reporting(E_ALL | E_STRICT);
 
-require_once('../Assets/Connector/FileManager.php');
+//require_once('../Assets/Connector/FileManager.php');
+require_once('../Assets/Connector/FMgr4Alias.php');
 
 
 define('DEVELOPMENT', 01);   // set to 01 / 1 to enable logging of each incoming event request.
+
 
 
 
@@ -107,7 +109,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 	//$mimetdefs = $mgr->getMimeTypeDefinitions();
 
 	// log request data:
-	FM_vardumper($mgr, $action, $info);
+	//FM_vardumper($mgr, $action, $info);
 
 
 	/*
@@ -197,50 +199,11 @@ function FM_IsAuthorized($mgr, $action, &$info)
 }
 
 
+
+
+
 if (01) // debugging
 {
-	if (0)
-	{
-		echo "<pre>\n";
-		echo "pagetitle test = \n";
-		$test = array(
-			'~!@#$%^&*()_+',
-			'`1234567890-=',
-			'QWERTYUIOP{}',
-			'qwertyuiop[]',
-			'ASDFGHJKL:"',
-			'asdfghjkl;\'',
-			'ZXCVBNM<>?  ',
-			'zxcvbnm,./  '
-			);
-		foreach ($test as $t)
-		{
-			//$r = FileManagerUtility::pagetitle($t);
-			$r = preg_replace('/([^A-Za-z0-9. \[\]\(\)~&!@#_-])/', '_', $t);
-
-			echo "\nORIG: [" . htmlentities($t) . "]\nRES:  [" . htmlentities($r) . "]\n";
-		}
-		$test = array(
-			'.ignore',
-			'___ignore',
-			'_._.ignore',
-			'._._ignore',
-			'X.ignore',
-			'X___ignore',
-			'X_._.ignore',
-			'X._._ignore',
-			'__X_ignore',
-			'_._X.ignore',
-			'._.X_ignore'
-			);
-		foreach ($test as $t)
-		{
-			$r = trim($t, '_.');
-
-			echo "\nORIG: [" . htmlentities($t) . "]\nRES:  [" . htmlentities($r) . "]\n";
-		}
-	}
-
 	// fake a POST submit through a GET request so we can easily diag/debug event requests:
 	if (!isset($_POST)) $_POST = array();
 	foreach($_GET as $k => $v)
@@ -250,9 +213,13 @@ if (01) // debugging
 }
 
 
-$browser = new FileManager(array(
+
+
+
+$browser = new FileManagerWithAliasSupport /* FileManager */ (array(
+
 	'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__)
-	'thumbnailPath' => 'Files/Thumbnails/',
+	//'thumbnailPath' => 'Files/Thumbnails/',
 	'assetBasePath' => '../Assets',
 	'chmod' => 0777,
 	//'maxUploadSize' => 1024 * 1024 * 5,
@@ -268,14 +235,23 @@ $browser = new FileManager(array(
 	'CreateIsAuthorized_cb' => 'FM_IsAuthorized',
 	'DestroyIsAuthorized_cb' => 'FM_IsAuthorized',
 	'MoveIsAuthorized_cb' => 'FM_IsAuthorized'
+	
+	// http://httpd.apache.org/docs/2.2/mod/mod_alias.html -- we only emulate the Alias statement.
+	// Implementing other path translation features is left as an exercise to the reader:
+	, 'Aliases' => array(
+		'/c/lib/includes/js/mootools-filemanager/Demos/Files/alias' => "D:/xxx",
+		'/c/lib/includes/js/mootools-filemanager/Demos/Files/d' => "D:/xxx.tobesorted",
+		'/c/lib/includes/js/mootools-filemanager/Demos/Files/u' => "D:/websites-uploadarea",
+		
+		'/c/lib/includes/js/mootools-filemanager/Demos/Files' => "D:/experiment"
+	)
 ));
 
 
 
 
 // log request data:
-FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
-
+//FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
 
 
 

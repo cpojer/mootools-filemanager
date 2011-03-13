@@ -10,7 +10,7 @@ FileManager.Language.fi = {
 	more: 'Lisätiedot',
 	width: 'Leveys:',
 	height: 'Korkeus:',
-	
+
 	ok: 'Ok',
 	open: 'Valitse tiedosto',
 	upload: 'Lähetä',
@@ -18,7 +18,7 @@ FileManager.Language.fi = {
 	createdir: 'Kansion nimi:',
 	cancel: 'Peruuta',
 	error: 'Virhe',
-	
+
 	information: 'Tiedot',
 	type: 'Tyyppi:',
 	size: 'Koko:',
@@ -28,23 +28,26 @@ FileManager.Language.fi = {
 	close: 'Sulje',
 	destroy: 'Poista',
 	destroyfile: 'Haluatko varmasti poistaa tiedoston?',
-	
+
 	rename: 'Nimeä uudelleen',
 	renamefile: 'Syötä tiedoston uusi nimi:',
-	
+
 	download: 'Lataa',
 	nopreview: '<i>Esikatselua ei voida näyttää</i>',
-	
+
 	title: 'Kappaleen nimi:',
 	artist: 'Artisti:',
 	album: 'Albumi:',
 	length: 'Pituus:',
 	bitrate: 'Bitrate:',
-	
+
 	deselect: 'Poista valinta',
-	
+
 	nodestroy: 'Tiedostojen poisto otettu käytöstä.',
-	
+
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'Tiedostojen lähetys otettu käytöstä.',
 	'backend.authorized': 'Sinulla ei ole oikeuksia tiedostojen lähettämiseen.',
 	'backend.path': 'Määritettyä kansiota ei löydy. Ole hyvä ja ota yhteyttä sivuston ylläpitäjään.',
@@ -55,7 +58,7 @@ FileManager.Language.fi = {
 	'backend.partial': 'Tiedonsiirto onnistui vain osittain - siirto epäonnistui. Ole hyvä ja siirrä tiedosto uudestaan',
 	'backend.nofile': 'Tiedostoa ei määritetty.',
 	'backend.default': 'Tiedonsiirto epäonnistui tunnistamattomasta syystä.',
-	
+
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
@@ -84,7 +87,7 @@ FileManager.Language.fi = {
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
 	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
-	
+
 	/* FU */
 	uploader: {
 		unknown: 'Tunnistamaton virhe',
@@ -92,12 +95,20 @@ FileManager.Language.fi = {
 		sizeLimitMin: 'Et voi lisätä seuraavaa tiedostoa: "<em>${name}</em>" (${size}). Tiedostojen minimikoko on <strong>${size_min}</strong>!',
 		sizeLimitMax: 'Et voi lisätä seuraavaa tiedostoa: "<em>${name}</em>" (${size}). Tiedostojen maksimikoko on <strong>${size_max}</strong>!'
 	},
-	
+
 	flash: {
 		hidden: null,
 		disabled: null,
 		flash: 'Käyttääksesi FileManageria, tarvitset Adobe Flash Playerin. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Lataa tästä</a>.'
 	},
-	
+
 	resizeImages: 'Pienennä liian suuret kuvat automaattisesti siirron yhteydessä'
+
+	serialize: 'Save gallery',
+	gallery: {
+		text: 'Image caption',
+		save: 'Save',
+		remove: 'Remove from gallery',
+		drag: 'Drag items here to create a gallery...'
+	}
 };

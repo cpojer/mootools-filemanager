@@ -115,7 +115,7 @@ var FileManager = new Class({
     };
 
     this.toggleList = function(e) {
-		if (console && console.log) console.log('togglelist: key press: ' + e.key);
+		if (console && console.log) console.log('togglelist: key press: ' + (e ? e.key : '---'));
       if(e) e.stop();
       $$('.filemanager-browserheader a').set('opacity',0.5);
       if(!this.browserMenu_thumb.retrieve('set',false)) {
@@ -140,15 +140,17 @@ var FileManager = new Class({
       this.browser.getElements('span.fi.hover').each(function(span){ span.removeClass('hover'); });
     }).bind(this));
     this.browserMenu_thumb = new Element('a',{
-        'id':'togggle_side_boxes',
+        'id':'toggle_side_boxes',
         'class':'listType',
-        'style' : 'margin-right: 10px;'
+        'style' : 'margin-right: 10px;',
+		'title': this.language.toggle_side_boxes
       }).set('opacity',0.5).addEvents({
         click: this.toggleList.bind(this)
       });
     this.browserMenu_list = new Element('a',{
-        'id':'togggle_side_list',
-        'class':'listType'
+        'id':'toggle_side_list',
+        'class':'listType',
+		'title': this.language.toggle_side_list
       }).set('opacity',1).addEvents({
         click: this.toggleList.bind(this)
       });
@@ -408,7 +410,7 @@ var FileManager = new Class({
   download: function(e) {
     e.stop();
     if (!this.Current) return;
-	//alert('download: ' + this.Current.retrieve('file').path + ', ' + this.normalize(this.Current.retrieve('file').path));
+	if (console && console.log) console.log('download: ' + this.Current.retrieve('file').path + ', ' + this.normalize(this.Current.retrieve('file').path));
 	var file = this.Current.retrieve('file');
     window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 	  event: 'download',
@@ -525,7 +527,7 @@ var FileManager = new Class({
 		self.fireEvent('modify', [Object.clone(file)]);
 		file.element.getParent().fade(0).get('tween').chain(function(){
 		  self.deselect(file.element);
-		  self.element.destroy();
+		  this.element.destroy();
 		});
 	  },
 	  onComplete: self.browserLoader.fade(0),
@@ -763,7 +765,7 @@ var FileManager = new Class({
         icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
-		  //alert('download: ' + file.path + ', ' + this.normalize(file.path));
+		  if (console && console.log) console.log('download: ' + file.path + ', ' + this.normalize(file.path));
 		  window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 			event: 'download',
 			file: this.normalize(file.dir + file.name),

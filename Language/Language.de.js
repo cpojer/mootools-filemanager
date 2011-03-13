@@ -45,6 +45,9 @@ FileManager.Language.de = {
 
 	nodestroy: 'Dateien löschen wurde auf diesem Server deaktiviert.',
 
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'Dieser Funktion wurde auf diesem Server deaktiviert.',
 	'backend.authorized': 'Akt fehlgeschlagen: Du hast keine Genehmigung.',
 	'backend.path': 'Der angegebene Ordner oder Datei existiert nicht. Bitte kontaktiere den Administrator dieser Website.',

@@ -333,7 +333,7 @@ class Image_XMP
 						if (array_key_exists('attributes', $xml_elem))
 						{
 							// If Lang Alt (language alternatives) then ensure we take the default language
-							if ($xml_elem['attributes']['xml:lang'] != 'x-default')
+							if (empty($xml_elem['attributes']['xml:lang']) || $xml_elem['attributes']['xml:lang'] != 'x-default')  // [i_a] crash fix
 							{
 								break;
 							}

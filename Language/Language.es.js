@@ -10,7 +10,7 @@ FileManager.Language.es = {
 	more: 'Detalles',
 	width: 'Anchura:',
 	height: 'Altura:',
-	
+
 	ok: 'Ok',
 	open: 'Seleccionar Fichero',
 	upload: 'Subir ficheros',
@@ -18,7 +18,7 @@ FileManager.Language.es = {
 	createdir: 'Especifica el nombre de la carpeta:',
 	cancel: 'Cancelar',
 	error: 'Error',
-	
+
 	information: 'Información',
 	type: 'Tipo:',
 	size: 'Tamaño:',
@@ -28,23 +28,26 @@ FileManager.Language.es = {
 	close: 'Cerrar',
 	destroy: 'Borrar',
 	destroyfile: '¿Seguro que deseas borrar el fichero?',
-	
+
 	rename: 'Renombrar',
 	renamefile: 'Especifica un nuevo nombre para el fichero:',
-	
+
 	download: 'Descargar',
 	nopreview: '<i>No hay previsualizacion disponible</i>',
-	
+
 	title: 'Título:',
 	artist: 'Artista:',
 	album: 'Album:',
 	length: 'Duración:',
 	bitrate: 'Bitrate:',
-	
+
 	deselect: 'Desmarcar',
-	
+
 	nodestroy: 'El borrado de ficheros ha sido deshabilitado.',
-	
+
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'La carga de archivos ha sido deshabilitada.',
 	'backend.authorized': 'Necesitas autorización para subir ficheros.',
 	'backend.path': 'La carpeta destino especificada no existe. Contacta con el administrador del sitio web.',
@@ -55,7 +58,7 @@ FileManager.Language.es = {
 	'backend.partial': 'El fichero se ha subido parcialmente, por favor, sube el fichero de nuevo.',
 	'backend.nofile': 'No se especificó el fichero a subir.',
 	'backend.default': 'Algo falló durante la carga del fichero.',
-	
+
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
@@ -84,7 +87,7 @@ FileManager.Language.es = {
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
 	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
-	
+
 	/* FU */
 	uploader: {
 		unknown: 'Error desconocido',
@@ -92,12 +95,20 @@ FileManager.Language.es = {
 		sizeLimitMin: 'No se puede subir "<em>${name}</em>" (${size}), el tamaño mínimo de fichero es <strong>${size_min}</strong>!',
 		sizeLimitMax: 'No se puede subir "<em>${name}</em>" (${size}), el tamaño máximo de fichero es <strong>${size_max}</strong>!'
 	},
-	
+
 	flash: {
 		hidden: null,
 		disabled: null,
 		flash: 'Para poder subir ficheros necesitas instalar <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
 	},
-	
+
 	resizeImages: 'Redimensionar las imágenes grandes al subirlas'
+
+	serialize: 'Save gallery',
+	gallery: {
+		text: 'Image caption',
+		save: 'Save',
+		remove: 'Remove from gallery',
+		drag: 'Drag items here to create a gallery...'
+	}
 };

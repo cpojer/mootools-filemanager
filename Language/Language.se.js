@@ -10,7 +10,7 @@ FileManager.Language.se = {
 	more: 'Detaljer',
 	width: 'Bredd:',
 	height: 'Höjd:',
-	
+
 	ok: 'Ok',
 	open: 'Välj fil',
 	upload: 'Ladda upp',
@@ -18,7 +18,7 @@ FileManager.Language.se = {
 	createdir: 'Vänligen ange ett mapp-namn:',
 	cancel: 'Avbryt',
 	error: 'Fel',
-	
+
 	information: 'Information',
 	type: 'Typ:',
 	size: 'Storlek:',
@@ -28,23 +28,26 @@ FileManager.Language.se = {
 	close: 'Stäng',
 	destroy: 'Ta bort',
 	destroyfile: 'Är du säker på att du vill ta bort filen?',
-	
+
 	rename: 'Döp om',
 	renamefile: 'Vänligen ange ett nytt filnamn:',
-	
+
 	download: 'Ladda ner',
 	nopreview: '<i>Ingen förhandsgranskning tillgänglig</i>',
-	
+
 	title: 'Titel:',
 	artist: 'Artist:',
 	album: 'Album:',
 	length: 'Längd:',
 	bitrate: 'Bitrate:',
-	
+
 	deselect: 'Avmarkera',
-	
+
 	nodestroy: 'Funktionen ta bort filer är avstängd på denna server.',
-	
+
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'Uppladdning är avstängt på denna server.',
 	'backend.authorized': 'Du har inte behörighet att ladda upp filer.',
 	'backend.path': 'Den angivna uppladdnings-mappen existerar inte. Vänligen kontakta serveradministratören.',
@@ -55,7 +58,7 @@ FileManager.Language.se = {
 	'backend.partial': 'Ett fel uppstod och hela filen kunde inte laddas upp. Vänligen försök igen.',
 	'backend.nofile': 'Du måste välja en fil att ladda upp.',
 	'backend.default': 'Ett fel inträffade under uppladdningen.',
-	
+
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
@@ -84,7 +87,7 @@ FileManager.Language.se = {
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
 	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
-	
+
 	/* FU */
 	uploader: {
 		unknown: 'Okänt fel',
@@ -92,12 +95,20 @@ FileManager.Language.se = {
 		sizeLimitMin: 'Du kan inte ladda upp "<em>${name}</em>" (${size}), minsta storlek som accepteras är <strong>${size_min}</strong>!',
 		sizeLimitMax: 'Du kan inte ladda upp "<em>${name}</em>" (${size}), filens storlek får inte överstiga <strong>${size_max}</strong>!'
 	},
-	
+
 	flash: {
 		hidden: null,
 		disabled: null,
 		flash: 'För att kunna ladda upp filer behöver du ha <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a> installerat.'
 	},
-	
+
 	resizeImages: 'Ändra storleken på bilden under uppladdningen'
+
+	serialize: 'Save gallery',
+	gallery: {
+		text: 'Image caption',
+		save: 'Save',
+		remove: 'Remove from gallery',
+		drag: 'Drag items here to create a gallery...'
+	}
 };
