@@ -55,32 +55,32 @@ if (!function_exists('safe_glob'))
 	 */
 	function safe_glob($pattern, $flags = 0)
 	{
-		$split=explode('/',str_replace('\\','/',$pattern));
-		$mask=array_pop($split);
-		$path=implode('/',$split);
-		if (($dir=opendir($path))!==false)
+		$split = explode('/', str_replace('\\', '/', $pattern));
+		$mask = array_pop($split);
+		$path = implode('/', $split);
+		if (($dir = @opendir($path)) !== false)
 		{
-			$glob=array();
-			while(($file=readdir($dir))!==false)
+			$glob = array();
+			while(($file = readdir($dir)) !== false)
 			{
 				// Recurse subdirectories (GLOB_RECURSE); speedup: no need to sort the intermediate results
-				if (($flags&GLOB_RECURSE) && is_dir($file) && (!in_array($file,array('.','..'))))
+				if (($flags & GLOB_RECURSE) && is_dir($file) && (!in_array($file, array('.', '..'))))
 				{
-					$glob = array_merge($glob, array_prepend(safe_glob($path.'/'.$file.'/'.$mask, $flags | GLOB_NOSORT), ($flags&GLOB_PATH?'':$file.'/')));
+					$glob = array_merge($glob, array_prepend(safe_glob($path . '/' . $file . '/' . $mask, $flags | GLOB_NOSORT), ($flags & GLOB_PATH ? '' : $file . '/')));
 				}
 				// Match file mask
-				if (fnmatch($mask,$file))
+				if (fnmatch($mask, $file))
 				{
-					if ( ( (!($flags&GLOB_ONLYDIR)) || is_dir($path.'/'.$file) )
-					&& ( (!($flags&GLOB_NODIR)) || (!is_dir($path.'/'.$file)) )
-					&& ( (!($flags&GLOB_NODOTS)) || (!in_array($file,array('.','..'))) ) )
+					if ( ( (!($flags & GLOB_ONLYDIR)) || is_dir($path . '/' . $file) )
+					  && ( (!($flags & GLOB_NODIR)) || (!is_dir($path . '/' . $file)) )
+					  && ( (!($flags & GLOB_NODOTS)) || (!in_array($file, array('.', '..'))) ) )
 					{
-						$glob[] = ($flags&GLOB_PATH?$path.'/':'') . $file . (($flags&GLOB_MARK) && is_dir($path.'/'.$file) ? '/' : '');
+						$glob[] = ($flags & GLOB_PATH ? $path . '/' : '') . $file . (($flags & GLOB_MARK) && is_dir($path . '/' . $file) ? '/' : '');
 					}
 				}
 			}
 			closedir($dir);
-			if (!($flags&GLOB_NOSORT)) sort($glob);
+			if (!($flags & GLOB_NOSORT)) sort($glob);
 			return $glob;
 		}
 		else
