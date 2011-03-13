@@ -115,7 +115,7 @@ var FileManager = new Class({
     };
 
     this.toggleList = function(e) {
-		if (console && console.log) console.log('togglelist: key press: ' + e.key);
+		if (console && console.log) console.log('togglelist: key press: ' + (e ? e.key : '---'));
       if(e) e.stop();
       $$('.filemanager-browserheader a').set('opacity',0.5);
       if(!this.browserMenu_thumb.retrieve('set',false)) {
