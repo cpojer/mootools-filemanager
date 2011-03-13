@@ -142,13 +142,15 @@ var FileManager = new Class({
     this.browserMenu_thumb = new Element('a',{
         'id':'toggle_side_boxes',
         'class':'listType',
-        'style' : 'margin-right: 10px;'
+        'style' : 'margin-right: 10px;',
+		'title': this.language.toggle_side_boxes
       }).set('opacity',0.5).addEvents({
         click: this.toggleList.bind(this)
       });
     this.browserMenu_list = new Element('a',{
         'id':'toggle_side_list',
-        'class':'listType'
+        'class':'listType',
+		'title': this.language.toggle_side_list
       }).set('opacity',1).addEvents({
         click: this.toggleList.bind(this)
       });

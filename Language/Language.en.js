@@ -10,7 +10,7 @@ FileManager.Language.en = {
 	more: 'Details',
 	width: 'Width:',
 	height: 'Height:',
-	
+
 	ok: 'Ok',
 	open: 'Select file',
 	upload: 'Upload',
@@ -18,7 +18,7 @@ FileManager.Language.en = {
 	createdir: 'Please specify a folder name:',
 	cancel: 'Cancel',
 	error: 'Error',
-	
+
 	information: 'Information',
 	type: 'Type:',
 	size: 'Size:',
@@ -28,23 +28,26 @@ FileManager.Language.en = {
 	close: 'Close',
 	destroy: 'Delete',
 	destroyfile: 'Are you sure to delete this file?',
-	
+
 	rename: 'Rename',
 	renamefile: 'Please enter a new file name:',
-	
+
 	download: 'Download',
 	nopreview: '<i>No preview available</i>',
-	
+
 	title: 'Title:',
 	artist: 'Artist:',
 	album: 'Album:',
 	length: 'Length:',
 	bitrate: 'Bitrate:',
-	
+
 	deselect: 'Deselect',
-	
+
 	nodestroy: 'Deleting files has been disabled on this Server.',
-	
+
+	toggle_side_boxes: 'Thumbnail view',
+	toggle_side_list: 'List view',
+
 	'backend.disabled': 'This operation has been disabled on this Server.',
 	'backend.authorized': 'You are not authorized to perform this operation.',
 	'backend.path': 'The specified Folder does not exist. Please contact the administrator of this Website.',
@@ -55,7 +58,7 @@ FileManager.Language.en = {
 	'backend.partial': 'The file you uploaded was only partially uploaded, please upload the file again.',
 	'backend.nofile': 'There was no file specified or the file does not exist.',
 	'backend.default': 'Something went wrong with the File-Upload.',
-	
+
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
@@ -84,20 +87,20 @@ FileManager.Language.en = {
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
 	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
-	
+
 	/* FU */
 	uploader: {
 		unknown: 'Unknown Error',
 		sizeLimitMin: 'You can not attach "<em>${name}</em>" (${size}), the file size minimum is <strong>${size_min}</strong>!',
 		sizeLimitMax: 'You can not attach "<em>${name}</em>" (${size}), the file size limit is <strong>${size_max}</strong>!'
 	},
-	
+
 	flash: {
 		hidden: 'To enable the embedded uploader, unblock it in your browser and refresh (see Adblock).',
 		disabled: 'To enable the embedded uploader, enable the blocked Flash movie  and refresh (see Flashblock).',
 		flash: 'In order to upload files you need to install <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
 	},
-	
+
 	resizeImages: 'Resize big images on upload',
 
 	serialize: 'Save gallery',
