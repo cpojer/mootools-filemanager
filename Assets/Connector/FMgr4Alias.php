@@ -21,9 +21,10 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *   Backend: FileManager & FMgr4Alias Copyright (c) 2011 [Ger Hobbelt](http://hobbelt.com)
  *
  * Dependencies:
- *   - Upload.php
+ *   - Tooling.php
  *   - Image.class.php
  *   - getId3 Library
+ *   - FileManager.php
  */
  
 require_once('FileManager.php');
