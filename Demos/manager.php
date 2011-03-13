@@ -109,7 +109,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 	//$mimetdefs = $mgr->getMimeTypeDefinitions();
 
 	// log request data:
-	FM_vardumper($mgr, $action, $info);
+	//FM_vardumper($mgr, $action, $info);
 
 
 	/*
@@ -254,7 +254,7 @@ if (01) // debugging
 
 $browser = new FileManager(array(
 	'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__)
-	'thumbnailPath' => 'Files/Thumbnails/',
+	//'thumbnailPath' => 'Files/Thumbnails/',
 	'assetBasePath' => '../Assets',
 	'chmod' => 0777,
 	//'maxUploadSize' => 1024 * 1024 * 5,
@@ -276,7 +276,7 @@ $browser = new FileManager(array(
 
 
 // log request data:
-FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
+//FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
 
 
 
