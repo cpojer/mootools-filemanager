@@ -408,7 +408,7 @@ var FileManager = new Class({
   download: function(e) {
     e.stop();
     if (!this.Current) return;
-	//alert('download: ' + this.Current.retrieve('file').path + ', ' + this.normalize(this.Current.retrieve('file').path));
+	if (console && console.log) console.log('download: ' + this.Current.retrieve('file').path + ', ' + this.normalize(this.Current.retrieve('file').path));
 	var file = this.Current.retrieve('file');
     window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 	  event: 'download',
@@ -763,7 +763,7 @@ var FileManager = new Class({
         icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
-		  //alert('download: ' + file.path + ', ' + this.normalize(file.path));
+		  if (console && console.log) console.log('download: ' + file.path + ', ' + this.normalize(file.path));
 		  window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 			event: 'download',
 			file: this.normalize(file.dir + file.name),
