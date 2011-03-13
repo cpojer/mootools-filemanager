@@ -527,7 +527,7 @@ var FileManager = new Class({
 		self.fireEvent('modify', [Object.clone(file)]);
 		file.element.getParent().fade(0).get('tween').chain(function(){
 		  self.deselect(file.element);
-		  self.element.destroy();
+		  this.element.destroy();
 		});
 	  },
 	  onComplete: self.browserLoader.fade(0),
