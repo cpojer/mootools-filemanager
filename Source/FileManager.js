@@ -96,7 +96,7 @@ var FileManager = new Class({
       self.storeHistory = true;
 
       var file = this.retrieve('file');
-	  if (console && console.log) console.log('on relayClick file = ' + file.mime + ': ' + file.path + ' : ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
+	  if (typeof console !== 'undefined' && console.log) console.log('on relayClick file = ' + file.mime + ': ' + file.path + ' : ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
       if (this.retrieve('edit')) {
         this.eliminate('edit');
         return;
@@ -115,7 +115,7 @@ var FileManager = new Class({
     };
 
     this.toggleList = function(e) {
-		if (console && console.log) console.log('togglelist: key press: ' + (e ? e.key : '---'));
+		if (typeof console !== 'undefined' && console.log) console.log('togglelist: key press: ' + (e ? e.key : '---'));
       if(e) e.stop();
       $$('.filemanager-browserheader a').set('opacity',0.5);
       if(!this.browserMenu_thumb.retrieve('set',false)) {
@@ -129,7 +129,7 @@ var FileManager = new Class({
         this.listType = 'list';
         if(typeof jsGET != 'undefined') jsGET.set('fmListType=list');
       }
-	  if (console && console.log) console.log('on toggleList dir = ' + this.Directory + ', source = ' + '---');
+	  if (typeof console !== 'undefined' && console.log) console.log('on toggleList dir = ' + this.Directory + ', source = ' + '---');
       this.load(this.Directory);
     };
 
@@ -234,7 +234,7 @@ var FileManager = new Class({
         this.imageadd.fade(0);
       }).bind(this),
       toggleList: (function(e){
-		if (console && console.log) console.log('toggleList 2 key press: ' + e.key);
+		if (typeof console !== 'undefined' && console.log) console.log('toggleList 2 key press: ' + e.key);
         if(this.dialogOpen) return;
         if(e.key=='tab') {
           e.preventDefault();
@@ -242,13 +242,13 @@ var FileManager = new Class({
         }
       }).bind(this),
       keyesc:( function(e) {
-		if (console && console.log) console.log('keyEsc 2 key press: ' + e.key);
+		if (typeof console !== 'undefined' && console.log) console.log('keyEsc 2 key press: ' + e.key);
         if(this.dialogOpen) return;
 
         if (e.key=='esc') this.hide();
       }).bind(this),
       keyboardInput: (function(e) {
-		if (console && console.log) console.log('key press: ' + e.key);
+		if (typeof console !== 'undefined' && console.log) console.log('key press: ' + e.key);
         if(this.dialogOpen) return;
 		switch (e.key) {
 		case 'up':
@@ -295,7 +295,7 @@ var FileManager = new Class({
       vars.changed['fmPath'] = '/';
 
     Object.each(vars.changed,function(value,key) {
-	    if (console && console.log) console.log('on hashHistory key = ' + key + ', value = ' + value + ', source = ' + '---');
+	    if (typeof console !== 'undefined' && console.log) console.log('on hashHistory key = ' + key + ', value = ' + value + ', source = ' + '---');
         if(key == 'fmPath') {
           this.load(value);
         }
@@ -336,7 +336,7 @@ var FileManager = new Class({
       this.hashListenerId = jsGET.addListener(this.hashHistory,false,this);
     }
 
-	if (console && console.log) console.log('on show file = ' + this.Directory + ', source = ' + '---');
+	if (typeof console !== 'undefined' && console.log) console.log('on show file = ' + this.Directory + ', source = ' + '---');
     this.load(this.Directory);
     if(!this.options.hideOverlay)
       this.overlay.show();
@@ -410,7 +410,7 @@ var FileManager = new Class({
   download: function(e) {
     e.stop();
     if (!this.Current) return;
-	if (console && console.log) console.log('download: ' + this.Current.retrieve('file').path + ', ' + this.normalize(this.Current.retrieve('file').path));
+	if (typeof console !== 'undefined' && console.log) console.log('download: ' + this.Current.retrieve('file').path + ', ' + this.normalize(this.Current.retrieve('file').path));
 	var file = this.Current.retrieve('file');
     window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 	  event: 'download',
@@ -477,7 +477,7 @@ var FileManager = new Class({
 
     if (this.Request) this.Request.cancel();
 
-	if (console && console.log) console.log('view URI: ' + this.options.url + ', ' + (this.options.url.indexOf('?') == -1 ? '?' : '&') + ', ' + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+	if (typeof console !== 'undefined' && console.log) console.log('view URI: ' + this.options.url + ', ' + (this.options.url.indexOf('?') == -1 ? '?' : '&') + ', ' + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 		event: 'view'
 	  })));
     this.Request = new FileManager.Request({
@@ -659,7 +659,7 @@ var FileManager = new Class({
           this.browser.getElement('span.fi.selected').removeClass('selected');
         current.addClass('selected');
         var currentFile = current.retrieve('file');
-		if (console && console.log) console.log('on key ENTER file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
+		if (typeof console !== 'undefined' && console.log) console.log('on key ENTER file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
         if(currentFile.mime == 'text/directory')
           this.load(currentFile.dir + currentFile.name /*.replace(this.root,'')*/);
         else {
@@ -675,7 +675,7 @@ var FileManager = new Class({
           this.browser.getElement('span.fi.selected').removeClass('selected');
         current.addClass('selected');
         var currentFile = current.retrieve('file');
-		if (console && console.log) console.log('on key DELETE file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
+		if (typeof console !== 'undefined' && console.log) console.log('on key DELETE file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
         this.destroy(currentFile);
 		break;
       }
@@ -711,7 +711,7 @@ var FileManager = new Class({
 
       pre.push(folderName);
       var path = ('/'+pre.join('/')+'/').replace(j.root,'');
-	  if (console && console.log) console.log('on fill file = ' + j.root + ' : ' + path + ' : ' + folderName + ', source = ' + 'JSON');
+	  if (typeof console !== 'undefined' && console.log) console.log('on fill file = ' + j.root + ' : ' + path + ' : ' + folderName + ', source = ' + 'JSON');
       // add non-clickable path
       if(rootPath.contains(folderName)) {
         text.push(new Element('span', {'class': 'icon',text: folderName}));
@@ -765,7 +765,7 @@ var FileManager = new Class({
         icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
-		  if (console && console.log) console.log('download: ' + file.path + ', ' + this.normalize(file.path));
+		  if (typeof console !== 'undefined' && console.log) console.log('download: ' + file.path + ', ' + this.normalize(file.path));
 		  window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 			event: 'download',
 			file: this.normalize(file.dir + file.name),
@@ -881,10 +881,10 @@ var FileManager = new Class({
           if (self.onDragComplete(el, droppable)) return;
 
           dir = droppable.retrieve('file');
-		  if (console && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
+		  if (typeof console !== 'undefined' && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
         }
         var file = el.retrieve('file');
-	    if (console && console.log) console.log('on drop file = ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
+	    if (typeof console !== 'undefined' && console.log) console.log('on drop file = ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
 
         new FileManager.Request({
           url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
@@ -1194,7 +1194,7 @@ this.Dialog = new Class({
         else this.el.center();
       }).bind(this),
       keyesc: (function(e){
-		if (console && console.log) console.log('keyEsc: key press: ' + e.key);
+		if (typeof console !== 'undefined' && console.log) console.log('keyEsc: key press: ' + e.key);
         if (e.key == 'esc') {
           e.stopPropagation();
           this.fireEvent('close').destroy();
