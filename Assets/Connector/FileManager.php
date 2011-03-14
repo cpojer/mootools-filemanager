@@ -297,6 +297,7 @@ class FileManager
 			array_unshift($files, $doubledot);
 		}
 		
+		$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 		
 		foreach ($files as $filename)
 		{
@@ -308,8 +309,15 @@ class FileManager
 			if (!$isdir)
 			{
 				$mime = $this->getMimeType($file);
-				if ($mime_filter && !FileManagerUtility::startsWith($mime, $mime_filter))
+				if (is_file($file))
+				{
+					if (!$this->IsAllowedMimeType($mime, $mime_filters))
+						continue;
+				}
+				else
+				{
 					continue;
+				}
 				$iconspec = $filename;
 			}
 			else
@@ -318,44 +326,61 @@ class FileManager
 				$iconspec = 'is.dir';
 			}
 			
-			/*
-			 * each image we inspect may throw an exception due to a out of memory warning
-			 * (which is far better than without those: a silent fatal abort!)
-			 *
-			 * However, now that we do have a way to check most memory failures occurring in here (due to large images
-			 * and too little available RAM) we /still/ want a directory view; we just want to skip/ignore/mark those
-			 * overly large ones.
-			 */
-			$icon = $this->getIcon($iconspec, true);
-			$thumb = ($list_type == 'thumb' ? $this->getIcon($iconspec) : $icon);
-			if ($list_type == 'thumb' && in_array($mime, array('image/gif', 'image/jpeg', 'image/png')))
+			if ($list_type == 'thumb')
 			{
-				// speed up 'list' view when it's not a thumbanils view: don't precalc the thumbnails!
-				try
+				if (FileManagerUtility::startsWith($mime, 'image/'))
 				{
-					// access the image and create a thumbnail image; this can fail dramatically
-					$thumb = $this->getThumb($url, $file, 66);
+					/*
+					 * offload the thumbnailing process to another event ('event=thumbnail') to be fired by the client
+					 * when it's time to render the thumbnail: the offloading helps us tremendously in coping with large
+					 * directories: 
+					 * WE simply assume the thumbnail will be there, so we don't even need to check for its existence
+					 * (which saves us one more file_exists() per item at the very least). And when it doesn't, that's
+					 * for the event=thumbnail handler to worry about (creating the thumbnail on demand or serving
+					 * a generic icon image instead).
+					 */
+					$thumb = $this->mkEventHandlerURL(array(
+							'event' => 'thumbnail',
+							// directory and filename of the ORIGINAL image should follow next:
+							'directory' => $legal_url,
+							'file' => $filename,
+							'size' => 48,          // thumbnail suitable for 'view/type=thumb' list views
+							'filter' => $mime_filter,
+							'type' => $list_type
+						));
 				}
-				catch (Exception $e)
+				else
 				{
-					// do nothing, except mark image as 'not suitable for thumbnailing'
-					$thumb = $this->getIcon('badly.broken_img', $list_type != 'thumb');
-					$icon = $this->getIcon('badly.broken_img', true);
+					$thumb = $this->getIcon($iconspec, false);
 				}
+				$icon = $this->getIcon($iconspec, true);
+			}
+			else
+			{
+				$icon = $this->getIcon($iconspec, true);
+				$thumb = $icon;
 			}
 
-			$icon = ($thumb	? $thumb : $this->getIcon($iconspec, $list_type != 'thumb'));
 
 			$out[$isdir ? 0 : 1][] = array(
 					'path' => FileManagerUtility::rawurlencode_path($url),
 					'name' => preg_replace('/[^ -~]/', '?', $filename),       // HACK/TWEAK: PHP5 and below are completely b0rked when it comes to international filenames   :-(
 					'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
-					'thumbnail' => FileManagerUtility::rawurlencode_path($thumb),
+					'thumbnail' => $thumb,
+					//'_______thumbnail______' => FileManagerUtility::rawurlencode_path($thumb),
 					'icon' => FileManagerUtility::rawurlencode_path($icon),
 					'size' => @filesize($file)
 				);
+
+			if (0)
+			{
+				// help PHP when 'doing' large image directories: reset the timeout for each thumbnail / entry we produce:
+				//   http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time
+				set_time_limit(max(30, ini_get('max_execution_time')));
+			}
 		}
+		
 		return array_merge((is_array($json) ? $json : array()), array(
 				//'assetBasePath' => $this->options['assetBasePath'],
 				//'thumbnailPath' => $this->options['thumbnailPath'],
@@ -482,6 +507,11 @@ class FileManager
 	 * $_POST['file']          filename (including extension, of course) of the file to
 	 *                         be detailed.
 	 *
+	 * $_POST['filter']        optional mimetype filter string, amy be the part up to and
+	 *                         including the slash '/' or the full mimetype. Only files
+	 *                         matching this (set of) mimetypes will be listed.
+	 *                         Examples: 'image/' or 'application/zip'
+	 *
 	 * Errors will produce a JSON encoded error report, including at least two fields:
 	 *
 	 * status                  0 for error; nonzero for success
@@ -513,7 +543,7 @@ class FileManager
 			if (!is_readable($file))
 				throw new FileManagerException('nofile');
 			
-			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
+			$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 			$mime = $this->getMimeType($file);
 			if (is_file($file))
@@ -532,9 +562,9 @@ class FileManager
 			echo json_encode(array(
 					'status' => 1,
 					'mimetype' => $mime,
-					'content' => !empty($content) ? $content : '<div class="margin">
+					'content' => !empty($content) ? $content : self::compressHTML('<div class="margin">
 						${nopreview}
-					</div>'                 //<br/><button value="' . $url . '">${download}</button>
+					</div>')                 //<br/><button value="' . $url . '">${download}</button>
 				));
 			return;
 		}
@@ -556,6 +586,175 @@ class FileManager
 	}
 
 	/**
+	 * Process the 'thumbnail' event
+	 *
+	 * Returns either the binary content of the requested thumbnail or the binary content of a replacement image.
+	 *
+	 * Technical info: this function is assumed to be fired from a <img src="..."> URI or similar and must produce
+	 * the content of an image. 
+	 * It is used in conjection with the 'view/list=thumb' view mode of the FM client: the 'view' list, as 
+	 * produced by us, contains specially crafted URLs pointing back at us (the 'event=thumbnail' URLs) to
+	 * enable FM to cope much better with large image collections by having the entire thumbnail checking
+	 * and creation process offloaded to this Just-in-Time subevent.
+	 *
+	 * By not loading the 'view' event with the thumbnail precreation/checking effort, it can respond
+	 * much faster or at least not timeout in the backend for larger image sets in any directory.
+	 * ('view' simply assumes the thumbnail will be there, hence reducing its own workload with at least 
+	 * 1 file_exists() plus worst-case one GD imageinfo + imageresample + extras per image in the 'view' list!)
+	 *
+	 * Expected parameters:
+	 *
+	 * $_POST['directory']     path relative to basedir a.k.a. options['directory'] root
+	 *
+	 * $_POST['file']          filename (including extension, of course) of the file to
+	 *                         be thumbnailed.
+	 *
+	 * $_POST['size']          the requested thumbnail maximum width / height (the bounding box is square).
+	 *                         Must be one of our 'authorized' sizes: 48, 250.
+	 *
+	 * $_POST['filter']        optional mimetype filter string, amy be the part up to and
+	 *                         including the slash '/' or the full mimetype. Only files
+	 *                         matching this (set of) mimetypes will be listed.
+	 *                         Examples: 'image/' or 'application/zip'
+	 *
+	 * Errors will produce a JSON encoded error report, including at least two fields:
+	 *
+	 * status                  0 for error; nonzero for success
+	 *
+	 * error                   error message
+	 *
+	 * Next to these, the JSON encoded output will, with high probability, include a
+	 * list view of the parent or 'basedir' as a fast and easy fallback mechanism for client side
+	 * viewing code. However, severe and repetitive errors may not produce this
+	 * 'fallback view list' so proper client code should check the 'status' field in the
+	 * JSON output.
+	 */
+	protected function onThumbnail()
+	{
+		// try to produce the view; if it b0rks, retry with the parent, until we've arrived at the basedir:
+		// then we fail more severely.
+
+		$emsg = null;
+		$img_filepath = null;
+		$reqd_size = 48;
+		$filename = null;
+
+		try
+		{
+			$reqd_size = intval($this->getGETparam('size'));
+			if (empty($reqd_size))
+				throw new FileManagerException('disabled');
+			// and when not requesting one of our 'authorized' thumbnail sizes, you're gonna burn as well!
+			if (!in_array($reqd_size, array(16, 48, 250)))
+				throw new FileManagerException('disabled');
+
+			$file_arg = $this->getGETparam('file');
+			if (empty($file_arg))
+				throw new FileManagerException('nofile');
+
+			$dir_arg = $this->getGETparam('directory');
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
+			$legal_url = self::enforceTrailingSlash($legal_url);
+			
+			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
+			$legal_url .= $filename;
+			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
+			$file = $this->legal_url_path2file_path($legal_url);
+
+			if (!is_readable($file))
+				throw new FileManagerException('nofile');
+			
+			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
+			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
+			$mime = $this->getMimeType($file);
+			if (is_file($file))
+			{
+				if (!$this->IsAllowedMimeType($mime, $mime_filters))
+					throw new FileManagerException('extension');
+			}
+			else
+			{
+				throw new FileManagerException('nofile');
+			}
+			
+			/*
+			 * each image we inspect may throw an exception due to a out of memory warning
+			 * (which is far better than without those: a silent fatal abort!)
+			 *
+			 * However, now that we do have a way to check most memory failures occurring in here (due to large images
+			 * and too little available RAM) we /still/ want to see that happen: for broken and overlarge images, we 
+			 * produce some alternative graphics instead!
+			 */
+			$thumb_path = null;
+			if (FileManagerUtility::startsWith($mime, 'image/'))
+			{
+				// access the image and create a thumbnail image; this can fail dramatically
+				$thumb_path = $this->getThumb($legal_url, $file, $reqd_size);
+			}
+
+			$img_filepath = (!empty($thumb_path) ? $thumb_path : $this->getIcon($filename, $reqd_size <= 16));
+		}
+		catch(FileManagerException $e)
+		{
+			$emsg = $e->getMessage();
+		}
+		catch(Exception $e)
+		{
+			// catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
+			$emsg = $e->getMessage();
+		}
+
+		// now go and serve the content of the thumbnail / icon image file (which we still need to determine /exactly/):
+		try
+		{
+			if (empty($img_filepath))
+			{
+				$img_filepath = $this->getIconForError($emsg, $filename, $reqd_size <= 16);
+			}
+			
+			$file = $this->url_path2file_path($img_filepath);
+			$mime = $this->getMimeType($file);
+			$fd = fopen($file, 'rb');
+			if (!$fd)
+			{
+				// when the icon / thumbnail cannot be opened for whatever reason, fall back to the default error image:
+				$file = $this->url_path2file_path($this->getIcon('is.default-error', $reqd_size <= 16));
+				$mime = $this->getMimeType($file);
+				$fd = fopen($file, 'rb');
+				if (!$fd)
+					throw new Exception('panic');
+			}
+			$fsize = filesize($file);
+			if (!empty($mime))
+			{
+				header('Content-Type: ' . $mime);
+			}
+			header('Content-Length: ' . $fsize);
+			
+			header("Cache-Control: private"); //use this to open files directly
+
+			fpassthru($fd);
+			fclose($fd);
+			exit();
+		}
+		catch(Exception $e)
+		{
+			if (function_exists('send_response_status_header'))
+			{
+				send_response_status_header(500);
+				echo 'Cannot produce thumbnail: ' . $emsg . ' :: ' . $img_filepath;
+			}
+			else
+			{
+				// no smarties detection whether we're running on fcgi or bare iron, we assume the latter:
+				header('HTTP/1.0 500 Internal Error', true, 500);
+				echo 'Cannot produce thumbnail: ' . $emsg . ' :: ' . $img_filepath;
+			}
+		}
+	}
+
+	
+	/**
 	 * Process the 'destroy' event
 	 *
 	 * Delete the specified file or directory and return a JSON encoded status of success
@@ -569,6 +768,11 @@ class FileManager
 	 *
 	 * $_POST['file']          filename (including extension, of course) of the file to
 	 *                         be detailed.
+	 *
+	 * $_POST['filter']        optional mimetype filter string, amy be the part up to and
+	 *                         including the slash '/' or the full mimetype. Only files
+	 *                         matching this (set of) mimetypes will be listed.
+	 *                         Examples: 'image/' or 'application/zip'
 	 *
 	 * Errors will produce a JSON encoded error report, including at least two fields:
 	 *
@@ -605,7 +809,7 @@ class FileManager
 			if (!file_exists($file))
 				throw new FileManagerException('nofile');
 			
-			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
+			$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 			$mime = $this->getMimeType($file);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 			if (is_file($file))
@@ -669,7 +873,7 @@ class FileManager
 	 * $_POST['file']          name of the subdirectory to be created
 	 *
 	 * Extra input parameters considered while producing the JSON encoded directory view.
-	 * This may not seem relevant for an empty directory, but these parameters are also
+	 * These may not seem relevant for an empty directory, but these parameters are also
 	 * considered when providing the fallback directory view in case an error occurred
 	 * and then the listed directory (either the parent or the basedir itself) may very
 	 * likely not be empty!
@@ -818,6 +1022,11 @@ class FileManager
 	 *
 	 * $_GET['file']          filepath of the file to be downloaded
 	 *
+	 * $_GET['filter']        optional mimetype filter string, amy be the part up to and
+	 *                        including the slash '/' or the full mimetype. Only files
+	 *                        matching this (set of) mimetypes will be listed.
+	 *                        Examples: 'image/' or 'application/zip'
+	 *
 	 * On errors a HTTP 403 error response will be sent instead.
 	 */
 	protected function onDownload()
@@ -873,14 +1082,14 @@ class FileManager
 				switch ($ext)
 				{
 				case "pdf":
-					header('Content-type: application/pdf');
+					header('Content-Type: application/pdf');
 					header('Content-Disposition: attachment; filename="' . $path_parts["basename"] . '"'); // use 'attachment' to force a download
 					break;
 
 				// add here more headers for diff. extensions
 
 				default;
-					header('Content-type: application/octet-stream');
+					header('Content-Type: application/octet-stream');
 					header('Content-Disposition: filename="' . $path_parts["basename"] . '"');
 					break;
 				}
@@ -936,6 +1145,11 @@ class FileManager
 	 * $_GET['directory']     path relative to basedir a.k.a. options['directory'] root
 	 *
 	 * $_GET['resize']        nonzero value indicates any uploaded image should be resized to the configured options['maxImageSize'] width and height whenever possible
+	 *
+	 * $_GET['filter']        optional mimetype filter string, amy be the part up to and
+	 *                        including the slash '/' or the full mimetype. Only files
+	 *                        matching this (set of) mimetypes will be listed.
+	 *                        Examples: 'image/' or 'application/zip'
 	 *
 	 * $_FILES[]              the metadata for the uploaded file
 	 *
@@ -1050,8 +1264,7 @@ class FileManager
 				$img = new Image($file);
 				$size = $img->getSize();
 				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy:
-				if ($size['width'] > $this->options['maxImageSize'] || $size['height'] > $this->options['maxImageSize'])
-					$img->resize($this->options['maxImageSize'], $this->options['maxImageSize'])->save();
+				$img->resize($this->options['maxImageSize'], $this->options['maxImageSize'])->save();
 				unset($img);
 			}
 
@@ -1254,6 +1467,36 @@ class FileManager
 		echo json_encode($jserr);
 	}
 
+	
+
+
+
+	
+	
+	/**
+	 * Convert a given file spec into a URL pointing at our JiT thumbnail creation/delivery event handler.
+	 *
+	 * The spec must be an array with these elements:
+	 *   'event':     	'thumbnail'
+	 *   'directory':   URI path to directory of the ORIGINAL file
+	 *   'file':		filename of the ORIGINAL file
+	 *   'size':		requested thumbnail size (e.g. 48)
+	 *   'filter':		optional mime_filter as originally specified by the client
+	 *   'type':		'thumb' or 'list': the current type of directory view at the client
+	 *
+	 * Return the URL string.
+	 */
+	public function mkEventHandlerURL($spec)
+	{
+		// first determine how the client can reach us; assume that's the same URI as he went to right now.
+		$our_handler_url = $_SERVER['SCRIPT_NAME'];
+		
+		// next, construct the query part of the URI:
+		$qstr = http_build_query($spec, null, '&');
+		
+		return $our_handler_url . '?' . $qstr;
+	}
+
 
 	
 	/**
@@ -1271,7 +1514,7 @@ class FileManager
 			if (FileManagerUtility::startsWith($mime, 'image/'))
 			{
 				// generates a random number to put on the end of the image, to prevent caching
-				$randomImage = '?'.md5(uniqid(rand(),1));
+				//$randomImage = '?'.md5(uniqid(rand(),1));
 				
 				// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
 				// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
@@ -1297,24 +1540,47 @@ class FileManager
 				$content .= '
 					<h2>${preview}</h2>
 					';
+
+				$emsg = null;	
 				try
 				{
 					$thumbfile = $this->getThumb($legal_url, $file);
 				}
 				catch (Exception $e)
 				{
-					$thumbfile = $this->getIcon('badly.broken_img');
+					$emsg = $e->getMessage();
+					$thumbfile = $this->getIconForError($emsg, $legal_url, false);
 				}
 				
-				$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) . $randomImage . '" class="preview" alt="preview" /></a>';
+				$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" /></a>';
+				if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
+				{
+					$earr = explode(':', $e->getMessage(), 2);
+					$content .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
+				}
+				$finfo = Image::guestimateRequiredMemorySpace($file);
+				$content .= "\n" . '<p class="tech_info">memory used: ' . number_format(memory_get_peak_usage() / 1E6, 1) . ' MB / estimated: ' . number_format($finfo['usage_guestimate'] / 1E6, 1) . ' MB / suggested: ' . number_format($finfo['usage_min_advised'] / 1E6, 1) . ' MB</p>';
 
 				$exif_data = $this->getID3infoItem($getid3, null, 'jpg', 'exif');
-				if (!empty($exif_data))
+				try
 				{
-					ob_start();
-						var_dump($exif_data);
-					$dump = ob_get_clean();
-					$content .= $dump;
+					if (!empty($exif_data))
+					{
+						/*
+ 						 * before dumping the EXIF data array (which may carry binary content and MAY CRASH the json_encode()r >:-((
+						 * we filter it to prevent such crashes and oddly looking (diagnostic) presentation of values.
+						 */
+						self::clean_EXIF_results($exif_data); 
+						ob_start();
+							var_dump($exif_data);
+						//return $content;
+						$dump = ob_get_clean();
+						$content .= $dump;
+					}
+				}
+				catch (Exception $e)
+				{
+					$content .= 'kleppertje: ' . $e->getMessage();
 				}
 			}
 			elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript')
@@ -1428,6 +1694,8 @@ class FileManager
 								<h2>${preview}</h2>
 								<pre>' . "\n" . $dump . "\n" . '</pre></div>';
 					//@file_put_contents('getid3.log', $dump);
+					
+					return $content;
 				}
 				catch(Exception $e)
 				{
@@ -1440,7 +1708,7 @@ class FileManager
 						</div>';
 			}
 			
-			return $content;
+			return self::compressHTML($content);
 	}
 	
 	/**
@@ -1478,6 +1746,23 @@ class FileManager
 		return $o;
 	}
 
+	protected static function clean_EXIF_results(&$arr)
+	{
+		// see http://nl2.php.net/manual/en/function.array-walk-recursive.php#81835 
+		// --> we don't mind about it because we're not worried about the references occurring in here, now or later.
+		// Indeed, that does assume we (as in 'we' being this particular function!) know about how the
+		// data we process will be used. Risky, but fine with me. Hence the 'protected'.
+		array_walk_recursive($arr, function(&$value, $key) 
+			{
+				if (is_string($value))
+				{
+					if (FileManagerUtility::isBinary($value))
+					{
+						$value = '(binary data... length = ' . strlen($value) . ')';
+					}
+				}
+			});
+	}
 
 	/**
 	 * Delete a file or directory, inclusing subdirectories and files.
@@ -1686,15 +1971,14 @@ class FileManager
 	 * Note #2 is important as this enables this function to also serve as icon fetcher for ZIP content viewer, etc.:
 	 * after all, those files do not exist physically on disk themselves!
 	 */
-	protected function getIcon($file, $smallIcon = false)
+	protected function getIcon($file, $smallIcon)
 	{
-		if (FileManagerUtility::endsWith($file, '/..')) $ext = 'dir_up';
-		//elseif (is_dir($file)) $ext = 'dir';
-		else $ext = pathinfo($file, PATHINFO_EXTENSION);
+		$ext = pathinfo($file, PATHINFO_EXTENSION);
 
 		$largeDir = (!$smallIcon ? 'Large/' : '');
-		$path = (is_file($this->url_path2file_path($this->options['assetBasePath'] . 'Images/Icons/' .$largeDir.$ext.'.png')))
-			? $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.$ext.'.png'
+		$url_path = $this->options['assetBasePath'] . 'Images/Icons/' .$largeDir.$ext.'.png';
+		$path = (is_file($this->url_path2file_path($url_path)))
+			? $url_path
 			: $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.'default.png';
 
 		return $path;
@@ -1706,23 +1990,56 @@ class FileManager
 		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumb);
 		if (!is_file($thumbPath))
 		{
-			// help PHP when 'doing' large image directories: reset the timeout for each thumbnail we produce:
-			//   http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time
-			set_time_limit(max(30, ini_get('max_execution_time')));
-			
 			if (!file_exists(dirname($thumbPath)))
 			{
 				@mkdir(dirname($thumbPath), $this->options['chmod'], true);
 			}
 			$img = new Image($path);
-			$ext = pathinfo($thumbPath, PATHINFO_EXTENSION);
 			// generally save as lossy / lower-Q jpeg to reduce filesize, unless orig is PNG/GIF, higher quality for smaller thumbnails:
-			$img->resize($width,$width,true,false)->process($ext, $thumbPath, min(98, max(MTFM_THUMBNAIL_JPEG_QUALITY, MTFM_THUMBNAIL_JPEG_QUALITY + 0.15 * (250 - $width)))); 
+			$img->resize($width,$width)->save($thumbPath, min(98, max(MTFM_THUMBNAIL_JPEG_QUALITY, MTFM_THUMBNAIL_JPEG_QUALITY + 0.15 * (250 - $width))), true); 
 			unset($img);
 		}
 		return $this->options['thumbnailPath'] . $thumb;
 	}
 
+	/**
+	 * Assitant function which produces the best possible icon image path for the given error/exception message.
+	 */
+	protected function getIconForError($emsg, $original_filename, $small_icon)
+	{
+		if (empty($emsg))
+		{
+			// just go and pick the extension-related icon for this one; nothing is wrong today, it seems.
+			$thumb_path = (!empty($original_filename) ? $original_filename : 'is.default-missing');
+		}
+		else
+		{
+			$thumb_path = 'is.default-error';
+			
+			if (strpos($emsg, 'img_will_not_fit') !== false)
+			{
+				$thumb_path = 'is.oversized_img';
+			}
+			else if (strpos($emsg, 'nofile') !== false)
+			{
+				$thumb_path = 'is.default-missing';
+			}
+			else if (strpos($emsg, 'unsupported_imgfmt') !== false)
+			{
+				// just go and pick the extension-related icon for this one; nothing seriously wrong here.
+				$thumb_path = (!empty($original_filename) ? $original_filename : $thumb_path);
+			}
+			else if (strpos($emsg, 'image') !== false)
+			{
+				$thumb_path = 'badly.broken_img';
+			}
+		}
+			
+		$img_filepath = $this->getIcon($thumb_path, $small_icon);
+	
+		return $img_filepath;
+	}
+	
 	/**
 	 * Make sure the generated thumbpath is unique for each file. To prevent 
 	 * reduced performance for large file sets: all thumbnails derived from any files in the entire
@@ -2065,6 +2382,18 @@ class FileManager
 	
 	
 	
+	/**
+	 * Produce minimized HTML output; used to cut don't on the content fed 
+	 * to JSON_encode() and make it more readable in raw debug view.
+	 */
+	public static function compressHTML($str)
+	{
+		// brute force: replace tabs by spaces and reduce whitespace series to a single space.
+		//$str = preg_replace('/\s+/', ' ', $str);
+		
+		return $str;
+	}
+	
 	
 	protected /* static */ function modify_json4exception(&$jserr, $emsg, $mode = 0)
 	{
@@ -2089,14 +2418,14 @@ class FileManager
 			
 			if ($mode == 1)
 			{
-				$jserr['content'] = '<div class="margin">
+				$jserr['content'] = self::compressHTML('<div class="margin">
 						${nopreview}
 						<div class="failure_notice">
 							<h3>${error}</h3>
 							<p>mem usage: ' . number_format(memory_get_usage() / 1E6, 2) . ' MB : ' . number_format(memory_get_peak_usage() / 1E6, 2) . ' MB</p>
 							<p>' . $emsg . '</p>
 						</div>
-					</div>';       // <br/><button value="' . $url . '">${download}</button>
+					</div>');       // <br/><button value="' . $url . '">${download}</button>
 			}
 		}
 	}
@@ -2154,8 +2483,11 @@ class FileManager
 	 * Returns (if possible) the mimetype of the given file
 	 *
 	 * @param string $file
+	 * @param boolean $just_guess when TRUE, files are not 'sniffed' to derive their actual mimetype
+	 *                            but instead only the swift (and blunt) process of guestimating
+	 *                            the mime type from the file extension is performed.
 	 */
-	public function getMimeType($file)
+	public function getMimeType($file, $just_guess = false)
 	{
 		if (is_dir($file))
 			return 'text/directory';
@@ -2344,10 +2676,13 @@ class FileManagerUtility
 
 	public static function isBinary($str)
 	{
-		$array = array(0, 255);
 		for($i = 0; $i < strlen($str); $i++)
-			if (in_array(ord($str[$i]), $array)) return true;
-
+		{
+			$c = ord($str[$i]);
+			// do not accept ANY codes below SPACE, except TAB, CR and LF.
+			if ($c == 255 || ($c < 32 /* SPACE */ && $c != 9 && $c != 10 && $c != 13)) return true;
+		}
+		
 		return false;
 	}
 
