@@ -154,7 +154,13 @@ var FileManager = new Class({
       }).set('opacity',1).addEvents({
         click: this.toggleList.bind(this)
       });
-    this.browserheader.adopt([this.browserMenu_thumb,this.browserMenu_list]);
+    this.browser_dragndrop_info = new Element('a',{
+        'id':'drag_n_drop',
+        //'class':'listType',
+        'style' : 'margin-right: 10px;',
+		'title': this.language.drag_n_drop_disabled
+      }); // .setStyle('visibility', 'hidden');
+    this.browserheader.adopt([this.browserMenu_thumb, this.browserMenu_list, this.browser_dragndrop_info]);
 
     this.browser = new Element('ul', {'class': 'filemanager-browser'}).inject(this.browserScroll);
 
@@ -683,6 +689,12 @@ var FileManager = new Class({
   },
 
   fill: function(j, nofade) {
+
+    //this.browser_dragndrop_info.setStyle('visibility', 'visible');
+	this.browser_dragndrop_info.setStyle('opacity', 0.5);
+    this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
+    this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
+
     this.Directory = j.path;
     this.CurrentDir = j.dir;
     if (!nofade && !this.onShow) this.fillInfo(j.dir);
@@ -740,14 +752,43 @@ var FileManager = new Class({
     // ->> generate browser list
     var els = [[], []];
 
-    Array.each(j.files, function(file) {
+	/*
+	 For very large directories, where the number of directories in there and/or the number of files is HUGE (> 200),
+	 we DISABLE drag&drop functionality.
+
+	 Yes, we could have opted for the alternative, which is splitting up the .makeDraggable() activity in multiple
+	 setTimeout(callback, 0) initiated chunks in order to spare the user the hassle of a 'slow script' dialog,
+	 but in reality drag&drop is ludicrous in such an environment; currently we do not (yet) support autoscrolling
+	 the list to enable drag&dropping it to elements further away that the current viewport can hold at the same time,
+	 but drag&drop in a 500+ image carrying directory is resulting in a significant load of the browser anyway;
+	 alternative means to move/copy files should be provided in such cases instead.
+
+	 Hence we run through the list here and abort / limit the drag&drop assignment process when the hardcoded number of
+	 MAX_DnD_COUNT directories or files have been reached.
+
+	 TODO: make these numbers 'auto adaptive' based on timing measurements: how long does it take to initialize
+	       a view on YOUR machine? --> adjust limits accordingly.
+	*/
+	var MAX_DnD_COUNT = 500;
+    var starttime = new Date().getTime();
+	if (typeof console !== 'undefined' && console.log) console.log('fill list size = ' + j.files.length);
+
+    Array.each(j.files, function(file, idx) {
+
+	  if (idx % 100 == 0) {
+		var duration = new Date().getTime() - starttime;
+		if (typeof console !== 'undefined' && console.log) console.log('time taken so far = ' + duration + ' @ elcnt = ' + idx);
+	  }
 
       file.dir = j.path;
       var largeDir = '';
-      // generate unique id
-      var newDate = new Date;
-      uniqueId = newDate.getTime();
-      var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail+'?'+uniqueId,{'class':this.listType}) : new Asset.image(file.thumbnail);
+      //// generate unique id
+      //var newDate = new Date;
+      //uniqueId = newDate.getTime();
+
+	  //if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
+      var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
+	  var isdir = (file.mime == 'text/directory');
 
       var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
         icon,
@@ -755,13 +796,14 @@ var FileManager = new Class({
       ).store('file', file);
 
       // add click event, only to directories, files use the revert function (to enable drag n drop)
-      if(file.mime == 'text/directory')
+      if(isdir) {
         el.addEvent('click',this.relayClick);
+	  }
 
       // -> add icons
       var icons = [];
       // dowload icon
-      if(file.mime!='text/directory' && this.options.download)
+      if(!isdir && this.options.download) {
         icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
@@ -772,6 +814,7 @@ var FileManager = new Class({
 			filter: this.options.filter
 		  })));
         }).bind(this)).inject(el, 'top'));
+	  }
 
       // rename, delete icon
       if(file.name != '..') {
@@ -788,7 +831,7 @@ var FileManager = new Class({
         }, this);
       }
 
-      els[file.mime == 'text/directory' ? 1 : 0].push(el);
+      els[isdir ? 1 : 0].push(el);
       //if (file.name == '..') el.set('opacity', 0.7);
       el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
       icons = $$(icons.map((function(icon){
@@ -803,8 +846,9 @@ var FileManager = new Class({
         new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(file.element);
         file.element.addClass('selected');
         this.fillInfo(file);
-      } else if(this.onShow && jsGET.get('fmFile') == null)
+      } else if(this.onShow && jsGET.get('fmFile') == null) {
         this.onShow = false;
+	  }
     }, this);
 
     // -> cancel dragging
@@ -824,10 +868,16 @@ var FileManager = new Class({
       self.relayClick.apply(el);
     };
 
-    // -> make dragable
-    $$(els[0]).makeDraggable({
-      droppables: $$(this.droppables.combine(els[1])),
-      //stopPropagation: true,
+	// check how much we've consumed so far:
+	var duration = new Date().getTime() - starttime;
+    if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal = ' + duration);
+    starttime = new Date().getTime();
+
+	if (MAX_DnD_COUNT > 0) {
+		// -> make draggable
+		$$(els[0]).makeDraggable({
+		  droppables: $$(this.droppables.combine(els[1])),
+		  //stopPropagation: true,
 
       onDrag: function(el, e){
         self.imageadd.setStyles({
@@ -916,9 +966,24 @@ var FileManager = new Class({
       }
     });
 
+		this.browser_dragndrop_info.setStyle('background-position', '0px 0px');
+		this.browser_dragndrop_info.set('title', this.language.drag_n_drop);
+		//this.browser_dragndrop_info.setStyle('visibility', 'hidden');
+	}
+
+	// check how much we've consumed so far:
+	duration = new Date().getTime() - starttime;
+    if (typeof console !== 'undefined' && console.log) console.log('time taken in make draggable = ' + duration);
+    starttime = new Date().getTime();
+
     $$(els[0].combine(els[1])).setStyles({'left': 0, 'top': 0});
 
+	// check how much we've consumed so far:
+	duration = new Date().getTime() - starttime;
+    if (typeof console !== 'undefined' && console.log) console.log('time taken in setStyles = ' + duration);
+
     this.tips.attach(this.browser.getElements('img.browser-icon'));
+	this.browser_dragndrop_info.setStyle('opacity', 0.75);
   },
 
   fillInfo: function(file) {

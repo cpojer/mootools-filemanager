@@ -235,6 +235,21 @@ div.filemanager-browsercontainer div.filemanager-browserheader a.listType#toggle
 div.filemanager-browsercontainer div.filemanager-browserheader a.listType#toggle_side_boxes {
   background: url("../Images/application_side_boxes.png") no-repeat;
 }
+div.filemanager-browsercontainer div.filemanager-browserheader a#drag_n_drop {
+	display: inline-block;
+	float: right;
+	width: 16px;
+	height: 16px;
+	margin: 5px;
+	cursor: help;
+	
+	background-image: url("../Images/drag_n_drop.png");
+	background-repeat: no-repeat;
+	height: 16px;
+	width: 16px;
+	overflow: hidden;
+	background-position: 0px -16px;
+}
 
 div.filemanager-container span.fi {
   height: 21px;
