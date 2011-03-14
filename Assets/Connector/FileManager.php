@@ -2118,7 +2118,8 @@ class FileManager
 		// generate a thumbnail name with embedded wildcard for the size parameter:
 		$thumb = $this->generateThumbName($legal_url, '*');
 		$tfi = pathinfo($thumb);
-		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $tfi['dirname']);
+		$thumbnail_subdir = $tfi['dirname'];
+		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumbnail_subdir);
 		$thumbPath = self::enforceTrailingSlash($thumbPath);
 
 		// remove thumbnails (any size) and any other related cached files (TODO: future version should cache getID3 metadata as well -- and delete it here!)
@@ -2137,6 +2138,19 @@ class FileManager
 					$rv &= @unlink($file);
 			}
 		}
+		
+		// as the thumbnail subdirectory may now be entirely empty, try to remove it as well,
+		// but do NOT yack when we don't succeed: there may be other thumbnails, etc. in there still!
+		
+		while ($thumbnail_subdir > '/')
+		{
+			// try to NOT delete the thumbnails base directory itself; we MAY not be able to recreate it later on demand!
+			$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumbnail_subdir);
+			@rmdir($thumbPath);
+		
+			$thumbnail_subdir = self::getParentDir($thumbnail_subdir);
+		}
+		
 		return $rv;   // when thumbnail does not exist, say it is succesfully removed: all that counts is it doesn't exist anymore when we're done here.
 	}
 
