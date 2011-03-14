@@ -99,7 +99,7 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *
  * Developer Notes:
  *
- * - member fucntions which have a commented out 'static' keyword have it removed by design: it makes for easier overloading through 
+ * - member fucntions which have a commented out 'static' keyword have it removed by design: it makes for easier overloading through
  *   inheritance that way and meanwhile there's no pressing need to have those (public) member functions acccessible from the outside world
  *   without having an instance of the FileManager class itself round at the same time.
  */
@@ -144,10 +144,10 @@ class FileManager
 			 * Note that all default paths as listed below are transformed to DocumentRoot-based paths
 			 * through the getRealPath() invocations further below:
 			 */
-			'directory' => null,									   // MUST be in the DocumentRoot tree
-			'assetBasePath' => null,								   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
-			'thumbnailPath' => null,  								   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
-			'mimeTypesPath' => dirname(__FILE__) . '/MimeTypes.ini',  // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
+			'directory' => null,                                       // MUST be in the DocumentRoot tree
+			'assetBasePath' => null,                                   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
+			'thumbnailPath' => null,                                   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
+			'mimeTypesPath' => dirname(__FILE__) . '/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 2600 * 2600 * 3,
 			'maxImageSize' => 1024,
@@ -189,11 +189,11 @@ class FileManager
 				$my_path .= '/';
 			}
 			$my_assumed_url_path = str_replace($assumed_root, '', $my_path);
-			
+
 			// we throw an Exception here because when these do not apply, the user should have specified all three these entries!
 			if (empty($assumed_root) || empty($my_path) || !FileManagerUtility::startsWith($my_path, $assumed_root))
 				throw new FileManagerException('nofile');
-				
+
 			if ($this->options['directory'] == null)
 			{
 				$this->options['directory'] = $my_assumed_url_path . '../../Demos/Files/';
@@ -209,19 +209,19 @@ class FileManager
 		}
 
 		/*
-		 * make sure we start with a very predictable and LEGAL options['directory'] setting, so that the checks applied to the 
+		 * make sure we start with a very predictable and LEGAL options['directory'] setting, so that the checks applied to the
 		 * (possibly) user specified value for this bugger acvtually can check out okay AS LONG AS IT'S INSIDE the DocumentRoot-based
 		 * directory tree:
 		 */
 		$new_root = $this->options['directory'];
 		$this->options['directory'] = '/';      // use DocumentRoot temporarily as THE root for this optional transform
 		$this->options['directory'] = self::enforceTrailingSlash($this->rel2abs_url_path($new_root));
-		
+
 		// now that the correct options['directory'] has been set up, go and check/clean the other paths in the options[]:
-		
+
 		$this->options['thumbnailPath'] = self::enforceTrailingSlash($this->rel2abs_url_path($this->options['thumbnailPath']));
 		$this->options['assetBasePath'] = self::enforceTrailingSlash($this->rel2abs_url_path($this->options['assetBasePath']));
-		
+
 		$this->options['mimeTypesPath'] = @realpath($this->options['mimeTypesPath']);
 		if (empty($this->options['mimeTypesPath']))
 			throw new FileManagerException('nofile');
@@ -243,9 +243,9 @@ class FileManager
 				'basedir' => $this->url_path2file_path($this->options['directory'])
 		), $this->options);
 	}
-	
-	
-	
+
+
+
 
 	/**
 	 * Central entry point for any client side request.
@@ -259,10 +259,10 @@ class FileManager
 	}
 
 
-	
-	
-	
-	
+
+
+
+
 	/**
 	 * Generalized 'view' handler, which produces a directory listing.
 	 *
@@ -274,12 +274,12 @@ class FileManager
 		if (!is_dir($dir))
 		{
 			throw new FileManagerException('nofile');
-		}		
+		}
 		$files = $this->scandir($dir);
 
 		if ($files === false)
 			throw new FileManagerException('nofile');
-			
+
 		/*
 		 * To ensure '..' ends up at the very top of the view, no matter what the other entries in $files[] are made of,
 		 * we pop the last element off the array, check whether it's the double-dot, and if so, keep it out while we
@@ -296,15 +296,15 @@ class FileManager
 		{
 			array_unshift($files, $doubledot);
 		}
-		
+
 		$mime_filters = $this->getAllowedMimeTypes($mime_filter);
-		
+
 		foreach ($files as $filename)
 		{
 			$url = $legal_url . $filename;
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($url);
-		
+
 			$isdir = is_dir($file);
 			if (!$isdir)
 			{
@@ -325,7 +325,7 @@ class FileManager
 				$mime = 'text/directory';
 				$iconspec = ($filename == '..' ? 'is.dir_up' : 'is.dir');
 			}
-			
+
 			if ($list_type == 'thumb')
 			{
 				if (FileManagerUtility::startsWith($mime, 'image/'))
@@ -333,7 +333,7 @@ class FileManager
 					/*
 					 * offload the thumbnailing process to another event ('event=thumbnail') to be fired by the client
 					 * when it's time to render the thumbnail: the offloading helps us tremendously in coping with large
-					 * directories: 
+					 * directories:
 					 * WE simply assume the thumbnail will be there, so we don't even need to check for its existence
 					 * (which saves us one more file_exists() per item at the very least). And when it doesn't, that's
 					 * for the event=thumbnail handler to worry about (creating the thumbnail on demand or serving
@@ -380,7 +380,7 @@ class FileManager
 				set_time_limit(max(30, ini_get('max_execution_time')));
 			}
 		}
-		
+
 		return array_merge((is_array($json) ? $json : array()), array(
 				//'assetBasePath' => $this->options['assetBasePath'],
 				//'thumbnailPath' => $this->options['thumbnailPath'],
@@ -484,13 +484,13 @@ class FileManager
 
 			// step down to the parent dir and retry:
 			$legal_url = self::getParentDir($legal_url);
-			
+
 		} while ($legal_url !== false);
 
 		$this->modify_json4exception($jserr, $emsg . ' : path :: ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
-		
+
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
 		echo json_encode($jserr);
@@ -526,7 +526,7 @@ class FileManager
 		$jserr = array(
 				'status' => 1
 			);
-			
+
 		try
 		{
 			$file_arg = $this->getPOSTparam('file');
@@ -536,7 +536,7 @@ class FileManager
 			$dir_arg = $this->getPOSTparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
-			
+
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			$legal_url .= $filename;
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
@@ -544,7 +544,7 @@ class FileManager
 
 			if (!is_readable($file))
 				throw new FileManagerException('nofile');
-			
+
 			$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 			$mime = $this->getMimeType($file);
@@ -557,12 +557,12 @@ class FileManager
 			{
 				throw new FileManagerException('nofile');
 			}
-			
-			
+
+
 			$content = $this->extractDetailInfo($legal_url, $file, $mime);
 
 			if (!headers_sent()) header('Content-Type: application/json');
-		
+
 			echo json_encode(array(
 					'status' => 1,
 					'mimetype' => $mime,
@@ -583,9 +583,9 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
-		
+
 		if (!headers_sent()) header('Content-Type: application/json');
-		
+
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
 		echo json_encode($jserr);
@@ -597,15 +597,15 @@ class FileManager
 	 * Returns either the binary content of the requested thumbnail or the binary content of a replacement image.
 	 *
 	 * Technical info: this function is assumed to be fired from a <img src="..."> URI or similar and must produce
-	 * the content of an image. 
-	 * It is used in conjection with the 'view/list=thumb' view mode of the FM client: the 'view' list, as 
+	 * the content of an image.
+	 * It is used in conjection with the 'view/list=thumb' view mode of the FM client: the 'view' list, as
 	 * produced by us, contains specially crafted URLs pointing back at us (the 'event=thumbnail' URLs) to
 	 * enable FM to cope much better with large image collections by having the entire thumbnail checking
 	 * and creation process offloaded to this Just-in-Time subevent.
 	 *
 	 * By not loading the 'view' event with the thumbnail precreation/checking effort, it can respond
 	 * much faster or at least not timeout in the backend for larger image sets in any directory.
-	 * ('view' simply assumes the thumbnail will be there, hence reducing its own workload with at least 
+	 * ('view' simply assumes the thumbnail will be there, hence reducing its own workload with at least
 	 * 1 file_exists() plus worst-case one GD imageinfo + imageresample + extras per image in the 'view' list!)
 	 *
 	 * Expected parameters:
@@ -661,7 +661,7 @@ class FileManager
 			$dir_arg = $this->getGETparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
-			
+
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			$legal_url .= $filename;
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
@@ -669,7 +669,7 @@ class FileManager
 
 			if (!is_readable($file))
 				throw new FileManagerException('nofile');
-			
+
 			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 			$mime = $this->getMimeType($file);
@@ -682,13 +682,13 @@ class FileManager
 			{
 				throw new FileManagerException('nofile');
 			}
-			
+
 			/*
 			 * each image we inspect may throw an exception due to a out of memory warning
 			 * (which is far better than without those: a silent fatal abort!)
 			 *
 			 * However, now that we do have a way to check most memory failures occurring in here (due to large images
-			 * and too little available RAM) we /still/ want to see that happen: for broken and overlarge images, we 
+			 * and too little available RAM) we /still/ want to see that happen: for broken and overlarge images, we
 			 * produce some alternative graphics instead!
 			 */
 			$thumb_path = null;
@@ -717,7 +717,7 @@ class FileManager
 			{
 				$img_filepath = $this->getIconForError($emsg, $filename, $reqd_size <= 16);
 			}
-			
+
 			$file = $this->url_path2file_path($img_filepath);
 			$mime = $this->getMimeType($file);
 			$fd = fopen($file, 'rb');
@@ -736,7 +736,7 @@ class FileManager
 				header('Content-Type: ' . $mime);
 			}
 			header('Content-Length: ' . $fsize);
-			
+
 			header("Cache-Control: private"); //use this to open files directly
 
 			fpassthru($fd);
@@ -759,7 +759,7 @@ class FileManager
 		}
 	}
 
-	
+
 	/**
 	 * Process the 'destroy' event
 	 *
@@ -792,12 +792,12 @@ class FileManager
 		$jserr = array(
 				'status' => 1
 			);
-		
+
 		try
 		{
 			if (!$this->options['destroy'])
 				throw new FileManagerException('disabled');
-				
+
 			$file_arg = $this->getPOSTparam('file');
 			if (empty($file_arg))
 				throw new FileManagerException('nofile');
@@ -805,7 +805,7 @@ class FileManager
 			$dir_arg = $this->getPOSTparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
-			
+
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			$legal_url .= $filename;
 			$url = $this->legal2abs_url_path($legal_url);
@@ -814,7 +814,7 @@ class FileManager
 
 			if (!file_exists($file))
 				throw new FileManagerException('nofile');
-			
+
 			$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 			$mime = $this->getMimeType($file);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
@@ -827,7 +827,7 @@ class FileManager
 			{
 				throw new FileManagerException('nofile');
 			}
-			
+
 			$fileinfo = array(
 					'file' => $file,
 					'url' => $url,
@@ -843,7 +843,7 @@ class FileManager
 				throw new FileManagerException('unlink_failed:' . $legal_url);
 
 			if (!headers_sent()) header('Content-Type: application/json');
-		
+
 			echo json_encode(array(
 					'status' => 1,
 					'content' => 'destroyed'
@@ -861,9 +861,9 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
-		
+
 		if (!headers_sent()) header('Content-Type: application/json');
-		
+
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
 		echo json_encode($jserr);
@@ -909,7 +909,7 @@ class FileManager
 		$jserr = array(
 				'status' => 1
 			);
-		
+
 		$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 		$list_type = ($this->getPOSTparam('type') != 'thumb' ? 'list' : 'thumb');
 
@@ -925,7 +925,7 @@ class FileManager
 			$dir_arg = $this->getPOSTparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
-			
+
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			//$legal_url .= $filename;
 			$url = $this->legal2abs_url_path($legal_url);
@@ -934,7 +934,7 @@ class FileManager
 
 			if (!is_dir($dir))
 				throw new FileManagerException('nofile');
-			
+
 			$file = $this->getUniqueName(array('filename' => $filename), $dir);  // a directory has no 'extension'!
 			if (!$file)
 				throw new FileManagerException('nofile');
@@ -956,7 +956,7 @@ class FileManager
 				throw new FileManagerException('mkdir_failed:' . $url . $file);
 
 			if (!headers_sent()) header('Content-Type: application/json');
-		
+
 			// success, now show the new directory as a list view:
 			$rv = $this->_onView($url . $file . '/', $jserr, $mime_filter, $list_type);
 			echo json_encode($rv);
@@ -965,7 +965,7 @@ class FileManager
 		catch(FileManagerException $e)
 		{
 			$emsg = $e->getMessage();
-			
+
 			// and fall back to showing the PARENT directory
 			try
 			{
@@ -1017,9 +1017,9 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
-		
+
 		if (!headers_sent()) header('Content-Type: application/json');
-		
+
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
 		echo json_encode($jserr);
@@ -1056,14 +1056,14 @@ class FileManager
 
 			$legal_url = $this->rel2abs_legal_url_path($file_arg);
 			//$legal_url = self::enforceTrailingSlash($legal_url);
-			
+
 			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url);
 
 			if (!is_readable($file))
 				throw new FileManagerException('nofile');
-			
+
 			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
 			$mime = $this->getMimeType($file);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
@@ -1076,8 +1076,8 @@ class FileManager
 			{
 				throw new FileManagerException('nofile');
 			}
-			
-			
+
+
 			$fileinfo = array(
 					'file' => $file,
 					'url' => $url,
@@ -1179,12 +1179,12 @@ class FileManager
 		$jserr = array(
 				'status' => 1
 			);
-		
+
 		try
 		{
 			if (!$this->options['upload'])
 				throw new FileManagerException('disabled');
-				
+
 			if (!isset($_FILES) || empty($_FILES['Filedata']) || empty($_FILES['Filedata']['name']) || empty($_FILES['Filedata']['size']))
 				throw new FileManagerException('nofile');
 
@@ -1204,7 +1204,7 @@ class FileManager
 				throw new FileManagerException('nofile');
 			$fi = pathinfo($filename);
 
-			
+
 			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
 			$tmppath = $_FILES['Filedata']['tmp_name'];
 			$mime = $this->getMimeType($tmppath);
@@ -1254,7 +1254,7 @@ class FileManager
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url . $fileinfo['name'] . '.' . $fileinfo['extension']);
-			
+
 
 			if(!$fileinfo['overwrite'] && file_exists($file))
 				throw new UploadException('exists');
@@ -1283,7 +1283,7 @@ class FileManager
 			}
 
 			if (!headers_sent()) header('Content-Type: application/json');
-		
+
 			echo json_encode(array(
 					'status' => 1,
 					'name' => pathinfo($file, PATHINFO_BASENAME)
@@ -1305,9 +1305,9 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
-		
+
 		if (!headers_sent()) header('Content-Type: application/json');
-		
+
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
 		echo json_encode($jserr);
@@ -1348,12 +1348,12 @@ class FileManager
 		$jserr = array(
 				'status' => 1
 			);
-		
+
 		try
 		{
 			if (!$this->options['move'])
 				throw new FileManagerException('disabled');
-				
+
 			$file_arg = $this->getPOSTparam('file');
 			if (empty($file_arg))
 				throw new FileManagerException('nofile');
@@ -1361,7 +1361,7 @@ class FileManager
 			$dir_arg = $this->getPOSTparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
-			
+
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			//$legal_url .= $filename;
 			$url = $this->legal2abs_url_path($legal_url);
@@ -1373,7 +1373,7 @@ class FileManager
 				throw new FileManagerException('nofile');
 
 			$is_dir = is_dir($path);
-				
+
 			$newdir_arg = $this->getPOSTparam('newDirectory');
 			$name_arg = $this->getPOSTparam('name');
 			$rename = (empty($newdir_arg) && !empty($name_arg));
@@ -1390,13 +1390,13 @@ class FileManager
 				$legal_newurl = $legal_url;
 				$newurl = $url;
 				$newdir = $dir;
-				
+
 				$newname = pathinfo($name_arg, PATHINFO_BASENAME);
 				if ($is_dir)
 					$newname = $this->getUniqueName(array('filename' => $newname), $dir);  // a directory has no 'extension'
 				else
 					$newname = $this->getUniqueName($newname, $dir);
-					
+
 				if (!$newname)
 					throw new FileManagerException('nonewfile');
 
@@ -1417,19 +1417,19 @@ class FileManager
 				$legal_newurl = self::enforceTrailingSlash($legal_newurl);
 				$newurl = $this->legal2abs_url_path($legal_newurl);
 				$newdir = $this->legal_url_path2file_path($legal_newurl);
-				
+
 				if ($is_dir)
 					$newname = $this->getUniqueName(array('filename' => $filename), $newdir);  // a directory has no 'extension'
 				else
 					$newname = $this->getUniqueName($filename, $newdir);
-					
+
 				if (!$newname)
 					throw new FileManagerException('nonewfile');
 			}
 
 			$newpath = $this->legal_url_path2file_path($legal_newurl . $newname);
-			
-			
+
+
 			$fileinfo = array(
 					'dir' => $dir,
 					'url' => $url,
@@ -1463,7 +1463,7 @@ class FileManager
 				throw new FileManagerException($fn . '_failed:' . $legal_newurl . ':' . $newname);
 
 			if (!headers_sent()) header('Content-Type: application/json');
-		
+
 			echo json_encode(array(
 				'status' => 1,
 				'name' => $newname
@@ -1481,30 +1481,30 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
-		
+
 		if (!headers_sent()) header('Content-Type: application/json');
-		
+
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
 		echo json_encode($jserr);
 	}
 
-	
 
 
 
-	
-	
+
+
+
 	/**
 	 * Convert a given file spec into a URL pointing at our JiT thumbnail creation/delivery event handler.
 	 *
 	 * The spec must be an array with these elements:
-	 *   'event':     	'thumbnail'
+	 *   'event':       'thumbnail'
 	 *   'directory':   URI path to directory of the ORIGINAL file
-	 *   'file':		filename of the ORIGINAL file
-	 *   'size':		requested thumbnail size (e.g. 48)
-	 *   'filter':		optional mime_filter as originally specified by the client
-	 *   'type':		'thumb' or 'list': the current type of directory view at the client
+	 *   'file':        filename of the ORIGINAL file
+	 *   'size':        requested thumbnail size (e.g. 48)
+	 *   'filter':      optional mime_filter as originally specified by the client
+	 *   'type':        'thumb' or 'list': the current type of directory view at the client
 	 *
 	 * Return the URL string.
 	 */
@@ -1512,15 +1512,15 @@ class FileManager
 	{
 		// first determine how the client can reach us; assume that's the same URI as he went to right now.
 		$our_handler_url = $_SERVER['SCRIPT_NAME'];
-		
+
 		// next, construct the query part of the URI:
 		$qstr = http_build_query($spec, null, '&');
-		
+
 		return $our_handler_url . '?' . $qstr;
 	}
 
 
-	
+
 	/**
 	 * Produce a HTML snippet detailing the given file.
 	 *
@@ -1532,12 +1532,12 @@ class FileManager
 		$filename = pathinfo($url, PATHINFO_BASENAME);
 
 			$content = null;
-			
+
 			if (FileManagerUtility::startsWith($mime, 'image/'))
 			{
 				// generates a random number to put on the end of the image, to prevent caching
 				//$randomImage = '?'.md5(uniqid(rand(),1));
-				
+
 				// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
 				// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
 				$getid3 = new getID3();
@@ -1546,11 +1546,11 @@ class FileManager
 				//$size = @getimagesize($file);
 				//// check for badly formatted image files (corruption); we'll handle the overly large ones next
 				//if (!$size)
-				//	throw new FileManagerException('corrupt_img:' . $url);
-				
+				//  throw new FileManagerException('corrupt_img:' . $url);
+
 				$sw_make = $this->getID3infoItem($getid3, null, 'jpg', 'exif', 'IFD0', 'Software');
 				$time_make = $this->getID3infoItem($getid3, null, 'jpg', 'exif', 'IFD0', 'DateTime');
-					
+
 				$content = '<dl>
 						<dt>${width}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'video', 'resolution_x') . 'px</dd>
 						<dt>${height}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'video', 'resolution_y') . 'px</dd>
@@ -1563,7 +1563,7 @@ class FileManager
 					<h2>${preview}</h2>
 					';
 
-				$emsg = null;	
+				$emsg = null;
 				try
 				{
 					$thumbfile = $this->getThumb($legal_url, $file);
@@ -1573,7 +1573,7 @@ class FileManager
 					$emsg = $e->getMessage();
 					$thumbfile = $this->getIconForError($emsg, $legal_url, false);
 				}
-				
+
 				$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" /></a>';
 				if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
 				{
@@ -1589,10 +1589,10 @@ class FileManager
 					if (!empty($exif_data))
 					{
 						/*
- 						 * before dumping the EXIF data array (which may carry binary content and MAY CRASH the json_encode()r >:-((
+						 * before dumping the EXIF data array (which may carry binary content and MAY CRASH the json_encode()r >:-((
 						 * we filter it to prevent such crashes and oddly looking (diagnostic) presentation of values.
 						 */
-						self::clean_EXIF_results($exif_data); 
+						self::clean_EXIF_results($exif_data);
 						ob_start();
 							var_dump($exif_data);
 						//return $content;
@@ -1611,7 +1611,7 @@ class FileManager
 				$filecontent = @file_get_contents($file, false, null, 0);
 				if ($filecontent === false)
 					throw new FileManagerException('nofile');
-					
+
 				if (!FileManagerUtility::isBinary($filecontent))
 				{
 					$content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent, ENT_NOQUOTES, 'UTF-8')) . '</pre></div>';
@@ -1716,7 +1716,7 @@ class FileManager
 								<h2>${preview}</h2>
 								<pre>' . "\n" . $dump . "\n" . '</pre></div>';
 					//@file_put_contents('getid3.log', $dump);
-					
+
 					return $content;
 				}
 				catch(Exception $e)
@@ -1724,15 +1724,15 @@ class FileManager
 					// ignore
 					$content = $e->getMessage();
 				}
-				
+
 				$content = '<div class="margin">
 							${nopreview} ' . $content . '
 						</div>';
 			}
-			
+
 			return self::compressHTML($content);
 	}
-	
+
 	/**
 	 * Traverse the getID3 info[] array tree and fetch the item pointed at by the variable number of indices specified
 	 * as additional parameters to this function.
@@ -1770,11 +1770,11 @@ class FileManager
 
 	protected static function clean_EXIF_results(&$arr)
 	{
-		// see http://nl2.php.net/manual/en/function.array-walk-recursive.php#81835 
+		// see http://nl2.php.net/manual/en/function.array-walk-recursive.php#81835
 		// --> we don't mind about it because we're not worried about the references occurring in here, now or later.
 		// Indeed, that does assume we (as in 'we' being this particular function!) know about how the
 		// data we process will be used. Risky, but fine with me. Hence the 'protected'.
-		array_walk_recursive($arr, function(&$value, $key) 
+		array_walk_recursive($arr, function(&$value, $key)
 			{
 				if (is_string($value))
 				{
@@ -1798,10 +1798,10 @@ class FileManager
 	protected function unlink($legal_url, $mime_filters)
 	{
 		$rv = true;
-		
+
 		// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 		$file = $this->legal_url_path2file_path($legal_url);
-		
+
 		if(is_dir($file))
 		{
 			$dir = self::enforceTrailingSlash($file);
@@ -1811,7 +1811,7 @@ class FileManager
 			{
 				if(in_array($f, array('.','..')))
 					continue;
-					
+
 				$rv2 = $this->unlink($url . $f, $mime_filters);
 				if ($rv2)
 					$rv &= $this->deleteThumb($url . $f);
@@ -1829,7 +1829,7 @@ class FileManager
 				if (!$this->IsAllowedMimeType($mime, $mime_filters))
 					return false;
 			}
-				
+
 			$rv2 = @unlink($file);
 			if ($rv2)
 				$rv &= $this->deleteThumb($legal_url);
@@ -1842,7 +1842,7 @@ class FileManager
 	/**
 	 * glob() wrapper: accepts the same options as Tooling.php::safe_glob()
 	 *
-	 * However, this method will also ensure the '..' directory entry is only returned, 
+	 * However, this method will also ensure the '..' directory entry is only returned,
 	 * even while asked for, when the parent directory can be legally traversed by the FileManager.
 	 *
 	 * Always return an array (possibly empty)
@@ -1870,11 +1870,11 @@ class FileManager
 		}
 
 		$at_basedir = ($this->url_path2file_path($this->options['directory']) == $dir);
-		
+
 
 		$files = safe_glob($dir . $filemask, GLOB_NODOTS | GLOB_NOSORT);
 
-		
+
 		if ($just_below_thumbnail_dir)
 		{
 			$f = array();
@@ -1886,12 +1886,12 @@ class FileManager
 			unset($files);
 			$files = $f;
 		}
-		
+
 		if (!$at_basedir)
 		{
 			$files[] = '..';
 		}
-	
+
 		return $files;
 	}
 
@@ -1987,7 +1987,7 @@ class FileManager
 	 *
 	 * 1) any $path with an 'extension' of '.dir' is assumed to be a directory.
 	 *
-	 * 2) This method specifically does NOT check whether the given path exists or not: it just looks at 
+	 * 2) This method specifically does NOT check whether the given path exists or not: it just looks at
 	 *    the filename extension passed to it, that's all.
 	 *
 	 * Note #2 is important as this enables this function to also serve as icon fetcher for ZIP content viewer, etc.:
@@ -2018,7 +2018,7 @@ class FileManager
 			}
 			$img = new Image($path);
 			// generally save as lossy / lower-Q jpeg to reduce filesize, unless orig is PNG/GIF, higher quality for smaller thumbnails:
-			$img->resize($width,$width)->save($thumbPath, min(98, max(MTFM_THUMBNAIL_JPEG_QUALITY, MTFM_THUMBNAIL_JPEG_QUALITY + 0.15 * (250 - $width))), true); 
+			$img->resize($width,$width)->save($thumbPath, min(98, max(MTFM_THUMBNAIL_JPEG_QUALITY, MTFM_THUMBNAIL_JPEG_QUALITY + 0.15 * (250 - $width))), true);
 			unset($img);
 		}
 		return $this->options['thumbnailPath'] . $thumb;
@@ -2037,7 +2037,7 @@ class FileManager
 		else
 		{
 			$thumb_path = 'is.default-error';
-			
+
 			if (strpos($emsg, 'img_will_not_fit') !== false)
 			{
 				$thumb_path = 'is.oversized_img';
@@ -2056,14 +2056,14 @@ class FileManager
 				$thumb_path = 'badly.broken_img';
 			}
 		}
-			
+
 		$img_filepath = $this->getIcon($thumb_path, $small_icon);
-	
+
 		return $img_filepath;
 	}
-	
+
 	/**
-	 * Make sure the generated thumbpath is unique for each file. To prevent 
+	 * Make sure the generated thumbpath is unique for each file. To prevent
 	 * reduced performance for large file sets: all thumbnails derived from any files in the entire
 	 * FileManager-managed directory tree, rooted by options['directory'], can become a huge collection,
 	 * so we distribute them across a directory tree, which is created on demand.
@@ -2084,13 +2084,13 @@ class FileManager
 		case 'jpg':
 		case 'jpeg':
 			break;
-			
+
 		default:
 			// default to PNG, as it'll handle transparancy and full color both:
 			$ext = 'png';
 			break;
 		}
-		
+
 		// as the Thumbnail is generated, but NOT guaranteed from a safe filepath (FM may be visiting unsafe
 		// image files when they exist in a preloaded directory tree!) we do the full safe-filename transform
 		// on the name itself.
@@ -2103,12 +2103,12 @@ class FileManager
 			$rv .= substr($dircode, 0, 2) . '/';
 			$dircode = substr($dircode, 2);
 		}
-		
+
 		$fn = '_' . $fi['filename'];
 		$fn = substr($dircode, 0, 4) . preg_replace('/[^A-Za-z0-9]+/', '_', $fn);
 		$fn = substr($fn . $dircode, 0, 38);
 		$ext = preg_replace('/[^A-Za-z0-9_]+/', '_', $ext);
-		
+
 		$rv .= $fn . '-' . $width . '.' . $ext;
 		return $rv;
 	}
@@ -2132,37 +2132,37 @@ class FileManager
 			{
 				if(in_array($filename, array('.','..')))
 					continue;
-					
+
 				$file = $thumbPath . $filename;
 				if(is_file($file))
 					$rv &= @unlink($file);
 			}
 		}
-		
+
 		// as the thumbnail subdirectory may now be entirely empty, try to remove it as well,
 		// but do NOT yack when we don't succeed: there may be other thumbnails, etc. in there still!
-		
+
 		while ($thumbnail_subdir > '/')
 		{
 			// try to NOT delete the thumbnails base directory itself; we MAY not be able to recreate it later on demand!
 			$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumbnail_subdir);
 			@rmdir($thumbPath);
-		
+
 			$thumbnail_subdir = self::getParentDir($thumbnail_subdir);
 		}
-		
+
 		return $rv;   // when thumbnail does not exist, say it is succesfully removed: all that counts is it doesn't exist anymore when we're done here.
 	}
 
-	
 
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
 	/**
 	 * Safe replacement of dirname(); does not care whether the input has a trailing slash or not.
 	 *
@@ -2185,7 +2185,7 @@ class FileManager
 		// empty directory or a path with only 1 or 2 characters in it cannot be a parent+child: that would be 3 at the very least:
 		if ($len < 3)
 			return false;
-			
+
 		$p2 = strrpos($path, '/', ($path[$len - 1] == '/' ? -1 : 0));
 		if ($p2 === false)
 		{
@@ -2194,7 +2194,7 @@ class FileManager
 		$prev = substr($path, 0, $p2 + 1);
 		return $prev;
 	}
-	
+
 	/**
 	 * Return the URI absolute path to the directory pointed at by the current URI request.
 	 * For example, if the request was 'http://site.org/dir1/dir2/script', then this method will
@@ -2273,11 +2273,11 @@ class FileManager
 		/*
 		 * iff there was such a '../../../etc/' attempt, we'll know because there'd be an exception thrown in the loop above.
 		 */
-		 
+
 		return $path;
 	}
 
-	
+
 	/**
 	 * Accept a URI relative or absolute path and transform it to an absolute URI path, i.e. rooted against DocumentRoot.
 	 *
@@ -2297,7 +2297,7 @@ class FileManager
 		}
 		return $this->normalize($path);
 	}
-	
+
 	/**
 	 * Accept a URI relative or absolute LEGAL URI path and transform it to an absolute URI path, i.e. rooted against DocumentRoot.
 	 *
@@ -2317,14 +2317,14 @@ class FileManager
 			// clip the trailing '/' off the $root path as $path has a leading '/' already:
 			$path = substr($root, 0, -1) . $path;
 		}
-		
+
 		$path = $this->rel2abs_url_path($path);
 		//$path = $this->normalize($path);    -- taken care of by rel2abs_url_path already
 
 		// but we MUST make sure the path is still a LEGAL URI, i.e. sutting inside options['directory']:
 		if (strlen($path) < strlen($root))
 			$path = self::enforceTrailingSlash($path);
-			
+
 		if (!FileManagerUtility::startsWith($path, $root))
 		{
 			throw new FileManagerException('path_tampering:' . $path);
@@ -2336,8 +2336,8 @@ class FileManager
 	 * Accept a URI relative or absolute LEGAL URI path and transform it to an absolute LEGAL URI path, i.e. rooted against options['directory'].
 	 *
 	 * Relative paths are assumed to be relative to the options['directory'] directory. This makes them equivalent to absolute paths within
-	 * the LEGAL URI tree and this fact may seem odd. Alas, the FM frontend sends requests without the leading slash and it's those that 
-	 * we wish to resolve here, after all. So, yes, this deviates from the general principle applied elesewhere in the code. :-( 
+	 * the LEGAL URI tree and this fact may seem odd. Alas, the FM frontend sends requests without the leading slash and it's those that
+	 * we wish to resolve here, after all. So, yes, this deviates from the general principle applied elesewhere in the code. :-(
 	 * Nevertheless, it's easier than scanning and tweaking the FM frontend everywhere.
 	 *
 	 * Note: as it uses normalize(), any illegal path will throw an FileManagerException
@@ -2368,7 +2368,7 @@ class FileManager
 
 		return $path;
 	}
-	
+
 	/**
 	 * Return the filesystem absolute path for the relative or absolute URI path.
 	 *
@@ -2389,7 +2389,7 @@ class FileManager
 		//$path = $this->normalize($path);    -- taken care of by rel2abs_url_path already
 		return $path;
 	}
-	
+
 	/**
 	 * Return the filesystem absolute path for the relative URI path or absolute LEGAL URI path.
 	 *
@@ -2402,12 +2402,12 @@ class FileManager
 		$path = $this->rel2abs_legal_url_path($url_path);
 
 		$path = substr($this->options['directory'], 0, -1) . $path;
-		
+
 		$path = $this->url_path2file_path($path);
-		
+
 		return $path;
 	}
-	
+
 	public static function enforceTrailingSlash($string)
 	{
 		return (strrpos($string, '/') === strlen($string) - 1 ? $string : $string . '/');
@@ -2415,27 +2415,27 @@ class FileManager
 
 
 
-	
-	
-	
+
+
+
 	/**
-	 * Produce minimized HTML output; used to cut don't on the content fed 
+	 * Produce minimized HTML output; used to cut don't on the content fed
 	 * to JSON_encode() and make it more readable in raw debug view.
 	 */
 	public static function compressHTML($str)
 	{
 		// brute force: replace tabs by spaces and reduce whitespace series to a single space.
 		//$str = preg_replace('/\s+/', ' ', $str);
-		
+
 		return $str;
 	}
-	
-	
+
+
 	protected /* static */ function modify_json4exception(&$jserr, $emsg, $mode = 0)
 	{
 		if (empty($emsg))
 			return;
-			
+
 		// only set up the new json error report array when this is the first exception we got:
 		if ($jserr['status'])
 		{
@@ -2451,7 +2451,7 @@ class FileManager
 				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : '');
 			}
 			$jserr['status'] = 0;
-			
+
 			if ($mode == 1)
 			{
 				$jserr['content'] = self::compressHTML('<div class="margin">
@@ -2470,7 +2470,7 @@ class FileManager
 
 
 
-	
+
 	public function getAllowedMimeTypes($mime_filter = null)
 	{
 		$mimeTypes = array();
@@ -2511,7 +2511,7 @@ class FileManager
 			return false;
 		if (!is_array($mime_filters))
 			return true;
-		
+
 		return in_array($mime_type, $mime_filters);
 	}
 
@@ -2550,20 +2550,20 @@ class FileManager
 
 		if ((!$mime || $mime == 'application/octet-stream') && strlen($ext) > 0)
 		{
-			if (!empty($ext2mimetype_arr[$ext])) 
+			if (!empty($ext2mimetype_arr[$ext]))
 				return $ext2mimetype_arr[$ext];
 		}
 
-		if (!$mime) 
+		if (!$mime)
 			$mime = 'application/octet-stream';
 
 		return $mime;
 	}
 
 
-	
-	
-	
+
+
+
 	protected /* static */ function getGETparam($name, $default_value = null)
 	{
 		if (is_array($_GET) && !empty($_GET[$name]))
@@ -2619,7 +2619,7 @@ class FileManagerUtility
 		return strpos($string, $look)===0;
 	}
 
-	
+
 	/**
 	 * Cleanup and check against 'already known names' in optional $options array.
 	 * Return a uniquified name equal to or derived from the original ($data).
@@ -2718,7 +2718,7 @@ class FileManagerUtility
 			// do not accept ANY codes below SPACE, except TAB, CR and LF.
 			if ($c == 255 || ($c < 32 /* SPACE */ && $c != 9 && $c != 10 && $c != 13)) return true;
 		}
-		
+
 		return false;
 	}
 
