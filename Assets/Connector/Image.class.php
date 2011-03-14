@@ -19,6 +19,7 @@
  */
 
 
+define('IMAGE_PROCESSING_MEMORY_MAX_USAGE', 64); // memory_limit setting, in Megabytes; increase when Image class reports too often the images don't fit in memory.
 
 class Image {
 	/**
@@ -39,11 +40,17 @@ class Image {
 	 * @var array
 	 */
 	private $meta;
+	/**
+	 * Flags whether the image has been manipulated by this instance in any way and has not yet been saved to disk.
+	 */
+	private $dirty;
 
 	/**
 	 * @param string $file The path to the image file
 	 */
 	public function __construct($file){
+
+		$this->dirty = false;
 
 		$finfo = self::guestimateRequiredMemorySpace($file);
 		$file = $finfo['path'];
@@ -52,10 +59,13 @@ class Image {
 		if (!isset($finfo['imageinfo']))
 			throw new Exception('no_imageinfo');
 
-		// only set the new memory limit of 64MB when the configured one is smaller:
-		if ($finfo['memory_limit'] < 64 * 1024 * 1024)
+		// only set the new memory limit of IMAGE_PROCESSING_MEMORY_MAX_USAGE MB when the configured one is smaller:
+		if ($finfo['memory_limit'] < IMAGE_PROCESSING_MEMORY_MAX_USAGE * 1024 * 1024)
 		{
-			ini_set('memory_limit', '64M'); //  handle large images
+			ini_set('memory_limit', IMAGE_PROCESSING_MEMORY_MAX_USAGE . 'M'); //  handle large images
+
+			// recalc the 'will_fit' indicator now:
+			$finfo['will_fit'] = ($finfo['usage_min_advised'] < IMAGE_PROCESSING_MEMORY_MAX_USAGE * 1024 * 1024);
 		}
 
 		$this->file = $file;
@@ -63,7 +73,7 @@ class Image {
 
 		// and will it fit in available memory if we go and load the bugger?
 		if (!$finfo['will_fit'])
-			throw new Exception('img_will_not_fit:' . round(($finfo['usage_min_advised'] + 9.9E5) / 1E6) . ' MByte');
+			throw new Exception('img_will_not_fit:' . ceil($finfo['usage_min_advised'] / 1E6) . ' MByte');
 
 		$explarr = explode('/', $img['mime']); // make sure the end() call doesn't throw an error next in E_STRICT mode:
 		$ext_from_mime = end($explarr);
@@ -257,11 +267,12 @@ class Image {
 	 * @param resource $new
 	 */
 	private function set($new){
-	  if(!empty($this->image)) imagedestroy($this->image);
-		$this->image = $new;
+		if(!empty($this->image)) imagedestroy($this->image);
+			$this->dirty = true;
+			$this->image = $new;
 
-		$this->meta['width'] = imagesx($this->image);
-		$this->meta['height'] = imagesy($this->image);
+			$this->meta['width'] = imagesx($this->image);
+			$this->meta['height'] = imagesy($this->image);
 	}
 
 	/**
@@ -315,49 +326,44 @@ class Image {
 	 *                    already smaller, if TRUE the images will always be resized
 	 * @return resource Image resource on success; throws an exception on failure
 	 */
-	public function resize($x = null, $y = null, $ratio = true, $resizeWhenSmaller = true){
+	public function resize($x = null, $y = null, $ratio = true, $resizeWhenSmaller = false){
 		if(empty($this->image) || (empty($x) && empty($y))) return false;
 
 		$xStart = $x;
-	$yStart = $y;
-	$ratioX = $this->meta['width'] / $this->meta['height'];
-	$ratioY = $this->meta['height'] / $this->meta['width'];
-	//echo 'ALLOWED: <br>'.$xStart.'x'."<br>".$yStart.'y'."<br>---------------<br>";
-	// ->> keep the RATIO
-	if($ratio) {
-	  //echo 'BEGINN: <br>'.$this->meta['width'].'x'."<br>".$this->meta['height'].'y'."<br><br>";
-		// -> align to WIDTH
-		if(!empty($x) && ($x < $this->meta['width'] || $resizeWhenSmaller))
-		  $y = $x / $ratioX;
-		// -> align to HEIGHT
-		elseif(!empty($y) && ($y < $this->meta['height'] || $resizeWhenSmaller))
-		  $x = $y / $ratioY;
-		else {
-		  $y = $this->meta['height'];
-		  $x = $this->meta['width'];
+		$yStart = $y;
+		$ratioX = $this->meta['width'] / $this->meta['height'];
+		$ratioY = $this->meta['height'] / $this->meta['width'];
+		$ratio |= (empty($y) || empty($x)); // keep ratio when only width OR height is set
+		//echo 'ALLOWED: <br>'.$xStart.'x'."<br>".$yStart.'y'."<br>---------------<br>";
+		// ->> keep the RATIO
+		if($ratio) {
+			//echo 'BEGINN: <br>'.$this->meta['width'].'x'."<br>".$this->meta['height'].'y'."<br><br>";
+			// -> align to WIDTH
+			if(!empty($x) && ($x < $this->meta['width'] || $resizeWhenSmaller))
+				$y = $x / $ratioX;
+			// -> align to HEIGHT
+			elseif(!empty($y) && ($y < $this->meta['height'] || $resizeWhenSmaller))
+				$x = $y / $ratioY;
+			else {
+				$y = $this->meta['height'];
+				$x = $this->meta['width'];
+			}
+			//echo 'BET: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
+			// ->> align to WIDTH AND HEIGHT
+			if((!empty($yStart) && $y > $yStart) || (!empty($xStart) && $x > $xStart)) {
+				if($y > $yStart) {
+					$y = $yStart;
+					$x = $y / $ratioY;
+				} elseif($x > $xStart) {
+					$x = $xStart;
+					$y = $x / $ratioX;
+				}
+			}
 		}
-	  //echo 'BET: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
-	  // ->> align to WIDTH AND HEIGHT
-	  if((!empty($yStart) && $y > $yStart) || (!empty($xStart) && $x > $xStart)) {
-		if($y > $yStart) {
-		  $y = $yStart;
-		  $x = $y / $ratioY;
-		} elseif($x > $xStart) {
-		  $x = $xStart;
-		  $y = $x / $ratioX;
-		}
-	  }
-	// ->> DONT keep the RATIO (but keep ration when only width OR height is set)
-	} else {
-	  // RATIO X
-	  if(!empty($y) && empty($x) && ($y < $this->meta['height'] || $resizeWhenSmaller))
-		$x = $y / $ratioX;
-	  // RATIO Y
-	  elseif(empty($y) && !empty($x) && ($x < $this->meta['width'] || $resizeWhenSmaller))
-		$y = $x / $ratioY;
-	}
-	$x = round($x);
-	$y = round($y);
+		// else: ->> DONT keep the RATIO
+
+		$x = round($x);
+		$y = round($y);
 
 		//echo 'END: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
 
@@ -467,9 +473,15 @@ class Image {
 	 * @param string $ext
 	 * @param string $file
 	 * @param int $quality the amount of lossy compression to apply to the saved file
+	 * @param boolean $store_original_if_unaltered (default: FALSE) set to TRUE if you want to copy the
+	 *                                             original instead of saving the loaded copy when no
+	 *                                             edits to the image have occurred. (set to TRUE when
+	 *                                             you like to keep animated GIFs intact when they have
+	 *                                             not been cropped, rescaled, etc., for instance)
+	 *
 	 * @return Image object
 	 */
-	public function process($ext = null, $file = null, $quality = 100){
+	public function process($ext = null, $file = null, $quality = 100, $store_original_if_unaltered = false){
 		if(empty($this->image)) return $this;
 
 		if(!$ext) $ext = $this->meta['ext'];
@@ -477,20 +489,30 @@ class Image {
 		if($ext=='png') imagesavealpha($this->image, true);
 
 		if($file == null)
-		  $file = $this->file;
+			$file = $this->file;
 		if(!$file) throw new Exception('process_nofile');
 		if(!is_dir(dirname($file))) throw new Exception('process_nodir');
-		
-
-		$fn = 'image'.$ext;
-		if($ext == 'jpeg')
-		  $rv = @$fn($this->image, $file, $quality);
-		elseif($ext == 'png')
-		  $rv = @$fn($this->image, $file, 9); // PNG is lossless: always maximum compression!
+		if ($store_original_if_unaltered && !$this->dirty && $ext == $this->meta['ext'])
+		{
+			// copy original instead of saving the internal representation:
+			$rv = true;
+			if ($file != $this->file)
+			{
+				$rv = @copy($this->file, $file);
+			}
+		}
 		else
-		  $rv = @$fn($this->image, $file);
+		{
+			$fn = 'image'.$ext;
+			if($ext == 'jpeg')
+				$rv = @$fn($this->image, $file, $quality);
+			elseif($ext == 'png')
+				$rv = @$fn($this->image, $file, 9); // PNG is lossless: always maximum compression!
+			else
+				$rv = @$fn($this->image, $file);
+		}
 		if (!$rv)
-		  throw new Exception($fn . '_failed');
+			throw new Exception($fn . '_failed');
 
 		// If there is a new filename change the internal name too
 		$this->file = $file;
@@ -502,9 +524,16 @@ class Image {
 	 * Saves the image to the given path
 	 *
 	 * @param string $file Leave empty to replace the original file
+	 * @param int $quality the amount of lossy compression to apply to the saved file
+	 * @param boolean $store_original_if_unaltered (default: FALSE) set to TRUE if you want to copy the
+	 *                                             original instead of saving the loaded copy when no
+	 *                                             edits to the image have occurred. (set to TRUE when
+	 *                                             you like to keep animated GIFs intact when they have
+	 *                                             not been cropped, rescaled, etc., for instance)
+	 *
 	 * @return Image
 	 */
-	public function save($file = null){
+	public function save($file = null, $quality = 100, $store_original_if_unaltered = false){
 		if(empty($this->image)) return $this;
 
 		if(!$file) $file = $this->file;
@@ -520,7 +549,7 @@ class Image {
 		if(!in_array($ext, array('png', 'jpeg', 'gif')))
 			return $this;
 
-		return $this->process($ext, $file);
+		return $this->process($ext, $file, $quality, $store_original_if_unaltered);
 	}
 
 	/**
