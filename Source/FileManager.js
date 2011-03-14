@@ -788,10 +788,20 @@ var FileManager = new Class({
 
 	  //if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
       var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
+      if (0)
+	  {
+	  var icon = ((this.listType == 'thumb') ? new Element('img', {
+			'src': file.thumbnail /* +'?'+uniqueId */,
+			'class': this.listType
+		}) :
+		new Element('img', {
+			'src': file.thumbnail
+		}));
+	  }
 	  var isdir = (file.mime == 'text/directory');
 
       var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
-        icon,
+        new Element('span', {'class': this.listType}).adopt(icon),
         new Element('span', {text: file.name, title:file.name})
       ).store('file', file);
 
