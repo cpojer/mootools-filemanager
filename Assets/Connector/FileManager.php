@@ -488,6 +488,8 @@ class FileManager
 		} while ($legal_url !== false);
 
 		$this->modify_json4exception($jserr, $emsg . ' : path :: ' . $legal_url);
+
+		if (!headers_sent()) header('Content-Type: application/json');
 		
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
@@ -559,6 +561,8 @@ class FileManager
 			
 			$content = $this->extractDetailInfo($legal_url, $file, $mime);
 
+			if (!headers_sent()) header('Content-Type: application/json');
+		
 			echo json_encode(array(
 					'status' => 1,
 					'mimetype' => $mime,
@@ -579,6 +583,8 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
+		
+		if (!headers_sent()) header('Content-Type: application/json');
 		
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
@@ -836,6 +842,8 @@ class FileManager
 			if (!$this->unlink($legal_url, $mime_filters))
 				throw new FileManagerException('unlink_failed:' . $legal_url);
 
+			if (!headers_sent()) header('Content-Type: application/json');
+		
 			echo json_encode(array(
 					'status' => 1,
 					'content' => 'destroyed'
@@ -853,6 +861,8 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
+		
+		if (!headers_sent()) header('Content-Type: application/json');
 		
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
@@ -945,6 +955,8 @@ class FileManager
 			if (!@mkdir($newdir, $fileinfo['chmod'], true))
 				throw new FileManagerException('mkdir_failed:' . $url . $file);
 
+			if (!headers_sent()) header('Content-Type: application/json');
+		
 			// success, now show the new directory as a list view:
 			$rv = $this->_onView($url . $file . '/', $jserr, $mime_filter, $list_type);
 			echo json_encode($rv);
@@ -1005,6 +1017,8 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
+		
+		if (!headers_sent()) header('Content-Type: application/json');
 		
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
@@ -1268,6 +1282,8 @@ class FileManager
 				unset($img);
 			}
 
+			if (!headers_sent()) header('Content-Type: application/json');
+		
 			echo json_encode(array(
 					'status' => 1,
 					'name' => pathinfo($file, PATHINFO_BASENAME)
@@ -1289,6 +1305,8 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
+		
+		if (!headers_sent()) header('Content-Type: application/json');
 		
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
@@ -1444,6 +1462,8 @@ class FileManager
 			if (!@$fn($path, $newpath))
 				throw new FileManagerException($fn . '_failed:' . $legal_newurl . ':' . $newname);
 
+			if (!headers_sent()) header('Content-Type: application/json');
+		
 			echo json_encode(array(
 				'status' => 1,
 				'name' => $newname
@@ -1461,6 +1481,8 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
+		
+		if (!headers_sent()) header('Content-Type: application/json');
 		
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
