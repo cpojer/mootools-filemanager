@@ -7,7 +7,7 @@
   <title>MooTools FileManager CKEditor example</title>
   
   <!-- thirdparty/MooTools -->
-  <script type="text/javascript" src="mootools-core-1.3.js"></script>
+  <script type="text/javascript" src="mootools-core.js"></script>
   <script type="text/javascript" src="mootools-more.js"></script>
   
   <!-- thirdparty/MooTools-FileManager -->
