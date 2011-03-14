@@ -323,7 +323,7 @@ class FileManager
 			else
 			{
 				$mime = 'text/directory';
-				$iconspec = 'is.dir';
+				$iconspec = ($filename == '..' ? 'is.dir_up' : 'is.dir');
 			}
 			
 			if ($list_type == 'thumb')
