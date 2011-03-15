@@ -47,6 +47,8 @@ FileManager.Language.fr = {
 
 	toggle_side_boxes: 'Thumbnail view',
 	toggle_side_list: 'List view',
+	drag_n_drop: 'Drag & drop has been enabled for this directory',
+	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 
 	'backend.disabled': 'Le téléversement de fichier a été désactivé sur ce serveur.',
 	'backend.authorized': 'Vous n\'êtes pas authentifié et ne pouvez pas téléverser de fichier.',

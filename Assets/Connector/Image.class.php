@@ -225,6 +225,7 @@ class Image {
 		);
 	}
 
+	
 	/**
 	 * Returns a copy of the meta information of the image
 	 *
@@ -232,6 +233,16 @@ class Image {
 	 */
 	public function getMetaInfo(){
 		return array_merge(array(), (is_array($this->meta) ? $this->meta : array()));
+	}
+
+	
+	/**
+	 * Returns TRUE when the image data have been altered by this instance's operations, FALSE when the content has not (yet) been touched.
+	 *
+	 * @return boolean
+	 */
+	public function isDirty(){
+		return $this->dirty;
 	}
 
 
@@ -492,7 +503,7 @@ class Image {
 			$file = $this->file;
 		if(!$file) throw new Exception('process_nofile');
 		if(!is_dir(dirname($file))) throw new Exception('process_nodir');
-		if ($store_original_if_unaltered && !$this->dirty && $ext == $this->meta['ext'])
+		if ($store_original_if_unaltered && !$this->isDirty() && $ext == $this->meta['ext'])
 		{
 			// copy original instead of saving the internal representation:
 			$rv = true;
@@ -545,9 +556,6 @@ class Image {
 		}
 
 		if($ext=='jpg') $ext = 'jpeg';
-
-		if(!in_array($ext, array('png', 'jpeg', 'gif')))
-			return $this;
 
 		return $this->process($ext, $file, $quality, $store_original_if_unaltered);
 	}

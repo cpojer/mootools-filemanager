@@ -593,7 +593,7 @@ var FileManager = new Class({
 					onSuccess: (function(j){
 						if (!j || !j.name) return;
 						self.fireEvent('modify', [Object.clone(file)]);
-						file.element.getElement('span').set('text', j.name);
+						file.element.getElement('span.filename').set('text', j.name).set('title', j.name);
 						file.element.addClass('selected');
 						file.name = j.name;
 						self.fillInfo(file);
@@ -786,7 +786,7 @@ var FileManager = new Class({
 			//uniqueId = newDate.getTime();
 
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
-			var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
+			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 			if (0)
 			{
 			var icon = ((this.listType == 'thumb') ? new Element('img', {
@@ -800,8 +800,11 @@ var FileManager = new Class({
 			var isdir = (file.mime == 'text/directory');
 
 			var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
-				new Element('span', {'class': this.listType}).adopt(icon),
-				new Element('span', {text: file.name, title:file.name})
+				new Element('span', {
+					'class': this.listType,
+					'style': 'background-image: url(' + file.thumbnail + ')'
+				}) /* .adopt(icon) */ ,
+				new Element('span', {'class': 'filename', text: file.name, title:file.name})
 			).store('file', file);
 
 			// add click event, only to directories, files use the revert function (to enable drag n drop)
@@ -992,7 +995,7 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log('time taken in setStyles = ' + duration);
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
-		this.browser_dragndrop_info.setStyle('opacity', 0.75);
+		this.browser_dragndrop_info.setStyle('opacity', 1.0);
 	},
 
 	fillInfo: function(file) {

@@ -47,6 +47,8 @@ FileManager.Language.de = {
 
 	toggle_side_boxes: 'Thumbnail view',
 	toggle_side_list: 'List view',
+	drag_n_drop: 'Drag & drop has been enabled for this directory',
+	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 
 	'backend.disabled': 'Dieser Funktion wurde auf diesem Server deaktiviert.',
 	'backend.authorized': 'Akt fehlgeschlagen: Du hast keine Genehmigung.',

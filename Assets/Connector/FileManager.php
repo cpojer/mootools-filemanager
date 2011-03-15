@@ -301,7 +301,7 @@ class FileManager
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($url);
 
-			$isdir = is_dir($file);
+			$isdir = !is_file($file);
 			if (!$isdir)
 			{
 				$mime = $this->getMimeType($file);
@@ -463,6 +463,9 @@ class FileManager
 			try
 			{
 				$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
+
+				if (!headers_sent()) header('Content-Type: application/json');
+
 				echo json_encode($rv);
 				return;
 			}
@@ -1859,10 +1862,10 @@ class FileManager
 			if (FileManagerUtility::startswith($dir, $tnpath))
 				return false;
 
-			$tnparent = self::getParentDir($tnpath);
-			$just_below_thumbnail_dir = FileManagerUtility::startswith($dir, $tnparent);
+			$tnparent = $this->url_path2file_path(self::getParentDir($this->options['thumbnailPath']));
+			$just_below_thumbnail_dir = ($dir == $tnparent);
 
-			$tndir = basename(substr($tnpath, 0, -1));
+			$tndir = basename(substr($this->options['thumbnailPath'], 0, -1));
 		}
 
 		$at_basedir = ($this->url_path2file_path($this->options['directory']) == $dir);
@@ -1874,10 +1877,10 @@ class FileManager
 		if ($just_below_thumbnail_dir)
 		{
 			$f = array();
-			for ($i = count($files) - 1; $i >= 0; $i--)
+			foreach($files as $file)
 			{
-				if ($files[$i] !== $tndir)
-					$f[] = $files[$i];
+				if ($file !== $tndir)
+					$f[] = $file;
 			}
 			unset($files);
 			$files = $f;
@@ -2076,6 +2079,7 @@ class FileManager
 		$ext = strtolower(!empty($fi['extension']) ? $fi['extension'] : '');
 		switch ($ext)
 		{
+		case 'gif':
 		case 'png':
 		case 'jpg':
 		case 'jpeg':
@@ -2177,12 +2181,12 @@ class FileManager
 		 */
 		if (!is_string($path))
 			return false;
-		$len = strlen($path);
-		// empty directory or a path with only 1 or 2 characters in it cannot be a parent+child: that would be 3 at the very least:
-		if ($len < 3)
+		$path = rtrim($path, '/');
+		// empty directory or a path with only 1 character in it cannot be a parent+child: that would be 2 at the very least when it's '/a': parent is root '/' then:
+		if (strlen($path) <= 1)
 			return false;
 
-		$p2 = strrpos($path, '/', ($path[$len - 1] == '/' ? -1 : 0));
+		$p2 = strrpos($path, '/' /* , -1 */ );  // -1 as extra offset is not good enough? Nope. At least not for my Win32 PHP 5.3.1. Yeah, sounds like a PHP bug to me. So we rtrim() now...
 		if ($p2 === false)
 		{
 			return false; // tampering!
