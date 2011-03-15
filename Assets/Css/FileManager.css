@@ -279,17 +279,24 @@ div.filemanager-container span.fi span, div.filemanager-container span.thumb {
   overflow: hidden;
 }
 
-/* forcing the text to center: see comment below where we vcenter the image */
+/* forcing the text to center: see comment below where we v-center the image */
 div.filemanager-container span.thumb span {
   /* margin-top: 14px; */
-  vertical-align: middle;
-  display: table-cell;
+  vertical-align: middle;   /* pretty useless, but keep it in? */
+  margin-top: 12px;  /* instead, we 'vertical center' (ahem!) the thing by pushing it down. */
+  /* display: table-cell; */
+  overflow: visible; 
+  /* ^^^ since the floats are all images, this does a nice graphic effect for very long filenames: 
+         the maximum width of the row is used to display the name and when hovering over it, the 
+		 icons appear on top.
+   */
+  border: yellow 1px solid;
 }
 
 /*
  * Have the image (thumbnail) centered as well: 
  *
- * After several failed attempts it is now based on 
+ * After several failed attempts this was done with 90% success:
  *    http://www.brunildo.org/test/img_center.html
  * 
  * Note that you cannot mix 'float:left' and 'display-table-cell'
@@ -299,16 +306,30 @@ div.filemanager-container span.thumb span {
  * And because the text is now it's own 'table-cell' it also needs
  * its own 'vertical-align:middle' replacing the brute-force 
  * margin-top downshift.
+ *
+ * HOWEVER we note that last 10%: very long filenames, i.e. spans
+ * with text that would wrap, will NOT center correctly, but instead
+ * nuke the complete layout of that particular row. No matter what you do.
+ *
+ * We can't have that so finally we go back to our old-time all-time favorite:
+ * a <span> (which is already here now that we did the previous) filled
+ * with a _background_ image: since CSS can center those very well, we're
+ * good to go. Finally.
  */
 div.filemanager-container span.thumb span.thumb {
-  float: none;
+  float: left;   /* 'left' for the span with background image way; 'none' for the previous method */
   width: 48px;
   height: 48px; 
-  vertical-align: middle;
+  vertical-align: middle;   /* pretty useless, but keep it in? */
   text-align: center;
-  display: table-cell;
-  margin: 0;    /* superfluous as it's a 'table-cell' display now: the margin is neglected, so we move the right-side gap to the padding. */
-  padding: 0 5px 0 0;
+  /* display: table-cell; */
+  margin: 0 5px 0 0;    /* previous method only: superfluous as it's a 'table-cell' display now: the margin is neglected, so we move the right-side gap to the padding. */
+  /* padding: 0 5px 0 0; */
+  padding: 0; 
+  border: red 1px solid;
+  
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
 }
 div.filemanager-container span.thumb span.thumb img {
   float: none;
@@ -316,6 +337,7 @@ div.filemanager-container span.thumb span.thumb img {
   text-align: center;
   margin: 0;
   padding: 0;
+  border: green 1px solid;
 }
 
 

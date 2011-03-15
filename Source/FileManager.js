@@ -786,7 +786,7 @@ var FileManager = new Class({
 			//uniqueId = newDate.getTime();
 
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
-			var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
+			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 			if (0)
 			{
 			var icon = ((this.listType == 'thumb') ? new Element('img', {
@@ -800,7 +800,10 @@ var FileManager = new Class({
 			var isdir = (file.mime == 'text/directory');
 
 			var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
-				new Element('span', {'class': this.listType}).adopt(icon),
+				new Element('span', {
+					'class': this.listType,
+					'style': 'background-image: url(' + file.thumbnail + ')'
+				}) /* .adopt(icon) */ ,
 				new Element('span', {text: file.name, title:file.name})
 			).store('file', file);
 
