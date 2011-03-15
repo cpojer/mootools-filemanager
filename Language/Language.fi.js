@@ -47,6 +47,8 @@ FileManager.Language.fi = {
 
 	toggle_side_boxes: 'Thumbnail view',
 	toggle_side_list: 'List view',
+	drag_n_drop: 'Drag & drop has been enabled for this directory',
+	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 
 	'backend.disabled': 'Tiedostojen lähetys otettu käytöstä.',
 	'backend.authorized': 'Sinulla ei ole oikeuksia tiedostojen lähettämiseen.',

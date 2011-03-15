@@ -47,6 +47,8 @@ FileManager.Language.da = {
 
 	toggle_side_boxes: 'Thumbnail view',
 	toggle_side_list: 'List view',
+	drag_n_drop: 'Drag & drop has been enabled for this directory',
+	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 
 	'backend.disabled': 'Det er ikke muligt at uploade filer på serveren.',
 	'backend.authorized': 'Du har ikke rettigheder til at uploade filer.',
