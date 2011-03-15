@@ -40,7 +40,7 @@ function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase =
 			echo "\n\nFileManager::settings:\n";
 			var_dump($settings);
 
-			if (0) // set to 'if (01)' if you want this bit dumped as well; fastest back-n-forth edit that way :-)
+			if (01) // set to 'if (01)' if you want this bit dumped as well; fastest back-n-forth edit that way :-)
 			{
 				echo "\n\n_SERVER:\n";
 				var_dump($_SERVER);
@@ -217,11 +217,25 @@ if (01) // debugging
 
 
 
+/*
+when you want to pass absolute paths into FileManger, be reminded that ALL paths 
+(except for the [mimeTypesPath] one!) are paths in URI space, i.e. the 'root'
+is assumed to be DocumentRoot.
+
+Below is a quick example how a physical filesystem path /could/ be transformed
+to a URI path -- assumed you don't get buggered by having Aliases apply to this
+particular path, in which case you are between a rock and a hard place.
+*/
+
+$fm_basedir = str_replace(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '', dirname(str_replace('\\', '/', __FILE__))) . '/';
+
 
 $browser = new FileManagerWithAliasSupport /* FileManager */ (array(
 
-	'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__)
-	//'thumbnailPath' => 'Files/Thumbnails/',
+	'directory' => $fm_basedir . 'Files/',                   // absolute paths: as the relative ones, they sit in URI space, i.e. assume DocumentRoot is root '/'
+	
+	//'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__) or rather: $_SERVER['SCRIPT_NAME']
+	'thumbnailPath' => 'Files/Thumbnails/',
 	'assetBasePath' => '../Assets',
 	'chmod' => 0777,
 	//'maxUploadSize' => 1024 * 1024 * 5,
@@ -253,7 +267,7 @@ $browser = new FileManagerWithAliasSupport /* FileManager */ (array(
 
 
 // log request data:
-//FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
+FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
 
 
 
