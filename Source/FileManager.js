@@ -995,7 +995,7 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log('time taken in setStyles = ' + duration);
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
-		this.browser_dragndrop_info.setStyle('opacity', 0.75);
+		this.browser_dragndrop_info.setStyle('opacity', 1.0);
 	},
 
 	fillInfo: function(file) {
