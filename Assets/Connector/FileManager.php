@@ -2083,6 +2083,7 @@ class FileManager
 		$ext = strtolower(!empty($fi['extension']) ? $fi['extension'] : '');
 		switch ($ext)
 		{
+		case 'gif':
 		case 'png':
 		case 'jpg':
 		case 'jpeg':
