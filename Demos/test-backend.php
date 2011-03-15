@@ -158,8 +158,8 @@ function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase =
   }
   </style>
   
-  <script type="text/javascript" src="mootools-core-1.3.1.js"></script>
-  <script type="text/javascript" src="mootools-more-1.3.1.1.js"></script>
+  <script type="text/javascript" src="mootools-core.js"></script>
+  <script type="text/javascript" src="mootools-more.js"></script>
   
   <script type="text/javascript" src="../Source/FileManager.js"></script>
   <script type="text/javascript" src="../Source/Gallery.js"></script>
