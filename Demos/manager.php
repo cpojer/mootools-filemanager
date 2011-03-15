@@ -232,9 +232,9 @@ $fm_basedir = str_replace(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '',
 
 $browser = new FileManagerWithAliasSupport /* FileManager */ (array(
 
-	'directory' => $fm_basedir . 'Files/',                   // absolute paths: as the relative ones, they sit in URI space, i.e. assume DocumentRoot is root '/'
+	//'directory' => $fm_basedir . 'Files/',   // absolute paths: as the relative ones, they sit in URI space, i.e. assume DocumentRoot is root '/'
 	
-	//'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__) or rather: $_SERVER['SCRIPT_NAME']
+	'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__) or rather: $_SERVER['SCRIPT_NAME']
 	'thumbnailPath' => 'Files/Thumbnails/',
 	'assetBasePath' => '../Assets',
 	'chmod' => 0777,
