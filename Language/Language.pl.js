@@ -60,6 +60,7 @@ FileManager.Language.pl = {
 	'backend.partial': 'Plik nie został wysłany w całości. Ponów próbę wysyłki pliku.',
 	'backend.nofile': 'Nie wybrano pliku do wysyłki.',
 	'backend.default': 'Wystąpił błąd w trakcie wysyłki.',
+	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path

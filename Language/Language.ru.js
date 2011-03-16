@@ -60,6 +60,7 @@ FileManager.Language.ru = {
 	'backend.partial': 'Файл был загружен частично, пожалуйста загрузите этот файл еще раз.',
 	'backend.nofile': 'Не указаны файлы для загрузки.',
 	'backend.default': 'При загрузке файлов что-то пошло не так.',
+	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path

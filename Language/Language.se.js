@@ -60,6 +60,7 @@ FileManager.Language.se = {
 	'backend.partial': 'Ett fel uppstod och hela filen kunde inte laddas upp. Vänligen försök igen.',
 	'backend.nofile': 'Du måste välja en fil att ladda upp.',
 	'backend.default': 'Ett fel inträffade under uppladdningen.',
+	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path

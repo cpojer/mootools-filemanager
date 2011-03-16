@@ -60,6 +60,7 @@ FileManager.Language.br = {
 	'backend.partial': 'O arquivo enviado foi corrompido, por favor envie o arquivo novamente.',
 	'backend.nofile': 'Não existe arquivo especificado para ser enviado.',
 	'backend.default': 'Erro no envio do arquivo.',
+	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
