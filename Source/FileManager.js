@@ -65,6 +65,7 @@ var FileManager = new Class({
 		this.dialogOpen = false;
 		this.usingHistory = false;
 		this.fmShown = false;
+		this.drop_pending = 0;   // state: 0: no drop pending, 1: copy pending, 2: move pending
 		this.view_fill_timer = null;   // timer reference when fill() is working chunk-by-chunk.
 
 		this.language = Object.clone(FileManager.Language.en);
@@ -108,9 +109,18 @@ var FileManager = new Class({
 				return;
 			}
 
-			self.fillInfo(file);
+			// when we're right smack in the middle of a drag&drop, which may end up as a MOVE, do NOT send a 'detail' request
+			// alongside (through fillInfo) as that may lock the file being moved, server-side.
+			// It's good enough to disable the detail view, if we want/need to.
+			//
+			// Note that this info is stored in the instance variable: this.drop_pending -- more functions may check this one!
+			this.fillInfo(file);
 			if (self.Current) self.Current.removeClass('selected');
-			self.Current = this.addClass('selected');
+			// ONLY do this when we're doing a COPY or on a failed attempt...
+			// CORRECTION: as even a failed 'drop' action will have moved the cursor, we can't keep this one selected right now:
+			if (0 && self.drop_pending != 2) {
+				self.Current = this.addClass('selected');
+			}
 
 			self.switchButton();
 		};
@@ -1078,6 +1088,13 @@ var FileManager = new Class({
 				left: 0,
 				top: 0
 			}).inject(el.retrieve('parent'));
+			// also dial down the opacity of the icons within this row (download, rename, delete):
+			var icons = el.getElements('img.browser-icon');
+			if (icons) {
+				icons.each(function(icon) {
+					icon.set('opacity', 0.0);
+				});
+			}
 
 			//if (typeof console !== 'undefined' && console.log) console.log('REMOVE keyboard up/down on revert');
 			document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keyup);
@@ -1142,10 +1159,18 @@ var FileManager = new Class({
 				onDrop: function(el, droppable, e){
 					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onDrop');
 
-					if (e.control || e.meta || !droppable) el.setStyles({left: 0, top: 0});
-					if (!droppable && !e.control && !e.meta) {
+					var is_a_move = !(e.control || e.meta);
+					self.drop_pending = 1 + is_a_move;
+
+					if (!is_a_move || !droppable) el.setStyles({left: 0, top: 0});
+					if (is_a_move && !droppable) {
+						self.drop_pending = 0;
+
+						revert(el);   // go and request the details anew, then refresh them in the view
 						return;
 					}
+
+					revert(el);		// do not send the 'detail' request in here: self.drop_pending takes care of that!
 
 					var dir;
 					if (droppable){
@@ -1154,6 +1179,7 @@ var FileManager = new Class({
 							droppable.removeClass('selected');
 						}).delay(300);
 						if (self.onDragComplete(el, droppable)) {
+							self.drop_pending = 0;
 							return;
 						}
 
@@ -1172,7 +1198,7 @@ var FileManager = new Class({
 							filter: self.options.filter,
 							directory: self.Directory,
 							newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : self.Directory,
-							copy: e.control || e.meta ? 1 : 0
+							copy: is_a_move ? 0 : 1
 						},
 						onSuccess: (function(j) {
 							if (!j || !j.status) {
@@ -1199,11 +1225,14 @@ var FileManager = new Class({
 
 					self.fireEvent('modify', [Object.clone(file)]);
 
-					if (!e.control && !e.meta)
-						el.fade(0).get('tween').chain(function(){
-							self.deselect(el);
-							el.getParent().destroy();
-						});
+					el.fade(0).get('tween').chain(function(){
+						el.getParent().destroy();
+					});
+
+					self.deselect(el);					// and here, once again, do NOT send the 'detail' request while the 'move' is still ongoing (*async* communications!)
+
+					// the 'move' action will probably still be running by now, but we need this only to block simultaneous requests triggered from this run itself
+					self.drop_pending = 0;
 				}
 			});
 
@@ -1250,10 +1279,19 @@ var FileManager = new Class({
 
 		this.switchButton();
 
-		this.info.fade(1).getElement('img').set({
-			src: icon,
-			alt: file.mime
-		});
+		if (self.drop_pending != 2) {
+			// only fade up when we are allowed to send a detail request next as well and we're doing a MOVE drop
+			this.info.fade(1).getElement('img').set({
+				src: icon,
+				alt: file.mime
+			});
+		}
+		else {
+			this.info.getElement('img').set({
+				src: icon,
+				alt: file.mime
+			});
+		}
 
 		this.fireHooks('cleanup');
 		this.preview.empty();
@@ -1267,12 +1305,13 @@ var FileManager = new Class({
 
 		if (file.mime=='text/directory') return;
 
-		if (this.Request) this.Request.cancel();
+		if (self.drop_pending != 2) {
+			if (this.Request) this.Request.cancel();
 
-		this.Request = new FileManager.Request({
-			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
-				event: 'detail'
-			})),
+			this.Request = new FileManager.Request({
+				url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+					event: 'detail'
+				})),
 				data: {
 					directory: this.Directory,
 					file: file.name,
@@ -1294,21 +1333,21 @@ var FileManager = new Class({
 					this.previewLoader.fade(0).get('tween').chain((function() {
 						this.previewLoader.dispose();
 
-					var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
-					if (prev) prev.addEvent('load', function(){
-						this.setStyle('background', 'none');
-					});
+						var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
+						if (prev) prev.addEvent('load', function(){
+							this.setStyle('background', 'none');
+						});
 
-					var els = this.preview.getElements('button');
-					if (els) els.addEvent('click', function(e){
-						e.stop();
-						window.open(this.get('value'));
-					});
+						var els = this.preview.getElements('button');
+						if (els) els.addEvent('click', function(e){
+							e.stop();
+							window.open(this.get('value'));
+						});
 
-					if(typeof milkbox != 'undefined')
-						milkbox.reloadPageGalleries();
+						if(typeof milkbox != 'undefined')
+							milkbox.reloadPageGalleries();
 
-				}).bind(this));
+					}).bind(this));
 				}).bind(self),
 				onError: (function(text, error) {
 					this.previewLoader.dispose();
@@ -1320,7 +1359,7 @@ var FileManager = new Class({
 					this.showError(text);
 				}).bind(self)
 			}, this).send();
-
+		}
 	},
 
 	showFunctions: function(icon,appearOn,opacityBefore,opacityAfter) {
