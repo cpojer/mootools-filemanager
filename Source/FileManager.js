@@ -855,12 +855,12 @@ var FileManager = new Class({
 		 * alternative means to move/copy files should be provided in such cases instead.
 		 *
 		 * Hence we run through the list here and abort / limit the drag&drop assignment process when the hardcoded number of
-		 * MAX_DnD_COUNT directories or files have been reached.
+		 * allow_drag_n_drop_now directories or files have been reached.
 		 *
 		 * TODO: make these numbers 'auto adaptive' based on timing measurements: how long does it take to initialize
 		 *       a view on YOUR machine? --> adjust limits accordingly.
 		 */
-		var MAX_DnD_COUNT = 500;
+		var allow_drag_n_drop_now = (j.files.length < 1000);
 		var starttime = new Date().getTime();
 		//if (typeof console !== 'undefined' && console.log) console.log('fill list size = ' + j.files.length);
 
@@ -890,13 +890,14 @@ var FileManager = new Class({
 			).store('file', file);
 
 			// add click event, only to directories, files use the revert function (to enable drag n drop)
-			if(isdir) {
+			// OR provide a basic click event for files too IFF this directory is too huge to support drag & drop.
+			if(isdir || !allow_drag_n_drop_now) {
 				el.addEvent('click',this.relayClick);
 			}
 
 			// -> add icons
 			var icons = [];
-			// dowload icon
+			// download icon
 			if(!isdir && this.options.download) {
 				icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
 					e.preventDefault();
@@ -967,7 +968,7 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal = ' + duration);
 		starttime = new Date().getTime();
 
-		if (MAX_DnD_COUNT > 0) {
+		if (allow_drag_n_drop_now) {
 			// -> make draggable
 			$$(els[0]).makeDraggable({
 				droppables: $$(this.droppables.combine(els[1])),
