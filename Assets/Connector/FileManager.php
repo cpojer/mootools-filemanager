@@ -1382,8 +1382,9 @@ class FileManager
 			$is_dir = is_dir($path);
 
 			$newdir_arg = $this->getPOSTparam('newDirectory');
-			$name_arg = $this->getPOSTparam('name');
-			$rename = (empty($newdir_arg) && !empty($name_arg));
+			$newname_arg = $this->getPOSTparam('name');
+			$rename = (empty($newdir_arg) && !empty($newname_arg));
+			
 			$is_copy = !!$this->getPOSTparam('copy');
 
 
@@ -1398,11 +1399,11 @@ class FileManager
 				$newurl = $url;
 				$newdir = $dir;
 
-				$newname = pathinfo($name_arg, PATHINFO_BASENAME);
+				$newname = pathinfo($newname_arg, PATHINFO_BASENAME);
 				if ($is_dir)
-					$newname = $this->getUniqueName(array('filename' => $newname), $dir);  // a directory has no 'extension'
+					$newname = $this->getUniqueName(array('filename' => $newname), $newdir);  // a directory has no 'extension'
 				else
-					$newname = $this->getUniqueName($newname, $dir);
+					$newname = $this->getUniqueName($newname, $newdir);
 
 				if (!$newname)
 					throw new FileManagerException('nonewfile');
@@ -1410,7 +1411,7 @@ class FileManager
 				// when the new name seems to have a different extension, make sure the extension doesn't change after all:
 				// Note: - if it's only 'case' we're changing here, then exchange the extension instead of appending it.
 				//       - directories do not have extensions
-				$extOld = pathinfo($path, PATHINFO_EXTENSION);
+				$extOld = pathinfo($filename, PATHINFO_EXTENSION);
 				$extNew = pathinfo($newname, PATHINFO_EXTENSION);
 				if ((!$this->options['allowExtChange'] || (!$is_dir && empty($extNew))) && !empty($extOld) && strtolower($extOld) != strtolower($extNew))
 				{
