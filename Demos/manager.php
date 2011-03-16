@@ -267,7 +267,7 @@ $browser = new FileManagerWithAliasSupport /* FileManager */ (array(
 
 
 // log request data:
-FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
+//FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
 
 
 
