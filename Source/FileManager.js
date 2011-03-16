@@ -462,19 +462,34 @@ var FileManager = new Class({
 					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
 						event: 'create'
 					})),
-					onRequest: self.browserLoader.set('opacity', 1),
-					onSuccess: self.fill.bind(self),
-					onComplete: self.browserLoader.fade(0),
-					onError: (function(xmlHttpRequest) {
-						this.showError(xmlHttpRequest);
-						this.browserLoader.fade(0);
-					}).bind(self),
 					data: {
 						file: input.get('value'),
 						directory: self.Directory,
 						type: self.listType,
 						filter: self.options.filter
-					}
+					},
+					onRequest: self.browserLoader.set('opacity', 1),
+					onSuccess: (function(j) {
+						if (!j || !j.status) {
+							// TODO: include j.error in the message, iff j.error exists
+							new Dialog(('' + j.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+							this.browserLoader.fade(0);
+							return;
+						}
+
+						self.fill.bind(self)
+						this.browserLoader.fade(0);
+					}).bind(self),
+					onComplete: function(){},
+					onError: (function(text, error) {
+						this.showError(text);
+						this.browserLoader.fade(0);
+					}).bind(self),
+					onFailure: (function(xmlHttpRequest) {
+						var text = this.cvtXHRerror2msg(xmlHttpRequest);
+						this.showError(text);
+						this.browserLoader.fade(0);
+					}).bind(self)
 				}, self).send();
 			}
 		});
@@ -491,6 +506,8 @@ var FileManager = new Class({
 
 	load: function(dir, nofade) {
 
+		var self = this;
+
 		this.deselect();
 		if (!nofade) this.info.fade(0);
 
@@ -501,28 +518,47 @@ var FileManager = new Class({
 			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 				event: 'view'
 			})),
+			data: {
+				directory: dir,
+				type: this.listType,
+				filter: this.options.filter
+			},
 			onRequest: (function(){
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onRequest invoked");
 				this.browserLoader.set('opacity', 1);
 				// abort any still running ('antiquated') fill chunks:
 				$clear(this.view_fill_timer);
-			}).bind(this),
+			}).bind(self),
 			onSuccess: (function(j) {
+				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onSuccess invoked");
+				if (!j || !j.status) {
+					// TODO: include j.error in the message, iff j.error exists
+					new Dialog(('' + j.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+					this.browserLoader.fade(0);
+					return;
+				}
+
 				this.fill(j, nofade);
-			}).bind(this),
+				this.browserLoader.fade(0);
+			}).bind(self),
 			onComplete: (function() {
+				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onComplete invoked");
 				this.fitSizes();
+				//this.browserLoader.fade(0);
+			}).bind(self),
+			onError: (function(text, error) {
+				// a JSON error
+				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onError invoked");
+				this.showError(text);
 				this.browserLoader.fade(0);
-			}).bind(this),
-			onError: (function(xmlHttpRequest) {
-				this.showError(xmlHttpRequest);
+			}).bind(self),
+			onFailure: (function(xmlHttpRequest) {
+				// a generic (non-JSON) communication failure
+				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onFailure invoked");
+				var text = this.cvtXHRerror2msg(xmlHttpRequest);
+				this.showError(text);
 				this.browserLoader.fade(0);
-			}).bind(this),
-			data: {
-				directory: dir,
-				type: this.listType,
-				filter: this.options.filter
-			}
+			}).bind(self)
 		}, this).send();
 	},
 
@@ -538,9 +574,12 @@ var FileManager = new Class({
 				filter: self.options.filter
 			},
 			onRequest: self.browserLoader.set('opacity', 1),
-			onSuccess: function(j){
-				if (!j || j.content!='destroyed'){
-					new Dialog(self.language.nodestroy, {language: {confirm: self.language.ok}, buttons: ['confirm']});
+			onSuccess: (function(j) {
+				if (!j || !j.status) {
+					// TODO: include j.error in the message, iff j.error exists
+					var emsg = ('' + j.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g);
+					new Dialog(self.language.nodestroy + ' (' + emsg + ')', {language: {confirm: self.language.ok}, buttons: ['confirm']});
+					this.browserLoader.fade(0);
 					return;
 				}
 
@@ -549,10 +588,16 @@ var FileManager = new Class({
 					self.deselect(file.element);
 					this.element.destroy();
 				});
-			},
-			onComplete: self.browserLoader.fade(0),
-			onError: (function(xmlHttpRequest) {
-				this.showError(xmlHttpRequest);
+				this.browserLoader.fade(0);
+			}).bind(self),
+			onComplete: function(){},
+			onError: (function(text, error) {
+				this.showError(text);
+				this.browserLoader.fade(0);
+			}).bind(self),
+			onFailure: (function(xmlHttpRequest) {
+				var text = this.cvtXHRerror2msg(xmlHttpRequest);
+				this.showError(text);
 				this.browserLoader.fade(0);
 			}).bind(self)
 		}, this).send();
@@ -606,26 +651,38 @@ var FileManager = new Class({
 					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 						event: 'move'
 					})),
-					onRequest: self.browserLoader.set('opacity', 1),
-					onSuccess: (function(j){
-						if (!j || !j.name) return;
-						self.fireEvent('modify', [Object.clone(file)]);
-						file.element.getElement('span.filename').set('text', j.name).set('title', j.name);
-						file.element.addClass('selected');
-						file.name = j.name;
-						self.fillInfo(file);
-					}).bind(this),
-					onComplete: self.browserLoader.fade(0),
-					onError: (function(xmlHttpRequest) {
-						this.showError(xmlHttpRequest);
-						this.browserLoader.fade(0);
-					}).bind(self),
 					data: {
 						file: file.name,
 						name: input.get('value'),
 						directory: self.Directory,
 						filter: self.options.filter
-					}
+					},
+					onRequest: self.browserLoader.set('opacity', 1),
+					onSuccess: (function(j) {
+						if (!j || !j.status) {
+							// TODO: include j.error in the message, iff j.error exists
+							new Dialog(('' + j.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+							this.browserLoader.fade(0);
+							return;
+						}
+						self.fireEvent('modify', [Object.clone(file)]);
+						file.element.getElement('span.filename').set('text', j.name).set('title', j.name);
+						file.element.addClass('selected');
+						file.name = j.name;
+						//if (typeof console !== 'undefined' && console.log) console.log('move : onSuccess: fillInfo: file = ' + file.name);
+						self.fillInfo(file);
+						this.browserLoader.fade(0);
+					}).bind(self),
+					onComplete: function(){},
+					onError: (function(text, error) {
+						this.showError(text);
+						this.browserLoader.fade(0);
+					}).bind(self),
+					onFailure: (function(xmlHttpRequest) {
+						var text = this.cvtXHRerror2msg(xmlHttpRequest);
+						this.showError(text);
+						this.browserLoader.fade(0);
+					}).bind(self)
 				}, self).send();
 			}).bind(this)
 		});
@@ -1049,6 +1106,7 @@ var FileManager = new Class({
 				},
 
 				onBeforeStart: function(el){
+					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onBeforeStart');
 					self.deselect();
 					self.tips.hide();
 					var position = el.getPosition();
@@ -1064,6 +1122,7 @@ var FileManager = new Class({
 				onCancel: revert,
 
 				onStart: function(el){
+					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onStart');
 					el.set('opacity', 0.7).addClass('move');
 					//if (typeof console !== 'undefined' && console.log) console.log('add keyboard up/down on drag start');
 					document.addEvents({
@@ -1081,10 +1140,12 @@ var FileManager = new Class({
 				},
 
 				onDrop: function(el, droppable, e){
-					revert(el);
+					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onDrop');
 
 					if (e.control || e.meta || !droppable) el.setStyles({left: 0, top: 0});
-					if (!droppable && !e.control && !e.meta) return;
+					if (!droppable && !e.control && !e.meta) {
+						return;
+					}
 
 					var dir;
 					if (droppable){
@@ -1092,7 +1153,9 @@ var FileManager = new Class({
 						(function() {
 							droppable.removeClass('selected');
 						}).delay(300);
-						if (self.onDragComplete(el, droppable)) return;
+						if (self.onDragComplete(el, droppable)) {
+							return;
+						}
 
 						dir = droppable.retrieve('file');
 						//if (typeof console !== 'undefined' && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
@@ -1111,12 +1174,26 @@ var FileManager = new Class({
 							newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : self.Directory,
 							copy: e.control || e.meta ? 1 : 0
 						},
-						onSuccess: function(){
-							if (!dir) self.load(self.Directory);
-						},
-						onError: (function(xmlHttpRequest) {
-							self.showError(xmlHttpRequest);
-							self.browserLoader.fade(0);
+						onSuccess: (function(j) {
+							if (!j || !j.status) {
+								// TODO: include j.error in the message, iff j.error exists
+								new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+								this.browserLoader.fade(0);
+								return;
+							}
+							if (!dir) {
+								this.load(this.Directory);
+							}
+							this.browserLoader.fade(0);
+						}).bind(self),
+						onError: (function(text, error) {
+							this.showError(text);
+							this.browserLoader.fade(0);
+						}).bind(self),
+						onFailure: (function(xmlHttpRequest) {
+							var text = this.cvtXHRerror2msg(xmlHttpRequest);
+							this.showError(text);
+							this.browserLoader.fade(0);
 						}).bind(self)
 					}, self).send();
 
@@ -1153,6 +1230,9 @@ var FileManager = new Class({
 	},
 
 	fillInfo: function(file) {
+
+		var self = this;
+
 		if (!file) file = this.CurrentDir;
 		if (!file) return;
 
@@ -1193,20 +1273,26 @@ var FileManager = new Class({
 			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 				event: 'detail'
 			})),
-			onRequest: (function() {
-				this.previewLoader.inject(this.preview);
-				this.previewLoader.set('opacity', 1);
-			}).bind(this),
-			onSuccess: (function(j) {
+				data: {
+					directory: this.Directory,
+					file: file.name,
+					filter: this.options.filter
+				},
+				onRequest: (function() {
+					this.previewLoader.inject(this.preview);
+					this.previewLoader.set('opacity', 1);
+				}).bind(self),
+				onSuccess: (function(j) {
 
-				this.previewLoader.fade(0).get('tween').chain((function() {
-					this.previewLoader.dispose();
+					if (!j || !j.status) {
+						// TODO: include j.error in the message, iff j.error exists
+						new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+						this.previewLoader.dispose();
+						return;
+					}
 
-					if (0)   // debugging only:
-						if (j && !j.status)
-						{
-							new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
-						}
+					this.previewLoader.fade(0).get('tween').chain((function() {
+						this.previewLoader.dispose();
 
 					var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
 					if (prev) prev.addEvent('load', function(){
@@ -1223,17 +1309,17 @@ var FileManager = new Class({
 						milkbox.reloadPageGalleries();
 
 				}).bind(this));
-			}).bind(this),
-			onError: (function(xmlHttpRequest) {
-				this.previewLoader.dispose();
-				this.showError(xmlHttpRequest);
-			}).bind(this),
-			data: {
-				directory: this.Directory,
-				file: file.name,
-				filter: this.options.filter
-			}
-		}, this).send();
+				}).bind(self),
+				onError: (function(text, error) {
+					this.previewLoader.dispose();
+					this.showError(text);
+				}).bind(self),
+				onFailure: (function(xmlHttpRequest) {
+					this.previewLoader.dispose();
+					var text = this.cvtXHRerror2msg(xmlHttpRequest);
+					this.showError(text);
+				}).bind(self)
+			}, this).send();
 
 	},
 
@@ -1288,12 +1374,25 @@ var FileManager = new Class({
 		return this;
 	},
 
+	cvtXHRerror2msg: function(xmlHttpRequest) {
+		var status = xmlHttpRequest.status;
+		var orsc = xmlHttpRequest.onreadystatechange;
+		var response = (xmlHttpRequest.responseText || xmlHttpRequest.responseXML || '');
+
+		var text = response.substitute(this.language, /\\?\$\{([^{}]+)\}/g);
+		return text;
+	},
+
 	showError: function(text) {
 		var errorText = text;
 		var self = this;
 
-		if(errorText.indexOf('{') != -1)
+		if (!errorText) {
+			errorText = this.language.backend.unidentified_error;
+		}
+		else if (errorText.indexOf('{') != -1) {
 			errorText = errorText.substring(0,errorText.indexOf('{'));
+		}
 
 		new Dialog(this.language.error, {
 			buttons: ['confirm'],
@@ -1315,6 +1414,9 @@ var FileManager = new Class({
 		this.loader.fade(0);
 	},
 	onError: function(){
+		this.loader.fade(0);
+	},
+	onFailure: function(){
 		this.loader.fade(0);
 	},
 	onDialogOpen: function(){
@@ -1340,7 +1442,8 @@ FileManager.Request = new Class({
 		if (filebrowser) this.addEvents({
 			request: filebrowser.onRequest.bind(filebrowser),
 			complete: filebrowser.onComplete.bind(filebrowser),
-			error: filebrowser.onError.bind(filebrowser)
+			error: filebrowser.onError.bind(filebrowser),
+			failure: filebrowser.onFailure.bind(filebrowser)
 		});
 	}
 });
