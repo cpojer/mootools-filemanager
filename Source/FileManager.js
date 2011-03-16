@@ -390,7 +390,7 @@ var FileManager = new Class({
 		this.browser.empty();
 		this.container.setStyle('display', 'none');
 
-		// add keyboard navigation
+		// remove keyboard navigation
 		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
 		document.removeEvent('keydown', this.bound.toggleList);
 		window.removeEvent('keydown', this.bound.keyesc);
@@ -787,16 +787,6 @@ var FileManager = new Class({
 
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
 			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
-			if (0)
-			{
-			var icon = ((this.listType == 'thumb') ? new Element('img', {
-					'src': file.thumbnail /* +'?'+uniqueId */,
-					'class': this.listType
-				}) :
-				new Element('img', {
-					'src': file.thumbnail
-				}));
-			}
 			var isdir = (file.mime == 'text/directory');
 
 			var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
@@ -1154,11 +1144,23 @@ var FileManager = new Class({
 		});
 	},
 
-	onRequest: function(){this.loader.set('opacity', 1);},
-	onComplete: function(){this.loader.fade(0);},
-	onError: function(){this.loader.fade(0);},
-	onDialogOpen: function(){this.dialogOpen = true; this.onDialogOpenWhenUpload.apply(this);},
-	onDialogClose: function(){this.dialogOpen = false; this.onDialogCloseWhenUpload.apply(this);},
+	onRequest: function(){
+		this.loader.set('opacity', 1);
+	},
+	onComplete: function(){
+		this.loader.fade(0);
+	},
+	onError: function(){
+		this.loader.fade(0);
+	},
+	onDialogOpen: function(){
+		this.dialogOpen = true;
+		this.onDialogOpenWhenUpload.apply(this);
+	},
+	onDialogClose: function(){
+		this.dialogOpen = false;
+		this.onDialogCloseWhenUpload.apply(this);
+	},
 	onDialogOpenWhenUpload: function(){},
 	onDialogCloseWhenUpload: function(){},
 	onDragComplete: Function.from(false)
@@ -1378,3 +1380,4 @@ this.Overlay = new Class({
 });
 
 })();
+
