@@ -2543,6 +2543,9 @@ class FileManager
 		if (function_exists('finfo_open') && $f = finfo_open(FILEINFO_MIME, getenv('MAGIC')))
 		{
 			$mime = finfo_file($f, $file);
+			// some systems also produce the cracter encoding with the mime type; strip if off:
+			$ma = explode(';', $mime);
+			$mime = $ma[0];
 			finfo_close($f);
 		}
 		error_reporting($ini);
