@@ -324,10 +324,21 @@ class FileManager
 				}
 				$iconspec = $filename;
 			}
-			else
+			else if (is_dir($file))
 			{
 				$mime = 'text/directory';
 				$iconspec = ($filename == '..' ? 'is.dir_up' : 'is.dir');
+			}
+			else
+			{
+				// simply do NOT list anything that we cannot cope with.
+				// That includes clearly inaccessible files (and paths) with non-ASCII characters:
+				// PHP5 and below are a real mess when it comes to handling Unicode filesystems
+				// (see the php.net site too: readdir / glob / etc. user comments and the official
+				// notice that PHP will support filesystem UTF-8/Unicode only when PHP6 is released.
+				//
+				// Big, fat bummer!
+				continue;
 			}
 
 			if ($list_type == 'thumb')
