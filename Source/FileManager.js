@@ -594,10 +594,12 @@ var FileManager = new Class({
 				}
 
 				self.fireEvent('modify', [Object.clone(file)]);
-				file.element.getParent().fade(0).get('tween').chain(function(){
-					self.deselect(file.element);
+				var p = file.element.getParent();
+				if (p)
+					p.fade(0).get('tween').chain(function(){
 					this.element.destroy();
 				});
+				self.deselect(file.element);
 				this.browserLoader.fade(0);
 			}).bind(self),
 			onComplete: function(){},
