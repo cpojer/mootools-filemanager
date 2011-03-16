@@ -1369,8 +1369,8 @@ var FileManager = new Class({
 		});
 
 		$(appearOn).addEvents({
-			mouseenter: (function(){this.setStyle('opacity',opacity[0]);}).bind(icon),
-			mouseleave: (function(){this.setStyle('opacity',opacity[1]);}).bind(icon)
+			mouseenter: (function(){this.set('opacity',opacity[0]);}).bind(icon),
+			mouseleave: (function(){this.set('opacity',opacity[1]);}).bind(icon)
 		});
 		return icon;
 	},
