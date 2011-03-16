@@ -1009,6 +1009,20 @@ var FileManager = new Class({
 
 					 The 'solution' which I found was to rely on the 'self' reference instead and bind to 'el'. If the one wouldn't work, the other shouldn't,
 					 but there you have it: this way around it works. FF3.6.14 :-(
+
+					 EDIT 2011/03/16: the problem started as soon as the old Array.each(function(...){...}) by the chunked code which uses a for loop:
+					                    http://jibbering.com/faq/notes/closures/
+								      as it says there:
+									    A closure is formed when one of those inner functions is made accessible outside of the function in which it was
+										contained, so that it may be executed after the outer function has returned. At which point it still has access to
+										the local variables, parameters and inner function declarations of its outer function. Those local variables,
+										parameter and function declarations (initially) >>>> have the values that they had when the outer function returned <<<<
+										and may be interacted with by the inner function.
+									  The >>>> <<<< emphasis is mine: in the .each() code, each el was a separate individual, where due to the for loop,
+									  the last 'el' to exist at all is the one created during the last round of the loop in that chunk. Which explains the
+									  observed behaviour before the fix: the file names associated with the 'el' element object were always pointing
+									  at some item further down the list, not necessarily the very last one, but always these references were 'grouped':
+									  multiple rows would produce the same filename.
 			*/
 			// add click event, only to directories, files use the revert function (to enable drag n drop)
 			// OR provide a basic click event for files too IFF this directory is too huge to support drag & drop.
