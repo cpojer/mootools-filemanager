@@ -65,6 +65,7 @@ var FileManager = new Class({
 		this.dialogOpen = false;
 		this.usingHistory = false;
 		this.fmShown = false;
+		this.view_fill_timer = null;   // timer reference when fill() is working chunk-by-chunk.
 
 		this.language = Object.clone(FileManager.Language.en);
 		if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
@@ -776,8 +777,14 @@ var FileManager = new Class({
 
 	fill: function(j, nofade) {
 
+		// abort any still running ('antiquated') fill chunks -- should have been done in the last 'view' request, but better safe than sorry:
+		$clear(this.view_fill_timer);
+
+		// as this is a long-running process, make sure the hourglass-equivalent is visible for the duration:
+		//this.browserLoader.set('opacity', 1);
+
 		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
-		this.browser_dragndrop_info.setStyle('opacity', 0.5);
+		this.browser_dragndrop_info.set('opacity', 0.5);
 		this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
 		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
 
@@ -786,7 +793,10 @@ var FileManager = new Class({
 
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
-		if (!nofade && !this.onShow) this.fillInfo(j.dir);
+		if (!nofade && !this.onShow) {
+			//if (typeof console !== 'undefined' && console.log) console.log('fill internal: fillInfo: file = ' + j.dir.name);
+			this.fillInfo(j.dir);
+		}
 		this.browser.empty();
 		this.root = j.root;
 		var self = this;
@@ -838,7 +848,9 @@ var FileManager = new Class({
 		this.selectablePath.set('value','/'+this.CurrentPath);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
 
-		if (!j.files) return;
+		if (!j.files) {
+			return;
+		}
 
 		// ->> generate browser list
 		var els = [[], []];
@@ -864,11 +876,40 @@ var FileManager = new Class({
 		var starttime = new Date().getTime();
 		//if (typeof console !== 'undefined' && console.log) console.log('fill list size = ' + j.files.length);
 
-		Array.each(j.files, function(file, idx) {
+		this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [j, 0, allow_drag_n_drop_now, starttime, els]);
+	},
 
-			if (idx % 100 == 0) {
-				var duration = new Date().getTime() - starttime;
-				//if (typeof console !== 'undefined' && console.log) console.log('time taken so far = ' + duration + ' @ elcnt = ' + idx);
+	/*
+	 The old one-function-does-all fill() would take an awful long time when processing large directories. This function
+	 contains the most costly code chunk of the old fill() and has adjusted the looping through the j.files[] list
+	 in such a way that we can 'chunk it up': we can measure the time consumed so far and when we have spent more than
+	 X milliseconds in the loop, we stop and allow the loop to commence after a minimal delay.
+
+	 The delay is the way to relinquish control to the browser and as a thank-you NOT get the dreaded
+	 'slow script, continue or abort?' dialog in your face. Ahh, the joy of cooperative multitasking is back again! :-)
+	*/
+	fill_chunkwise_1: function(j, startindex, allow_drag_n_drop_now, starttime, els) {
+
+		var idx;
+		var self = this;
+		var loop_starttime = new Date().getTime();
+
+		var duration = new Date().getTime() - starttime;
+		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_1(' + startindex + ') @ ' + duration);
+
+		for (idx = startindex; idx < j.files.length; idx++)
+		{
+			var file = j.files[idx];
+
+			if (idx % 10 == 0) {
+				// try not to spend more than 100 msecs per (UI blocking!) loop run!
+				var loop_duration = new Date().getTime() - loop_starttime;
+				//if (typeof console !== 'undefined' && console.log) console.log('time taken so far = ' + duration + ' / ' + loop_duration + ' @ elcnt = ' + idx);
+				if (loop_duration >= 100)
+				{
+					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [j, idx, allow_drag_n_drop_now, starttime, els]);
+					return; // end call == break out of loop
+				}
 			}
 
 			file.dir = j.path;
@@ -940,11 +981,32 @@ var FileManager = new Class({
 				this.Current = file.element;
 				new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(file.element);
 				file.element.addClass('selected');
+				//if (typeof console !== 'undefined' && console.log) console.log('fill: fillInfo: file = ' + file.name);
 				this.fillInfo(file);
 			} else if(this.onShow && jsGET.get('fmFile') == null) {
 				this.onShow = false;
 			}
-		}, this);
+		}
+
+		// check how much we've consumed so far:
+		duration = new Date().getTime() - starttime;
+		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal = ' + duration);
+		//starttime = new Date().getTime();
+
+		// go to the next stage, right after these messages... ;-)
+		this.view_fill_timer = this.fill_chunkwise_2.delay(1, this, [j, allow_drag_n_drop_now, starttime, els]);
+	},
+
+	/*
+	See comment for fill_chunkwise_1(): the makeDraggable() is a loop in itself and taking some considerable time
+	as well, so make it happen in a 'fresh' run here...
+	*/
+	fill_chunkwise_2: function(endindex, allow_drag_n_drop_now, starttime, els) {
+
+		var self = this;
+
+		var duration = new Date().getTime() - starttime;
+		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_2() @ ' + duration);
 
 		// -> cancel dragging
 		var revert = function(el) {
@@ -957,6 +1019,7 @@ var FileManager = new Class({
 				top: 0
 			}).inject(el.retrieve('parent'));
 
+			//if (typeof console !== 'undefined' && console.log) console.log('REMOVE keyboard up/down on revert');
 			document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keyup);
 			self.imageadd.fade(0);
 
@@ -964,9 +1027,9 @@ var FileManager = new Class({
 		};
 
 		// check how much we've consumed so far:
-		var duration = new Date().getTime() - starttime;
-		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal = ' + duration);
-		starttime = new Date().getTime();
+		duration = new Date().getTime() - starttime;
+		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal + revert = ' + duration);
+		//starttime = new Date().getTime();
 
 		if (allow_drag_n_drop_now) {
 			// -> make draggable
@@ -1071,17 +1134,19 @@ var FileManager = new Class({
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		//if (typeof console !== 'undefined' && console.log) console.log('time taken in make draggable = ' + duration);
-		starttime = new Date().getTime();
+		//if (typeof console !== 'undefined' && console.log) console.log(' + time taken in make draggable = ' + duration);
+		//starttime = new Date().getTime();
 
 		$$(els[0].combine(els[1])).setStyles({'left': 0, 'top': 0});
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		//if (typeof console !== 'undefined' && console.log) console.log('time taken in setStyles = ' + duration);
+		//if (typeof console !== 'undefined' && console.log) console.log(' + time taken in setStyles = ' + duration);
+
+		this.view_fill_timer = null;
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
-		this.browser_dragndrop_info.setStyle('opacity', 1.0);
+		this.browser_dragndrop_info.set('opacity', 1.0);
 	},
 
 	fillInfo: function(file) {
