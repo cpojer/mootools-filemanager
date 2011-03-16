@@ -502,7 +502,10 @@ var FileManager = new Class({
 				event: 'view'
 			})),
 			onRequest: (function(){
+				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onRequest invoked");
 				this.browserLoader.set('opacity', 1);
+				// abort any still running ('antiquated') fill chunks:
+				$clear(this.view_fill_timer);
 			}).bind(this),
 			onSuccess: (function(j) {
 				this.fill(j, nofade);
