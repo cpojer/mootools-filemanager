@@ -60,6 +60,7 @@ FileManager.Language.fr = {
 	'backend.partial': 'Le fichier a été partiellement téléversé, merci de recommencer l\'opération.',
 	'backend.nofile': 'Aucun fichier n\'a été spécifié.',
 	'backend.default': 'Une erreur s\'est produite.',
+	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path

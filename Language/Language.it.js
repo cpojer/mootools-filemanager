@@ -60,6 +60,7 @@ FileManager.Language.it = {
 	'backend.partial': 'Il file è stato parzialmente caricato. Per favore, prova a ricaricarlo.',
 	'backend.nofile': 'Non è stato specificato alcun file da caricare.',
 	'backend.default': 'Mi spiace, l operazione non è andata a buon fine.',
+	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path

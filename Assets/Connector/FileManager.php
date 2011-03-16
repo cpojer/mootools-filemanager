@@ -294,6 +294,10 @@ class FileManager
 		}
 
 		$mime_filters = $this->getAllowedMimeTypes($mime_filter);
+		
+		// remove the imageinfo() call overhead per file for very large directories; just guess at the mimetye from the filename alone.
+		// The real mimetype will show up in the 'details' view anyway! This is only for the 'filter' function:
+		$just_guess_mime = (count($files) > 100);
 
 		foreach ($files as $filename)
 		{
@@ -304,7 +308,7 @@ class FileManager
 			$isdir = !is_file($file);
 			if (!$isdir)
 			{
-				$mime = $this->getMimeType($file);
+				$mime = $this->getMimeType($file, $just_guess_mime);
 				if (is_file($file))
 				{
 					if (!$this->IsAllowedMimeType($mime, $mime_filters))
@@ -1580,7 +1584,10 @@ class FileManager
 					$content .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
 				}
 				$finfo = Image::guestimateRequiredMemorySpace($file);
-				$content .= "\n" . '<p class="tech_info">memory used: ' . number_format(memory_get_peak_usage() / 1E6, 1) . ' MB / estimated: ' . number_format($finfo['usage_guestimate'] / 1E6, 1) . ' MB / suggested: ' . number_format($finfo['usage_min_advised'] / 1E6, 1) . ' MB</p>';
+				if (!empty($finfo['usage_guestimate']) && !empty($finfo['usage_min_advised']))
+				{
+					$content .= "\n" . '<p class="tech_info">memory used: ' . number_format(memory_get_peak_usage() / 1E6, 1) . ' MB / estimated: ' . number_format($finfo['usage_guestimate'] / 1E6, 1) . ' MB / suggested: ' . number_format($finfo['usage_min_advised'] / 1E6, 1) . ' MB</p>';
+				}
 
 				$exif_data = $this->getID3infoItem($getid3, null, 'jpg', 'exif');
 				try
@@ -2528,8 +2535,6 @@ class FileManager
 		if (is_dir($file))
 			return 'text/directory';
 
-		$ext2mimetype_arr = $this->getMimeTypeDefinitions();
-		//$file = realpath($file);
 		$ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 		$mime = null;
@@ -2537,11 +2542,14 @@ class FileManager
 		if (function_exists('finfo_open') && $f = finfo_open(FILEINFO_MIME, getenv('MAGIC')))
 		{
 			$mime = finfo_file($f, $file);
+			// some systems also produce the cracter encoding with the mime type; strip if off:
+			$ma = explode(';', $mime);
+			$mime = $ma[0];
 			finfo_close($f);
 		}
 		error_reporting($ini);
 
-		if (!$mime && in_array($ext, array('gif', 'jpg', 'jpeg', 'png')))
+		if (!$mime && !$just_guess && in_array($ext, array('gif', 'jpg', 'jpeg', 'png')))
 		{
 			$image = @getimagesize($file);
 			if($image !== false && !empty($image['mime']))
@@ -2550,6 +2558,8 @@ class FileManager
 
 		if ((!$mime || $mime == 'application/octet-stream') && strlen($ext) > 0)
 		{
+			$ext2mimetype_arr = $this->getMimeTypeDefinitions();
+			
 			if (!empty($ext2mimetype_arr[$ext]))
 				return $ext2mimetype_arr[$ext];
 		}

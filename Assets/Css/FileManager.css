@@ -162,7 +162,8 @@ div.filemanager div.filemanager-browserscroll {
   margin: 0;
   padding: 0;
   height:100%;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden; /* don't show the hor. scrollbar just because a few filenames are very long: just clip them! */
 }
 
 

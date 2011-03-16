@@ -197,6 +197,13 @@ class Image {
 				// and 'worst case' (ahem) we've got the file itself loaded in memory as well (on initial load and later save):
 				// ... but this is more than covered by the 'triple charge' already, so we ditch this one from the heuristics.
 				if (0) $will_eat += $raw_size;
+				
+				// interestingly, JPEG files only appear to require about half that space required by PNG resize processes...
+				if (!empty($img['mime']) && $img['mime'] == 'image/jpeg')
+				{
+					$will_eat /= 2.0;
+				}
+				
 				$rv['usage_guestimate'] = $will_eat;
 
 				// now we know what we about need for this bugger, see if we got enough:
@@ -209,6 +216,11 @@ class Image {
 				// else: this is not a valid image file!
 				$rv['not_an_image_file'] = true;
 			}
+		}
+		else
+		{
+			// else: this file does not exist!
+			$rv['not_an_image_file'] = true;
 		}
 		return $rv;
 	}

@@ -60,6 +60,7 @@ FileManager.Language.de = {
 	'backend.partial': 'Die Datei wurde nur teilweise hochgeladen. Bitte lade sie erneut hoch.',
 	'backend.nofile': 'Es wurde keine Datei angezeigt/hochgeladen oder der Datei konnte nicht gefunden werden.',
 	'backend.default': 'Der Datei-Upload ist fehlgeschlagen.',
+	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
