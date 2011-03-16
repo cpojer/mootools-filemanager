@@ -93,19 +93,19 @@ var FileManager = new Class({
 
 		var self = this;
 		// -> catch a click on an element in the file/folder browser
-		this.relayClick = function(e) {
+		this.relayClick = function(e, el) {
 			if(e) e.stop();
-			self.storeHistory = true;
+			this.storeHistory = true;
 
-			var file = this.retrieve('file');
+			var file = el.retrieve('file');
 			//if (typeof console !== 'undefined' && console.log) console.log('on relayClick file = ' + file.mime + ': ' + file.path + ' : ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
-			if (this.retrieve('edit')) {
-				this.eliminate('edit');
+			if (el.retrieve('edit')) {
+				el.eliminate('edit');
 				return;
 			}
 			if (file.mime == 'text/directory'){
-				this.addClass('selected');
-				self.load(self.Directory + file.name);
+				el.addClass('selected');
+				this.load(this.Directory + file.name);
 				return;
 			}
 
@@ -115,14 +115,14 @@ var FileManager = new Class({
 			//
 			// Note that this info is stored in the instance variable: this.drop_pending -- more functions may check this one!
 			this.fillInfo(file);
-			if (self.Current) self.Current.removeClass('selected');
+			if (this.Current) this.Current.removeClass('selected');
 			// ONLY do this when we're doing a COPY or on a failed attempt...
 			// CORRECTION: as even a failed 'drop' action will have moved the cursor, we can't keep this one selected right now:
-			if (0 && self.drop_pending != 2) {
-				self.Current = this.addClass('selected');
+			if (0 && this.drop_pending != 2) {
+				this.Current = el.addClass('selected');
 			}
 
-			self.switchButton();
+			this.switchButton();
 		};
 
 		this.toggleList = function(e) {
@@ -1000,26 +1000,43 @@ var FileManager = new Class({
 				new Element('span', {'class': 'filename', text: file.name, title:file.name})
 			).store('file', file);
 
+			/*
+			WARNING: for some (to me) incomprehensible reason the old code which bound the event handlers to 'this==self' and which used the 'el' variable
+			         available here, does NOT WORK ANY MORE - tested in FF3.6. Turns out 'el' is pointing anywhere but where you want it by the time
+					 the event handler is executed.
+
+					 The 'solution' which I found was to rely on the 'self' reference instead and bind to 'el'. If the one wouldn't work, the other shouldn't,
+					 but there you have it: this way around it works. FF3.6.14 :-(
+			*/
 			// add click event, only to directories, files use the revert function (to enable drag n drop)
 			// OR provide a basic click event for files too IFF this directory is too huge to support drag & drop.
 			if(isdir || !allow_drag_n_drop_now) {
-				el.addEvent('click',this.relayClick);
+				el.addEvent('click', (function(e, target) {
+					if (typeof console !== 'undefined' && console.log) console.log('is_dir:CLICK');
+					//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
+					//var node = el;
+					var node = this;
+					self.relayClick.apply(self, [e, node]);
+				}).bind(el));
 			}
 
 			// -> add icons
 			var icons = [];
 			// download icon
 			if(!isdir && this.options.download) {
-				icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
+				icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e, target){
+					// this = el, self = FM instance
 					e.preventDefault();
-					el.store('edit',true);
+					this.store('edit',true);
+					// can't use 'file' in here directly anymore either:
+					var file = this.retrieve('file');
 					//if (typeof console !== 'undefined' && console.log) console.log('download: ' + file.path + ', ' + this.normalize(file.path));
-					window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+					window.open(self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
 						event: 'download',
-						file: this.normalize(file.dir + file.name),
-						filter: this.options.filter
+						file: self.normalize(file.dir + file.name),
+						filter: self.options.filter
 					})));
-				}).bind(this)).inject(el, 'top'));
+				}).bind(el)).inject(el, 'top'));
 			}
 
 			// rename, delete icon
@@ -1028,12 +1045,15 @@ var FileManager = new Class({
 				if(this.options.rename) editButtons.push('rename');
 				if(this.options.destroy) editButtons.push('destroy');
 				editButtons.each(function(v){
-					icons.push(new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('mouseup', (function(e){
+					icons.push(new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('mouseup', (function(e, target){
+						// this = el, self = FM instance
 						e.preventDefault();
-						el.store('edit',true);
-						this.tips.hide();
-						this[v](file);
-					}).bind(this)).inject(el,'top'));
+						this.store('edit',true);
+						// can't use 'file' in here directly anymore either:
+						var file = this.retrieve('file');
+						self.tips.hide();
+						self[v](file);
+					}).bind(el)).inject(el,'top'));
 				}, this);
 			}
 
@@ -1100,7 +1120,7 @@ var FileManager = new Class({
 			document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keyup);
 			self.imageadd.fade(0);
 
-			self.relayClick.apply(el);
+			self.relayClick.apply(self, [null, el]);
 		};
 
 		// check how much we've consumed so far:
