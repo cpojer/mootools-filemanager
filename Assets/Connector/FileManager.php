@@ -298,6 +298,10 @@ class FileManager
 		}
 
 		$mime_filters = $this->getAllowedMimeTypes($mime_filter);
+		
+		// remove the imageinfo() call overhead per file for very large directories; just guess at the mimetye from the filename alone.
+		// The real mimetype will show up in the 'details' view anyway! This is only for the 'filter' function:
+		$just_guess_mime = (count($files) > 100);
 
 		foreach ($files as $filename)
 		{
@@ -308,7 +312,7 @@ class FileManager
 			$isdir = !is_file($file);
 			if (!$isdir)
 			{
-				$mime = $this->getMimeType($file);
+				$mime = $this->getMimeType($file, $just_guess_mime);
 				if (is_file($file))
 				{
 					if (!$this->IsAllowedMimeType($mime, $mime_filters))
@@ -2532,8 +2536,6 @@ class FileManager
 		if (is_dir($file))
 			return 'text/directory';
 
-		$ext2mimetype_arr = $this->getMimeTypeDefinitions();
-		//$file = realpath($file);
 		$ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 		$mime = null;
@@ -2545,7 +2547,7 @@ class FileManager
 		}
 		error_reporting($ini);
 
-		if (!$mime && in_array($ext, array('gif', 'jpg', 'jpeg', 'png')))
+		if (!$mime && !$just_guess && in_array($ext, array('gif', 'jpg', 'jpeg', 'png')))
 		{
 			$image = @getimagesize($file);
 			if($image !== false && !empty($image['mime']))
@@ -2554,6 +2556,8 @@ class FileManager
 
 		if ((!$mime || $mime == 'application/octet-stream') && strlen($ext) > 0)
 		{
+			$ext2mimetype_arr = $this->getMimeTypeDefinitions();
+			
 			if (!empty($ext2mimetype_arr[$ext]))
 				return $ext2mimetype_arr[$ext];
 		}
