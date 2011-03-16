@@ -1295,7 +1295,8 @@ class FileManager
 			{
 				$img = new Image($file);
 				$size = $img->getSize();
-				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy:
+				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy 
+				// (default quality is 100% for JPEG so we get the cleanest resized images here)
 				$img->resize($this->options['maxImageSize'], $this->options['maxImageSize'])->save();
 				unset($img);
 			}
