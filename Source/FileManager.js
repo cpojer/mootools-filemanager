@@ -234,6 +234,7 @@ var FileManager = new Class({
 
 		this.bound = {
 			keydown: (function(e){
+				//if (typeof console !== 'undefined' && console.log) console.log('keydown: key press: ' + e.key);
 				if (e.control || e.meta) this.imageadd.fade(1);
 			}).bind(this),
 			keyup: (function(){
@@ -254,11 +255,15 @@ var FileManager = new Class({
 				if (e.key=='esc') this.hide();
 			}).bind(this),
 			keyboardInput: (function(e) {
-				//if (typeof console !== 'undefined' && console.log) console.log('key press: ' + e.key);
+				if (typeof console !== 'undefined' && console.log) console.log('key press: ' + e.key);
 				if(this.dialogOpen) return;
 				switch (e.key) {
 				case 'up':
 				case 'down':
+				case 'pageup':
+				case 'pagedown':
+				case 'home':
+				case 'end':
 				case 'enter':
 				case 'delete':
 					e.preventDefault();
@@ -314,6 +319,7 @@ var FileManager = new Class({
 						this.Current = current.getParent('span.fi');
 						new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(current.getParent('span.fi'));
 						current.getParent('span.fi').addClass('selected');
+						//if (typeof console !== 'undefined' && console.log) console.log('on hashHistory @ fillInfo key = ' + key + ', value = ' + value + ', source = ' + ' - file = ' + current.getParent('span.fi').retrieve('file').name);
 						this.fillInfo(current.getParent('span.fi').retrieve('file'));
 					}
 				}).bind(this));
@@ -322,6 +328,7 @@ var FileManager = new Class({
 	},
 
 	show: function(e) {
+		//if (typeof console !== 'undefined' && console.log) console.log('on show');
 		if(e) e.stop();
 		if(this.fmShown) return;
 		this.fmShown = true;
@@ -360,6 +367,7 @@ var FileManager = new Class({
 			'resize': this.bound.scroll
 		});
 		// add keyboard navigation
+		//if (typeof console !== 'undefined' && console.log) console.log('add keyboard nav on show file = ' + this.Directory + ', source = ' + '---');
 		document.addEvent('keydown', this.bound.toggleList);
 		window.addEvent('keydown', this.bound.keyesc);
 		if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
@@ -374,6 +382,7 @@ var FileManager = new Class({
 	},
 
 	hide: function(e){
+		//if (typeof console !== 'undefined' && console.log) console.log('on hide');
 		if (e) e.stop();
 		if(!this.fmShown) return;
 		this.fmShown = false;
@@ -391,6 +400,7 @@ var FileManager = new Class({
 		this.container.setStyle('display', 'none');
 
 		// remove keyboard navigation
+		//if (typeof console !== 'undefined' && console.log) console.log('REMOVE keyboard nav on hide');
 		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
 		document.removeEvent('keydown', this.bound.toggleList);
 		window.removeEvent('keydown', this.bound.keyesc);
@@ -441,6 +451,7 @@ var FileManager = new Class({
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
+				//if (typeof console !== 'undefined' && console.log) console.log('add key up on create dialog:onshow');
 				input.addEvent('keyup', function(e){
 					if (e.key == 'enter') e.target.getParent('div.dialog').getElement('button.dialog-confirm').fireEvent('click');
 				}).focus();
@@ -470,6 +481,7 @@ var FileManager = new Class({
 
 	deselect: function(el) {
 		if (el && this.Current != el) return;
+		//if (typeof console !== 'undefined' && console.log) console.log('deselect:Current');
 		if (el) this.fillInfo();
 		if (this.Current) this.Current.removeClass('selected');
 		this.Current = null;
@@ -580,6 +592,7 @@ var FileManager = new Class({
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
+				//if (typeof console !== 'undefined' && console.log) console.log('add key up on rename dialog:onshow');
 				input.addEvent('keyup', function(e){
 					if (e.key=='enter') e.target.getParent('div.dialog').getElement('button.dialog-confirm').fireEvent('click');
 				}).focus();
@@ -618,72 +631,146 @@ var FileManager = new Class({
 		if(this.browser.getElement('li') == null) return;
 
 		// none is selected
-		if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') == null) {
+		if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') == null)
+		{
 			// select first folder
-			this.browser.getFirst('li').getElement('span.fi').addClass('hover');
-			new Fx.Scroll(this.browserScroll,{duration: 250}).toElement(this.browser.getFirst('li').getElement('span.fi'));
-		} else {
+			current = this.browser.getFirst('li').getElement('span.fi');
+		}
+		else
+		{
 			// select the current file/folder or the one with hover
 			var current = null;
-			if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') != null)
+			if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') != null) {
 				current = this.browser.getElement('span.fi.selected');
-			else if(this.browser.getElement('span.fi.hover') != null)
+			}
+			else if(this.browser.getElement('span.fi.hover') != null) {
 				current = this.browser.getElement('span.fi.hover');
-			var browserScrollFx = new Fx.Scroll(this.browserScroll,{duration: 150}); //offset: {x:0,y:-(this.browserScroll.getSize().y / 4)},
+			}
+		}
 
-			switch (direction) {
-			// go down
-			case 'down':
-				if(current.getParent('li').getNext('li') != null) {
-					current.removeClass('hover');
-					var next = current.getParent('li').getNext('li').getElement('span.fi');
-					next.addClass('hover');
-					if((current.getPosition(this.browserScroll).y + (current.getSize().y*2)) >= this.browserScroll.getSize().y)
-						browserScrollFx.toElement(current);
-				}
-				break;
-
-			// go up
-			case 'up':
-				if(current.getParent('li').getPrevious('li') != null) {
-					current.removeClass('hover');
-					var previous = current.getParent('li').getPrevious('li').getElement('span.fi');
-					previous.addClass('hover');
-					if((current.getPosition(this.browserScroll).y) <= current.getSize().y) {
-						browserScrollFx.start(current.getPosition(this.browserScroll).x,(this.browserScroll.getScroll().y - this.browserScroll.getSize().y + (current.getSize().y*2)));
-					}
-				}
-				break;
-
-			// select
-			case 'enter':
-				this.storeHistory = true;
-				this.Current = current;
-				if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
-					this.browser.getElement('span.fi.selected').removeClass('selected');
-				current.addClass('selected');
-				var currentFile = current.retrieve('file');
-				//if (typeof console !== 'undefined' && console.log) console.log('on key ENTER file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
-				if(currentFile.mime == 'text/directory') {
-					this.load(currentFile.dir + currentFile.name /*.replace(this.root,'')*/);
+		var stepsize = 1;
+		switch (direction) {
+		// go down
+		case 'end':
+			stepsize = 1E5;
+			/* fallthrough */
+		case 'pagedown':
+			if (stepsize == 1) {
+				if (current.getPosition(this.browserScroll).y + current.getSize().y * 2 < this.browserScroll.getSize().y) {
+					stepsize = Math.floor((this.browserScroll.getSize().y - current.getPosition(this.browserScroll).y) / current.getSize().y) - 1;
+					if (stepsize < 1)
+						stepsize = 1;
 				}
 				else {
-					this.fillInfo(currentFile);
+					stepsize = Math.floor(this.browserScroll.getSize().y / current.getSize().y);
 				}
-				break;
-
-			// delete file/directory:
-			case 'delete':
-				this.storeHistory = true;
-				this.Current = current;
-				if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
-					this.browser.getElement('span.fi.selected').removeClass('selected');
-				current.addClass('selected');
-				var currentFile = current.retrieve('file');
-				//if (typeof console !== 'undefined' && console.log) console.log('on key DELETE file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
-				this.destroy(currentFile);
-				break;
 			}
+			/* fallthrough */
+		case 'down':
+			current.removeClass('hover');
+			current = current.getParent('li');
+			//if (typeof console !== 'undefined' && console.log) console.log('key DOWN: stepsize = ' + stepsize);
+			for ( ; stepsize > 0; stepsize--) {
+				var next = current.getNext('li');
+				if (next == null)
+					break;
+				current = next;
+			}
+			current = current.getElement('span.fi');
+			current.addClass('hover');
+			this.Current = current;
+			//if (typeof console !== 'undefined' && console.log) console.log('key DOWN: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y);
+			if (current.getPosition(this.browserScroll).y + current.getSize().y * 2 >= this.browserScroll.getSize().y)
+			{
+				// make scroll duration slightly dependent on the distance to travel:
+				var dy = (current.getPosition(this.browserScroll).y + current.getSize().y * 2 - this.browserScroll.getSize().y);
+				dy = 50 * dy / this.browserScroll.getSize().y;
+				//if (typeof console !== 'undefined' && console.log) console.log('key UP: DUR: ' + dy);
+				var browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy)) });
+				browserScrollFx.toElement(current);
+			}
+			break;
+
+		// go up
+		case 'home':
+			stepsize = 1E5;
+			/* fallthrough */
+		case 'pageup':
+			if (stepsize == 1) {
+				// when at the top of the viewport, a full page scroll already happens /visually/ when you go up 1: that one will end up at the /bottom/, after all.
+				stepsize = Math.floor(current.getPosition(this.browserScroll).y / current.getSize().y);
+				if (stepsize < 1)
+					stepsize = 1;
+			}
+			/* fallthrough */
+		case 'up':
+			current.removeClass('hover');
+			current = current.getParent('li');
+			//if (typeof console !== 'undefined' && console.log) console.log('key UP: stepsize = ' + stepsize);
+			for ( ; stepsize > 0; stepsize--) {
+				var previous = current.getPrevious('li');
+				if (previous == null)
+					break;
+				current = previous;
+			}
+			current = current.getElement('span.fi');
+			current.addClass('hover');
+			this.Current = current;
+			//if (typeof console !== 'undefined' && console.log) console.log('key UP: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y + ', SCROLL = ' + this.browserScroll.getScroll().y + ', SIZE = ' + this.browserScroll.getSize().y);
+			if (current.getPosition(this.browserScroll).y <= current.getSize().y) {
+				var sy = this.browserScroll.getScroll().y + current.getPosition(this.browserScroll).y - this.browserScroll.getSize().y + current.getSize().y * 2;
+
+				// make scroll duration slightly dependent on the distance to travel:
+				var dy = this.browserScroll.getScroll().y - sy;
+				dy = 50 * dy / this.browserScroll.getSize().y;
+				//if (typeof console !== 'undefined' && console.log) console.log('key UP: SY = ' + sy + ', DUR: ' + dy);
+				var browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy)) });
+				browserScrollFx.start(current.getPosition(this.browserScroll).x, (sy >= 0 ? sy : 0));
+			}
+			break;
+
+		// select
+		case 'enter':
+			this.storeHistory = true;
+			this.Current = current;
+			if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
+				this.browser.getElement('span.fi.selected').removeClass('selected');
+			current.addClass('selected');
+			var currentFile = current.retrieve('file');
+			//if (typeof console !== 'undefined' && console.log) console.log('on key ENTER file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
+			if(currentFile.mime == 'text/directory') {
+				this.load(currentFile.dir + currentFile.name /*.replace(this.root,'')*/);
+			}
+			else {
+				this.fillInfo(currentFile);
+			}
+			break;
+
+		// delete file/directory:
+		case 'delete':
+			this.storeHistory = true;
+			this.Current = current;
+			current.removeClass('hover');
+			if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
+				this.browser.getElement('span.fi.selected').removeClass('selected');
+
+			// and before we go and delete the entry, see if we pick the next one down or up as our next cursor position:
+			var parent = current.getParent('li');
+			var next = parent.getNext('li');
+			if (next == null) {
+				next = parent.getPrevious('li');
+			}
+			if (next != null) {
+				next.addClass('hover');
+			}
+
+			var currentFile = current.retrieve('file');
+			//if (typeof console !== 'undefined' && console.log) console.log('on key DELETE file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
+			this.destroy(currentFile);
+
+			this.Current = next;
+			// TODO: scroll to center the new item in view; multiple DELETE actions should not 'walk off the screen'.
+			break;
 		}
 	},
 
@@ -693,6 +780,9 @@ var FileManager = new Class({
 		this.browser_dragndrop_info.setStyle('opacity', 0.5);
 		this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
 		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
+
+		// keyboard navigation sets the 'hover' class on the 'current' item: remove any of those:
+		this.browser.getElements('span.fi.hover').each(function(span){ span.removeClass('hover'); });
 
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
@@ -742,7 +832,9 @@ var FileManager = new Class({
 		});
 
 		text.pop();
-		text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e){e.stop();});
+		text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e) {
+			e.stop();
+		});
 		this.selectablePath.set('value','/'+this.CurrentPath);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
 
@@ -906,6 +998,7 @@ var FileManager = new Class({
 
 				onStart: function(el){
 					el.set('opacity', 0.7).addClass('move');
+					//if (typeof console !== 'undefined' && console.log) console.log('add keyboard up/down on drag start');
 					document.addEvents({
 						keydown: self.bound.keydown,
 						keyup: self.bound.keyup
@@ -929,14 +1022,16 @@ var FileManager = new Class({
 					var dir;
 					if (droppable){
 						droppable.addClass('selected').removeClass('droppable');
-						(function(){droppable.removeClass('selected');}).delay(300);
+						(function() {
+							droppable.removeClass('selected');
+						}).delay(300);
 						if (self.onDragComplete(el, droppable)) return;
 
 						dir = droppable.retrieve('file');
 						//if (typeof console !== 'undefined' && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
 					}
 					var file = el.retrieve('file');
-					//if (typeof console !== 'undefined' && console.log) console.log('on drop file = ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
+					//if (typeof console !== 'undefined' && console.log) console.log('on drop file = ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve; droppable = "' + droppable + '"');
 
 					new FileManager.Request({
 						url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
@@ -1294,6 +1389,7 @@ this.Dialog = new Class({
 			self.fireEvent('show');
 		});
 
+		//if (typeof console !== 'undefined' && console.log) console.log('add key up(ESC)/resize/scroll on show 1500');
 		document.addEvents({
 			'scroll': this.bound.scroll,
 			'resize': this.bound.scroll,
@@ -1309,6 +1405,7 @@ this.Dialog = new Class({
 				this.el.destroy();
 			}).bind(this));
 		}
+		//if (typeof console !== 'undefined' && console.log) console.log('remove key up(ESC) on destroy');
 		document.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
 	}
 
