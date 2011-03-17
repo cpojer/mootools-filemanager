@@ -491,7 +491,7 @@ var FileManager = new Class({
 						}
 
 						this.fill(j);
-						this.browserLoader.fade(0);
+						//this.browserLoader.fade(0);
 					}).bind(self),
 					onComplete: function(){},
 					onError: (function(text, error) {
@@ -552,7 +552,7 @@ var FileManager = new Class({
 				}
 
 				this.fill(j);
-				this.browserLoader.fade(0);
+				//this.browserLoader.fade(0);
 			}).bind(self),
 			onComplete: (function() {
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onComplete invoked");
@@ -1289,10 +1289,32 @@ var FileManager = new Class({
 		duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + time taken in setStyles = ' + duration);
 
-		this.view_fill_timer = null;
+		// go to the next stage, right after these messages... ;-)
+		this.view_fill_timer = this.fill_chunkwise_3.delay(1, this, [is_bloody_huge_directory, starttime]);
+	},
+
+	/*
+	See comment for fill_chunkwise_1(): the tooltips need to be assigned with each icon (2..3 per list item)
+	and apparently that takes some considerable time as well for large directories and slightly slower machines.
+	*/
+	fill_chunkwise_3: function(is_bloody_huge_directory, starttime) {
+
+		var self = this;
+
+		var duration = new Date().getTime() - starttime;
+		if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_3() @ ' + duration);
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
 		this.browser_dragndrop_info.fade(1);
+
+		// check how much we've consumed so far:
+		duration = new Date().getTime() - starttime;
+		if (typeof console !== 'undefined' && console.log) console.log(' + time taken in tips.attach = ' + duration);
+
+		// we're done: erase the timer so it can be garbage collected
+		this.view_fill_timer = null;
+
+		this.browserLoader.fade(0);
 	},
 
 	fillInfo: function(file) {
