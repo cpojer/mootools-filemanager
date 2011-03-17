@@ -196,6 +196,7 @@ div.filemanager ul li {
 div.filemanager div.filemanager-browsercontainer {
   height: 100%;
   width: 35%;
+  min-width: 146px;
   border: 0;
   border-right: 1px solid #bebebe;
   background:#D7DEE8 url("../Images/filelist.png") repeat-x bottom left;
@@ -219,7 +220,7 @@ div.filemanager-browsercontainer div.filemanager-browserheader {
   height: 25px;
   background:#C3CDD9;
   border-bottom: 1px solid #bebebe;
-  text-align: right;
+  text-align: center;
 }
 
 div.filemanager-browsercontainer div.filemanager-browserheader a.listType {
@@ -239,9 +240,7 @@ div.filemanager-browsercontainer div.filemanager-browserheader a.listType#toggle
 div.filemanager-browsercontainer div.filemanager-browserheader a#drag_n_drop {
 	display: inline-block;
 	float: right;
-	width: 16px;
-	height: 16px;
-	margin: 5px;
+	margin: 5px 3% 0 0;        /* 3%: keep distance variable with the total width of the FM window: looks better for tight and wide viewports */
 	cursor: help;
 	
 	background-image: url("../Images/drag_n_drop.png");
@@ -251,6 +250,78 @@ div.filemanager-browsercontainer div.filemanager-browserheader a#drag_n_drop {
 	overflow: hidden;
 	background-position: 0px -16px;
 }
+
+div.filemanager-browsercontainer div.filemanager-browserheader #fm_view_paging {
+	display: inline-block;
+	float: right;
+	margin: 1px 3% 0 0;
+	height: 19px;
+	padding: 4px 5px 0 5px;
+	/* add subtle lines to increase visual separation with the other icons up top */
+	border-left: 1px solid #BEBEBE;
+	border-right: 1px solid #BEBEBE;
+	
+}
+
+div.filemanager-browsercontainer div.filemanager-browserheader #fm_view_paging a {
+	display: inline-block;
+	margin: 0 2px;
+}
+
+div.filemanager-browsercontainer div.filemanager-browserheader #fm_view_paging a#paging_goto_first {
+	background-image: url("../Images/go_first.png");
+	background-repeat: no-repeat;
+	height: 16px;
+	width: 10px;
+	overflow: hidden;
+	background-position: 50% 50%;
+	
+	position: relative;
+}
+div.filemanager-browsercontainer div.filemanager-browserheader #fm_view_paging a#paging_goto_previous {
+	background-image: url("../Images/go_previous.png");
+	background-repeat: no-repeat;
+	height: 16px;
+	width: 7px;
+	overflow: hidden;
+	background-position: 50% 50%;
+	
+	position: relative;
+}
+div.filemanager-browsercontainer div.filemanager-browserheader #fm_view_paging a#paging_goto_next {
+	background-image: url("../Images/go_next.png");
+	background-repeat: no-repeat;
+	height: 16px;
+	width: 7px;
+	overflow: hidden;
+	background-position: 50% 50%;
+	
+	position: relative;
+}
+div.filemanager-browsercontainer div.filemanager-browserheader #fm_view_paging a#paging_goto_last {
+	background-image: url("../Images/go_last.png");
+	background-repeat: no-repeat;
+	height: 16px;
+	width: 10px;
+	overflow: hidden;
+	background-position: 50% 50%;
+	
+	position: relative;
+}
+div.filemanager-browsercontainer div.filemanager-browserheader #fm_view_paging #paging_info {
+	margin: 0 10px;
+	/* 
+	to help the page number center vertically, we have to tweak the settings a bit oddly:
+	without the position:relative and the top:-4px, it wouldn't work. vertical-align is no use at all: 
+	'middle' does not do anything while 'top' does, but is exactly what we do not want.
+	Anyway, relative -4px it is.
+	*/
+	height: 16px;
+	position: relative;
+	top: -4px;
+	overflow: hidden;
+}
+
 
 div.filemanager-container span.fi {
   height: 21px;
@@ -452,6 +523,7 @@ div.filemanager-infos {
   left: 35%;
   top: 0;
   width: 63%;
+  min-width: 250px;
   height: 92%;
   padding: 0px 1%;
   line-height: 1.6em;

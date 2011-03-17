@@ -294,7 +294,7 @@ class FileManager
 		}
 
 		$mime_filters = $this->getAllowedMimeTypes($mime_filter);
-		
+
 		// remove the imageinfo() call overhead per file for very large directories; just guess at the mimetye from the filename alone.
 		// The real mimetype will show up in the 'details' view anyway! This is only for the 'filter' function:
 		$just_guess_mime = (count($files) > 100);
@@ -320,10 +320,21 @@ class FileManager
 				}
 				$iconspec = $filename;
 			}
-			else
+			else if (is_dir($file))
 			{
 				$mime = 'text/directory';
 				$iconspec = ($filename == '..' ? 'is.dir_up' : 'is.dir');
+			}
+			else
+			{
+				// simply do NOT list anything that we cannot cope with.
+				// That includes clearly inaccessible files (and paths) with non-ASCII characters:
+				// PHP5 and below are a real mess when it comes to handling Unicode filesystems
+				// (see the php.net site too: readdir / glob / etc. user comments and the official
+				// notice that PHP will support filesystem UTF-8/Unicode only when PHP6 is released.
+				//
+				// Big, fat bummer!
+				continue;
 			}
 
 			if ($list_type == 'thumb')
@@ -916,18 +927,20 @@ class FileManager
 		$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 		$list_type = ($this->getPOSTparam('type') != 'thumb' ? 'list' : 'thumb');
 
+		$legal_url = null;
+		
 		try
 		{
+			$dir_arg = $this->getPOSTparam('directory');
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
+			$legal_url = self::enforceTrailingSlash($legal_url);
+
 			if (!$this->options['create'])
 				throw new FileManagerException('disabled');
 
 			$file_arg = $this->getPOSTparam('file');
 			if (empty($file_arg))
 				throw new FileManagerException('nofile');
-
-			$dir_arg = $this->getPOSTparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
 
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			//$legal_url .= $filename;
@@ -961,7 +974,7 @@ class FileManager
 			if (!headers_sent()) header('Content-Type: application/json');
 
 			// success, now show the new directory as a list view:
-			$rv = $this->_onView($url . $file . '/', $jserr, $mime_filter, $list_type);
+			$rv = $this->_onView($legal_url . $file . '/', $jserr, $mime_filter, $list_type);
 			echo json_encode($rv);
 			return;
 		}
@@ -1007,8 +1020,8 @@ class FileManager
 				// and fall back to showing the BASEDIR directory
 				try
 				{
-					$dir = $this->options['directory'];
-					$rv = $this->_onView($dir, $jserr, $mime_filter, $list_type);
+					$legal_url = $this->options['directory'];
+					$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
 					$jserr = $rv;
 				}
 				catch (Exception $e)
@@ -1250,20 +1263,20 @@ class FileManager
 				throw new FileManagerException('authorized');
 
 			if($fileinfo['maxsize'] && $fileinfo['size'] > $fileinfo['maxsize'])
-				throw new UploadException('size');
+				throw new FileManagerException('size');
 
 			if(!$fileinfo['extension'])
-				throw new UploadException('extension');
+				throw new FileManagerException('extension');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url . $fileinfo['name'] . '.' . $fileinfo['extension']);
 
 
 			if(!$fileinfo['overwrite'] && file_exists($file))
-				throw new UploadException('exists');
+				throw new FileManagerException('exists');
 
 			if(!move_uploaded_file($_FILES['Filedata']['tmp_name'], $file))
-				throw new UploadException(strtolower($_FILES['Filedata']['error'] <= 2 ? 'size' : ($_FILES['Filedata']['error'] == 3 ? 'partial' : 'path')));
+				throw new FileManagerException(strtolower($_FILES['Filedata']['error'] <= 2 ? 'size' : ($_FILES['Filedata']['error'] == 3 ? 'partial' : 'path')));
 
 			@chmod($file, $fileinfo['chmod']);
 
@@ -1280,7 +1293,8 @@ class FileManager
 			{
 				$img = new Image($file);
 				$size = $img->getSize();
-				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy:
+				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy
+				// (default quality is 100% for JPEG so we get the cleanest resized images here)
 				$img->resize($this->options['maxImageSize'], $this->options['maxImageSize'])->save();
 				unset($img);
 			}
@@ -1292,10 +1306,6 @@ class FileManager
 					'name' => pathinfo($file, PATHINFO_BASENAME)
 				));
 			return;
-		}
-		catch(UploadException $e)
-		{
-			$emsg = $e->getMessage();
 		}
 		catch(FileManagerException $e)
 		{
@@ -1378,8 +1388,9 @@ class FileManager
 			$is_dir = is_dir($path);
 
 			$newdir_arg = $this->getPOSTparam('newDirectory');
-			$name_arg = $this->getPOSTparam('name');
-			$rename = (empty($newdir_arg) && !empty($name_arg));
+			$newname_arg = $this->getPOSTparam('name');
+			$rename = (empty($newdir_arg) && !empty($newname_arg));
+
 			$is_copy = !!$this->getPOSTparam('copy');
 
 
@@ -1394,11 +1405,11 @@ class FileManager
 				$newurl = $url;
 				$newdir = $dir;
 
-				$newname = pathinfo($name_arg, PATHINFO_BASENAME);
+				$newname = pathinfo($newname_arg, PATHINFO_BASENAME);
 				if ($is_dir)
-					$newname = $this->getUniqueName(array('filename' => $newname), $dir);  // a directory has no 'extension'
+					$newname = $this->getUniqueName(array('filename' => $newname), $newdir);  // a directory has no 'extension'
 				else
-					$newname = $this->getUniqueName($newname, $dir);
+					$newname = $this->getUniqueName($newname, $newdir);
 
 				if (!$newname)
 					throw new FileManagerException('nonewfile');
@@ -1406,7 +1417,7 @@ class FileManager
 				// when the new name seems to have a different extension, make sure the extension doesn't change after all:
 				// Note: - if it's only 'case' we're changing here, then exchange the extension instead of appending it.
 				//       - directories do not have extensions
-				$extOld = pathinfo($path, PATHINFO_EXTENSION);
+				$extOld = pathinfo($filename, PATHINFO_EXTENSION);
 				$extNew = pathinfo($newname, PATHINFO_EXTENSION);
 				if ((!$this->options['allowExtChange'] || (!$is_dir && empty($extNew))) && !empty($extOld) && strtolower($extOld) != strtolower($extNew))
 				{
@@ -1577,7 +1588,9 @@ class FileManager
 					$thumbfile = $this->getIconForError($emsg, $legal_url, false);
 				}
 
-				$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" /></a>';
+				$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+							   <img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" />
+							 </a>';
 				if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
 				{
 					$earr = explode(':', $e->getMessage(), 2);
@@ -2559,7 +2572,7 @@ class FileManager
 		if ((!$mime || $mime == 'application/octet-stream') && strlen($ext) > 0)
 		{
 			$ext2mimetype_arr = $this->getMimeTypeDefinitions();
-			
+
 			if (!empty($ext2mimetype_arr[$ext]))
 				return $ext2mimetype_arr[$ext];
 		}
