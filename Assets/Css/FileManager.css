@@ -196,7 +196,7 @@ div.filemanager ul li {
 div.filemanager div.filemanager-browsercontainer {
   height: 100%;
   width: 35%;
-  min-width: 146px;
+  min-width: 189px;
   border: 0;
   border-right: 1px solid #bebebe;
   background:#D7DEE8 url("../Images/filelist.png") repeat-x bottom left;
