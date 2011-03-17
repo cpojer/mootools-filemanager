@@ -47,6 +47,7 @@ var FileManager = new Class({
 		hideOverlay: false,
 		hideQonDelete: false,
 		listPaginationSize: 1000,  // add pagination per N items for huge directories (speed up interaction)
+		listPaginationAvgWaitTime: 2000,  // aaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
 		propagateData: {}          // extra query parameters sent with every request to the backend
 	},
 
@@ -70,6 +71,7 @@ var FileManager = new Class({
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
 		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
 		this.view_fill_json = null;      // the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly consulting the server.
+		this.listPaginationLastSize = this.options.listPaginationSize;
 
 		this.language = Object.clone(FileManager.Language.en);
 		if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
@@ -897,15 +899,15 @@ var FileManager = new Class({
 		if (!startindex)
 			return;
 
-		this.paging_goto_helper(startindex - this.options.listPaginationSize);
+		this.paging_goto_helper(startindex - this.listPaginationLastSize, this.listPaginationLastSize);
 	},
 	paging_goto_next: function()
 	{
 		var startindex = this.get_view_fill_startindex();
-		if (this.view_fill_json && startindex > this.view_fill_json.files.length - this.options.listPaginationSize)
+		if (this.view_fill_json && startindex > this.view_fill_json.files.length - this.listPaginationLastSize)
 			return;
 
-		this.paging_goto_helper(startindex + this.options.listPaginationSize);
+		this.paging_goto_helper(startindex + this.listPaginationLastSize, this.listPaginationLastSize);
 	},
 	paging_goto_first: function()
 	{
@@ -923,7 +925,7 @@ var FileManager = new Class({
 
 		this.paging_goto_helper(2E9 /* ~ maxint */);
 	},
-	paging_goto_helper: function(startindex)
+	paging_goto_helper: function(startindex, pagesize)
 	{
 		// similar activity as load(), but without the server communication...
 		this.deselect();
@@ -938,12 +940,17 @@ var FileManager = new Class({
 		$clear(this.view_fill_timer);
 		this.view_fill_timer = null;
 
-		this.fill(null, startindex);
+		this.fill(null, startindex, pagesize);
 	},
 
-	fill: function(j, startindex) {
+	fill: function(j, startindex, pagesize) {
 
-		var pagesize = (this.options.listPaginationSize || 0);
+		if (!pagesize)
+		{
+			pagesize = this.options.listPaginationSize;
+			this.listPaginationLastSize = pagesize;
+		}
+		// else: pagesize specified means stick with that one. (useful to keep pagesize intact when going prev/next)
 
 		if (!j)
 		{
@@ -1075,6 +1082,8 @@ var FileManager = new Class({
 			is_bloody_huge_directory = (j.files.length > pagesize * 4);
 			// endindex MAY point beyond j.files.length; that's okay; we check the boundary every time in the other fill chunks.
 			endindex = startindex + pagesize;
+			// however for reasons of statistics gathering, we keep it bound to j.files.length at the moment:
+			if (endindex > j.files.length) endindex = j.files.length;
 
 			if (pagesize < j.files.length)
 			{
@@ -1120,7 +1129,7 @@ var FileManager = new Class({
 		// remember pagination position history
 		this.store_view_fill_startindex(startindex);
 
-		this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [startindex, endindex, is_bloody_huge_directory, starttime, els]);
+		this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [startindex, endindex, endindex - startindex, pagesize, is_bloody_huge_directory, starttime, els]);
 	},
 
 	/*
@@ -1132,7 +1141,7 @@ var FileManager = new Class({
 	 * The delay is the way to relinquish control to the browser and as a thank-you NOT get the dreaded
 	 * 'slow script, continue or abort?' dialog in your face. Ahh, the joy of cooperative multitasking is back again! :-)
 	 */
-	fill_chunkwise_1: function(startindex, endindex, is_bloody_huge_directory, starttime, els) {
+	fill_chunkwise_1: function(startindex, endindex, render_count, pagesize, is_bloody_huge_directory, starttime, els) {
 
 		var idx;
 		var self = this;
@@ -1142,6 +1151,14 @@ var FileManager = new Class({
 		var duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_1(' + startindex + ') @ ' + duration);
 
+		/*
+		 * Note that the < j.files.length check MUST be kept around: one of the fastest ways to abort/cancel
+		 * the render is emptying the files[] array, as that would abort the loop on the '< j.files.length'
+		 * condition.
+		 *
+		 * This, together with killing our delay-timer, is done when anyone calls reset_view_fill_store() to
+		 * abort this render pronto.
+		 */
 		for (idx = startindex; idx < endindex && idx < j.files.length; idx++)
 		{
 			var file = j.files[idx];
@@ -1149,10 +1166,20 @@ var FileManager = new Class({
 			if (idx % 10 == 0) {
 				// try not to spend more than 100 msecs per (UI blocking!) loop run!
 				var loop_duration = new Date().getTime() - loop_starttime;
+				duration = new Date().getTime() - starttime;
 				//if (typeof console !== 'undefined' && console.log) console.log('time taken so far = ' + duration + ' / ' + loop_duration + ' @ elcnt = ' + idx);
+
+				/*
+				 * Are we running in adaptive pagination mode? yes: calculate estimated new pagesize and adjust average (EMA) when needed.
+				 *
+				 * Do this here instead of at the very end so that pagesize will adapt, particularly when user does not want to wait for
+				 * this render to finish.
+				 */
+				this.adaptive_update_pagination_size(idx, endindex, render_count, pagesize, duration, 1.0 / 7.0, 1.1, 0.1 / 1000);
+
 				if (loop_duration >= 100)
 				{
-					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [idx, endindex, is_bloody_huge_directory, starttime, els]);
+					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [idx, endindex, render_count, pagesize, is_bloody_huge_directory, starttime, els]);
 					return; // end call == break out of loop
 				}
 			}
@@ -1278,14 +1305,14 @@ var FileManager = new Class({
 		//starttime = new Date().getTime();
 
 		// go to the next stage, right after these messages... ;-)
-		this.view_fill_timer = this.fill_chunkwise_2.delay(1, this, [is_bloody_huge_directory, starttime, els]);
+		this.view_fill_timer = this.fill_chunkwise_2.delay(1, this, [render_count, pagesize, is_bloody_huge_directory, starttime, els]);
 	},
 
 	/*
 	 * See comment for fill_chunkwise_1(): the makeDraggable() is a loop in itself and taking some considerable time
 	 * as well, so make it happen in a 'fresh' run here...
 	 */
-	fill_chunkwise_2: function(is_bloody_huge_directory, starttime, els) {
+	fill_chunkwise_2: function(render_count, pagesize, is_bloody_huge_directory, starttime, els) {
 
 		var self = this;
 
@@ -1465,15 +1492,17 @@ var FileManager = new Class({
 		duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + time taken in setStyles = ' + duration);
 
+		this.adaptive_update_pagination_size(render_count, render_count, render_count, pagesize, duration, 1.0 / 7.0, 1.02, 0.1 / 1000);
+
 		// go to the next stage, right after these messages... ;-)
-		this.view_fill_timer = this.fill_chunkwise_3.delay(1, this, [is_bloody_huge_directory, starttime]);
+		this.view_fill_timer = this.fill_chunkwise_3.delay(1, this, [render_count, pagesize, is_bloody_huge_directory, starttime]);
 	},
 
 	/*
 	 * See comment for fill_chunkwise_1(): the tooltips need to be assigned with each icon (2..3 per list item)
 	 * and apparently that takes some considerable time as well for large directories and slightly slower machines.
 	 */
-	fill_chunkwise_3: function(is_bloody_huge_directory, starttime) {
+	fill_chunkwise_3: function(render_count, pagesize, is_bloody_huge_directory, starttime) {
 
 		var self = this;
 
@@ -1487,10 +1516,59 @@ var FileManager = new Class({
 		duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + time taken in tips.attach = ' + duration);
 
+		// when a render is completed, we have maximum knowledge, i.e. maximum prognosis power: shorter tail on the EMA is our translation of that.
+		this.adaptive_update_pagination_size(render_count, render_count, render_count, pagesize, duration, 1.0 / 5.0, 1.0, 0);
+
 		// we're done: erase the timer so it can be garbage collected
 		this.view_fill_timer = null;
 
 		this.browserLoader.fade(0);
+	},
+
+	adaptive_update_pagination_size: function(currentindex, endindex, render_count, pagesize, duration, EMA_factor, future_fudge_factor, compensation)
+	{
+		var avgwait = this.options.listPaginationAvgWaitTime;
+		if (avgwait)
+		{
+			// we can now estimate how much time we'll need to process the entire list:
+			var orig_startindex = endindex - render_count;
+			var done_so_far = currentindex - orig_startindex;
+			// the 1.3 is a heuristic covering for chunk_2+3 activity
+			done_so_far /= parseFloat(render_count);
+			// at least 5% of the job should be done before we start using our info for estimation/extrapolation
+			if (done_so_far > 0.05)
+			{
+				/*
+				and it turns out our fudge factors are not telling the whole story: the total number of elements
+				to render are still a factor then.
+				*/
+				future_fudge_factor *= (1 + compensation * render_count);
+
+				var t_est = duration * future_fudge_factor / done_so_far;
+
+				// now take the configured _desired_ maximum average wait time and see how we should fare:
+				var p_est = render_count * avgwait / t_est;
+
+				// EMA + sensitivity: the closer to our current target, the better our info:
+				var tail = EMA_factor * (0.9 + 0.1 * done_so_far);
+				var newpsize = tail * p_est + (1 - tail) * pagesize;
+
+				// apply limitations: never reduce more than 50%, never increase more than 20%:
+				var delta = newpsize / pagesize;
+				if (delta < 0.5)
+					newpsize = 0.5 * pagesize;
+				else if (delta > 1.2)
+					newpsize = 1.2 * pagesize;
+				newpsize = parseInt(newpsize);
+
+				// and never let it drop below rediculous values:
+				if (newpsize < 20)
+					newpsize = 20;
+
+				if (typeof console !== 'undefined' && console.log) console.log('::auto-tune pagination: new page = ' + newpsize + ' @ tail:' + tail + ', p_est: ' + p_est + ', psize:' + pagesize + ', render:' + render_count + ', done%:' + done_so_far + '(' + (currentindex - orig_startindex) + '), t_est:' + t_est + ', dur:' + duration + ', pdelta: ' + delta);
+				this.options.listPaginationSize = newpsize;
+			}
+		}
 	},
 
 	fillInfo: function(file) {
