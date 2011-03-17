@@ -514,12 +514,12 @@ var FileManager = new Class({
 		this.switchButton();
 	},
 
-	load: function(dir, nofade) {
+	load: function(dir) {
 
 		var self = this;
 
 		this.deselect();
-		if (!nofade) this.info.fade(0);
+		this.info.fade(0);
 
 		if (this.Request) this.Request.cancel();
 
@@ -548,13 +548,12 @@ var FileManager = new Class({
 					return;
 				}
 
-				this.fill(j, nofade);
+				this.fill(j);
 				this.browserLoader.fade(0);
 			}).bind(self),
 			onComplete: (function() {
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onComplete invoked");
 				this.fitSizes();
-				//this.browserLoader.fade(0);
 			}).bind(self),
 			onError: (function(text, error) {
 				// a JSON error
@@ -847,7 +846,7 @@ var FileManager = new Class({
 		}
 	},
 
-	fill: function(j, nofade) {
+	fill: function(j) {
 
 		// abort any still running ('antiquated') fill chunks -- should have been done in the last 'view' request, but better safe than sorry:
 		$clear(this.view_fill_timer);
@@ -865,7 +864,7 @@ var FileManager = new Class({
 
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
-		if (!nofade && !this.onShow) {
+		if (!this.onShow) {
 			//if (typeof console !== 'undefined' && console.log) console.log('fill internal: fillInfo: file = ' + j.dir.name);
 			this.fillInfo(j.dir);
 		}
