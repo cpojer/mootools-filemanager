@@ -297,7 +297,7 @@ var FileManager = new Class({
 				if (e.key=='esc') this.hide();
 			}).bind(this),
 			keyboardInput: (function(e) {
-				if (typeof console !== 'undefined' && console.log) console.log('key press: ' + e.key);
+				//if (typeof console !== 'undefined' && console.log) console.log('key press: ' + e.key);
 				if(this.dialogOpen) return;
 				switch (e.key) {
 				case 'up':
@@ -1140,7 +1140,7 @@ var FileManager = new Class({
 		var loop_starttime = new Date().getTime();
 
 		var duration = new Date().getTime() - starttime;
-		if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_1(' + startindex + ') @ ' + duration);
+		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_1(' + startindex + ') @ ' + duration);
 
 		for (idx = startindex; idx < endindex && idx < j.files.length; idx++)
 		{
@@ -1206,7 +1206,7 @@ var FileManager = new Class({
 			// OR provide a basic click event for files too IFF this directory is too huge to support drag & drop.
 			if(isdir || is_bloody_huge_directory) {
 				el.addEvent('click', (function(e, target) {
-					if (typeof console !== 'undefined' && console.log) console.log('is_dir:CLICK');
+					//if (typeof console !== 'undefined' && console.log) console.log('is_dir:CLICK');
 					//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
 					//var node = el;
 					var node = this;
@@ -1274,7 +1274,7 @@ var FileManager = new Class({
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal = ' + duration);
+		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal = ' + duration);
 		//starttime = new Date().getTime();
 
 		// go to the next stage, right after these messages... ;-)
@@ -1290,7 +1290,7 @@ var FileManager = new Class({
 		var self = this;
 
 		var duration = new Date().getTime() - starttime;
-		if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_2() @ ' + duration);
+		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_2() @ ' + duration);
 
 		// -> cancel dragging
 		var revert = function(el) {
@@ -1478,14 +1478,14 @@ var FileManager = new Class({
 		var self = this;
 
 		var duration = new Date().getTime() - starttime;
-		if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_3() @ ' + duration);
+		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_3() @ ' + duration);
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
 		this.browser_dragndrop_info.fade(1);
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		if (typeof console !== 'undefined' && console.log) console.log(' + time taken in tips.attach = ' + duration);
+		//if (typeof console !== 'undefined' && console.log) console.log(' + time taken in tips.attach = ' + duration);
 
 		// we're done: erase the timer so it can be garbage collected
 		this.view_fill_timer = null;
