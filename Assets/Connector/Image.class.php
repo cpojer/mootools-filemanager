@@ -201,13 +201,13 @@ class Image {
 				// and 'worst case' (ahem) we've got the file itself loaded in memory as well (on initial load and later save):
 				// ... but this is more than covered by the 'triple charge' already, so we ditch this one from the heuristics.
 				if (0) $will_eat += $raw_size;
-				
+
 				// interestingly, JPEG files only appear to require about half that space required by PNG resize processes...
 				if (!empty($img['mime']) && $img['mime'] == 'image/jpeg')
 				{
 					$will_eat /= 2.0;
 				}
-				
+
 				$rv['usage_guestimate'] = $will_eat;
 
 				// now we know what we about need for this bugger, see if we got enough:
@@ -241,7 +241,7 @@ class Image {
 		);
 	}
 
-	
+
 	/**
 	 * Returns a copy of the meta information of the image
 	 *
@@ -251,7 +251,7 @@ class Image {
 		return array_merge(array(), (is_array($this->meta) ? $this->meta : array()));
 	}
 
-	
+
 	/**
 	 * Returns TRUE when the image data have been altered by this instance's operations, FALSE when the content has not (yet) been touched.
 	 *

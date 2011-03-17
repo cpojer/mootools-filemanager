@@ -298,7 +298,7 @@ class FileManager
 		}
 
 		$mime_filters = $this->getAllowedMimeTypes($mime_filter);
-		
+
 		// remove the imageinfo() call overhead per file for very large directories; just guess at the mimetye from the filename alone.
 		// The real mimetype will show up in the 'details' view anyway! This is only for the 'filter' function:
 		$just_guess_mime = (count($files) > 100);
@@ -1295,7 +1295,7 @@ class FileManager
 			{
 				$img = new Image($file);
 				$size = $img->getSize();
-				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy 
+				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy
 				// (default quality is 100% for JPEG so we get the cleanest resized images here)
 				$img->resize($this->options['maxImageSize'], $this->options['maxImageSize'])->save();
 				unset($img);
@@ -1392,7 +1392,7 @@ class FileManager
 			$newdir_arg = $this->getPOSTparam('newDirectory');
 			$newname_arg = $this->getPOSTparam('name');
 			$rename = (empty($newdir_arg) && !empty($newname_arg));
-			
+
 			$is_copy = !!$this->getPOSTparam('copy');
 
 
@@ -2574,7 +2574,7 @@ class FileManager
 		if ((!$mime || $mime == 'application/octet-stream') && strlen($ext) > 0)
 		{
 			$ext2mimetype_arr = $this->getMimeTypeDefinitions();
-			
+
 			if (!empty($ext2mimetype_arr[$ext]))
 				return $ext2mimetype_arr[$ext];
 		}

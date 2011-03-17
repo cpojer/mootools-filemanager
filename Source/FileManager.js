@@ -1124,14 +1124,14 @@ var FileManager = new Class({
 	},
 
 	/*
-	 The old one-function-does-all fill() would take an awful long time when processing large directories. This function
-	 contains the most costly code chunk of the old fill() and has adjusted the looping through the j.files[] list
-	 in such a way that we can 'chunk it up': we can measure the time consumed so far and when we have spent more than
-	 X milliseconds in the loop, we stop and allow the loop to commence after a minimal delay.
-
-	 The delay is the way to relinquish control to the browser and as a thank-you NOT get the dreaded
-	 'slow script, continue or abort?' dialog in your face. Ahh, the joy of cooperative multitasking is back again! :-)
-	*/
+	 * The old one-function-does-all fill() would take an awful long time when processing large directories. This function
+	 * contains the most costly code chunk of the old fill() and has adjusted the looping through the j.files[] list
+	 * in such a way that we can 'chunk it up': we can measure the time consumed so far and when we have spent more than
+	 * X milliseconds in the loop, we stop and allow the loop to commence after a minimal delay.
+	 *
+	 * The delay is the way to relinquish control to the browser and as a thank-you NOT get the dreaded
+	 * 'slow script, continue or abort?' dialog in your face. Ahh, the joy of cooperative multitasking is back again! :-)
+	 */
 	fill_chunkwise_1: function(startindex, endindex, is_bloody_huge_directory, starttime, els) {
 
 		var idx;
@@ -1176,27 +1176,32 @@ var FileManager = new Class({
 			).store('file', file);
 
 			/*
-			WARNING: for some (to me) incomprehensible reason the old code which bound the event handlers to 'this==self' and which used the 'el' variable
-			         available here, does NOT WORK ANY MORE - tested in FF3.6. Turns out 'el' is pointing anywhere but where you want it by the time
-					 the event handler is executed.
+			 * WARNING: for some (to me) incomprehensible reason the old code which bound the event handlers to 'this==self' and which used the 'el' variable
+			 *          available here, does NOT WORK ANY MORE - tested in FF3.6. Turns out 'el' is pointing anywhere but where you want it by the time
+			 *          the event handler is executed.
+			 *
+			 *          The 'solution' which I found was to rely on the 'self' reference instead and bind to 'el'. If the one wouldn't work, the other shouldn't,
+			 *          but there you have it: this way around it works. FF3.6.14 :-(
+			 *
+			 * EDIT 2011/03/16: the problem started as soon as the old Array.each(function(...){...}) by the chunked code which uses a for loop:
+			 *
+			 *              http://jibbering.com/faq/notes/closures/
+			 *
+			 *          as it says there:
+			 *
+			 *              A closure is formed when one of those inner functions is made accessible outside of the function in which it was
+			 *              contained, so that it may be executed after the outer function has returned. At which point it still has access to
+			 *              the local variables, parameters and inner function declarations of its outer function. Those local variables,
+			 *              parameter and function declarations (initially) >>>> have the values that they had when the outer function returned <<<<
+			 *              and may be interacted with by the inner function.
+			 *
+			 *          The >>>> <<<< emphasis is mine: in the .each() code, each el was a separate individual, where due to the for loop,
+			 *          the last 'el' to exist at all is the one created during the last round of the loop in that chunk. Which explains the
+			 *          observed behaviour before the fix: the file names associated with the 'el' element object were always pointing
+			 *          at some item further down the list, not necessarily the very last one, but always these references were 'grouped':
+			 *          multiple rows would produce the same filename.
+			 */
 
-					 The 'solution' which I found was to rely on the 'self' reference instead and bind to 'el'. If the one wouldn't work, the other shouldn't,
-					 but there you have it: this way around it works. FF3.6.14 :-(
-
-					 EDIT 2011/03/16: the problem started as soon as the old Array.each(function(...){...}) by the chunked code which uses a for loop:
-					                    http://jibbering.com/faq/notes/closures/
-								      as it says there:
-									    A closure is formed when one of those inner functions is made accessible outside of the function in which it was
-										contained, so that it may be executed after the outer function has returned. At which point it still has access to
-										the local variables, parameters and inner function declarations of its outer function. Those local variables,
-										parameter and function declarations (initially) >>>> have the values that they had when the outer function returned <<<<
-										and may be interacted with by the inner function.
-									  The >>>> <<<< emphasis is mine: in the .each() code, each el was a separate individual, where due to the for loop,
-									  the last 'el' to exist at all is the one created during the last round of the loop in that chunk. Which explains the
-									  observed behaviour before the fix: the file names associated with the 'el' element object were always pointing
-									  at some item further down the list, not necessarily the very last one, but always these references were 'grouped':
-									  multiple rows would produce the same filename.
-			*/
 			// add click event, only to directories, files use the revert function (to enable drag n drop)
 			// OR provide a basic click event for files too IFF this directory is too huge to support drag & drop.
 			if(isdir || is_bloody_huge_directory) {
@@ -1277,9 +1282,9 @@ var FileManager = new Class({
 	},
 
 	/*
-	See comment for fill_chunkwise_1(): the makeDraggable() is a loop in itself and taking some considerable time
-	as well, so make it happen in a 'fresh' run here...
-	*/
+	 * See comment for fill_chunkwise_1(): the makeDraggable() is a loop in itself and taking some considerable time
+	 * as well, so make it happen in a 'fresh' run here...
+	 */
 	fill_chunkwise_2: function(is_bloody_huge_directory, starttime, els) {
 
 		var self = this;
@@ -1378,7 +1383,7 @@ var FileManager = new Class({
 						return;
 					}
 
-					revert(el);		// do not send the 'detail' request in here: self.drop_pending takes care of that!
+					revert(el);       // do not send the 'detail' request in here: self.drop_pending takes care of that!
 
 					var dir;
 					if (droppable){
@@ -1437,7 +1442,7 @@ var FileManager = new Class({
 						el.getParent().destroy();
 					});
 
-					self.deselect(el);					// and here, once again, do NOT send the 'detail' request while the 'move' is still ongoing (*async* communications!)
+					self.deselect(el);                  // and here, once again, do NOT send the 'detail' request while the 'move' is still ongoing (*async* communications!)
 
 					// the 'move' action will probably still be running by now, but we need this only to block simultaneous requests triggered from this run itself
 					self.drop_pending = 0;
@@ -1465,9 +1470,9 @@ var FileManager = new Class({
 	},
 
 	/*
-	See comment for fill_chunkwise_1(): the tooltips need to be assigned with each icon (2..3 per list item)
-	and apparently that takes some considerable time as well for large directories and slightly slower machines.
-	*/
+	 * See comment for fill_chunkwise_1(): the tooltips need to be assigned with each icon (2..3 per list item)
+	 * and apparently that takes some considerable time as well for large directories and slightly slower machines.
+	 */
 	fill_chunkwise_3: function(is_bloody_huge_directory, starttime) {
 
 		var self = this;
