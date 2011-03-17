@@ -931,18 +931,20 @@ class FileManager
 		$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 		$list_type = ($this->getPOSTparam('type') != 'thumb' ? 'list' : 'thumb');
 
+		$legal_url = null;
+		
 		try
 		{
+			$dir_arg = $this->getPOSTparam('directory');
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
+			$legal_url = self::enforceTrailingSlash($legal_url);
+
 			if (!$this->options['create'])
 				throw new FileManagerException('disabled');
 
 			$file_arg = $this->getPOSTparam('file');
 			if (empty($file_arg))
 				throw new FileManagerException('nofile');
-
-			$dir_arg = $this->getPOSTparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
 
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			//$legal_url .= $filename;
