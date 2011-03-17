@@ -1600,7 +1600,7 @@ var FileManager = new Class({
 	showFunctions: function(icon,appearOn,opacityBefore,opacityAfter) {
 		var opacity = [opacityBefore || 1, opacityAfter || 0];
 		icon.set({
-			opacity: opacity[1],
+			opacity: opacity[1]
 		});
 
 		$(appearOn).addEvents({
