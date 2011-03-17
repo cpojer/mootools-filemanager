@@ -1462,7 +1462,7 @@ var FileManager = new Class({
 		var self = this;
 
 		if (!errorText) {
-			errorText = this.language.backend.unidentified_error;
+			errorText = this.language['backend.unidentified_error'];
 		}
 		else if (errorText.indexOf('{') != -1) {
 			errorText = errorText.substring(0,errorText.indexOf('{'));
