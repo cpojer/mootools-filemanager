@@ -976,7 +976,7 @@ class FileManager
 			if (!headers_sent()) header('Content-Type: application/json');
 
 			// success, now show the new directory as a list view:
-			$rv = $this->_onView($url . $file . '/', $jserr, $mime_filter, $list_type);
+			$rv = $this->_onView($legal_url . $file . '/', $jserr, $mime_filter, $list_type);
 			echo json_encode($rv);
 			return;
 		}
@@ -1022,8 +1022,8 @@ class FileManager
 				// and fall back to showing the BASEDIR directory
 				try
 				{
-					$dir = $this->options['directory'];
-					$rv = $this->_onView($dir, $jserr, $mime_filter, $list_type);
+					$legal_url = $this->options['directory'];
+					$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
 					$jserr = $rv;
 				}
 				catch (Exception $e)
@@ -1594,7 +1594,9 @@ class FileManager
 					$thumbfile = $this->getIconForError($emsg, $legal_url, false);
 				}
 
-				$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '"><img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" /></a>';
+				$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+							   <img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" />
+							 </a>';
 				if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
 				{
 					$earr = explode(':', $e->getMessage(), 2);
