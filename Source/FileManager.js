@@ -46,7 +46,8 @@ var FileManager = new Class({
 		hideClose: false,
 		hideOverlay: false,
 		hideQonDelete: false,
-		propagateData: {}       // extra query parameters sent with every request to the backend
+		listPaginationSize: 1000,  // add pagination per N items for huge directories (speed up interaction)
+		propagateData: {}          // extra query parameters sent with every request to the backend
 	},
 
 	hooks: {
@@ -66,7 +67,9 @@ var FileManager = new Class({
 		this.usingHistory = false;
 		this.fmShown = false;
 		this.drop_pending = 0;   // state: 0: no drop pending, 1: copy pending, 2: move pending
-		this.view_fill_timer = null;   // timer reference when fill() is working chunk-by-chunk.
+		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
+		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
+		this.view_fill_json = null;      // the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly consulting the server.
 
 		this.language = Object.clone(FileManager.Language.en);
 		if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
@@ -105,6 +108,8 @@ var FileManager = new Class({
 			}
 			if (file.mime == 'text/directory'){
 				el.addClass('selected');
+				// reset the paging to page #0 as we clicked to change directory
+				this.store_view_fill_startindex(0);
 				this.load(this.Directory + file.name);
 				return;
 			}
@@ -169,7 +174,35 @@ var FileManager = new Class({
 				'id':'drag_n_drop',
 				'title': this.language.drag_n_drop_disabled
 			}); // .setStyle('visibility', 'hidden');
-		this.browserheader.adopt([this.browserMenu_thumb, this.browserMenu_list, this.browser_dragndrop_info]);
+		this.browser_paging = new Element('div',{
+				'id':'fm_view_paging'
+			}).set('opacity', 0); // .setStyle('visibility', 'hidden');
+		this.browser_paging_first = new Element('a',{
+				'id':'paging_goto_first'
+			}).set('opacity', 1).addEvents({
+				click: this.paging_goto_first.bind(this)
+			});
+		this.browser_paging_prev = new Element('a',{
+				'id':'paging_goto_previous'
+			}).set('opacity', 1).addEvents({
+				click: this.paging_goto_prev.bind(this)
+			});
+		this.browser_paging_next = new Element('a',{
+				'id':'paging_goto_next'
+			}).set('opacity', 1).addEvents({
+				click: this.paging_goto_next.bind(this)
+			});
+		this.browser_paging_last = new Element('a',{
+				'id':'paging_goto_last'
+			}).set('opacity', 1).addEvents({
+				click: this.paging_goto_last.bind(this)
+			});
+		this.browser_paging_info = new Element('span',{
+				'id':'paging_info',
+				'text': ''
+			});
+		this.browser_paging.adopt([this.browser_paging_first, this.browser_paging_prev, this.browser_paging_info, this.browser_paging_next, this.browser_paging_last]);
+		this.browserheader.adopt([this.browserMenu_thumb, this.browserMenu_list, this.browser_dragndrop_info, this.browser_paging]);
 
 		this.browser = new Element('ul', {'class': 'filemanager-browser'}).inject(this.browserScroll);
 
@@ -397,7 +430,7 @@ var FileManager = new Class({
 		// stop hashListener
 		if(typeof jsGET != 'undefined') {
 			jsGET.removeListener(this.hashListenerId);
-			jsGET.remove(['fmID','fmPath','fmFile','fmListType']);
+			jsGET.remove(['fmID','fmPath','fmFile','fmListType','fmPageIdx']);
 		}
 
 		if(!this.options.hideOverlay)
@@ -477,8 +510,8 @@ var FileManager = new Class({
 						filter: self.options.filter
 					},
 					onRequest: (function(j) {
-						// abort any still running ('antiquated') fill chunks:
-						$clear(this.view_fill_timer);
+						// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+						this.reset_view_fill_store();
 
 						this.browserLoader.fade(1);
 					}).bind(self),
@@ -490,7 +523,11 @@ var FileManager = new Class({
 							return;
 						}
 
-						this.fill(j);
+						// make sure we store the JSON list!
+						this.reset_view_fill_store(j);
+
+						// the 'view' request may be an initial reload: keep the startindex (= page shown) intact then:
+						this.fill(j, this.get_view_fill_startindex());
 						//this.browserLoader.fade(0);
 					}).bind(self),
 					onComplete: function(){},
@@ -539,8 +576,8 @@ var FileManager = new Class({
 			onRequest: (function(){
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onRequest invoked");
 				this.browserLoader.fade(1);
-				// abort any still running ('antiquated') fill chunks:
-				$clear(this.view_fill_timer);
+				// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+				this.reset_view_fill_store();
 			}).bind(self),
 			onSuccess: (function(j) {
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onSuccess invoked");
@@ -551,7 +588,11 @@ var FileManager = new Class({
 					return;
 				}
 
-				this.fill(j);
+				// make sure we store the JSON list!
+				this.reset_view_fill_store(j);
+
+				// the 'view' request may be an initial reload: keep the startindex (= page shown) intact then:
+				this.fill(j, this.get_view_fill_startindex());
 				//this.browserLoader.fade(0);
 			}).bind(self),
 			onComplete: (function() {
@@ -849,10 +890,87 @@ var FileManager = new Class({
 		}
 	},
 
-	fill: function(j) {
+	// clicked 'first' button in the paged list/thumb view:
+	paging_goto_prev: function()
+	{
+		var startindex = this.get_view_fill_startindex();
+		if (!startindex)
+			return;
 
-		// abort any still running ('antiquated') fill chunks -- should have been done in the last 'view' request, but better safe than sorry:
+		this.paging_goto_helper(startindex - this.options.listPaginationSize);
+	},
+	paging_goto_next: function()
+	{
+		var startindex = this.get_view_fill_startindex();
+		if (this.view_fill_json && startindex > this.view_fill_json.files.length - this.options.listPaginationSize)
+			return;
+
+		this.paging_goto_helper(startindex + this.options.listPaginationSize);
+	},
+	paging_goto_first: function()
+	{
+		var startindex = this.get_view_fill_startindex();
+		if (!startindex)
+			return;
+
+		this.paging_goto_helper(0);
+	},
+	paging_goto_last: function()
+	{
+		var startindex = this.get_view_fill_startindex();
+		if (this.view_fill_json && startindex > this.view_fill_json.files.length - this.options.listPaginationSize)
+			return;
+
+		this.paging_goto_helper(2E9 /* ~ maxint */);
+	},
+	paging_goto_helper: function(startindex)
+	{
+		// similar activity as load(), but without the server communication...
+		this.deselect();
+		this.info.fade(0);
+
+		// if (this.Request) this.Request.cancel();
+
+		this.browserLoader.fade(1);
+		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+		//this.reset_view_fill_store();
+		// abort any still running ('antiquated') fill chunks:
 		$clear(this.view_fill_timer);
+		this.view_fill_timer = null;
+
+		this.fill(null, startindex);
+	},
+
+	fill: function(j, startindex) {
+
+		var pagesize = (this.options.listPaginationSize || 0);
+
+		if (!j)
+		{
+			j = this.view_fill_json;
+		}
+
+		startindex = parseInt(startindex);     // make sure it's an int number
+		if (!pagesize)
+		{
+			// no paging: always go to position 0 then!
+			startindex = 0;
+		}
+		else if (startindex > j.files.length)
+		{
+			startindex = j.files.length;
+		}
+		else if (startindex < 0)
+		{
+			startindex = 0;
+		}
+		// always make sure startindex is exactly on a page edge: this is important to keep the page numbers
+		// in the tooltips correct!
+		startindex = Math.floor(startindex / pagesize);
+		startindex *= pagesize;
+
+		//this.browser_paging.fade(0);
+
 
 		// as this is a long-running process, make sure the hourglass-equivalent is visible for the duration:
 		//this.browserLoader.fade(1);
@@ -941,16 +1059,68 @@ var FileManager = new Class({
 		 * alternative means to move/copy files should be provided in such cases instead.
 		 *
 		 * Hence we run through the list here and abort / limit the drag&drop assignment process when the hardcoded number of
-		 * allow_drag_n_drop_now directories or files have been reached.
+		 * directories or files have been reached (is_bloody_huge_directory).
 		 *
 		 * TODO: make these numbers 'auto adaptive' based on timing measurements: how long does it take to initialize
 		 *       a view on YOUR machine? --> adjust limits accordingly.
 		 */
-		var allow_drag_n_drop_now = (j.files.length < 1000);
+		var is_bloody_huge_directory = false;
 		var starttime = new Date().getTime();
 		//if (typeof console !== 'undefined' && console.log) console.log('fill list size = ' + j.files.length);
 
-		this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [j, 0, allow_drag_n_drop_now, starttime, els]);
+		var endindex = j.files.length;
+		var paging_now = 0;
+		if (pagesize)
+		{
+			is_bloody_huge_directory = (j.files.length > pagesize * 4);
+			// endindex MAY point beyond j.files.length; that's okay; we check the boundary every time in the other fill chunks.
+			endindex = startindex + pagesize;
+
+			if (pagesize < j.files.length)
+			{
+				var pagecnt = Math.ceil(j.files.length / pagesize);
+				var curpagno = Math.floor(startindex / pagesize) + 1;
+
+				this.browser_paging_info.set('text', 'P:' + curpagno);
+
+				if (curpagno > 1)
+				{
+					this.browser_paging_first.set('title', this.language.goto_page + ' 1');
+					this.browser_paging_first.fade(1);
+					this.browser_paging_prev.set('title', this.language.goto_page + ' ' + (curpagno - 1));
+					this.browser_paging_prev.fade(1);
+				}
+				else
+				{
+					this.browser_paging_first.set('title', '---');
+					this.browser_paging_first.fade(0.25);
+					this.browser_paging_prev.set('title', '---');
+					this.browser_paging_prev.fade(0.25);
+				}
+				if (curpagno < pagecnt)
+				{
+					this.browser_paging_last.set('title', this.language.goto_page + ' ' + pagecnt);
+					this.browser_paging_last.fade(1);
+					this.browser_paging_next.set('title', this.language.goto_page + ' ' + (curpagno + 1));
+					this.browser_paging_next.fade(1);
+				}
+				else
+				{
+					this.browser_paging_last.set('title', '---');
+					this.browser_paging_last.fade(0.25);
+					this.browser_paging_next.set('title', '---');
+					this.browser_paging_next.fade(0.25);
+				}
+
+				paging_now = 1;
+			}
+		}
+		this.browser_paging.fade(paging_now);
+
+		// remember pagination position history
+		this.store_view_fill_startindex(startindex);
+
+		this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [startindex, endindex, is_bloody_huge_directory, starttime, els]);
 	},
 
 	/*
@@ -962,16 +1132,17 @@ var FileManager = new Class({
 	 The delay is the way to relinquish control to the browser and as a thank-you NOT get the dreaded
 	 'slow script, continue or abort?' dialog in your face. Ahh, the joy of cooperative multitasking is back again! :-)
 	*/
-	fill_chunkwise_1: function(j, startindex, allow_drag_n_drop_now, starttime, els) {
+	fill_chunkwise_1: function(startindex, endindex, is_bloody_huge_directory, starttime, els) {
 
 		var idx;
 		var self = this;
+		var j = this.view_fill_json;
 		var loop_starttime = new Date().getTime();
 
 		var duration = new Date().getTime() - starttime;
-		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_1(' + startindex + ') @ ' + duration);
+		if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_1(' + startindex + ') @ ' + duration);
 
-		for (idx = startindex; idx < j.files.length; idx++)
+		for (idx = startindex; idx < endindex && idx < j.files.length; idx++)
 		{
 			var file = j.files[idx];
 
@@ -981,7 +1152,7 @@ var FileManager = new Class({
 				//if (typeof console !== 'undefined' && console.log) console.log('time taken so far = ' + duration + ' / ' + loop_duration + ' @ elcnt = ' + idx);
 				if (loop_duration >= 100)
 				{
-					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [j, idx, allow_drag_n_drop_now, starttime, els]);
+					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [idx, endindex, is_bloody_huge_directory, starttime, els]);
 					return; // end call == break out of loop
 				}
 			}
@@ -1028,7 +1199,7 @@ var FileManager = new Class({
 			*/
 			// add click event, only to directories, files use the revert function (to enable drag n drop)
 			// OR provide a basic click event for files too IFF this directory is too huge to support drag & drop.
-			if(isdir || !allow_drag_n_drop_now) {
+			if(isdir || is_bloody_huge_directory) {
 				el.addEvent('click', (function(e, target) {
 					if (typeof console !== 'undefined' && console.log) console.log('is_dir:CLICK');
 					//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
@@ -1098,23 +1269,23 @@ var FileManager = new Class({
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal = ' + duration);
+		if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal = ' + duration);
 		//starttime = new Date().getTime();
 
 		// go to the next stage, right after these messages... ;-)
-		this.view_fill_timer = this.fill_chunkwise_2.delay(1, this, [j, allow_drag_n_drop_now, starttime, els]);
+		this.view_fill_timer = this.fill_chunkwise_2.delay(1, this, [is_bloody_huge_directory, starttime, els]);
 	},
 
 	/*
 	See comment for fill_chunkwise_1(): the makeDraggable() is a loop in itself and taking some considerable time
 	as well, so make it happen in a 'fresh' run here...
 	*/
-	fill_chunkwise_2: function(endindex, allow_drag_n_drop_now, starttime, els) {
+	fill_chunkwise_2: function(is_bloody_huge_directory, starttime, els) {
 
 		var self = this;
 
 		var duration = new Date().getTime() - starttime;
-		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_2() @ ' + duration);
+		if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_2() @ ' + duration);
 
 		// -> cancel dragging
 		var revert = function(el) {
@@ -1145,7 +1316,7 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal + revert = ' + duration);
 		//starttime = new Date().getTime();
 
-		if (allow_drag_n_drop_now) {
+		if (!is_bloody_huge_directory) {
 			// -> make draggable
 			$$(els[0]).makeDraggable({
 				droppables: $$(this.droppables.combine(els[1])),
@@ -1464,6 +1635,50 @@ var FileManager = new Class({
 		}).inject(this.menu, 'top');
 		if (this[name]) el.addEvent('click', this[name].bind(this));
 		return el;
+	},
+
+	// clear the view chunk timer, erase the JSON store but do NOT reset the pagination to page 0:
+	// we may be reloading and we don't want to destroy the page indicator then!
+	reset_view_fill_store: function(j)
+	{
+		// abort any still running ('antiquated') fill chunks:
+		$clear(this.view_fill_timer);
+
+		this.browser_paging.fade(0);
+
+		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
+		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
+		if (this.view_fill_json)
+		{
+			// make sure the old 'fill' run is aborted ASAP: clear the old files[] array to break
+			// the heaviest loop in fill:
+			this.view_fill_json.files = [];
+		}
+		this.view_fill_json = ((j && j.status) ? j : null);      // clear out the old JSON data and set up possibly new data.
+		// ^^^ the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly
+		//     consulting the server. The server doesn't need to know we're so slow we need pagination now! ;-)
+	},
+
+	store_view_fill_startindex: function(idx)
+	{
+		this.view_fill_startindex = idx;
+		if(typeof jsGET != 'undefined' /* && this.storeHistory */) {
+			jsGET.set({'fmPageIdx': idx});
+		}
+	},
+
+	get_view_fill_startindex: function(idx)
+	{
+		// we don't care about null, undefined or 0 here: as we keep close track of the startindex, any nonzero valued setting wins out.
+		if (!idx)
+		{
+			idx = this.view_fill_startindex;
+		}
+		if(typeof jsGET != 'undefined' && !idx)
+		{
+			idx = jsGET.get('fmPageIdx');
+		}
+		return parseInt(idx ? idx : 0);
 	},
 
 	fireHooks: function(hook){

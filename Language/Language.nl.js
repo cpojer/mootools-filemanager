@@ -49,6 +49,7 @@ FileManager.Language.nl = {
 	toggle_side_list: 'List view',
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
+	goto_page: 'Go to page',
 
 	'backend.disabled': 'Deze operatie is uitgeschakeld op deze server.',
 	'backend.authorized': 'Je hebt geen toestemming om deze aktie uit te voeren.',

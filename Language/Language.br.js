@@ -49,6 +49,7 @@ FileManager.Language.br = {
 	toggle_side_list: 'List view',
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
+	goto_page: 'Go to page',
 
 	'backend.disabled': 'Não é permitido enviar arquivos neste servidor.',
 	'backend.authorized': 'Você não está autenticado para enviar arquivos neste servidor.',
