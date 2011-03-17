@@ -196,6 +196,7 @@ div.filemanager ul li {
 div.filemanager div.filemanager-browsercontainer {
   height: 100%;
   width: 35%;
+  min-width: 146px;
   border: 0;
   border-right: 1px solid #bebebe;
   background:#D7DEE8 url("../Images/filelist.png") repeat-x bottom left;
@@ -219,7 +220,7 @@ div.filemanager-browsercontainer div.filemanager-browserheader {
   height: 25px;
   background:#C3CDD9;
   border-bottom: 1px solid #bebebe;
-  text-align: right;
+  text-align: center;
 }
 
 div.filemanager-browsercontainer div.filemanager-browserheader a.listType {
@@ -452,6 +453,7 @@ div.filemanager-infos {
   left: 35%;
   top: 0;
   width: 63%;
+  min-width: 250px;
   height: 92%;
   padding: 0px 1%;
   line-height: 1.6em;
