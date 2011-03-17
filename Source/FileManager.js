@@ -128,7 +128,7 @@ var FileManager = new Class({
 		this.toggleList = function(e) {
 			//if (typeof console !== 'undefined' && console.log) console.log('togglelist: key press: ' + (e ? e.key : '---'));
 			if(e) e.stop();
-			$$('.filemanager-browserheader a').set('opacity',0.5);
+			$$('.filemanager-browserheader a.listType').set('opacity',0.5);
 			if(!this.browserMenu_thumb.retrieve('set',false)) {
 				this.browserMenu_list.store('set',false);
 				this.browserMenu_thumb.store('set',true).set('opacity',1);
@@ -167,8 +167,6 @@ var FileManager = new Class({
 			});
 		this.browser_dragndrop_info = new Element('a',{
 				'id':'drag_n_drop',
-				//'class':'listType',
-				'style' : 'margin-right: 10px;',
 				'title': this.language.drag_n_drop_disabled
 			}); // .setStyle('visibility', 'hidden');
 		this.browserheader.adopt([this.browserMenu_thumb, this.browserMenu_list, this.browser_dragndrop_info]);
@@ -311,6 +309,7 @@ var FileManager = new Class({
 	},
 
 	hashHistory: function(vars) { // get called from the jsGET listener
+
 		this.storeHistory = false;
 		//if (typeof console !== 'undefined' && console.log) console.log(vars);
 		if(vars.changed['fmPath'] == '')
@@ -348,7 +347,7 @@ var FileManager = new Class({
 		if(typeof jsGET != 'undefined') {
 			if(jsGET.get('fmFile') != null) this.onShow = true;
 			if(jsGET.get('fmListType') != null) {
-				$$('.filemanager-browserheader a').set('opacity',0.5);
+				$$('.filemanager-browserheader a.listType').set('opacity',0.5);
 				this.listType = jsGET.get('fmListType');
 				if(this.listType == 'thumb')
 					this.browserMenu_thumb.store('set',true).set('opacity',1);
@@ -365,11 +364,8 @@ var FileManager = new Class({
 		if(!this.options.hideOverlay)
 			this.overlay.show();
 
-		this.info.set('opacity', 0);
-		this.container.set('opacity', 0);
-
-		this.container.setStyles({
-				opacity: 0,
+		this.info.fade(0);
+		this.container.fade(0).setStyles({
 				display: 'block'
 			});
 
@@ -385,7 +381,7 @@ var FileManager = new Class({
 		 document.addEvent('keydown', this.bound.keyboardInput);
 		else
 		 document.addEvent('keypress', this.bound.keyboardInput);
-		this.container.tween('opacity',1);
+		this.container.fade(1);
 
 		this.fitSizes();
 		this.fireEvent('show');
@@ -582,7 +578,7 @@ var FileManager = new Class({
 				directory: self.Directory,
 				filter: self.options.filter
 			},
-			onRequest: self.browserLoader.set('opacity', 1),
+			onRequest: self.browserLoader.fade(1),
 			onSuccess: (function(j) {
 				if (!j || !j.status) {
 					// TODO: include j.error in the message, iff j.error exists
@@ -668,7 +664,7 @@ var FileManager = new Class({
 						directory: self.Directory,
 						filter: self.options.filter
 					},
-					onRequest: self.browserLoader.set('opacity', 1),
+					onRequest: self.browserLoader.fade(1),
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							// TODO: include j.error in the message, iff j.error exists
@@ -852,10 +848,10 @@ var FileManager = new Class({
 		$clear(this.view_fill_timer);
 
 		// as this is a long-running process, make sure the hourglass-equivalent is visible for the duration:
-		//this.browserLoader.set('opacity', 1);
+		//this.browserLoader.fade(1);
 
 		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
-		this.browser_dragndrop_info.set('opacity', 0.5);
+		this.browser_dragndrop_info.fade(0.5);
 		this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
 		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
 
@@ -1073,7 +1069,7 @@ var FileManager = new Class({
 			}
 
 			els[isdir ? 1 : 0].push(el);
-			//if (file.name == '..') el.set('opacity', 0.7);
+			//if (file.name == '..') el.fade(0.7);
 			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
 			icons = $$(icons.map((function(icon){
 				this.showFunctions(icon,icon,0.5,1);
@@ -1115,8 +1111,7 @@ var FileManager = new Class({
 
 		// -> cancel dragging
 		var revert = function(el) {
-			el.set('opacity', 1).removeClass('drag').removeClass('move').setStyles({
-				opacity: 1,
+			el.fade(1).removeClass('drag').removeClass('move').setStyles({
 				'z-index': 'auto',
 				position: 'relative',
 				width: 'auto',
@@ -1127,7 +1122,7 @@ var FileManager = new Class({
 			var icons = el.getElements('img.browser-icon');
 			if (icons) {
 				icons.each(function(icon) {
-					icon.set('opacity', 0.0);
+					icon.fade(0);
 				});
 			}
 
@@ -1175,7 +1170,7 @@ var FileManager = new Class({
 
 				onStart: function(el){
 					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onStart');
-					el.set('opacity', 0.7).addClass('move');
+					el.fade(0.7).addClass('move');
 					//if (typeof console !== 'undefined' && console.log) console.log('add keyboard up/down on drag start');
 					document.addEvents({
 						keydown: self.bound.keydown,
@@ -1290,7 +1285,7 @@ var FileManager = new Class({
 		this.view_fill_timer = null;
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
-		this.browser_dragndrop_info.set('opacity', 1.0);
+		this.browser_dragndrop_info.fade(1);
 	},
 
 	fillInfo: function(file) {
@@ -1354,7 +1349,7 @@ var FileManager = new Class({
 				},
 				onRequest: (function() {
 					this.previewLoader.inject(this.preview);
-					this.previewLoader.set('opacity', 1);
+					this.previewLoader.fade(1);
 				}).bind(self),
 				onSuccess: (function(j) {
 
@@ -1482,7 +1477,7 @@ var FileManager = new Class({
 	},
 
 	onRequest: function(){
-		this.loader.set('opacity', 1);
+		this.loader.fade(1);
 	},
 	onComplete: function(){
 		this.loader.fade(0);
