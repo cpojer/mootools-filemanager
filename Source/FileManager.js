@@ -464,6 +464,8 @@ var FileManager = new Class({
 				}).focus();
 			},
 			onConfirm: function() {
+				if (this.Request) this.Request.cancel();
+
 				new FileManager.Request({
 					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
 						event: 'create'
@@ -474,7 +476,12 @@ var FileManager = new Class({
 						type: self.listType,
 						filter: self.options.filter
 					},
-					onRequest: self.browserLoader.set('opacity', 1),
+					onRequest: (function(j) {
+						// abort any still running ('antiquated') fill chunks:
+						$clear(this.view_fill_timer);
+
+						this.browserLoader.fade(1);
+					}).bind(self),
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							// TODO: include j.error in the message, iff j.error exists
@@ -483,7 +490,7 @@ var FileManager = new Class({
 							return;
 						}
 
-						self.fill.bind(self)
+						this.fill(j);
 						this.browserLoader.fade(0);
 					}).bind(self),
 					onComplete: function(){},
@@ -531,7 +538,7 @@ var FileManager = new Class({
 			},
 			onRequest: (function(){
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onRequest invoked");
-				this.browserLoader.set('opacity', 1);
+				this.browserLoader.fade(1);
 				// abort any still running ('antiquated') fill chunks:
 				$clear(this.view_fill_timer);
 			}).bind(self),
