@@ -1265,20 +1265,20 @@ class FileManager
 				throw new FileManagerException('authorized');
 
 			if($fileinfo['maxsize'] && $fileinfo['size'] > $fileinfo['maxsize'])
-				throw new UploadException('size');
+				throw new FileManagerException('size');
 
 			if(!$fileinfo['extension'])
-				throw new UploadException('extension');
+				throw new FileManagerException('extension');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url . $fileinfo['name'] . '.' . $fileinfo['extension']);
 
 
 			if(!$fileinfo['overwrite'] && file_exists($file))
-				throw new UploadException('exists');
+				throw new FileManagerException('exists');
 
 			if(!move_uploaded_file($_FILES['Filedata']['tmp_name'], $file))
-				throw new UploadException(strtolower($_FILES['Filedata']['error'] <= 2 ? 'size' : ($_FILES['Filedata']['error'] == 3 ? 'partial' : 'path')));
+				throw new FileManagerException(strtolower($_FILES['Filedata']['error'] <= 2 ? 'size' : ($_FILES['Filedata']['error'] == 3 ? 'partial' : 'path')));
 
 			@chmod($file, $fileinfo['chmod']);
 
@@ -1308,10 +1308,6 @@ class FileManager
 					'name' => pathinfo($file, PATHINFO_BASENAME)
 				));
 			return;
-		}
-		catch(UploadException $e)
-		{
-			$emsg = $e->getMessage();
 		}
 		catch(FileManagerException $e)
 		{
