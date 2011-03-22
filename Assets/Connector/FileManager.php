@@ -1070,7 +1070,7 @@ class FileManager
 			if (!$this->options['download'])
 				throw new FileManagerException('disabled');
 
-			$file_arg = $this->getPOSTparam('file');
+			$file_arg = $this->getGETparam('file');
 			if (empty($file_arg))
 				throw new FileManagerException('nofile');
 
