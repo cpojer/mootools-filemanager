@@ -479,10 +479,10 @@ function mkNewFileManager($options = null)
  * authentication/authorization requests, but you may of course provide
  * different functions for each of the FM callbacks.
  *
- * Return TRUE when the session/client is authorizaed to execute the action, FALSE
+ * Return TRUE when the session/client is authorized to execute the action, FALSE
  * otherwise.
  *
- * TODO: allow customer code in here to edit the $fileinfo items and have those edits picked up by FM.
+ * NOTE: the customer code in here may edit the $fileinfo items and have those edits picked up by FM.
  *       E.g. changing the filename on write/move, fixing filename extensions based on file content sniffed mimetype, etc.
  */
 function FM_IsAuthorized($mgr, $action, &$info)

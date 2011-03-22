@@ -60,6 +60,7 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *     Note that currently support for copying subdirectories is missing.
  *     The parameter $action = 'move'.
  *
+ *
  * For all authorization hooks (callback functions) the following applies:
  *
  *     The callback should return TRUE for yes (permission granted), FALSE for no (permission denied).
@@ -68,7 +69,9 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *     where $fileinfo is an array containing info about the file being uploaded, $action is a (string) identifying the current operation, $this is a reference to this FileManager instance.
  *     $action was included as a redundant parameter to each callback as a simple means to allow users to hook a single callback function to all the authorization hooks, without the need to create a wrapper function for each.
  *
- *     For more info about the hook parameter $fileinfo contents and a basic implementation, see Demos/manager.php and Demos/selectImage.php
+ *     For more info about the hook parameter $fileinfo contents and a basic implementation, see further below (section 'Hooks: Detailed Interface Specification') and the examples in
+ *     Demos/FM-common.php, Demos/manager.php and Demos/selectImage.php
+ *
  *
  * Notes on relative paths and safety / security:
  *
@@ -86,26 +89,354 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *   so these are subjected to the same scrutiny in here.)
  *
  *   All paths, absolute or relative, as passed to the event handlers (see the onXXX methods of this class) are ENFORCED TO ABIDE THE RULE
- *   'every path resides within the BASEDIR rooted tree' without exception.
- *   When paths apparently don't, they are forcibly coerced into adherence to this rule. Because we can do without exceptions to important rules. ;-)
+ *   'every path resides within the options['directory'] a.k.a. BASEDIR rooted tree' without exception.
+ *   Because we can do without exceptions to important rules. ;-)
+ *
+ *   When paths apparently don't, they are coerced into adherence to this rule; when this fails, an exception is thrown internally and an error
+ *   will be reported and the action temrinated.
+ *
+ *  'LEGAL URL paths':
+ *
+ *   Paths which adhere to the aforementioned rule are so-called LEGAL URL paths; their 'root' equals BASEDIR.
  *
  *   BASEDIR equals the path pointed at by the options['directory'] setting. It is therefore imperative that you ensure this value is
  *   correctly set up; worst case, this setting will equal DocumentRoot.
  *   In other words: you'll never be able to reach any file or directory outside this site's DocumentRoot directory tree, ever.
  *
  *
- *   When you need your paths to be restricted to the bounds of the options['directory'] tree (which is a subtree of the DocumentRoot based
- *   tree), you may wish to use the getPath() and getDir() methods instead of getRealPath() and getRealDir(), as the latter
- *   restrict targets to within the DocumentRoot tree only.
+ *  Path transformations:
  *
- *   getPath() and getRealPath() both deliver absolute paths relative to DocumentRoot, hence suitable for use in URIs and feeding to client side
- *   scripts, while getRealDir() and getDir() both return absolute paths in the server filesystem perspective, i.e. the latter are suitable for
- *   server side script based file operation functions.
+ *   To allow arbitrary directory/path mapping algorithms to be applied (e.g. when implementing Alias support such as available in the
+ *   derived class FileManagerWithAliasSupport), all paths are, on every change/edit, transformed from their LEGAL URL representation to
+ *   their 'absolute URI path' (which is suitable to be used in links and references in HTML output) and 'absolute physical filesystem path'
+ *   equivalents.
+ *   By enforcing such a unidirectional transformation we implicitly support non-reversible and hard-to-reverse path aliasing mechanisms,
+ *   e.g. complex regex+context based path manipulations in the server.
+ *
+ *
+ *   When you need your paths to be restricted to the bounds of the options['directory'] tree (which is a subtree of the DocumentRoot based
+ *   tree), you may wish to use the 'legal' class of path transformation member functions:
+ *
+ *   - legal2abs_url_path()
+ *   - rel2abs_legal_url_path()
+ *   - legal_url_path2file_path()
+ *
+ *   When you have a 'absolute URI path' or a path relative in URI space (implicitly relative to dirname($_SERVER['SCRIPT_NAME']) ), you can
+ *   transform such a path to either a guaranteed-absolute URI space path or a filesystem path:
+ *
+ *   - rel2abs_url_path()
+ *   - url_path2file_path()
+ *
+ *   Any other path transformations are ILLEGAL and DANGEROUS. The only other possibly legal transformation is from absolute URI path to
+ *   BASEDIR-based LEGAL URL path, as the URI path space is assumed to be linear and contiguous. However, this operation is HIGHLY discouraged
+ *   as it is a very strong indicator of other faulty logic, so we do NOT offer a method for this.
+ *
+ *
+ * Hooks: Detailed Interface Specification:
+ *
+ *   All 'authorization' callback hooks share a common interface specification (function parameter set). This is by design, so one callback
+ *   function can be used to process any and all of these events:
+ *
+ *   Function prototype:
+ *
+ *       function CallbackFunction($mgr, $action, &$info)
+ *
+ *   where
+ *
+ *       $msg:      (object) reference to the current FileManager class instance. Can be used to invoke public FileManager methods inside
+ *                  the callback.
+ *
+ *       $action:   (string) identifies the event being processed. Can be one of these:
+ *
+ *                  'create'          create new directory
+ *                  'move'            move or copy a file or directory
+ *                  'destroy'         delete a file or directory
+ *                  'upload'          upload a single file (when performing a bulk upload, each file will be uploaded individually)
+ *                  'download'        download a file
+ *                  'view'            show a directory listing (in either 'list' or 'thumb' mode)
+ *                  'detail'          show detailed information about the file and, whn possible, provide a link to a (largish) thumbnail
+ *                  'thumbnail'       send the thumbnail to the client (done this way to allow JiT thumbnail creation)
+ *
+ *       $info      (array) carries all the details. Some of which can even be manipulated if your callbac is more than just an
+ *                  authentication / authorization checker. ;-)
+ *                  For more detail, see the next major section.
+ *
+ *   The callback should return a boolean, where TRUE means the session/client is authorized to execute the action, while FALSE
+ *   will cause the backend to report an authentication error and abort the action.
+ *
+ *  Exceptions throwing from the callback:
+ *
+ *   Note that you may choose to throw exceptions from inside the callback; those will be caught and transformed to proper error reports.
+ *
+ *   You may either throw any exceptions based on either the FileManagerException or Exception classes. When you format the exception
+ *   message as "XYZ:data", where 'XYZ' is a alphanumeric-only word, this will be transformed to a i18n-support string, where
+ *   'backend.XYZ' must map to a translation string (e.g. 'backend.nofile', see also the Language/Language.XX.js files) and the optional
+ *   'data' tail will be appended to the translated message.
+ *
+ *
+ * $info: the details:
+ *
+ *   Here is the list of $info members per $action event code:
+ *
+ *   'upload':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the directory where the file is being uploaded. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given directory.
+ *
+ *               'dir'                   (string) physical filesystem path to the directory where the file is being uploaded.
+ *
+ *               'raw_filename'          (string) the raw, unprocessed filename of the file being being uploaded, as specified by the client.
+ *
+ *                                       WARNING: 'raw_filename' may contain anything illegal, such as directory paths instead of just a filename,
+ *                                                filesystem-illegal characters and what-not. Use 'name'+'extension' instead if you want to know
+ *                                                where the upload will end up.
+ *
+ *               'name'                  (string) the filename, sans extension, of the file being uploaded; this filename is ensured
+ *                                       to be both filesystem-legal, unique and not yet existing in the given directory.
+ *
+ *               'extension'             (string) the filename extension of the file being uploaded; this extension is ensured
+ *                                       to be filesystem-legal.
+ *
+ *                                       Note that the file name extension has already been cleaned, including 'safe' mode processing,
+ *                                       i.e. any uploaded binary executable will have been assigned the extension '.txt' already, when
+ *                                       FileManager's options['safe'] is enabled.
+ *
+ *               'tmp_filepath'          (string) filesystem path pointing at the temporary storage location of the uploaded file: you can
+ *                                       access the file data available here to optionally validate the uploaded content.
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *               'size'                  (integer) number of bytes of the uploaded file
+ *
+ *               'maxsize'               (integer) the configured maximum number of bytes for any single upload
+ *
+ *               'overwrite'             (boolean) FALSE: the uploaded file will not overwrite any existing file, it will fail instead.
+ *
+ *                                       Set to TRUE (and adjust the 'name' and 'extension' entries as you desire) when you wish to overwrite
+ *                                       an existing file.
+ *
+ *               'chmod'                 (integer) UNIX access rights (default: 0666) for the file-to-be-created (RW for user,group,world).
+ *
+ *                                       Note that the eXecutable bits have already been stripped before the callback was invoked.
+ *
+ *
+ *         Note that this request originates from a Macromedia Flash client: hence you'll need to use the
+ *         $_GET[session_name()] value to manually set the PHP session_id() before you start your your session
+ *         again.
+ *
+ *         The frontend-specified options.uploadAuthData items will be available as further $_GET[] items, as well.
+ *
+ *
+ *  'download':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the file to be downloaded. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given file.
+ *
+ *               'file'                  (string) physical filesystem path to the file being downloaded.
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *
+ *  'create': // create directory
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the parent directory of the directory being created. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for this parent directory.
+ *
+ *               'dir'                   (string) physical filesystem path to the parent directory of the directory being created.
+ *
+ *               'raw_name'              (string) the name of the directory to be created, as specified by the client (unfiltered!)
+ *
+ *               'uniq_name'             (string) the name of the directory to be created, filtered and ensured to be both unique and
+ *                                       not-yet-existing in the filesystem.
+ *
+ *               'newdir'                (string) the filesystem absolute path to the directory to be created; identical to:
+ *                                           $newdir = $mgr->legal_url_path2file_path($legal_url . $uniq_name);
+ *                                       Note the above: all paths are transformed from URI space to physical disk every time a change occurs;
+ *                                       this allows us to map even not-existing 'directories' to possibly disparate filesystem locations.
+ *
+ *               'chmod'                 (integer) UNIX access rights (default: 0777) for the directory-to-be-created (RWX for user,group,world)
+ *
+ *
+ *  'destroy':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the file/directory to be deleted. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given file/directory.
+ *
+ *               'file'                  (string) physical filesystem path to the file/directory being deleted.
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file / directory (directories are mime type: 'text/directory')
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *                                       Note that the 'mime_filters', if any, are applied to the 'delete' operation in a special way: only
+ *                                       files matching one of the mime types in this list will be deleted; anything else will remain intact.
+ *                                       This can be used to selectively clean a directory tree.
+ *
+ *                                       The design idea behind this approach is that you are only allowed what you can see ('view'), so
+ *                                       all 'view' restrictions should equally to the 'delete' operation.
+ *
+ *
+ *  'move':  // move or copy!
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the source parent directory of the file/directory being moved/copied. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given directory.
+ *
+ *               'dir'                   (string) physical filesystem path to the source parent directory of the file/directory being moved/copied.
+ *
+ *               'path'                  (string) physical filesystem path to the file/directory being moved/copied itself; this is the full source path.
+ *
+ *               'name'                  (string) the name itself of the file/directory being moved/copied; this is the source name.
+ *
+ *               'legal_newurl'          (string) LEGAL URI path to the target parent directory of the file/directory being moved/copied. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given directory.
+ *
+ *               'newdir'                (string) physical filesystem path to the target parent directory of the file/directory being moved/copied;
+ *                                       this is the full path of the directory where the file/directory will be moved/copied to. (filesystem absolute)
+ *
+ *               'newpath'               (string) physical filesystem path to the target file/directory being moved/copied itself; this is the full destination path,
+ *                                       i.e. the full path of where the file/directory should be renamed/moved to. (filesystem absolute)
+ *
+ *               'newname'               (string) the target name itself of the file/directory being moved/copied; this is the destination name.
+ *
+ *                                       This filename is ensured to be both filesystem-legal, unique and not yet existing in the given target directory.
+ *
+ *               'rename'                (boolean) TRUE when a file/directory RENAME operation is requested (name change, staying within the same
+ *                                       parent directory). FALSE otherwise.
+ *
+ *               'is_dir'                (boolean) TRUE when the subject is a directory itself, FALSE when it is a regular file.
+ *
+ *               'function'              (string) PHP call which will perform the operation. ('rename' or 'copy')
+ *
+ *
+ *  'view':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the directory being viewed/scanned. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the scanned directory.
+ *
+ *               'dir'                   (string) physical filesystem path to the directory being viewed/scanned.
+ *
+ *               'files'                 (array of strings) array of files and directories (including '..' entry at the top when this is a
+ *                                       subdirectory of the FM-managed tree): only names, not full paths.
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *               'guess_mime'            (boolean) TRUE when the mime type for each file in this directory will be determined using filename
+ *                                       extension sniffing only; FALSE means the mime type will be determined using content sniffing, which
+ *                                       is slower.
+ *
+ *               'list_type'             (string) the type of view requested: 'list' or 'thumb'.
+ *
+ *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular view
+ *                                       operation (possibly as the second half of a copy/move/delete operation), when the ['status']==0,
+ *                                       we are performing a view operation as the second part of another otherwise failed action, e.g. a
+ *                                       failed 'create directory'.
+ *
+ *
+ *  'detail':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the file/directory being inspected. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given file.
+ *
+ *               'file'                  (string) physical filesystem path to the file being inspected.
+ *
+ *               'filename'              (string) the filename of the file being inspected. (Identical to 'basename($legal_url)')
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *
+ *  'thumbnail':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the file/directory being thumbnailed. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given file.
+ *
+ *               'file'                  (string) physical filesystem path to the file being inspected.
+ *
+ *               'filename'              (string) the filename of the file being inspected. (Identical to 'basename($legal_url)')
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *               'requested_size'        (integer) the size (maximum width and height) in pixels of the thumbnail to be produced.
+ *
  *
  *
  * Developer Notes:
  *
- * - member fucntions which have a commented out 'static' keyword have it removed by design: it makes for easier overloading through
+ * - member functions which have a commented out 'static' keyword have it removed by design: it makes for easier overloading through
  *   inheritance that way and meanwhile there's no pressing need to have those (public) member functions acccessible from the outside world
  *   without having an instance of the FileManager class itself round at the same time.
  */

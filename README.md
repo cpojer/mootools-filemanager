@@ -80,11 +80,14 @@ Options
 * hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
 * hideOverlay: (boolean, defaults to *false*) When true, hides the background overlay
 * hideQonDelete: (boolean, defaults to *false*) When true, hides the Dialog asking 'are you sure' when you have clicked on any 'delete file/directory' button
+* listPaginationSize: (integer, defaults to *100*) When non-zero, add pagination, i.e. split the view of huge directories into pages of N items each (this speeds up rendering and interaction)
+* listPaginationAvgWaitTime: (integer, defaults to *2000*) When non-zero, enable adaptive pagination: strive to, on average, not to spend more than this number of milliseconds on rendering a directory view. This is a great help to adapt the view to match the power of your clients' machines.
+* propagateData: (object, defaults to *empty*) Specify extra elements, all of which will be sent with every request to the backend
 
 Options if Uploader is included
 
 * upload: (boolean, defaults to *true*)
-* uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
+* uploadAuthData: (object, defaults to *empty*) Extra data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
 * resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
 
 Events
