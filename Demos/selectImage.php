@@ -36,12 +36,12 @@ See also the 'SITE_USES_ALIASES' define and the mkNewFileManager() function in t
 mkNewFileManager() is just a wrapper used to keep the demo code lean...
 */
 $browser = mkNewFileManager(array(
-    //'directory' => $fm_basedir . 'Files/',   // absolute paths: as the relative ones, they sit in URI space, i.e. assume DocumentRoot is root '/'
+	//'directory' => $fm_basedir . 'Files/',   // absolute paths: as the relative ones, they sit in URI space, i.e. assume DocumentRoot is root '/'
 
-    'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__) or rather: $_SERVER['SCRIPT_NAME']
+	'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__) or rather: $_SERVER['SCRIPT_NAME']
 
-    'filter' => 'image/',
-    'allowExtChange' => false                 // allow file name extensions to be changed; the default however is: NO (FALSE)
+	'filter' => 'image/',
+	'allowExtChange' => false                 // allow file name extensions to be changed; the default however is: NO (FALSE)
 ));
 
 

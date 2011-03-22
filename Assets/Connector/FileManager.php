@@ -466,7 +466,14 @@ require_once('Assets/getid3/getid3.php');
 
 
 
-define('MTFM_THUMBNAIL_JPEG_QUALITY', 65);
+// the jpeg quality for the largest thumbnails (smaller ones are automatically done at increasingly higher quality)
+define('MTFM_THUMBNAIL_JPEG_QUALITY', 75);
+
+// the number of directory levels in the thumbnail cache; set to 2 when you expect to handle huge image collections.
+//
+// Note that each directory level distributes the files evenly across 256 directories; hence, you may set this
+// level count to 2 when you expect to handle more than 32K images in total -- as each image will have two thumbnails:
+// a 48px small one and a 250px large one.
 define('MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE', 1);
 
 
@@ -656,6 +663,15 @@ class FileManager
 
 		if (!empty($this->options['ViewIsAuthorized_cb']) && function_exists($this->options['ViewIsAuthorized_cb']) && !$this->options['ViewIsAuthorized_cb']($this, 'view', $fileinfo))
 			throw new FileManagerException('authorized');
+
+		$legal_url = $fileinfo['legal_url'];
+		$dir = $fileinfo['dir'];
+		$files = $fileinfo['files'];
+		$mime_filter = $fileinfo['mime_filter'];
+		$mime_filters = $fileinfo['mime_filters'];
+		$just_guess_mime = $fileinfo['guess_mime'];
+		$list_type = $fileinfo['list_type'];
+		$json = $fileinfo['preliminary_json'];
 
 		foreach ($files as $filename)
 		{
@@ -944,7 +960,14 @@ class FileManager
 			if (!empty($this->options['DetailIsAuthorized_cb']) && function_exists($this->options['DetailIsAuthorized_cb']) && !$this->options['DetailIsAuthorized_cb']($this, 'detail', $fileinfo))
 				throw new FileManagerException('authorized');
 
-			$content = $this->extractDetailInfo($legal_url, $file, $mime);
+			$legal_url = $fileinfo['legal_url'];
+			$file = $fileinfo['file'];
+			$filename = $fileinfo['filename'];
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
+
+			$content = $this->extractDetailInfo($legal_url, $file, $mime, $mime_filter);
 
 			if (!headers_sent()) header('Content-Type: application/json');
 
@@ -1080,6 +1103,14 @@ class FileManager
 
 			if (!empty($this->options['ThumbnailIsAuthorized_cb']) && function_exists($this->options['ThumbnailIsAuthorized_cb']) && !$this->options['ThumbnailIsAuthorized_cb']($this, 'thumbnail', $fileinfo))
 				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$file = $fileinfo['file'];
+			$filename = $fileinfo['filename'];
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
+			$reqd_size = $fileinfo['requested_size'];
 
 			/*
 			 * each image we inspect may throw an exception due to a out of memory warning
@@ -1236,6 +1267,12 @@ class FileManager
 			if (!empty($this->options['DestroyIsAuthorized_cb']) && function_exists($this->options['DestroyIsAuthorized_cb']) && !$this->options['DestroyIsAuthorized_cb']($this, 'destroy', $fileinfo))
 				throw new FileManagerException('authorized');
 
+			$legal_url = $fileinfo['legal_url'];
+			$file = $fileinfo['file'];
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
+
 			if (!$this->unlink($legal_url, $mime_filters))
 				throw new FileManagerException('unlink_failed:' . $legal_url);
 
@@ -1348,6 +1385,12 @@ class FileManager
 				);
 			if (!empty($this->options['CreateIsAuthorized_cb']) && function_exists($this->options['CreateIsAuthorized_cb']) && !$this->options['CreateIsAuthorized_cb']($this, 'create', $fileinfo))
 				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$dir = $fileinfo['dir'];
+			$filename = $fileinfo['raw_name'];
+			$file = $fileinfo['uniq_name'];
+			$newdir = $fileinfo['newdir'];
 
 			if (!@mkdir($newdir, $fileinfo['chmod'], true))
 				throw new FileManagerException('mkdir_failed:' . $this->legal2abs_url_path($legal_url) . $file);
@@ -1477,7 +1520,6 @@ class FileManager
 				throw new FileManagerException('nofile');
 			}
 
-
 			$fileinfo = array(
 					'legal_url' => $legal_url,
 					'file' => $file,
@@ -1487,6 +1529,12 @@ class FileManager
 				);
 			if (!empty($this->options['DownloadIsAuthorized_cb']) && function_exists($this->options['DownloadIsAuthorized_cb']) && !$this->options['DownloadIsAuthorized_cb']($this, 'download', $fileinfo))
 				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$file = $fileinfo['file'];
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
 
 			if ($fd = fopen($file, 'rb'))
 			{
@@ -1646,6 +1694,15 @@ class FileManager
 			if (!empty($this->options['UploadIsAuthorized_cb']) && function_exists($this->options['UploadIsAuthorized_cb']) && !$this->options['UploadIsAuthorized_cb']($this, 'upload', $fileinfo))
 				throw new FileManagerException('authorized');
 
+			$legal_url = $fileinfo['legal_url'];
+			$dir = $fileinfo['dir'];
+			$file_arg = $fileinfo['raw_filename'];
+			$filename = $fileinfo['name'] . (!empty($fileinfo['extension']) ? '.' . $fileinfo['extension'] : '');
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
+			//$tmppath = $fileinfo['tmp_filepath'];
+
 			if($fileinfo['maxsize'] && $fileinfo['size'] > $fileinfo['maxsize'])
 				throw new FileManagerException('size');
 
@@ -1653,7 +1710,7 @@ class FileManager
 				throw new FileManagerException('extension');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
-			$file = $this->legal_url_path2file_path($legal_url . $fileinfo['name'] . '.' . $fileinfo['extension']);
+			$file = $this->legal_url_path2file_path($legal_url . $filename);
 
 			if(!$fileinfo['overwrite'] && file_exists($file))
 				throw new FileManagerException('exists');
@@ -1841,6 +1898,18 @@ class FileManager
 			if (!empty($this->options['MoveIsAuthorized_cb']) && function_exists($this->options['MoveIsAuthorized_cb']) && !$this->options['MoveIsAuthorized_cb']($this, 'move', $fileinfo))
 				throw new FileManagerException('authorized');
 
+			$legal_url = $fileinfo['legal_url'];
+			$dir = $fileinfo['dir'];
+			$path = $fileinfo['path'];
+			$filename = $fileinfo['name'];
+			$legal_newurl = $fileinfo['legal_newurl'];
+			$newdir = $fileinfo['newdir'];
+			$newpath = $fileinfo['newpath'];
+			$newname = $fileinfo['newname'];
+			$rename = $fileinfo['rename'];
+			$is_dir = $fileinfo['is_dir'];
+			$fn = $fileinfo['function'];
+
 			if($rename)
 			{
 				// try to remove the thumbnail related to the original file; don't mind if it doesn't exist
@@ -1918,7 +1987,7 @@ class FileManager
 	 *
 	 * Return NULL on error.
 	 */
-	public function extractDetailInfo($legal_url, $file, $mime)
+	public function extractDetailInfo($legal_url, $file, $mime, $mime_filter)
 	{
 		$url = $this->legal2abs_url_path($legal_url);
 		$filename = pathinfo($url, PATHINFO_BASENAME);
@@ -1959,16 +2028,30 @@ class FileManager
 			$emsg = null;
 			try
 			{
-				$thumbfile = $this->getThumb($legal_url, $file);
+				$thumbfile = $this->getThumb($legal_url, $file, 250);
+				$thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
+				/*
+				 * the thumbnail may be produced now, but we want to stay in control when the thumbnail is
+				 * fetched by the client, so we force them to travel through this backend.
+				 */
+				$thumbfile = $this->mkEventHandlerURL(array(
+						'event' => 'thumbnail',
+						// directory and filename of the ORIGINAL image should follow next:
+						'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
+						'file' => pathinfo($legal_url, PATHINFO_BASENAME),
+						'size' => 250,
+						'filter' => $mime_filter
+					));
 			}
 			catch (Exception $e)
 			{
 				$emsg = $e->getMessage();
 				$thumbfile = $this->getIconForError($emsg, $legal_url, false);
+				$thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
 			}
 
 			$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-						   <img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" />
+						   <img src="' . $thumbfile . '" class="preview" alt="preview" />
 						 </a>';
 			if (!empty($emsg))
 			{
@@ -2400,7 +2483,7 @@ class FileManager
 	 * Note #2 is important as this enables this function to also serve as icon fetcher for ZIP content viewer, etc.:
 	 * after all, those files do not exist physically on disk themselves!
 	 */
-	protected function getIcon($file, $smallIcon)
+	public function getIcon($file, $smallIcon)
 	{
 		$ext = pathinfo($file, PATHINFO_EXTENSION);
 
@@ -2413,7 +2496,22 @@ class FileManager
 		return $path;
 	}
 
-	protected function getThumb($legal_url, $path, $width = 250)
+	/**
+	 * Return the path to the thumbnail of the specified image, the thumbnail having its
+	 * width and height limited to $width pixels.
+	 *
+	 * When the thumbnail image does not exist yet, it will created on the fly.
+	 *
+	 * @param string $legal_url    the LEGAL URL path to the original image. Is used solely
+	 *                             to generate a suitable thumbnail filename.
+	 *
+	 * @param string $path         filesystem path to the original image. Is used to derive
+	 *                             the thumbnail content from.
+	 *
+	 * @param integer $width       the maximum number of pixels for width and height of the
+	 *                             thumbnail.
+	 */
+	public function getThumb($legal_url, $path, $width = 250)
 	{
 		$thumb = $this->generateThumbName($legal_url, $width);
 		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumb);
@@ -2434,7 +2532,7 @@ class FileManager
 	/**
 	 * Assitant function which produces the best possible icon image path for the given error/exception message.
 	 */
-	protected function getIconForError($emsg, $original_filename, $small_icon)
+	public function getIconForError($emsg, $original_filename, $small_icon)
 	{
 		if (empty($emsg))
 		{

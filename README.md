@@ -102,6 +102,12 @@ Backend
 
 * See Assets/Connector/FileManager.php and Assets/Connector/FMgr4Alias.php for all available server-side options
 
+* Note that you can configure these items by changing the related PHP define:
+
+  - MTFM_THUMBNAIL_JPEG_QUALITY  (default: 75) the jpeg quality for the largest thumbnails (smaller ones are automatically done at increasingly higher quality to ensure they look good)
+
+  - MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE  (default: 1) the number of directory levels in the thumbnail cache; set to 2 when you expect to handle huge image collections.  Note that each directory level distributes the files evenly across 256 directories; hence, you may set this level count to 2 when you expect to handle more than 32K images in total -- as each image will have two thumbnails: a 48px small one and a 250px large one.
+
 ### Custom Authentication and Authorization
 
 * As Flash and therefore the Uploader ignores authenticated clients[*] you need to specify your own authentication / session initialization. This is taken care of by FileManager itself, so you don't need to bother, except provide a tiny bit of custom code in the "UploadIsAuthorized_cb" callback function on the serverside, manually initializing and starting your session-based authentication.
@@ -126,6 +132,7 @@ Backend
   * ViewIsAuthorized_cb
   * DetailIsAuthorized_cb
   * ThumbnailIsAuthorized_cb
+
 
 
 ### Credits
