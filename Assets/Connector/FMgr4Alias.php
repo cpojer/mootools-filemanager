@@ -196,8 +196,5 @@ class FileManagerWithAliasSupport extends FileManager
 		
 		return $url_path;
 	}
-	
-	
-	
 }
 

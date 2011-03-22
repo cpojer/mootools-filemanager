@@ -1549,211 +1549,211 @@ class FileManager
 		$url = $this->legal2abs_url_path($legal_url);
 		$filename = pathinfo($url, PATHINFO_BASENAME);
 
-			$content = null;
+		// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
+		// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
+		$getid3 = new getID3();
+		$getid3->encoding = 'UTF-8';
+		$getid3->Analyze($file);
+	
+		$content = null;
 
-			if (FileManagerUtility::startsWith($mime, 'image/'))
+		if (FileManagerUtility::startsWith($mime, 'image/'))
+		{
+			// generates a random number to put on the end of the image, to prevent caching
+			//$randomImage = '?'.md5(uniqid(rand(),1));
+
+			//$size = @getimagesize($file);
+			//// check for badly formatted image files (corruption); we'll handle the overly large ones next
+			//if (!$size)
+			//  throw new FileManagerException('corrupt_img:' . $url);
+
+			$sw_make = $this->getID3infoItem($getid3, null, 'jpg', 'exif', 'IFD0', 'Software');
+			$time_make = $this->getID3infoItem($getid3, null, 'jpg', 'exif', 'IFD0', 'DateTime');
+
+			$content = '<dl>
+					<dt>${width}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'video', 'resolution_x') . 'px</dd>
+					<dt>${height}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'video', 'resolution_y') . 'px</dd>
+				</dl>';
+			if (!empty($sw_make) || !empty($time_make))
 			{
-				// generates a random number to put on the end of the image, to prevent caching
-				//$randomImage = '?'.md5(uniqid(rand(),1));
+				$content .= '<p>Made with ' . (empty($sw_make) ? '???' : $sw_make) . ' @ ' . (empty($time_make) ? '???' : $time_make) . '</p>';
+			}
+			$content .= '
+				<h2>${preview}</h2>
+				';
 
-				// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
-				// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
-				$getid3 = new getID3();
-				$getid3->encoding = 'UTF-8';
-				$getid3->Analyze($file);
-				//$size = @getimagesize($file);
-				//// check for badly formatted image files (corruption); we'll handle the overly large ones next
-				//if (!$size)
-				//  throw new FileManagerException('corrupt_img:' . $url);
+			$emsg = null;
+			try
+			{
+				$thumbfile = $this->getThumb($legal_url, $file);
+			}
+			catch (Exception $e)
+			{
+				$emsg = $e->getMessage();
+				$thumbfile = $this->getIconForError($emsg, $legal_url, false);
+			}
 
-				$sw_make = $this->getID3infoItem($getid3, null, 'jpg', 'exif', 'IFD0', 'Software');
-				$time_make = $this->getID3infoItem($getid3, null, 'jpg', 'exif', 'IFD0', 'DateTime');
+			$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+						   <img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" />
+						 </a>';
+			if (!empty($emsg))
+			{
+				$jsa = array('status' => 1);
+				$this->modify_json4exception($jsa, $emsg);
+				$content .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
+			}
+			if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
+			{
+				$earr = explode(':', $e->getMessage(), 2);
+				$content .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
+			}
+			
+			$finfo = Image::guestimateRequiredMemorySpace($file);
+			if (!empty($finfo['usage_guestimate']) && !empty($finfo['usage_min_advised']))
+			{
+				$content .= "\n" . '<p class="tech_info">memory used: ' . number_format(memory_get_peak_usage() / 1E6, 1) . ' MB / estimated: ' . number_format($finfo['usage_guestimate'] / 1E6, 1) . ' MB / suggested: ' . number_format($finfo['usage_min_advised'] / 1E6, 1) . ' MB</p>';
+			}
+
+			$exif_data = $this->getID3infoItem($getid3, null, 'jpg', 'exif');
+			try
+			{
+				if (!empty($exif_data))
+				{
+					/*
+					 * before dumping the EXIF data array (which may carry binary content and MAY CRASH the json_encode()r >:-((
+					 * we filter it to prevent such crashes and oddly looking (diagnostic) presentation of values.
+					 */
+					self::clean_EXIF_results($exif_data);
+					ob_start();
+						var_dump($exif_data);
+					//return $content;
+					$dump = ob_get_clean();
+					$content .= $dump;
+				}
+			}
+			catch (Exception $e)
+			{
+				$jsa = array('status' => 0);
+				$this->modify_json4exception($jsa, $e->getMessage());
+				$content .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
+			}
+		}
+		elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript')
+		{
+			// text preview:
+			$filecontent = @file_get_contents($file, false, null, 0);
+			if ($filecontent === false)
+				throw new FileManagerException('nofile');
+
+			if (!FileManagerUtility::isBinary($filecontent))
+			{
+				$content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent, ENT_NOQUOTES, 'UTF-8')) . '</pre></div>';
+			}
+			// else: fall back to 'no preview available'
+		}
+		elseif ($mime == 'application/zip')
+		{
+			$out = array(array(), array());
+			$info = $this->getID3infoItem($getid3, null, 'zip', 'files');
+			if (is_array($info))
+			{
+				foreach ($info as $name => $size)
+				{
+					$isdir = is_array($size) ? true : false;
+					$out[($isdir) ? 0 : 1][$name] = '<li><a><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($name, true)) . '" alt="" /> ' . $name . '</a></li>';
+				}
+				natcasesort($out[0]);
+				natcasesort($out[1]);
+				$content = '<ul>' . implode(array_merge($out[0], $out[1])) . '</ul>';
+			}
+		}
+		elseif ($mime == 'application/x-shockwave-flash')
+		{
+			$info = $this->getID3infoItem($getid3, null, 'swf', 'header');
+			if (is_array($info))
+			{
+				// Note: preview data= urls were formatted like this in CCMS:
+				// $this->options['assetBasePath'] . 'dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30'
 
 				$content = '<dl>
-						<dt>${width}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'video', 'resolution_x') . 'px</dd>
-						<dt>${height}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'video', 'resolution_y') . 'px</dd>
-					</dl>';
-				if (!empty($sw_make) || !empty($time_make))
-				{
-					$content .= '<p>Made with ' . (empty($sw_make) ? '???' : $sw_make) . ' @ ' . (empty($time_make) ? '???' : $time_make) . '</p>';
-				}
-				$content .= '
-					<h2>${preview}</h2>
-					';
-
-				$emsg = null;
-				try
-				{
-					$thumbfile = $this->getThumb($legal_url, $file);
-				}
-				catch (Exception $e)
-				{
-					$emsg = $e->getMessage();
-					$thumbfile = $this->getIconForError($emsg, $legal_url, false);
-				}
-
-				$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-							   <img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" />
-							 </a>';
-				if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
-				{
-					$earr = explode(':', $e->getMessage(), 2);
-					$content .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
-				}
-				$finfo = Image::guestimateRequiredMemorySpace($file);
-				if (!empty($finfo['usage_guestimate']) && !empty($finfo['usage_min_advised']))
-				{
-					$content .= "\n" . '<p class="tech_info">memory used: ' . number_format(memory_get_peak_usage() / 1E6, 1) . ' MB / estimated: ' . number_format($finfo['usage_guestimate'] / 1E6, 1) . ' MB / suggested: ' . number_format($finfo['usage_min_advised'] / 1E6, 1) . ' MB</p>';
-				}
-
-				$exif_data = $this->getID3infoItem($getid3, null, 'jpg', 'exif');
-				try
-				{
-					if (!empty($exif_data))
-					{
-						/*
-						 * before dumping the EXIF data array (which may carry binary content and MAY CRASH the json_encode()r >:-((
-						 * we filter it to prevent such crashes and oddly looking (diagnostic) presentation of values.
-						 */
-						self::clean_EXIF_results($exif_data);
-						ob_start();
-							var_dump($exif_data);
-						//return $content;
-						$dump = ob_get_clean();
-						$content .= $dump;
-					}
-				}
-				catch (Exception $e)
-				{
-					$content .= 'kleppertje: ' . $e->getMessage();
-				}
-			}
-			elseif (FileManagerUtility::startsWith($mime, 'text/') || $mime == 'application/x-javascript')
-			{
-				// text preview:
-				$filecontent = @file_get_contents($file, false, null, 0);
-				if ($filecontent === false)
-					throw new FileManagerException('nofile');
-
-				if (!FileManagerUtility::isBinary($filecontent))
-				{
-					$content = '<div class="textpreview"><pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent, ENT_NOQUOTES, 'UTF-8')) . '</pre></div>';
-				}
-				// else: fall back to 'no preview available'
-			}
-			elseif ($mime == 'application/zip')
-			{
-				$out = array(array(), array());
-				$getid3 = new getID3();
-				$getid3->Analyze($file);
-				$info = $this->getID3infoItem($getid3, null, 'zip', 'files');
-				if (is_array($info))
-				{
-					foreach ($info as $name => $size)
-					{
-						$isdir = is_array($size) ? true : false;
-						$out[($isdir) ? 0 : 1][$name] = '<li><a><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($name, true)) . '" alt="" /> ' . $name . '</a></li>';
-					}
-					natcasesort($out[0]);
-					natcasesort($out[1]);
-					$content = '<ul>' . implode(array_merge($out[0], $out[1])) . '</ul>';
-				}
-			}
-			elseif ($mime == 'application/x-shockwave-flash')
-			{
-				$getid3 = new getID3();
-				$getid3->Analyze($file);
-
-				$info = $this->getID3infoItem($getid3, null, 'swf', 'header');
-				if (is_array($info))
-				{
-					// Note: preview data= urls were formatted like this in CCMS:
-					// $this->options['assetBasePath'] . 'dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30'
-
-					$content = '<dl>
-							<dt>${width}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_width') / 10 . 'px</dd>
-							<dt>${height}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_height') / 10 . 'px</dd>
-							<dt>${length}</dt><dd>' . round($this->getID3infoItem($getid3, 0, 'swf', 'header', 'length') / $this->getID3infoItem($getid3, 25, 'swf', 'header', 'frame_count')) . 's</dd>
-						</dl>
-						<h2>${preview}</h2>
-						<div class="object">
-							<object type="application/x-shockwave-flash" data="'.FileManagerUtility::rawurlencode_path($url).'" width="500" height="400">
-								<param name="scale" value="noscale" />
-								<param name="movie" value="'.FileManagerUtility::rawurlencode_path($url).'" />
-							</object>
-						</div>';
-				}
-			}
-			elseif (FileManagerUtility::startsWith($mime, 'audio/'))
-			{
-				$getid3 = new getID3();
-				$getid3->Analyze($file);
-				getid3_lib::CopyTagsToComments($getid3->info);
-
-				$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
-				// Note: these next several indexed array fetches were marked with @ in CCMS to catch some failures...
-				//
-				// TODO: do it cleaner then that!
-				//
-				// DONE!
-				$content = '<dl>
-						<dt>${title}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'title', 0) . '</dd>
-						<dt>${artist}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'artist', 0) . '</dd>
-						<dt>${album}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'album', 0) . '</dd>
-						<dt>${length}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'playtime_string') . '</dd>
-						<dt>${bitrate}</dt><dd>' . round($this->getID3infoItem($getid3, 0, 'bitrate') / 1000) . 'kbps</dd>
+						<dt>${width}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_width') / 10 . 'px</dd>
+						<dt>${height}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_height') / 10 . 'px</dd>
+						<dt>${length}</dt><dd>' . round($this->getID3infoItem($getid3, 0, 'swf', 'header', 'length') / $this->getID3infoItem($getid3, 25, 'swf', 'header', 'frame_count')) . 's</dd>
 					</dl>
 					<h2>${preview}</h2>
 					<div class="object">
-						<object type="application/x-shockwave-flash" data="' . $dewplayer . '" width="200" height="20" id="dewplayer" name="dewplayer">
-							<param name="wmode" value="transparent" />
-							<param name="movie" value="' . $dewplayer . '" />
-							<param name="flashvars" value="mp3=' . FileManagerUtility::rawurlencode_path($url) . '&amp;volume=50&amp;showtime=1" />
+						<object type="application/x-shockwave-flash" data="'.FileManagerUtility::rawurlencode_path($url).'" width="500" height="400">
+							<param name="scale" value="noscale" />
+							<param name="movie" value="'.FileManagerUtility::rawurlencode_path($url).'" />
 						</object>
 					</div>';
 			}
-			else
+		}
+		elseif (FileManagerUtility::startsWith($mime, 'audio/'))
+		{
+			getid3_lib::CopyTagsToComments($getid3->info);
+
+			$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
+			// Note: these next several indexed array fetches were marked with @ in CCMS to catch some failures...
+			//
+			// TODO: do it cleaner then that!
+			//
+			// DONE!
+			$content = '<dl>
+					<dt>${title}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'title', 0) . '</dd>
+					<dt>${artist}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'artist', 0) . '</dd>
+					<dt>${album}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'album', 0) . '</dd>
+					<dt>${length}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'playtime_string') . '</dd>
+					<dt>${bitrate}</dt><dd>' . round($this->getID3infoItem($getid3, 0, 'bitrate') / 1000) . 'kbps</dd>
+				</dl>
+				<h2>${preview}</h2>
+				<div class="object">
+					<object type="application/x-shockwave-flash" data="' . $dewplayer . '" width="200" height="20" id="dewplayer" name="dewplayer">
+						<param name="wmode" value="transparent" />
+						<param name="movie" value="' . $dewplayer . '" />
+						<param name="flashvars" value="mp3=' . FileManagerUtility::rawurlencode_path($url) . '&amp;volume=50&amp;showtime=1" />
+					</object>
+				</div>';
+		}
+		else
+		{
+			// else: fall back to 'no preview available'
+			try
 			{
-				// else: fall back to 'no preview available'
-				try
-				{
-					$getid3 = new getID3();
-					$getid3->encoding = 'UTF-8';
-					$getid3->Analyze($file);
-					ob_start();
-						var_dump($getid3->info);
-					$dump = ob_get_clean();
-					// $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
+				ob_start();
+					var_dump($getid3->info);
+				$dump = ob_get_clean();
+				// $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
 
-					// strip the NULs out:
-					$dump = str_replace('&#0;', '?', $dump);
-					//$dump = html_entity_decode(strip_tags($dump), ENT_QUOTES, 'UTF-8');
-					//@file_put_contents('getid3.raw.log', $dump);
-					// since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
-					$dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
-					// and reduce long sequences of unknown charcodes:
-					$dump = preg_replace('/\?{8,}/', '???????', $dump);
-					//$dump = html_entity_encode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
-
-					$content = '<div class="margin">
-								<h2>${preview}</h2>
-								<pre>' . "\n" . $dump . "\n" . '</pre></div>';
-					//@file_put_contents('getid3.log', $dump);
-
-					return $content;
-				}
-				catch(Exception $e)
-				{
-					// ignore
-					$content = $e->getMessage();
-				}
+				// strip the NULs out:
+				$dump = str_replace('&#0;', '?', $dump);
+				//$dump = html_entity_decode(strip_tags($dump), ENT_QUOTES, 'UTF-8');
+				//@file_put_contents('getid3.raw.log', $dump);
+				// since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
+				$dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
+				// and reduce long sequences of unknown charcodes:
+				$dump = preg_replace('/\?{8,}/', '???????', $dump);
+				//$dump = html_entity_encode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
 
 				$content = '<div class="margin">
-							${nopreview} ' . $content . '
-						</div>';
+							<h2>${preview}</h2>
+							<pre>' . "\n" . $dump . "\n" . '</pre></div>';
+				//@file_put_contents('getid3.log', $dump);
+
+				return $content;
+			}
+			catch(Exception $e)
+			{
+				// ignore
+				$content = $e->getMessage();
 			}
 
-			return self::compressHTML($content);
+			$content = '<div class="margin">
+						${nopreview} ' . $content . '
+					</div>';
+		}
+
+		return self::compressHTML($content);
 	}
 
 	/**
