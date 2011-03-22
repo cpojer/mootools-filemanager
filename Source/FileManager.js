@@ -129,7 +129,7 @@ var FileManager = new Class({
 				this.Current = el.addClass('selected');
 			}
 
-			this.switchButton();
+			this.switchButton4Current();
 		};
 
 		this.toggleList = function(e) {
@@ -553,7 +553,7 @@ var FileManager = new Class({
 		if (el) this.fillInfo();
 		if (this.Current) this.Current.removeClass('selected');
 		this.Current = null;
-		this.switchButton();
+		this.switchButton4Current();
 	},
 
 	load: function(dir) {
@@ -1590,7 +1590,7 @@ var FileManager = new Class({
 		var size = this.size(file.size);
 		var icon = file.icon;
 
-		this.switchButton();
+		this.switchButton4Current();
 
 		if (self.drop_pending != 2) {
 			// only fade up when we are allowed to send a detail request next as well and we're doing a MOVE drop
@@ -1700,7 +1700,7 @@ var FileManager = new Class({
 		return str.replace(/\/+/g, '/');
 	},
 
-	switchButton: function() {
+	switchButton4Current: function() {
 		var chk = !!this.Current;
 		var els = new Array();
 		els.push(this.menu.getElement('button.filemanager-open'));
