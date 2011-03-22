@@ -90,12 +90,12 @@ class Image {
 		if(!in_array($this->meta['ext'], array('gif', 'png', 'jpeg')))
 			throw new Exception('unsupported_imgfmt:' . $this->meta['ext']);
 
-		if(in_array($this->meta['ext'], array('gif', 'png'))){
+		if($this->meta['ext'] != 'jpeg'){
 			$this->image = $this->create();
 
 			$fn = 'imagecreatefrom'.$this->meta['ext'];
 			$original = @$fn($file);
-			if (!$original) throw new Exception('imagecreate_failed');
+			if (!$original) throw new Exception('imagecreate_failed:' . $fn);
 
 			if (!@imagecopyresampled($this->image, $original, 0, 0, 0, 0, $this->meta['width'], $this->meta['height'], $this->meta['width'], $this->meta['height']))
 				throw new Exception('cvt2truecolor_failed:' . $this->meta['width'] . ' x ' . $this->meta['height']);

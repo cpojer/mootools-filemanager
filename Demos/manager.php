@@ -2,11 +2,15 @@
 
 error_reporting(E_ALL | E_STRICT);
 
+
+define('DEVELOPMENT', 0);   // set to 01 / 1 to enable logging of each incoming event request.
+
+
+
 //require_once('../Assets/Connector/FileManager.php');
 require_once('../Assets/Connector/FMgr4Alias.php');
 
 
-define('DEVELOPMENT', 01);   // set to 01 / 1 to enable logging of each incoming event request.
 
 
 
@@ -109,7 +113,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 	//$mimetdefs = $mgr->getMimeTypeDefinitions();
 
 	// log request data:
-	//FM_vardumper($mgr, $action, $info);
+	FM_vardumper($mgr, $action, $info);
 
 
 	/*
@@ -265,7 +269,7 @@ $browser = new FileManagerWithAliasSupport /* FileManager */ (array(
 
 
 // log request data:
-//FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
+FM_vardumper($browser, 'init' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
 
 
 

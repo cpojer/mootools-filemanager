@@ -11,6 +11,7 @@ define('DEVELOPMENT', 0);   // set to 01 / 1 to enable logging of each incoming 
 
 
 
+
 // dumper useful in development
 function FM_vardumper($mgr = null, $action = null, $info = null, $filenamebase = null)
 {
@@ -211,7 +212,7 @@ if (01) // debugging
 
 $browser = new FileManager(array(
 	'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__)
-	//'thumbnailPath' => 'Files/Thumbnails/',
+	'thumbnailPath' => 'Files/Thumbnails/',
 	'assetBasePath' => '../Assets',
 	'chmod' => 0777,
 	//'maxUploadSize' => 1024 * 1024 * 5,

@@ -180,7 +180,7 @@ FileManager.implement({
         this.remove();
       },
 
-      onComplete: function(){
+      onComplete: function(norm_path, file_obj) {
         this.ui.progress = this.ui.progress.cancel().element.destroy();
         this.ui.cancel = this.ui.cancel.destroy();
 
