@@ -26,31 +26,37 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *   - getId3 Library
  *   - FileManager.php
  */
- 
+
 require_once('FileManager.php');
 
 
 /**
- * Example derived class for FileManager which is capable of handling Aliases as served through Apache's mod_alias, 
- * PROVIDED you have set up the Alias translation table in the constructor: you must pass this table in the
+ * Derived class for FileManager which is capable of handling Aliases as served through Apache's mod_alias or
+ * mod_vhost_alias, PROVIDED you have set up the Alias translation table in the constructor: you must pass this table in the
  * $options array as a mapping array in the constructor.
+ *
+ * Options:
+ *   -(all of the options of the FileManager class)
+ *   -Aliases: (associative array of strings, where the 'key' URI path is to be transformed to the 'value' physical filesystem path.
+ *
+ * See Demos/FM-common.php::mkNewFileManager() for an example of an 'Aliases' path mapping set.
  */
 class FileManagerWithAliasSupport extends FileManager
 {
 	protected $scandir_alias_lu_arr;
-	
+
 	public function __construct($options)
 	{
 		$this->scandir_alias_lu_arr = null;
-		
+
 		$options = array_merge(array(
 			'Aliases' => null    // default is an empty Alias list.
 		), (is_array($options) ? $options : array()));
-		
+
 		parent::__construct($options);
-		
+
 		/*
-		 * Now process the Aliases array: 
+		 * Now process the Aliases array:
 		 * it works as-is for transforming URI to FILE path, but we need
 		 * to munch the list for scandir() to have fast access at the same info:
 		 *
@@ -60,12 +66,12 @@ class FileManagerWithAliasSupport extends FileManager
 		if (is_array($this->options['Aliases']))
 		{
 			$alias_arr = $this->options['Aliases'];
-			
+
 			// collect the set of aliases per parent directory: we need a fully set up options['directory'] for this now
 			$scandir_lookup_arr = array();
-			
+
 			// NOTE: we can use any of the url2file_path methods here as those only use the raw [Aliases] array
-			
+
 			foreach($alias_arr as $uri => $file)
 			{
 				$p_uri = parent::getParentDir($uri);
@@ -81,11 +87,11 @@ class FileManagerWithAliasSupport extends FileManager
 				}
 				$scandir_lookup_arr[$p_dir][] = /* 'alias' => */ $a_name;
 			}
-			
+
 			$this->scandir_alias_lu_arr = $scandir_lookup_arr;
 		}
 	}
-	
+
 	/**
 	 * @return array the FileManager options and settings.
 	 */
@@ -98,17 +104,20 @@ class FileManagerWithAliasSupport extends FileManager
 
 
 
-	
+	/**
+	 * An augmented scandir() whih will ensure any Aliases are included in the relevant
+	 * directory scans; this makes the Aliases behave very similarly to actual directories.
+	 */
 	public function scandir($dir, $filemask = '*', $see_thumbnail_dir = false)
 	{
 		$dir = self::enforceTrailingSlash($dir);
-		
+
 		// collect the real items first:
 		$coll = parent::scandir($dir, $filemask, $see_thumbnail_dir);
 		if ($coll === false)
 			return $coll;
 
-			
+
 		// make sure we keep the guarantee that the '..' entry, when present, is the very last one, intact:
 		$doubledot = array_pop($coll);
 		if ($doubledot !== null && $doubledot !== '..')
@@ -116,8 +125,8 @@ class FileManagerWithAliasSupport extends FileManager
 			$coll[] = $doubledot;
 			$doubledot = null;
 		}
-		
-		
+
+
 		// we must check against thumbnail path again, as it MAY be an alias, itself!
 		$tndir = null;
 		if (!$see_thumbnail_dir)
@@ -125,7 +134,7 @@ class FileManagerWithAliasSupport extends FileManager
 			$tn_uri = $this->options['thumbnailPath'];
 			$tnpath = $this->url_path2file_path($tn_uri);
 			//if (FileManagerUtility::startswith($dir, $tnpath))
-			//	return false;
+			//  return false;
 
 			$tnparent = self::getParentDir($tnpath);
 			$just_below_thumbnail_dir = FileManagerUtility::startswith($dir, $tnparent);
@@ -136,7 +145,7 @@ class FileManagerWithAliasSupport extends FileManager
 			}
 		}
 
-		
+
 		// now see if we need to add any aliases as elements:
 		if (isset($this->scandir_alias_lu_arr) && !empty($this->scandir_alias_lu_arr[$dir]))
 		{
@@ -146,19 +155,19 @@ class FileManagerWithAliasSupport extends FileManager
 					$coll[] = $a_elem;
 			}
 		}
-		
+
 		// make sure we keep the guarantee that the '..' entry, when present, is the very last one, intact:
 		if ($doubledot !== null)
 		{
 			$coll[] = $doubledot;
 		}
-		
+
 		return $coll;
 	}
 
-	
-	
-	
+
+
+
 	/**
 	 * Return the filesystem absolute path for the relative or absolute URI path.
 	 *
@@ -176,7 +185,7 @@ class FileManagerWithAliasSupport extends FileManager
 		if (is_array($this->options['Aliases']))
 		{
 			$alias_arr = $this->options['Aliases'];
-			
+
 			foreach($alias_arr as $a_url => $a_path)
 			{
 				// if the uri path matches us (or at least our start), then apply the mapping.
@@ -188,12 +197,12 @@ class FileManagerWithAliasSupport extends FileManager
 				}
 			}
 		}
-		
+
 		if (!$replaced_some)
 		{
 			$url_path = parent::url_path2file_path($url_path);
 		}
-		
+
 		return $url_path;
 	}
 }

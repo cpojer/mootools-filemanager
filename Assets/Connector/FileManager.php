@@ -42,6 +42,12 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *   - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
  *   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
  *   - filter: (string, defaults to *null*) If not empty, this is a list of allowed mimetypes (overruled by the GET request 'filter' parameter: single requests can thus overrule the common setup in the constructor for this option)
+ *   - ViewIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given directory may be viewed.
+ *     The parameter $action = 'view'.
+ *   - DetailIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be inspected (and the details listed).
+ *     The parameter $action = 'detail'.
+ *   - ThumbnailIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether a thumbnail of the given file may be shown.
+ *     The parameter $action = 'thumbnail'.
  *   - UploadIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be uploaded.
  *     The parameter $action = 'upload'.
  *   - DownloadIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be downloaded.
@@ -166,6 +172,9 @@ class FileManager
 			'safe' => true,
 			'filter' => null,
 			'chmod' => 0777,
+			'ViewIsAuthorized_cb' => null,
+			'DetailIsAuthorized_cb' => null,
+			'ThumbnailIsAuthorized_cb' => null,
 			'UploadIsAuthorized_cb' => null,
 			'DownloadIsAuthorized_cb' => null,
 			'CreateIsAuthorized_cb' => null,
@@ -302,6 +311,20 @@ class FileManager
 		// remove the imageinfo() call overhead per file for very large directories; just guess at the mimetye from the filename alone.
 		// The real mimetype will show up in the 'details' view anyway! This is only for the 'filter' function:
 		$just_guess_mime = (count($files) > 100);
+
+		$fileinfo = array(
+				'legal_url' => $legal_url,
+				'dir' => $dir,
+				'files' => $files,
+				'mime_filter' => $mime_filter,
+				'mime_filters' => $mime_filters,
+				'guess_mime' => $just_guess_mime,
+				'list_type' => $list_type,
+				'preliminary_json' => $json
+			);
+
+		if (!empty($this->options['ViewIsAuthorized_cb']) && function_exists($this->options['ViewIsAuthorized_cb']) && !$this->options['ViewIsAuthorized_cb']($this, 'view', $fileinfo))
+			throw new FileManagerException('authorized');
 
 		foreach ($files as $filename)
 		{
@@ -578,6 +601,17 @@ class FileManager
 				throw new FileManagerException('nofile');
 			}
 
+			$fileinfo = array(
+					'legal_url' => $legal_url,
+					'file' => $file,
+					'filename' => $filename,
+					'mime' => $mime,
+					'mime_filter' => $mime_filter,
+					'mime_filters' => $mime_filters
+				);
+
+			if (!empty($this->options['DetailIsAuthorized_cb']) && function_exists($this->options['DetailIsAuthorized_cb']) && !$this->options['DetailIsAuthorized_cb']($this, 'detail', $fileinfo))
+				throw new FileManagerException('authorized');
 
 			$content = $this->extractDetailInfo($legal_url, $file, $mime);
 
@@ -702,6 +736,19 @@ class FileManager
 			{
 				throw new FileManagerException('nofile');
 			}
+
+			$fileinfo = array(
+					'legal_url' => $legal_url,
+					'file' => $file,
+					'filename' => $filename,
+					'mime' => $mime,
+					'mime_filter' => $mime_filter,
+					'mime_filters' => $mime_filters,
+					'requested_size' => $reqd_size
+				);
+
+			if (!empty($this->options['ThumbnailIsAuthorized_cb']) && function_exists($this->options['ThumbnailIsAuthorized_cb']) && !$this->options['ThumbnailIsAuthorized_cb']($this, 'thumbnail', $fileinfo))
+				throw new FileManagerException('authorized');
 
 			/*
 			 * each image we inspect may throw an exception due to a out of memory warning
@@ -933,7 +980,7 @@ class FileManager
 		$list_type = ($this->getPOSTparam('type') != 'thumb' ? 'list' : 'thumb');
 
 		$legal_url = null;
-		
+
 		try
 		{
 			$dir_arg = $this->getPOSTparam('directory');
@@ -986,7 +1033,7 @@ class FileManager
 			$emsg = $e->getMessage();
 
 			$jserr['status'] = 0;
-			
+
 			// and fall back to showing the PARENT directory
 			try
 			{
@@ -1015,7 +1062,7 @@ class FileManager
 			$emsg = $e->getMessage();
 
 			$jserr['status'] = 0;
-			
+
 			// and fall back to showing the PARENT directory
 			try
 			{
@@ -1550,7 +1597,7 @@ class FileManager
 		$getid3 = new getID3();
 		$getid3->encoding = 'UTF-8';
 		$getid3->Analyze($file);
-	
+
 		$content = null;
 
 		if (FileManagerUtility::startsWith($mime, 'image/'))
@@ -1604,7 +1651,7 @@ class FileManager
 				$earr = explode(':', $e->getMessage(), 2);
 				$content .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
 			}
-			
+
 			$finfo = Image::guestimateRequiredMemorySpace($file);
 			if (!empty($finfo['usage_guestimate']) && !empty($finfo['usage_min_advised']))
 			{
@@ -1713,7 +1760,7 @@ class FileManager
 					</object>
 				</div>';
 		}
-		else 
+		else
 		{
 			// else: fall back to 'no preview available'
 			if (!empty($getid3->info) && empty($getid3->info['error']))
