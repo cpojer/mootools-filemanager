@@ -415,43 +415,112 @@ function FM_IsAuthorized($mgr, $action, &$info)
 	{
 	case 'upload':
 		/*
-		 *   $fileinfo = array(
-		 *     'dir' => (string) directory where the uploaded file will be stored (filesystem absolute)
-		 *     'name' => (string) the filename of the uploaded file (already cleaned and resequenced, without the file name extension
-		 *     'extension' => (string) the file name extension (already cleaned as well, including 'safe' mode processing, i.e. any uploaded binary executable will have been assigned the extension '.txt' already)
-		 *     'size' => (integer) number of bytes of the uploaded file
-		 *     'maxsize' => (integer) the configured maximum number of bytes for any single upload
-		 *     'mimes' => NULL or an array of mime types which are permitted to be uploaded. This is a reference to the array produced by $mgr->getAllowedMimeTypes().
-		 *     'ext2mime_map' => an array of (key, value) pairs which can be used to map a file name extension (key) to a mime type (value). This is a reference to the array produced by $mgr->getAllowedMimeTypes().
-		 *     'chmod' => (integer) UNIX access rights (default: 0666) for the directory-to-be-created (RW for user,group,world). Note that the eXecutable bits have already been stripped before the callback was invoked.
-		 *   );
+		 	$info[] contains:
+
+				'legal_url'         			(string) LEGAL URI path to the directory where the file is being uploaded. You may invoke 
+													$dir = $mgr->legal_url_path2file_path($legal_url);
+												to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+													$url = $mgr->legal2abs_url_path($legal_url);
+												to obtain the absolute URI path for the given directory.
+				
+				'dir' 		        			(string) physical filesystem path to the directory where the file is being uploaded.
+				
+				'raw_filename'					(string) the raw, unprocessed filename of the file being being uploaded, as specified by the client.
+												
+												WARNING: 'raw_filename' may contain anything illegal, such as directory paths instead of just a filename, 
+														 filesystem-illegal characters and what-not. Use 'name'+'extension' instead if you want to know
+														 where the upload will end up.
+														 
+				'name'							(string) the filename, sans extension, of the file being uploaded; this filename is ensured 
+												to be both filesystem-legal, unique and not yet existing in the given directory.
+				
+				'extension'						(string) the filename extension of the file being uploaded; this extension is ensured 
+												to be filesystem-legal. 
+												
+												Note that the file name extension has already been cleaned, including 'safe' mode processing, 
+												i.e. any uploaded binary executable will have been assigned the extension '.txt' already, when
+												FileManager's options['safe'] is enabled.
+		
+				'tmp_filepath'					(string) filesystem path pointing at the temporary storage location of the uploaded file: you can
+												access the file data available here to optionally validate the uploaded content.
+												
+				'mime' 							(string) the mime type as sniffed from the file
+				
+				'mime_filter' 					(optional, string) mime filter as specified by the client: a comma-separated string containing
+				                                full or partial mime types, where a 'partial' mime types is the part of a mime type before
+												and including the slash, e.g. 'image/'
+				
+				'mime_filters' 					(optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+				
+				'size' 							(integer) number of bytes of the uploaded file
+				
+				'maxsize' 						(integer) the configured maximum number of bytes for any single upload
+				
+				'overwrite' 					(boolean) FALSE: the uploaded file will not overwrite any existing file, it will fail instead.
+				
+												Set to TRUE (and adjust the 'name' and 'extension' entries as you desire) when you wish to overwrite 
+												an existing file.
+				
+				'chmod' 						(integer) UNIX access rights (default: 0666) for the file-to-be-created (RW for user,group,world). 
+				
+												Note that the eXecutable bits have already been stripped before the callback was invoked.
+												
 		 *
 		 * Note that this request originates from a Macromedia Flash client: hence you'll need to use the
-		 * $_GET['session'] value to manually set the PHP session_id() before you start your your session
-		 * again. (Of course, this assumes you've set up the client side FileManager JS object to pass the
-		 * session_id() in this 'session' request parameter.
+		 * $_GET[session_name()] value to manually set the PHP session_id() before you start your your session
+		 * again.
 		 *
-		 * In examples provided with mootools_filemanager itself, the value is set to 'MySessionId'.
+		 * The frontend-specified options.uploadAuthData items will be available as further $_GET[] items, as well. 
 		 */
-		if(!empty($_GET['session'])) return true;
+		if(!empty($_GET[session_name()])) return true;
 
 		return false;
 
 	case 'download':
 		/*
-		 *     $fileinfo = array(
-		 *         'file' => (string) full path of the file (filesystem absolute)
-		 *     );
+		 	$info[] contains:
+
+				'legal_url'         			(string) LEGAL URI path to the file to be downloaded. You may invoke 
+													$dir = $mgr->legal_url_path2file_path($legal_url);
+												to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+													$url = $mgr->legal2abs_url_path($legal_url);
+												to obtain the absolute URI path for the given file.
+				
+				'file' 		        			(string) physical filesystem path to the file being downloaded.
+				
+				'mime' 							(string) the mime type as sniffed from the file
+				
+				'mime_filter' 					(optional, string) mime filter as specified by the client: a comma-separated string containing
+				                                full or partial mime types, where a 'partial' mime types is the part of a mime type before
+												and including the slash, e.g. 'image/'
+				
+				'mime_filters' 					(optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
 		 */
 		return true;
 
 	case 'create': // create directory
 		/*
-		 *     $fileinfo = array(
-		 *         'dir' => (string) parent directory: directory where the directory-to-be-created will exist (filesystem absolute)
-		 *         'file' => (string) full path of the directory-to-be-created itself (filesystem absolute)
-		 *         'chmod' => (integer) UNIX access rights (default: 0777) for the directory-to-be-created (RWX for user,group,world)
-		 *     );
+		 	$info[] contains:
+
+				'legal_url'         			(string) LEGAL URI path to the parent directory of the directory being created. You may invoke 
+													$dir = $mgr->legal_url_path2file_path($legal_url);
+												to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+													$url = $mgr->legal2abs_url_path($legal_url);
+												to obtain the absolute URI path for this parent directory.
+				
+				'dir'  		        			(string) physical filesystem path to the parent directory of the directory being created.
+				
+				'raw_name' 						(string) the name of the directory to be created, as specified by the client (unfiltered!)
+				
+				'uniq_name' 					(string) the name of the directory to be created, filtered and ensured to be both unique and 
+												not-yet-existing in the filesystem.
+												
+				'newdir' 						(string) the filesystem absolute path to the directory to be created; identical to:
+													$newdir = $mgr->legal_url_path2file_path($legal_url . $uniq_name);
+												Note the above: all paths are transformed from URI space to physical disk every time a change occurs;
+												this allows us to map even not-existing 'directories' to possibly disparate filesystem locations.
+												
+				'chmod' 						(integer) UNIX access rights (default: 0777) for the directory-to-be-created (RWX for user,group,world)
 		 */
 		return true;
 
@@ -466,22 +535,128 @@ function FM_IsAuthorized($mgr, $action, &$info)
 
 	case 'move':  // move or copy!
 		/*
-		 *     $fileinfo = array(
-		 *         'dir' => (string) directory where the file / directory-to-be-moved/copied exists (filesystem absolute)
-		 *         'file' => (string) the filename (with extension) of the file / directory to be moved/copied
-		 *         'newdir' => NULL or (string) target directory: full path of directory where the file/directory will be moved/copied to. (filesystem absolute)
-		 *         'newname' => NULL or (string) target path: full path of file/directory. This is the file location the file/.directory should be renamed/moved to. (filesystem absolute)
-		 *         'rename' => (boolean) TRUE when a file/directory RENAME operation is requested (name change, staying within the same parent directory). FALSE otherwise.
-		 *         'is_dir' => (boolean) TRUE when the subject is a directory itself, FALSE when it is a regular file.
-		 *         'function' => (string) PHP call which will perform the operation. ('rename' or 'copy')
-		 *     );
-		 *
-		 * on RENAME these path elements will be set: 'dir', 'file'            'newname'; 'rename' = TRUE, 'function' = 'rename'
-		 * on MOVE   these path elements will be set: 'dir', 'file', 'newdir', 'newname'; 'rename' = TRUE, 'function' = 'rename'
-		 * on COPY   these path elements will be set: 'dir', 'file'  'newdir', 'newname'; 'rename' = TRUE, 'function' = 'copy'
+		 	$info[] contains:
+
+				'legal_url'         			(string) LEGAL URI path to the source parent directory of the file/directory being moved/copied. You may invoke 
+													$dir = $mgr->legal_url_path2file_path($legal_url);
+												to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+													$url = $mgr->legal2abs_url_path($legal_url);
+												to obtain the absolute URI path for the given directory.
+				
+				'dir' 		        			(string) physical filesystem path to the source parent directory of the file/directory being moved/copied.
+				
+				'path'							(string) physical filesystem path to the file/directory being moved/copied itself; this is the full source path.
+														 
+				'name'							(string) the name itself of the file/directory being moved/copied; this is the source name.
+				
+				'legal_newurl'         			(string) LEGAL URI path to the target parent directory of the file/directory being moved/copied. You may invoke 
+													$dir = $mgr->legal_url_path2file_path($legal_url);
+												to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+													$url = $mgr->legal2abs_url_path($legal_url);
+												to obtain the absolute URI path for the given directory.
+				
+				'newdir' 		        		(string) physical filesystem path to the target parent directory of the file/directory being moved/copied; 
+												this is the full path of the directory where the file/directory will be moved/copied to. (filesystem absolute)
+				
+				'newpath'						(string) physical filesystem path to the target file/directory being moved/copied itself; this is the full destination path,
+												i.e. the full path of where the file/directory should be renamed/moved to. (filesystem absolute)
+														 
+				'newname'						(string) the target name itself of the file/directory being moved/copied; this is the destination name. 
+												
+												This filename is ensured to be both filesystem-legal, unique and not yet existing in the given target directory.
+												
+				'rename' 						(boolean) TRUE when a file/directory RENAME operation is requested (name change, staying within the same parent directory). FALSE otherwise.
+				
+				'is_dir'						(boolean) TRUE when the subject is a directory itself, FALSE when it is a regular file.
+				
+				'function' 						(string) PHP call which will perform the operation. ('rename' or 'copy')
 		 */
 		return true;
 
+	case 'view': 
+		/*
+		 	$info[] contains:
+
+				'legal_url'         			(string) LEGAL URI path to the directory being viewed/scanned. You may invoke 
+													$dir = $mgr->legal_url_path2file_path($legal_url);
+												to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+													$url = $mgr->legal2abs_url_path($legal_url);
+												to obtain the absolute URI path for the scanned directory.
+				
+				'dir'  		        			(string) physical filesystem path to the directory being viewed/scanned.
+				
+				'files' 						(array of strings) array of files and directories (including '..' entry at the top when this is a
+				                                subdirectory of the FM-managed tree): only names, not full paths.
+												
+				'mime_filter' 					(optional, string) mime filter as specified by the client: a comma-separated string containing
+				                                full or partial mime types, where a 'partial' mime types is the part of a mime type before
+												and including the slash, e.g. 'image/'
+				
+				'mime_filters' 					(optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+				
+				'guess_mime' 					(boolean) TRUE when the mime type for each file in this directory will be determined using filename
+                                                extension sniffing only; FALSE means the mime type will be determined using content sniffing, which
+												is slower. 
+												
+				'list_type' 					(string) the type of view requested: 'list' or 'thumb'.
+				
+				'preliminary_json' 				(array) the JSON data collected so far; when ['status']==1, then we're performing a regular view 
+												operation (possibly as the second half of a copy/move/delete operation), when the ['status']==0,
+												we are performing a view operation as the second part of another otherwise failed action, e.g. a
+												failed 'create directory'.
+		*/
+		return true;
+
+	case 'detail':
+		/*
+		 	$info[] contains:
+
+				'legal_url'         			(string) LEGAL URI path to the file/directory being inspected. You may invoke 
+													$dir = $mgr->legal_url_path2file_path($legal_url);
+												to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+													$url = $mgr->legal2abs_url_path($legal_url);
+												to obtain the absolute URI path for the given file.
+				
+				'file' 		        			(string) physical filesystem path to the file being inspected.
+				
+				'filename' 	        			(string) the filename of the file being inspected. (Identical to 'basename($legal_url)')
+				
+				'mime' 							(string) the mime type as sniffed from the file
+				
+				'mime_filter' 					(optional, string) mime filter as specified by the client: a comma-separated string containing
+				                                full or partial mime types, where a 'partial' mime types is the part of a mime type before
+												and including the slash, e.g. 'image/'
+				
+				'mime_filters' 					(optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+		*/
+		return true;
+		
+	case 'thumbnail':
+		/*
+		 	$info[] contains:
+
+				'legal_url'         			(string) LEGAL URI path to the file/directory being thumbnailed. You may invoke 
+													$dir = $mgr->legal_url_path2file_path($legal_url);
+												to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+													$url = $mgr->legal2abs_url_path($legal_url);
+												to obtain the absolute URI path for the given file.
+				
+				'file' 		        			(string) physical filesystem path to the file being inspected.
+				
+				'filename' 	        			(string) the filename of the file being inspected. (Identical to 'basename($legal_url)')
+				
+				'mime' 							(string) the mime type as sniffed from the file
+				
+				'mime_filter' 					(optional, string) mime filter as specified by the client: a comma-separated string containing
+				                                full or partial mime types, where a 'partial' mime types is the part of a mime type before
+												and including the slash, e.g. 'image/'
+				
+				'mime_filters' 					(optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+				
+				'requested_size' 				(integer) the size (maximum width and height) in pixels of the thumbnail to be produced.
+		*/
+		return true;
+		
 	default:
 		// unknown operation. Internal server error.
 		return false;

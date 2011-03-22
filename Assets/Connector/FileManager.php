@@ -503,6 +503,8 @@ class FileManager
 			// step down to the parent dir and retry:
 			$legal_url = self::getParentDir($legal_url);
 
+			$jserr['status']++;
+
 		} while ($legal_url !== false);
 
 		$this->modify_json4exception($jserr, $emsg . ' : path :: ' . $legal_url);
@@ -826,7 +828,6 @@ class FileManager
 
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			$legal_url .= $filename;
-			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url);
 
@@ -847,10 +848,10 @@ class FileManager
 			}
 
 			$fileinfo = array(
-					'file' => $file,
-					'url' => $url,
 					'legal_url' => $legal_url,
+					'file' => $file,
 					'mime' => $mime,
+					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters
 				);
 
@@ -948,7 +949,6 @@ class FileManager
 
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			//$legal_url .= $filename;
-			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
 
@@ -961,19 +961,18 @@ class FileManager
 			$newdir = $this->legal_url_path2file_path($legal_url . $file);
 
 			$fileinfo = array(
-					'dir' => $dir,
-					'url' => $url,
 					'legal_url' => $legal_url,
-					'name' => $file,
+					'dir' => $dir,
+					'raw_name' => $filename,
+					'uniq_name' => $file,
 					'newdir' => $newdir,
 					'chmod' => $this->options['chmod']
 				);
 			if (!empty($this->options['CreateIsAuthorized_cb']) && function_exists($this->options['CreateIsAuthorized_cb']) && !$this->options['CreateIsAuthorized_cb']($this, 'create', $fileinfo))
 				throw new FileManagerException('authorized');
 
-			//echo "*** CREATE *** newdir = '$newdir', url = '$url', file = '$file', legal_url = '$legal_url'\n";
 			if (!@mkdir($newdir, $fileinfo['chmod'], true))
-				throw new FileManagerException('mkdir_failed:' . $url . $file);
+				throw new FileManagerException('mkdir_failed:' . $this->legal2abs_url_path($legal_url) . $file);
 
 			if (!headers_sent()) header('Content-Type: application/json');
 
@@ -986,6 +985,8 @@ class FileManager
 		{
 			$emsg = $e->getMessage();
 
+			$jserr['status'] = 0;
+			
 			// and fall back to showing the PARENT directory
 			try
 			{
@@ -1013,6 +1014,8 @@ class FileManager
 			// catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
 			$emsg = $e->getMessage();
 
+			$jserr['status'] = 0;
+			
 			// and fall back to showing the PARENT directory
 			try
 			{
@@ -1077,7 +1080,6 @@ class FileManager
 			$legal_url = $this->rel2abs_legal_url_path($file_arg);
 			//$legal_url = self::enforceTrailingSlash($legal_url);
 
-			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url);
 
@@ -1099,10 +1101,10 @@ class FileManager
 
 
 			$fileinfo = array(
-					'file' => $file,
-					'url' => $url,
 					'legal_url' => $legal_url,
+					'file' => $file,
 					'mime' => $mime,
+					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters
 				);
 			if (!empty($this->options['DownloadIsAuthorized_cb']) && function_exists($this->options['DownloadIsAuthorized_cb']) && !$this->options['DownloadIsAuthorized_cb']($this, 'download', $fileinfo))
@@ -1217,7 +1219,6 @@ class FileManager
 			$legal_url = self::enforceTrailingSlash($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
-			$url = $this->legal2abs_url_path($legal_url);
 
 			$filename = $this->getUniqueName($file_arg, $dir);
 			if (!$filename)
@@ -1250,16 +1251,17 @@ class FileManager
 			}
 
 			$fileinfo = array(
-				'dir' => $dir,
-				'url' => $url,
 				'legal_url' => $legal_url,
-				'tmp_filepath' => $tmppath,
+				'dir' => $dir,
+				'raw_filename' => $file_arg,
 				'name' => $fi['filename'],
 				'extension' => $fi['extension'],
+				'mime' => $mime,
+				'mime_filter' => $mime_filter,
+				'mime_filters' => $mime_filters,
+				'tmp_filepath' => $tmppath,
 				'size' => $_FILES['Filedata']['size'],
 				'maxsize' => $this->options['maxUploadSize'],
-				'mime' => $mime,
-				'mime_filters' => $mime_filters,
 				'overwrite' => false,
 				'chmod' => $this->options['chmod'] & 0666   // security: never make those files 'executable'!
 			);
@@ -1274,7 +1276,6 @@ class FileManager
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url . $fileinfo['name'] . '.' . $fileinfo['extension']);
-
 
 			if(!$fileinfo['overwrite'] && file_exists($file))
 				throw new FileManagerException('exists');
@@ -1381,7 +1382,6 @@ class FileManager
 
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			//$legal_url .= $filename;
-			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
 			$path = $this->legal_url_path2file_path($legal_url . $filename);
@@ -1406,7 +1406,6 @@ class FileManager
 			{
 				$fn = 'rename';
 				$legal_newurl = $legal_url;
-				$newurl = $url;
 				$newdir = $dir;
 
 				$newname = pathinfo($newname_arg, PATHINFO_BASENAME);
@@ -1433,7 +1432,6 @@ class FileManager
 				$fn = ($is_copy ? 'copy' : 'rename' /* 'move' */);
 				$legal_newurl = $this->rel2abs_legal_url_path($newdir_arg);
 				$legal_newurl = self::enforceTrailingSlash($legal_newurl);
-				$newurl = $this->legal2abs_url_path($legal_newurl);
 				$newdir = $this->legal_url_path2file_path($legal_newurl);
 
 				if ($is_dir)
@@ -1449,14 +1447,12 @@ class FileManager
 
 
 			$fileinfo = array(
-					'dir' => $dir,
-					'url' => $url,
 					'legal_url' => $legal_url,
+					'dir' => $dir,
 					'path' => $path,
 					'name' => $filename,
-					'newdir' => $newdir,
-					'newurl' => $newurl,
 					'legal_newurl' => $legal_newurl,
+					'newdir' => $newdir,
 					'newpath' => $newpath,
 					'newname' => $newname,
 					'rename' => $rename,
@@ -1598,7 +1594,8 @@ class FileManager
 						 </a>';
 			if (!empty($emsg))
 			{
-				$jsa = array('status' => 1);
+				// use the abilities of modify_json4exception() to munge/format the exception message:
+				$jsa = array();
 				$this->modify_json4exception($jsa, $emsg);
 				$content .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
 			}
@@ -1633,7 +1630,8 @@ class FileManager
 			}
 			catch (Exception $e)
 			{
-				$jsa = array('status' => 0);
+				// use the abilities of modify_json4exception() to munge/format the exception message:
+				$jsa = array('error' => '');
 				$this->modify_json4exception($jsa, $e->getMessage());
 				$content .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
 			}
@@ -2469,7 +2467,7 @@ class FileManager
 			return;
 
 		// only set up the new json error report array when this is the first exception we got:
-		if ($jserr['status'])
+		if (empty($jserr['error']))
 		{
 			// check the error message and see if it is a translation code word (with or without parameters) or just a generic error report string
 			$e = explode(':', $emsg, 2);
