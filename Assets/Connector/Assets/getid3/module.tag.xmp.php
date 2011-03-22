@@ -338,7 +338,7 @@ class Image_XMP
 								break;
 							}
 						}
-						if ($current_property != '')
+						if ($current_property != '' && isset($xml_elem['value']))  // [i_a]
 						{
 							$xmp_array[$current_property][$container_index] = $xml_elem['value'];
 							$container_index += 1;
