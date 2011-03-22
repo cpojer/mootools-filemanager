@@ -1715,41 +1715,49 @@ class FileManager
 					</object>
 				</div>';
 		}
-		else
+		else 
 		{
 			// else: fall back to 'no preview available'
-			try
+			if (!empty($getid3->info) && empty($getid3->info['error']))
 			{
-				ob_start();
-					var_dump($getid3->info);
-				$dump = ob_get_clean();
-				// $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
+				try
+				{
+					ob_start();
+						var_dump($getid3->info);
+					$dump = ob_get_clean();
+					// $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
 
-				// strip the NULs out:
-				$dump = str_replace('&#0;', '?', $dump);
-				//$dump = html_entity_decode(strip_tags($dump), ENT_QUOTES, 'UTF-8');
-				//@file_put_contents('getid3.raw.log', $dump);
-				// since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
-				$dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
-				// and reduce long sequences of unknown charcodes:
-				$dump = preg_replace('/\?{8,}/', '???????', $dump);
-				//$dump = html_entity_encode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
+					// strip the NULs out:
+					$dump = str_replace('&#0;', '?', $dump);
+					//$dump = html_entity_decode(strip_tags($dump), ENT_QUOTES, 'UTF-8');
+					//@file_put_contents('getid3.raw.log', $dump);
+					// since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
+					$dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
+					// and reduce long sequences of unknown charcodes:
+					$dump = preg_replace('/\?{8,}/', '???????', $dump);
+					//$dump = html_entity_encode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
 
-				$content = '<div class="margin">
-							<h2>${preview}</h2>
-							<pre>' . "\n" . $dump . "\n" . '</pre></div>';
-				//@file_put_contents('getid3.log', $dump);
+					$content = '<div class="margin">
+								<h2>${preview}</h2>
+								<pre>' . "\n" . $dump . "\n" . '</pre></div>';
+					//@file_put_contents('getid3.log', $dump);
 
-				return $content;
+					return $content;
+				}
+				catch(Exception $e)
+				{
+					// ignore
+					$content = $e->getMessage();
+				}
 			}
-			catch(Exception $e)
+			else
 			{
-				// ignore
-				$content = $e->getMessage();
+				$content = implode(', ', $getid3->info['error']);
 			}
 
 			$content = '<div class="margin">
-						${nopreview} ' . $content . '
+						${nopreview}
+						<p class="err_info">' . $content . '</p>
 					</div>';
 		}
 
