@@ -46,8 +46,8 @@ var FileManager = new Class({
 		hideClose: false,
 		hideOverlay: false,
 		hideQonDelete: false,
-		listPaginationSize: 1000,  // add pagination per N items for huge directories (speed up interaction)
-		listPaginationAvgWaitTime: 2000,  // aaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
+		listPaginationSize: 100,  // add pagination per N items for huge directories (speed up interaction)
+		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
 		propagateData: {}          // extra query parameters sent with every request to the backend
 	},
 
