@@ -38,6 +38,12 @@
  *   - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
  *   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
  *   - filter: (string, defaults to *null*) If not empty, this is a list of allowed mimetypes (overruled by the GET request 'filter' parameter: single requests can thus overrule the common setup in the constructor for this option)
+ *   - ViewIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given directory may be viewed.
+ *     The parameter $action = 'view'.
+ *   - DetailIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be inspected (and the details listed).
+ *     The parameter $action = 'detail'.
+ *   - ThumbnailIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether a thumbnail of the given file may be shown.
+ *     The parameter $action = 'thumbnail'.
  *   - UploadIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be uploaded.
  *     The parameter $action = 'upload'.
  *   - DownloadIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be downloaded.
@@ -50,6 +56,7 @@
  *     Note that currently support for copying subdirectories is missing.
  *     The parameter $action = 'move'.
  *
+ *
  * For all authorization hooks (callback functions) the following applies:
  *
  *     The callback should return TRUE for yes (permission granted), FALSE for no (permission denied).
@@ -58,7 +65,9 @@
  *     where $fileinfo is an array containing info about the file being uploaded, $action is a (string) identifying the current operation, $this is a reference to this FileManager instance.
  *     $action was included as a redundant parameter to each callback as a simple means to allow users to hook a single callback function to all the authorization hooks, without the need to create a wrapper function for each.
  *
- *     For more info about the hook parameter $fileinfo contents and a basic implementation, see Demos/manager.php and Demos/selectImage.php
+ *     For more info about the hook parameter $fileinfo contents and a basic implementation, see further below (section 'Hooks: Detailed Interface Specification') and the examples in
+ *     Demos/FM-common.php, Demos/manager.php and Demos/selectImage.php
+ *
  *
  * Notes on relative paths and safety / security:
  *
@@ -76,26 +85,354 @@
  *   so these are subjected to the same scrutiny in here.)
  *
  *   All paths, absolute or relative, as passed to the event handlers (see the onXXX methods of this class) are ENFORCED TO ABIDE THE RULE
- *   'every path resides within the BASEDIR rooted tree' without exception.
- *   When paths apparently don't, they are forcibly coerced into adherence to this rule. Because we can do without exceptions to important rules. ;-)
+ *   'every path resides within the options['directory'] a.k.a. BASEDIR rooted tree' without exception.
+ *   Because we can do without exceptions to important rules. ;-)
+ *
+ *   When paths apparently don't, they are coerced into adherence to this rule; when this fails, an exception is thrown internally and an error
+ *   will be reported and the action temrinated.
+ *
+ *  'LEGAL URL paths':
+ *
+ *   Paths which adhere to the aforementioned rule are so-called LEGAL URL paths; their 'root' equals BASEDIR.
  *
  *   BASEDIR equals the path pointed at by the options['directory'] setting. It is therefore imperative that you ensure this value is
  *   correctly set up; worst case, this setting will equal DocumentRoot.
  *   In other words: you'll never be able to reach any file or directory outside this site's DocumentRoot directory tree, ever.
  *
  *
- *   When you need your paths to be restricted to the bounds of the options['directory'] tree (which is a subtree of the DocumentRoot based
- *   tree), you may wish to use the getPath() and getDir() methods instead of getRealPath() and getRealDir(), as the latter
- *   restrict targets to within the DocumentRoot tree only.
+ *  Path transformations:
  *
- *   getPath() and getRealPath() both deliver absolute paths relative to DocumentRoot, hence suitable for use in URIs and feeding to client side
- *   scripts, while getRealDir() and getDir() both return absolute paths in the server filesystem perspective, i.e. the latter are suitable for
- *   server side script based file operation functions.
+ *   To allow arbitrary directory/path mapping algorithms to be applied (e.g. when implementing Alias support such as available in the
+ *   derived class FileManagerWithAliasSupport), all paths are, on every change/edit, transformed from their LEGAL URL representation to
+ *   their 'absolute URI path' (which is suitable to be used in links and references in HTML output) and 'absolute physical filesystem path'
+ *   equivalents.
+ *   By enforcing such a unidirectional transformation we implicitly support non-reversible and hard-to-reverse path aliasing mechanisms,
+ *   e.g. complex regex+context based path manipulations in the server.
+ *
+ *
+ *   When you need your paths to be restricted to the bounds of the options['directory'] tree (which is a subtree of the DocumentRoot based
+ *   tree), you may wish to use the 'legal' class of path transformation member functions:
+ *
+ *   - legal2abs_url_path()
+ *   - rel2abs_legal_url_path()
+ *   - legal_url_path2file_path()
+ *
+ *   When you have a 'absolute URI path' or a path relative in URI space (implicitly relative to dirname($_SERVER['SCRIPT_NAME']) ), you can
+ *   transform such a path to either a guaranteed-absolute URI space path or a filesystem path:
+ *
+ *   - rel2abs_url_path()
+ *   - url_path2file_path()
+ *
+ *   Any other path transformations are ILLEGAL and DANGEROUS. The only other possibly legal transformation is from absolute URI path to
+ *   BASEDIR-based LEGAL URL path, as the URI path space is assumed to be linear and contiguous. However, this operation is HIGHLY discouraged
+ *   as it is a very strong indicator of other faulty logic, so we do NOT offer a method for this.
+ *
+ *
+ * Hooks: Detailed Interface Specification:
+ *
+ *   All 'authorization' callback hooks share a common interface specification (function parameter set). This is by design, so one callback
+ *   function can be used to process any and all of these events:
+ *
+ *   Function prototype:
+ *
+ *       function CallbackFunction($mgr, $action, &$info)
+ *
+ *   where
+ *
+ *       $msg:      (object) reference to the current FileManager class instance. Can be used to invoke public FileManager methods inside
+ *                  the callback.
+ *
+ *       $action:   (string) identifies the event being processed. Can be one of these:
+ *
+ *                  'create'          create new directory
+ *                  'move'            move or copy a file or directory
+ *                  'destroy'         delete a file or directory
+ *                  'upload'          upload a single file (when performing a bulk upload, each file will be uploaded individually)
+ *                  'download'        download a file
+ *                  'view'            show a directory listing (in either 'list' or 'thumb' mode)
+ *                  'detail'          show detailed information about the file and, whn possible, provide a link to a (largish) thumbnail
+ *                  'thumbnail'       send the thumbnail to the client (done this way to allow JiT thumbnail creation)
+ *
+ *       $info      (array) carries all the details. Some of which can even be manipulated if your callbac is more than just an
+ *                  authentication / authorization checker. ;-)
+ *                  For more detail, see the next major section.
+ *
+ *   The callback should return a boolean, where TRUE means the session/client is authorized to execute the action, while FALSE
+ *   will cause the backend to report an authentication error and abort the action.
+ *
+ *  Exceptions throwing from the callback:
+ *
+ *   Note that you may choose to throw exceptions from inside the callback; those will be caught and transformed to proper error reports.
+ *
+ *   You may either throw any exceptions based on either the FileManagerException or Exception classes. When you format the exception
+ *   message as "XYZ:data", where 'XYZ' is a alphanumeric-only word, this will be transformed to a i18n-support string, where
+ *   'backend.XYZ' must map to a translation string (e.g. 'backend.nofile', see also the Language/Language.XX.js files) and the optional
+ *   'data' tail will be appended to the translated message.
+ *
+ *
+ * $info: the details:
+ *
+ *   Here is the list of $info members per $action event code:
+ *
+ *   'upload':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the directory where the file is being uploaded. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given directory.
+ *
+ *               'dir'                   (string) physical filesystem path to the directory where the file is being uploaded.
+ *
+ *               'raw_filename'          (string) the raw, unprocessed filename of the file being being uploaded, as specified by the client.
+ *
+ *                                       WARNING: 'raw_filename' may contain anything illegal, such as directory paths instead of just a filename,
+ *                                                filesystem-illegal characters and what-not. Use 'name'+'extension' instead if you want to know
+ *                                                where the upload will end up.
+ *
+ *               'name'                  (string) the filename, sans extension, of the file being uploaded; this filename is ensured
+ *                                       to be both filesystem-legal, unique and not yet existing in the given directory.
+ *
+ *               'extension'             (string) the filename extension of the file being uploaded; this extension is ensured
+ *                                       to be filesystem-legal.
+ *
+ *                                       Note that the file name extension has already been cleaned, including 'safe' mode processing,
+ *                                       i.e. any uploaded binary executable will have been assigned the extension '.txt' already, when
+ *                                       FileManager's options['safe'] is enabled.
+ *
+ *               'tmp_filepath'          (string) filesystem path pointing at the temporary storage location of the uploaded file: you can
+ *                                       access the file data available here to optionally validate the uploaded content.
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *               'size'                  (integer) number of bytes of the uploaded file
+ *
+ *               'maxsize'               (integer) the configured maximum number of bytes for any single upload
+ *
+ *               'overwrite'             (boolean) FALSE: the uploaded file will not overwrite any existing file, it will fail instead.
+ *
+ *                                       Set to TRUE (and adjust the 'name' and 'extension' entries as you desire) when you wish to overwrite
+ *                                       an existing file.
+ *
+ *               'chmod'                 (integer) UNIX access rights (default: 0666) for the file-to-be-created (RW for user,group,world).
+ *
+ *                                       Note that the eXecutable bits have already been stripped before the callback was invoked.
+ *
+ *
+ *         Note that this request originates from a Macromedia Flash client: hence you'll need to use the
+ *         $_GET[session_name()] value to manually set the PHP session_id() before you start your your session
+ *         again.
+ *
+ *         The frontend-specified options.uploadAuthData items will be available as further $_GET[] items, as well.
+ *
+ *
+ *  'download':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the file to be downloaded. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given file.
+ *
+ *               'file'                  (string) physical filesystem path to the file being downloaded.
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *
+ *  'create': // create directory
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the parent directory of the directory being created. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for this parent directory.
+ *
+ *               'dir'                   (string) physical filesystem path to the parent directory of the directory being created.
+ *
+ *               'raw_name'              (string) the name of the directory to be created, as specified by the client (unfiltered!)
+ *
+ *               'uniq_name'             (string) the name of the directory to be created, filtered and ensured to be both unique and
+ *                                       not-yet-existing in the filesystem.
+ *
+ *               'newdir'                (string) the filesystem absolute path to the directory to be created; identical to:
+ *                                           $newdir = $mgr->legal_url_path2file_path($legal_url . $uniq_name);
+ *                                       Note the above: all paths are transformed from URI space to physical disk every time a change occurs;
+ *                                       this allows us to map even not-existing 'directories' to possibly disparate filesystem locations.
+ *
+ *               'chmod'                 (integer) UNIX access rights (default: 0777) for the directory-to-be-created (RWX for user,group,world)
+ *
+ *
+ *  'destroy':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the file/directory to be deleted. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given file/directory.
+ *
+ *               'file'                  (string) physical filesystem path to the file/directory being deleted.
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file / directory (directories are mime type: 'text/directory')
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *                                       Note that the 'mime_filters', if any, are applied to the 'delete' operation in a special way: only
+ *                                       files matching one of the mime types in this list will be deleted; anything else will remain intact.
+ *                                       This can be used to selectively clean a directory tree.
+ *
+ *                                       The design idea behind this approach is that you are only allowed what you can see ('view'), so
+ *                                       all 'view' restrictions should equally to the 'delete' operation.
+ *
+ *
+ *  'move':  // move or copy!
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the source parent directory of the file/directory being moved/copied. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given directory.
+ *
+ *               'dir'                   (string) physical filesystem path to the source parent directory of the file/directory being moved/copied.
+ *
+ *               'path'                  (string) physical filesystem path to the file/directory being moved/copied itself; this is the full source path.
+ *
+ *               'name'                  (string) the name itself of the file/directory being moved/copied; this is the source name.
+ *
+ *               'legal_newurl'          (string) LEGAL URI path to the target parent directory of the file/directory being moved/copied. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given directory.
+ *
+ *               'newdir'                (string) physical filesystem path to the target parent directory of the file/directory being moved/copied;
+ *                                       this is the full path of the directory where the file/directory will be moved/copied to. (filesystem absolute)
+ *
+ *               'newpath'               (string) physical filesystem path to the target file/directory being moved/copied itself; this is the full destination path,
+ *                                       i.e. the full path of where the file/directory should be renamed/moved to. (filesystem absolute)
+ *
+ *               'newname'               (string) the target name itself of the file/directory being moved/copied; this is the destination name.
+ *
+ *                                       This filename is ensured to be both filesystem-legal, unique and not yet existing in the given target directory.
+ *
+ *               'rename'                (boolean) TRUE when a file/directory RENAME operation is requested (name change, staying within the same
+ *                                       parent directory). FALSE otherwise.
+ *
+ *               'is_dir'                (boolean) TRUE when the subject is a directory itself, FALSE when it is a regular file.
+ *
+ *               'function'              (string) PHP call which will perform the operation. ('rename' or 'copy')
+ *
+ *
+ *  'view':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the directory being viewed/scanned. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'dir' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the scanned directory.
+ *
+ *               'dir'                   (string) physical filesystem path to the directory being viewed/scanned.
+ *
+ *               'files'                 (array of strings) array of files and directories (including '..' entry at the top when this is a
+ *                                       subdirectory of the FM-managed tree): only names, not full paths.
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *               'guess_mime'            (boolean) TRUE when the mime type for each file in this directory will be determined using filename
+ *                                       extension sniffing only; FALSE means the mime type will be determined using content sniffing, which
+ *                                       is slower.
+ *
+ *               'list_type'             (string) the type of view requested: 'list' or 'thumb'.
+ *
+ *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular view
+ *                                       operation (possibly as the second half of a copy/move/delete operation), when the ['status']==0,
+ *                                       we are performing a view operation as the second part of another otherwise failed action, e.g. a
+ *                                       failed 'create directory'.
+ *
+ *
+ *  'detail':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the file/directory being inspected. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given file.
+ *
+ *               'file'                  (string) physical filesystem path to the file being inspected.
+ *
+ *               'filename'              (string) the filename of the file being inspected. (Identical to 'basename($legal_url)')
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *
+ *  'thumbnail':
+ *
+ *           $info[] contains:
+ *
+ *               'legal_url'             (string) LEGAL URI path to the file/directory being thumbnailed. You may invoke
+ *                                           $dir = $mgr->legal_url_path2file_path($legal_url);
+ *                                       to obtain the physical filesystem path (also available in the 'file' $info entry, by the way!), or
+ *                                           $url = $mgr->legal2abs_url_path($legal_url);
+ *                                       to obtain the absolute URI path for the given file.
+ *
+ *               'file'                  (string) physical filesystem path to the file being inspected.
+ *
+ *               'filename'              (string) the filename of the file being inspected. (Identical to 'basename($legal_url)')
+ *
+ *               'mime'                  (string) the mime type as sniffed from the file
+ *
+ *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
+ *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
+ *                                       and including the slash, e.g. 'image/'
+ *
+ *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *               'requested_size'        (integer) the size (maximum width and height) in pixels of the thumbnail to be produced.
+ *
  *
  *
  * Developer Notes:
  *
- * - member fucntions which have a commented out 'static' keyword have it removed by design: it makes for easier overloading through
+ * - member functions which have a commented out 'static' keyword have it removed by design: it makes for easier overloading through
  *   inheritance that way and meanwhile there's no pressing need to have those (public) member functions acccessible from the outside world
  *   without having an instance of the FileManager class itself round at the same time.
  */
@@ -125,7 +462,14 @@ require_once('Assets/getid3/getid3.php');
 
 
 
-define('MTFM_THUMBNAIL_JPEG_QUALITY', 65);
+// the jpeg quality for the largest thumbnails (smaller ones are automatically done at increasingly higher quality)
+define('MTFM_THUMBNAIL_JPEG_QUALITY', 75);
+
+// the number of directory levels in the thumbnail cache; set to 2 when you expect to handle huge image collections.
+//
+// Note that each directory level distributes the files evenly across 256 directories; hence, you may set this
+// level count to 2 when you expect to handle more than 32K images in total -- as each image will have two thumbnails:
+// a 48px small one and a 250px large one.
 define('MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE', 1);
 
 
@@ -162,6 +506,9 @@ class FileManager
 			'safe' => true,
 			'filter' => null,
 			'chmod' => 0777,
+			'ViewIsAuthorized_cb' => null,
+			'DetailIsAuthorized_cb' => null,
+			'ThumbnailIsAuthorized_cb' => null,
 			'UploadIsAuthorized_cb' => null,
 			'DownloadIsAuthorized_cb' => null,
 			'CreateIsAuthorized_cb' => null,
@@ -298,6 +645,29 @@ class FileManager
 		// remove the imageinfo() call overhead per file for very large directories; just guess at the mimetye from the filename alone.
 		// The real mimetype will show up in the 'details' view anyway! This is only for the 'filter' function:
 		$just_guess_mime = (count($files) > 100);
+
+		$fileinfo = array(
+				'legal_url' => $legal_url,
+				'dir' => $dir,
+				'files' => $files,
+				'mime_filter' => $mime_filter,
+				'mime_filters' => $mime_filters,
+				'guess_mime' => $just_guess_mime,
+				'list_type' => $list_type,
+				'preliminary_json' => $json
+			);
+
+		if (!empty($this->options['ViewIsAuthorized_cb']) && function_exists($this->options['ViewIsAuthorized_cb']) && !$this->options['ViewIsAuthorized_cb']($this, 'view', $fileinfo))
+			throw new FileManagerException('authorized');
+
+		$legal_url = $fileinfo['legal_url'];
+		$dir = $fileinfo['dir'];
+		$files = $fileinfo['files'];
+		$mime_filter = $fileinfo['mime_filter'];
+		$mime_filters = $fileinfo['mime_filters'];
+		$just_guess_mime = $fileinfo['guess_mime'];
+		$list_type = $fileinfo['list_type'];
+		$json = $fileinfo['preliminary_json'];
 
 		foreach ($files as $filename)
 		{
@@ -499,6 +869,8 @@ class FileManager
 			// step down to the parent dir and retry:
 			$legal_url = self::getParentDir($legal_url);
 
+			$jserr['status']++;
+
 		} while ($legal_url !== false);
 
 		$this->modify_json4exception($jserr, $emsg . ' : path :: ' . $legal_url);
@@ -572,8 +944,26 @@ class FileManager
 				throw new FileManagerException('nofile');
 			}
 
+			$fileinfo = array(
+					'legal_url' => $legal_url,
+					'file' => $file,
+					'filename' => $filename,
+					'mime' => $mime,
+					'mime_filter' => $mime_filter,
+					'mime_filters' => $mime_filters
+				);
 
-			$content = $this->extractDetailInfo($legal_url, $file, $mime);
+			if (!empty($this->options['DetailIsAuthorized_cb']) && function_exists($this->options['DetailIsAuthorized_cb']) && !$this->options['DetailIsAuthorized_cb']($this, 'detail', $fileinfo))
+				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$file = $fileinfo['file'];
+			$filename = $fileinfo['filename'];
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
+
+			$content = $this->extractDetailInfo($legal_url, $file, $mime, $mime_filter);
 
 			if (!headers_sent()) header('Content-Type: application/json');
 
@@ -696,6 +1086,27 @@ class FileManager
 			{
 				throw new FileManagerException('nofile');
 			}
+
+			$fileinfo = array(
+					'legal_url' => $legal_url,
+					'file' => $file,
+					'filename' => $filename,
+					'mime' => $mime,
+					'mime_filter' => $mime_filter,
+					'mime_filters' => $mime_filters,
+					'requested_size' => $reqd_size
+				);
+
+			if (!empty($this->options['ThumbnailIsAuthorized_cb']) && function_exists($this->options['ThumbnailIsAuthorized_cb']) && !$this->options['ThumbnailIsAuthorized_cb']($this, 'thumbnail', $fileinfo))
+				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$file = $fileinfo['file'];
+			$filename = $fileinfo['filename'];
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
+			$reqd_size = $fileinfo['requested_size'];
 
 			/*
 			 * each image we inspect may throw an exception due to a out of memory warning
@@ -822,7 +1233,6 @@ class FileManager
 
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			$legal_url .= $filename;
-			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url);
 
@@ -843,15 +1253,21 @@ class FileManager
 			}
 
 			$fileinfo = array(
-					'file' => $file,
-					'url' => $url,
 					'legal_url' => $legal_url,
+					'file' => $file,
 					'mime' => $mime,
+					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters
 				);
 
 			if (!empty($this->options['DestroyIsAuthorized_cb']) && function_exists($this->options['DestroyIsAuthorized_cb']) && !$this->options['DestroyIsAuthorized_cb']($this, 'destroy', $fileinfo))
 				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$file = $fileinfo['file'];
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
 
 			if (!$this->unlink($legal_url, $mime_filters))
 				throw new FileManagerException('unlink_failed:' . $legal_url);
@@ -928,7 +1344,7 @@ class FileManager
 		$list_type = ($this->getPOSTparam('type') != 'thumb' ? 'list' : 'thumb');
 
 		$legal_url = null;
-		
+
 		try
 		{
 			$dir_arg = $this->getPOSTparam('directory');
@@ -944,7 +1360,6 @@ class FileManager
 
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			//$legal_url .= $filename;
-			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
 
@@ -957,19 +1372,24 @@ class FileManager
 			$newdir = $this->legal_url_path2file_path($legal_url . $file);
 
 			$fileinfo = array(
-					'dir' => $dir,
-					'url' => $url,
 					'legal_url' => $legal_url,
-					'name' => $file,
+					'dir' => $dir,
+					'raw_name' => $filename,
+					'uniq_name' => $file,
 					'newdir' => $newdir,
 					'chmod' => $this->options['chmod']
 				);
 			if (!empty($this->options['CreateIsAuthorized_cb']) && function_exists($this->options['CreateIsAuthorized_cb']) && !$this->options['CreateIsAuthorized_cb']($this, 'create', $fileinfo))
 				throw new FileManagerException('authorized');
 
-			//echo "*** CREATE *** newdir = '$newdir', url = '$url', file = '$file', legal_url = '$legal_url'\n";
+			$legal_url = $fileinfo['legal_url'];
+			$dir = $fileinfo['dir'];
+			$filename = $fileinfo['raw_name'];
+			$file = $fileinfo['uniq_name'];
+			$newdir = $fileinfo['newdir'];
+
 			if (!@mkdir($newdir, $fileinfo['chmod'], true))
-				throw new FileManagerException('mkdir_failed:' . $url . $file);
+				throw new FileManagerException('mkdir_failed:' . $this->legal2abs_url_path($legal_url) . $file);
 
 			if (!headers_sent()) header('Content-Type: application/json');
 
@@ -981,6 +1401,8 @@ class FileManager
 		catch(FileManagerException $e)
 		{
 			$emsg = $e->getMessage();
+
+			$jserr['status'] = 0;
 
 			// and fall back to showing the PARENT directory
 			try
@@ -1008,6 +1430,8 @@ class FileManager
 		{
 			// catching other severe failures; since this can be anything and should only happen in the direst of circumstances, we don't bother translating
 			$emsg = $e->getMessage();
+
+			$jserr['status'] = 0;
 
 			// and fall back to showing the PARENT directory
 			try
@@ -1066,14 +1490,13 @@ class FileManager
 			if (!$this->options['download'])
 				throw new FileManagerException('disabled');
 
-			$file_arg = $this->getPOSTparam('file');
+			$file_arg = $this->getGETparam('file');
 			if (empty($file_arg))
 				throw new FileManagerException('nofile');
 
 			$legal_url = $this->rel2abs_legal_url_path($file_arg);
 			//$legal_url = self::enforceTrailingSlash($legal_url);
 
-			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url);
 
@@ -1093,16 +1516,21 @@ class FileManager
 				throw new FileManagerException('nofile');
 			}
 
-
 			$fileinfo = array(
-					'file' => $file,
-					'url' => $url,
 					'legal_url' => $legal_url,
+					'file' => $file,
 					'mime' => $mime,
+					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters
 				);
 			if (!empty($this->options['DownloadIsAuthorized_cb']) && function_exists($this->options['DownloadIsAuthorized_cb']) && !$this->options['DownloadIsAuthorized_cb']($this, 'download', $fileinfo))
 				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$file = $fileinfo['file'];
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
 
 			if ($fd = fopen($file, 'rb'))
 			{
@@ -1213,7 +1641,6 @@ class FileManager
 			$legal_url = self::enforceTrailingSlash($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
-			$url = $this->legal2abs_url_path($legal_url);
 
 			$filename = $this->getUniqueName($file_arg, $dir);
 			if (!$filename)
@@ -1246,21 +1673,31 @@ class FileManager
 			}
 
 			$fileinfo = array(
-				'dir' => $dir,
-				'url' => $url,
 				'legal_url' => $legal_url,
-				'tmp_filepath' => $tmppath,
+				'dir' => $dir,
+				'raw_filename' => $file_arg,
 				'name' => $fi['filename'],
 				'extension' => $fi['extension'],
+				'mime' => $mime,
+				'mime_filter' => $mime_filter,
+				'mime_filters' => $mime_filters,
+				'tmp_filepath' => $tmppath,
 				'size' => $_FILES['Filedata']['size'],
 				'maxsize' => $this->options['maxUploadSize'],
-				'mime' => $mime,
-				'mime_filters' => $mime_filters,
 				'overwrite' => false,
 				'chmod' => $this->options['chmod'] & 0666   // security: never make those files 'executable'!
 			);
 			if (!empty($this->options['UploadIsAuthorized_cb']) && function_exists($this->options['UploadIsAuthorized_cb']) && !$this->options['UploadIsAuthorized_cb']($this, 'upload', $fileinfo))
 				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$dir = $fileinfo['dir'];
+			$file_arg = $fileinfo['raw_filename'];
+			$filename = $fileinfo['name'] . (!empty($fileinfo['extension']) ? '.' . $fileinfo['extension'] : '');
+			$mime = $fileinfo['mime'];
+			$mime_filter = $fileinfo['mime_filter'];
+			$mime_filters = $fileinfo['mime_filters'];
+			//$tmppath = $fileinfo['tmp_filepath'];
 
 			if($fileinfo['maxsize'] && $fileinfo['size'] > $fileinfo['maxsize'])
 				throw new FileManagerException('size');
@@ -1269,8 +1706,7 @@ class FileManager
 				throw new FileManagerException('extension');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
-			$file = $this->legal_url_path2file_path($legal_url . $fileinfo['name'] . '.' . $fileinfo['extension']);
-
+			$file = $this->legal_url_path2file_path($legal_url . $filename);
 
 			if(!$fileinfo['overwrite'] && file_exists($file))
 				throw new FileManagerException('exists');
@@ -1377,7 +1813,6 @@ class FileManager
 
 			$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 			//$legal_url .= $filename;
-			$url = $this->legal2abs_url_path($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
 			$path = $this->legal_url_path2file_path($legal_url . $filename);
@@ -1402,7 +1837,6 @@ class FileManager
 			{
 				$fn = 'rename';
 				$legal_newurl = $legal_url;
-				$newurl = $url;
 				$newdir = $dir;
 
 				$newname = pathinfo($newname_arg, PATHINFO_BASENAME);
@@ -1429,7 +1863,6 @@ class FileManager
 				$fn = ($is_copy ? 'copy' : 'rename' /* 'move' */);
 				$legal_newurl = $this->rel2abs_legal_url_path($newdir_arg);
 				$legal_newurl = self::enforceTrailingSlash($legal_newurl);
-				$newurl = $this->legal2abs_url_path($legal_newurl);
 				$newdir = $this->legal_url_path2file_path($legal_newurl);
 
 				if ($is_dir)
@@ -1445,14 +1878,12 @@ class FileManager
 
 
 			$fileinfo = array(
-					'dir' => $dir,
-					'url' => $url,
 					'legal_url' => $legal_url,
+					'dir' => $dir,
 					'path' => $path,
 					'name' => $filename,
-					'newdir' => $newdir,
-					'newurl' => $newurl,
 					'legal_newurl' => $legal_newurl,
+					'newdir' => $newdir,
 					'newpath' => $newpath,
 					'newname' => $newname,
 					'rename' => $rename,
@@ -1462,6 +1893,18 @@ class FileManager
 
 			if (!empty($this->options['MoveIsAuthorized_cb']) && function_exists($this->options['MoveIsAuthorized_cb']) && !$this->options['MoveIsAuthorized_cb']($this, 'move', $fileinfo))
 				throw new FileManagerException('authorized');
+
+			$legal_url = $fileinfo['legal_url'];
+			$dir = $fileinfo['dir'];
+			$path = $fileinfo['path'];
+			$filename = $fileinfo['name'];
+			$legal_newurl = $fileinfo['legal_newurl'];
+			$newdir = $fileinfo['newdir'];
+			$newpath = $fileinfo['newpath'];
+			$newname = $fileinfo['newname'];
+			$rename = $fileinfo['rename'];
+			$is_dir = $fileinfo['is_dir'];
+			$fn = $fileinfo['function'];
 
 			if($rename)
 			{
@@ -1540,7 +1983,7 @@ class FileManager
 	 *
 	 * Return NULL on error.
 	 */
-	public function extractDetailInfo($legal_url, $file, $mime)
+	public function extractDetailInfo($legal_url, $file, $mime, $mime_filter)
 	{
 		$url = $this->legal2abs_url_path($legal_url);
 		$filename = pathinfo($url, PATHINFO_BASENAME);
@@ -1550,7 +1993,7 @@ class FileManager
 		$getid3 = new getID3();
 		$getid3->encoding = 'UTF-8';
 		$getid3->Analyze($file);
-	
+
 		$content = null;
 
 		if (FileManagerUtility::startsWith($mime, 'image/'))
@@ -1581,20 +2024,35 @@ class FileManager
 			$emsg = null;
 			try
 			{
-				$thumbfile = $this->getThumb($legal_url, $file);
+				$thumbfile = $this->getThumb($legal_url, $file, 250);
+				$thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
+				/*
+				 * the thumbnail may be produced now, but we want to stay in control when the thumbnail is
+				 * fetched by the client, so we force them to travel through this backend.
+				 */
+				$thumbfile = $this->mkEventHandlerURL(array(
+						'event' => 'thumbnail',
+						// directory and filename of the ORIGINAL image should follow next:
+						'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
+						'file' => pathinfo($legal_url, PATHINFO_BASENAME),
+						'size' => 250,
+						'filter' => $mime_filter
+					));
 			}
 			catch (Exception $e)
 			{
 				$emsg = $e->getMessage();
 				$thumbfile = $this->getIconForError($emsg, $legal_url, false);
+				$thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
 			}
 
 			$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-						   <img src="' . FileManagerUtility::rawurlencode_path($thumbfile) /* . $randomImage */ . '" class="preview" alt="preview" />
+						   <img src="' . $thumbfile . '" class="preview" alt="preview" />
 						 </a>';
 			if (!empty($emsg))
 			{
-				$jsa = array('status' => 1);
+				// use the abilities of modify_json4exception() to munge/format the exception message:
+				$jsa = array();
 				$this->modify_json4exception($jsa, $emsg);
 				$content .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
 			}
@@ -1603,7 +2061,7 @@ class FileManager
 				$earr = explode(':', $e->getMessage(), 2);
 				$content .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
 			}
-			
+
 			$finfo = Image::guestimateRequiredMemorySpace($file);
 			if (!empty($finfo['usage_guestimate']) && !empty($finfo['usage_min_advised']))
 			{
@@ -1629,7 +2087,8 @@ class FileManager
 			}
 			catch (Exception $e)
 			{
-				$jsa = array('status' => 0);
+				// use the abilities of modify_json4exception() to munge/format the exception message:
+				$jsa = array('error' => '');
 				$this->modify_json4exception($jsa, $e->getMessage());
 				$content .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
 			}
@@ -1714,38 +2173,46 @@ class FileManager
 		else
 		{
 			// else: fall back to 'no preview available'
-			try
+			if (!empty($getid3->info) && empty($getid3->info['error']))
 			{
-				ob_start();
-					var_dump($getid3->info);
-				$dump = ob_get_clean();
-				// $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
+				try
+				{
+					ob_start();
+						var_dump($getid3->info);
+					$dump = ob_get_clean();
+					// $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
 
-				// strip the NULs out:
-				$dump = str_replace('&#0;', '?', $dump);
-				//$dump = html_entity_decode(strip_tags($dump), ENT_QUOTES, 'UTF-8');
-				//@file_put_contents('getid3.raw.log', $dump);
-				// since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
-				$dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
-				// and reduce long sequences of unknown charcodes:
-				$dump = preg_replace('/\?{8,}/', '???????', $dump);
-				//$dump = html_entity_encode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
+					// strip the NULs out:
+					$dump = str_replace('&#0;', '?', $dump);
+					//$dump = html_entity_decode(strip_tags($dump), ENT_QUOTES, 'UTF-8');
+					//@file_put_contents('getid3.raw.log', $dump);
+					// since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
+					$dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
+					// and reduce long sequences of unknown charcodes:
+					$dump = preg_replace('/\?{8,}/', '???????', $dump);
+					//$dump = html_entity_encode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
 
-				$content = '<div class="margin">
-							<h2>${preview}</h2>
-							<pre>' . "\n" . $dump . "\n" . '</pre></div>';
-				//@file_put_contents('getid3.log', $dump);
+					$content = '<div class="margin">
+								<h2>${preview}</h2>
+								<pre>' . "\n" . $dump . "\n" . '</pre></div>';
+					//@file_put_contents('getid3.log', $dump);
 
-				return $content;
+					return $content;
+				}
+				catch(Exception $e)
+				{
+					// ignore
+					$content = $e->getMessage();
+				}
 			}
-			catch(Exception $e)
+			else
 			{
-				// ignore
-				$content = $e->getMessage();
+				$content = implode(', ', $getid3->info['error']);
 			}
 
 			$content = '<div class="margin">
-						${nopreview} ' . $content . '
+						${nopreview}
+						<p class="err_info">' . $content . '</p>
 					</div>';
 		}
 
@@ -2012,7 +2479,7 @@ class FileManager
 	 * Note #2 is important as this enables this function to also serve as icon fetcher for ZIP content viewer, etc.:
 	 * after all, those files do not exist physically on disk themselves!
 	 */
-	protected function getIcon($file, $smallIcon)
+	public function getIcon($file, $smallIcon)
 	{
 		$ext = pathinfo($file, PATHINFO_EXTENSION);
 
@@ -2025,7 +2492,22 @@ class FileManager
 		return $path;
 	}
 
-	protected function getThumb($legal_url, $path, $width = 250)
+	/**
+	 * Return the path to the thumbnail of the specified image, the thumbnail having its
+	 * width and height limited to $width pixels.
+	 *
+	 * When the thumbnail image does not exist yet, it will created on the fly.
+	 *
+	 * @param string $legal_url    the LEGAL URL path to the original image. Is used solely
+	 *                             to generate a suitable thumbnail filename.
+	 *
+	 * @param string $path         filesystem path to the original image. Is used to derive
+	 *                             the thumbnail content from.
+	 *
+	 * @param integer $width       the maximum number of pixels for width and height of the
+	 *                             thumbnail.
+	 */
+	public function getThumb($legal_url, $path, $width = 250)
 	{
 		$thumb = $this->generateThumbName($legal_url, $width);
 		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumb);
@@ -2046,7 +2528,7 @@ class FileManager
 	/**
 	 * Assitant function which produces the best possible icon image path for the given error/exception message.
 	 */
-	protected function getIconForError($emsg, $original_filename, $small_icon)
+	public function getIconForError($emsg, $original_filename, $small_icon)
 	{
 		if (empty($emsg))
 		{
@@ -2457,7 +2939,7 @@ class FileManager
 			return;
 
 		// only set up the new json error report array when this is the first exception we got:
-		if ($jserr['status'])
+		if (empty($jserr['error']))
 		{
 			// check the error message and see if it is a translation code word (with or without parameters) or just a generic error report string
 			$e = explode(':', $emsg, 2);

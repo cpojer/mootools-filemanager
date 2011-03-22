@@ -6,8 +6,10 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 ![Screenshot](https://github.com/frozeman/mootools-filemanager/raw/master/screenshot.png)
 
 ### Authors
+
 * [Christoph Pojer](http://cpojer.net)
 * [Fabian Vogelsteller](http://frozeman.de)
+* [Ger Hobbelt](http://hobbelt.com / http://hebbut.net)
 
 ### Features
 
@@ -22,8 +24,11 @@ A filemanager for the web based on MooTools that allows you to (pre)view, upload
 * Provides your client with the most possible convenience
 * Create galleries using the Gallery-Plugin
 * History and state management
+* Backend PHP support for mod_alias/mod_vhost_alias/otherwise nonlinear mapped filesystems
+* Auto-adjusts directory views, balancing performance and the amount of data shown, unsuring optimum user experience
 
 ### Issues
+
   - sometimes "illegal character (Error #2038) mootools-core-1.3.js (line 5015)" when uploading multiple files
 
 How to use
@@ -65,7 +70,7 @@ Options
 * rename: (boolean, defaults to *false*) Whether to allow renaming of files or not
 * download: (boolean, defaults to *false*) Whether to allow downloading of files or not
 * createFolders: (boolean, defaults to *false*) Whether to allow creation of folders or not
-* filter: (string) If specified, it reduces the shown and upload-able filetypes to these mimtypes. possible options are
+* filter: (string) If specified, it reduces the shown and upload-able filetypes to these mimetypes. possible options are
   * image: *.jpg; *.jpeg; *.bmp; *.gif; *.png
   * video: *.avi; *.flv; *.fli; *.movie; *.mpe; *.qt; *.viv; *.mkv; *.vivo; *.mov; *.mpeg; *.mpg; *.wmv; *.mp4
   * audio: *.aif; *.aifc; *.aiff; *.aif; *.au; *.mka; *.kar; *.mid; *.midi; *.mp2; *.mp3; *.mpga; *.ra; *.ram; *.rm; *.rpm; *.snd; *.wav; *.tsi
@@ -75,11 +80,14 @@ Options
 * hideOnClick: (boolean, defaults to *false*) When true, hides the FileManager when the area outside of it is clicked
 * hideOverlay: (boolean, defaults to *false*) When true, hides the background overlay
 * hideQonDelete: (boolean, defaults to *false*) When true, hides the Dialog asking 'are you sure' when you have clicked on any 'delete file/directory' button
+* listPaginationSize: (integer, defaults to *100*) When non-zero, add pagination, i.e. split the view of huge directories into pages of N items each (this speeds up rendering and interaction)
+* listPaginationAvgWaitTime: (integer, defaults to *2000*) When non-zero, enable adaptive pagination: strive to, on average, not to spend more than this number of milliseconds on rendering a directory view. This is a great help to adapt the view to match the power of your clients' machines.
+* propagateData: (object, defaults to *empty*) Specify extra elements, all of which will be sent with every request to the backend
 
 Options if Uploader is included
 
 * upload: (boolean, defaults to *true*)
-* uploadAuthData: (object) Data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
+* uploadAuthData: (object, defaults to *empty*) Extra data to be send with the GET-Request of an Upload as Flash ignores authenticated clients
 * resizeImages: (boolean, defaults to *true*) Whether to show the option to resize big images or not
 
 Events
@@ -92,15 +100,25 @@ Events
 
 Backend
 
-* See Backend/FileManager.php for all available server-side options
+* See Assets/Connector/FileManager.php and Assets/Connector/FMgr4Alias.php for all available server-side options
+
+* Note that you can configure these items by changing the related PHP define:
+
+  - MTFM_THUMBNAIL_JPEG_QUALITY  (default: 75) the jpeg quality for the largest thumbnails (smaller ones are automatically done at increasingly higher quality to ensure they look good)
+
+  - MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE  (default: 1) the number of directory levels in the thumbnail cache; set to 2 when you expect to handle huge image collections.  Note that each directory level distributes the files evenly across 256 directories; hence, you may set this level count to 2 when you expect to handle more than 32K images in total -- as each image will have two thumbnails: a 48px small one and a 250px large one.
 
 ### Custom Authentication and Authorization
 
-* As Flash and therefore the Uploader ignores authenticated clients[*] you need to specify your own authentication / session initialization. In order to do this you need to provide custom code in the "UploadIsAuthorized" callback function on the serverside and you need to specify "uploadAuthData" on the client.
+* As Flash and therefore the Uploader ignores authenticated clients[*] you need to specify your own authentication / session initialization. This is taken care of by FileManager itself, so you don't need to bother, except provide a tiny bit of custom code in the "UploadIsAuthorized_cb" callback function on the serverside, manually initializing and starting your session-based authentication.
 
-  [*] More specifically: Flash does not pass along any cookies, hence the PHP session ID cookie is not sent along with any upload request. The elements in 'uploadAuthData' are sent to the server as part of the request URI and will show up in the $_GET[] array, where you can extract them and manually initialize and start your session-based authentication.
+  [*] More specifically: Flash does not pass along any cookies of itself, hence the FileManager will place the cookies in the GET URI query section for extraction by the server.
+  
+* You may pass along additional (key, value) elements to the server during upload by adding those items in the 'uploadAuthData' options' section. These will all be passed along in the GET URL query section.
 
-* FM now provides a server-side callback hook for each 'intrusive' request so you can apply your own business logic to determine if a given (file or directory, user context) mix is indeed permitted to upload / create / delete / move / rename / copy / download.
+* Any (key, value) elements included in the "propagateData" options' section are sent to the server as part of every request URI (action) and will show up in the $_GET[] array, where you can extract them.
+
+* FM now provides a server-side callback hook for each request so you can apply your own business logic to determine if a given (file or directory, user context) mix is indeed permitted to be viewed / detailed / thumbnailed / uploaded / created / deleted / moved / renamed / copied / downloaded.
 
   These hooks can be configured as part of the server-side options for the Backend/FileManager instance. For more info and a sample see the Demos/manager.php and Demos/selectImage.php files.
 
@@ -111,6 +129,10 @@ Backend
   * CreateIsAuthorized_cb
   * DestroyIsAuthorized_cb
   * MoveIsAuthorized_cb
+  * ViewIsAuthorized_cb
+  * DetailIsAuthorized_cb
+  * ThumbnailIsAuthorized_cb
+
 
 
 ### Credits
