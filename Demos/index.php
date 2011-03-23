@@ -215,7 +215,7 @@ session_write_close();
   </div>
 
   <div class="example">
-    <a href="tinymce.html">Open File-Manager from TinyMCE (editor) - separate test page</a>
+    <a href="tinymce.php">Open File-Manager from TinyMCE (editor) - separate test page</a>
   </div>
 
   <div class="example">
