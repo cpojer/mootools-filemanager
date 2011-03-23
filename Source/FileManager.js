@@ -1807,22 +1807,27 @@ var FileManager = new Class({
 
 					this.previewLoader.fade(0).get('tween').chain((function() {
 						this.previewLoader.dispose();
+					}).bind(this));
 
-						var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
-						if (prev) prev.addEvent('load', function(){
+					// don't wait for the fade to finish to set up the new content
+					var prev = this.preview.removeClass('filemanager-loading').set('html', j && j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '').getElement('img.preview');
+					if (prev) {
+						prev.addEvent('load', function(){
 							this.setStyle('background', 'none');
 						});
+					}
 
-						var els = this.preview.getElements('button');
-						if (els) els.addEvent('click', function(e){
+					var els = this.preview.getElements('button');
+					if (els) {
+						els.addEvent('click', function(e){
 							e.stop();
 							window.open(this.get('value'));
 						});
+					}
 
-						if(typeof milkbox != 'undefined')
-							milkbox.reloadPageGalleries();
+					if(typeof milkbox != 'undefined')
+						milkbox.reloadPageGalleries();
 
-					}).bind(this));
 				}).bind(this),
 				onError: (function(text, error) {
 					this.previewLoader.dispose();
