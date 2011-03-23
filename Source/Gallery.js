@@ -304,7 +304,7 @@ FileManager.Gallery = new Class({
     }, this);
   },
 
-  serialize: function(e){
+  serialize_on_click: function(e){
     if(e) e.stop();
     var serialized = {};
     this.files.each(function(v){
