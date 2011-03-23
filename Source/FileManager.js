@@ -604,8 +604,6 @@ var FileManager = new Class({
 				// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 				this.reset_view_fill_store();
 
-				this.browserLoader.fade(1);
-
 				this.Request = new FileManager.Request({
 					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 						event: 'create'
@@ -666,7 +664,7 @@ var FileManager = new Class({
 		if (this.Request) this.Request.cancel();
 
 		//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onRequest invoked");
-		this.browserLoader.fade(1);
+
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 		this.reset_view_fill_store();
 
@@ -1128,10 +1126,8 @@ var FileManager = new Class({
 
 		// if (this.Request) this.Request.cancel();
 
-		this.browserLoader.fade(1);
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 		//this.reset_view_fill_store();
-		// abort any still running ('antiquated') fill chunks:
 		$clear(this.view_fill_timer);
 		this.view_fill_timer = null;
 
@@ -1170,17 +1166,6 @@ var FileManager = new Class({
 		// in the tooltips correct!
 		startindex = Math.floor(startindex / pagesize);
 		startindex *= pagesize;
-
-		//this.browser_paging.fade(0);
-
-
-		// as this is a long-running process, make sure the hourglass-equivalent is visible for the duration:
-		//this.browserLoader.fade(1);
-
-		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
-		this.browser_dragndrop_info.fade(0.5);
-		this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
-		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
 
 		// keyboard navigation sets the 'hover' class on the 'current' item: remove any of those:
 		this.browser.getElements('span.fi.hover').each(function(span){
@@ -1895,10 +1880,18 @@ var FileManager = new Class({
 	// we may be reloading and we don't want to destroy the page indicator then!
 	reset_view_fill_store: function(j)
 	{
-		// abort any still running ('antiquated') fill chunks:
-		$clear(this.view_fill_timer);
+		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
+		this.browser_dragndrop_info.fade(0.5);
+		this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
+		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
+
+		// as this is a long-running process, make sure the hourglass-equivalent is visible for the duration:
+		this.browserLoader.fade(1);
 
 		this.browser_paging.fade(0);
+
+		// abort any still running ('antiquated') fill chunks:
+		$clear(this.view_fill_timer);
 
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
 		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
