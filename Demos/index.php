@@ -100,7 +100,7 @@ session_write_close();
         destroy: true,
         rename: true,
         createFolders: true,
-		hideQonDelete: true     // don't ask 'are you sure' when the user hits the 'delete' button
+		hideQonDelete: false     // DO ask 'are you sure' when the user hits the 'delete' button
       });
       $('example1').addEvent('click', manager1.show.bind(manager1));
 
