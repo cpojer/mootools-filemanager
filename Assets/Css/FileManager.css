@@ -341,7 +341,7 @@ div.filemanager-container span.thumb {
   overflow: hidden;
 }
 
-div.filemanager-container span.fi:hover, div.filemanager-container span.fi.hover {
+div.filemanager-container span.fi.hover {
   background:#E2EBF6;
 }
 
