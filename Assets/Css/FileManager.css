@@ -653,7 +653,8 @@ div.filemanager-preview {
 div.filemanager-preview img.preview {
   margin: 0 auto 1em;
   display: block;
-  background: transparent;
+  /* background: transparent; */
+  background: url("../Images/loader.gif") center center no-repeat;
   border: 1px solid #fff;
 }
 
