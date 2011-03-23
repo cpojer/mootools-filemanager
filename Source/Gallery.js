@@ -22,7 +22,7 @@ FileManager.Gallery = new Class({
 
   initialize: function(options) {
     this.offsets = {y: -72};
-    this.galleryPlugin = true; // prevent that this.show() is called in the base class again
+    //this.galleryPlugin = true; // prevent that this.show() is called in the base class again
     this.parent(options);
 
     var show = function() {
@@ -125,6 +125,15 @@ FileManager.Gallery = new Class({
           this.show();
       }).bind(this));
       }
+  },
+
+  // override the parent's initialShow method: we do not want to jump to the jsGET-stored position again!
+  initialShow: function() {
+  },
+
+  // override the parent's allow_DnD method: always allow drag and drop as otherwise we cannot construct our gallery!
+  allow_DnD: function(j, pagesize) {
+    return true;
   },
 
   onDragComplete: function(el, droppable) {

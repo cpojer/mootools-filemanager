@@ -100,7 +100,7 @@ session_write_close();
         destroy: true,
         rename: true,
         createFolders: true,
-		hideQonDelete: true     // don't ask 'are you sure' when the user hits the 'delete' button
+		hideQonDelete: false     // DO ask 'are you sure' when the user hits the 'delete' button
       });
       $('example1').addEvent('click', manager1.show.bind(manager1));
 
@@ -215,7 +215,7 @@ session_write_close();
   </div>
 
   <div class="example">
-    <a href="tinymce.html">Open File-Manager from TinyMCE (editor) - separate test page</a>
+    <a href="tinymce.php">Open File-Manager from TinyMCE (editor) - separate test page</a>
   </div>
 
   <div class="example">

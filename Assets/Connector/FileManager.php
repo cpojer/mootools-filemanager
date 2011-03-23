@@ -2025,12 +2025,12 @@ class FileManager
 			try
 			{
 				$thumbfile = $this->getThumb($legal_url, $file, 250);
-				$thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
+				$enc_thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
 				/*
 				 * the thumbnail may be produced now, but we want to stay in control when the thumbnail is
 				 * fetched by the client, so we force them to travel through this backend.
 				 */
-				$thumbfile = $this->mkEventHandlerURL(array(
+				$enc_thumbfile = $this->mkEventHandlerURL(array(
 						'event' => 'thumbnail',
 						// directory and filename of the ORIGINAL image should follow next:
 						'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
@@ -2043,11 +2043,15 @@ class FileManager
 			{
 				$emsg = $e->getMessage();
 				$thumbfile = $this->getIconForError($emsg, $legal_url, false);
-				$thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
+				$enc_thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
 			}
 
+			// get the size of the thumbnail/icon: the <img> is styled with width and height to ensure the background 'loader' image is shown correctly:
+			$tnpath = $this->url_path2file_path($thumbfile);
+			$tninf = @getimagesize($tnpath);
+
 			$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-						   <img src="' . $thumbfile . '" class="preview" alt="preview" />
+						   <img src="' . $enc_thumbfile . '" class="preview" alt="preview" style="width: ' . $tninf[0] . 'px; height: ' . $tninf[1] . 'px;" />
 						 </a>';
 			if (!empty($emsg))
 			{
