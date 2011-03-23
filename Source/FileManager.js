@@ -1197,15 +1197,15 @@ var FileManager = new Class({
 		}
 		var rootPath = j.root.slice(0,-1).split('/');
 		rootPath.pop();
-		this.CurrentPath.split('/').each(function(folderName){
+		this.CurrentPath.split('/').each((function(folderName){
 			if (!folderName) return;
 
 			pre.push(folderName);
 			var path = ('/'+pre.join('/')+'/').replace(j.root,'');
 			//if (typeof console !== 'undefined' && console.log) console.log('on fill file = ' + j.root + ' : ' + path + ' : ' + folderName + ', source = ' + 'JSON');
 			// add non-clickable path
-			if(rootPath.contains(folderName)) {
-				text.push(new Element('span', {'class': 'icon',text: folderName}));
+			if (rootPath.contains(folderName)) {
+				text.push(new Element('span', {'class': 'icon', text: folderName}));
 			// add clickable path
 			} else {
 				text.push(new Element('a', {
@@ -1219,7 +1219,7 @@ var FileManager = new Class({
 				);
 			}
 			text.push(new Element('span', {text: ' / '}));
-		});
+		}).bind(this));
 
 		text.pop();
 		text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e) {
