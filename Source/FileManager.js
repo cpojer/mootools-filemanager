@@ -102,12 +102,76 @@ var FileManager = new Class({
 		this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
 		this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
 		this.browserheader.adopt(this.browserLoader);
-		this.browserScroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer).addEvent(
-			'mouseover',(function(){
-			this.browser.getElements('span.fi.hover').each(function(span){
-				span.removeClass('hover');
+		this.browserScroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer).addEvents({
+			'mouseover': (function(e){
+					//if (typeof console !== 'undefined' && console.log) console.log('mouseover: ' + e.relatedTarget + ', ' + e.target);
+
+					// sync mouse and keyboard-driven browsing: the keyboard requires that we keep track of the hovered item,
+					// so we cannot simply leave it to a :hover CSS style. Instead, we find out which element is currently
+					// hovered:
+					var row = null;
+					if (e.target)
+					{
+						row = (e.target.hasClass('fi') ? e.target : e.target.getParent('span.fi'));
+						if (row)
+						{
+							row.addClass('hover');
+						}
+					}
+					this.browser.getElements('span.fi.hover').each(function(span){
+						// prevent screen flicker: only remove the class for /other/ nodes:
+						if (span != row) {
+							span.removeClass('hover');
+							var rowicons = span.getElements('img.browser-icon');
+							if (rowicons)
+							{
+								rowicons.each(function(icon) {
+									icon.set('tween', {duration: 'short'}).fade(0);
+								});
+							}
+						}
+					});
+
+					if  (row)
+					{
+						var icons = row.getElements('img.browser-icon');
+						if (icons)
+						{
+							icons.each(function(icon) {
+								if (e.target == icon)
+								{
+									icon.set('tween', {duration: 'short'}).fade(1);
+								}
+								else
+								{
+									icon.set('tween', {duration: 'short'}).fade(0.5);
+								}
+							});
+						}
+					}
+				}).bind(this),
+
+			/* 'mouseout' */
+			'mouseleave': (function(e){
+					//if (typeof console !== 'undefined' && console.log) console.log('mouseout: ' + e.relatedTarget + ', ' + e.target);
+
+					// only bother us when the mouse cursor has just left the browser area; anything inside there is handled
+					// by the recurring 'mouseover' event above...
+					//
+					// - do NOT remove the 'hover' marker from the row; it will be used by the keyboard!
+					// - DO fade out the action icons, though!
+					this.browser.getElements('span.fi.hover').each(function(span){
+						var rowicons = span.getElements('img.browser-icon');
+						if (rowicons)
+						{
+							rowicons.each(function(icon) {
+								icon.set('tween', {duration: 'short'}).fade(0);
+							});
+						}
+					});
+
+				}).bind(this)
 			});
-		}).bind(this));
 		this.browserMenu_thumb = new Element('a',{
 				'id':'toggle_side_boxes',
 				'class':'listType',
@@ -279,8 +343,9 @@ var FileManager = new Class({
 
 		// ->> autostart filemanager when set
 		if(!this.galleryPlugin) {
-			if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
+			if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID) {
 					this.show();
+			}
 			else {
 				window.addEvent('jsGETloaded',(function(){
 					if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
@@ -288,6 +353,14 @@ var FileManager = new Class({
 				}).bind(this));
 			}
 		}
+	},
+
+	allow_DnD: function(j, pagesize)
+	{
+		if (!j || !j.files || !pagesize)
+			return true;
+
+		return (j.files.length <= pagesize * 4);
 	},
 
 	fitSizes: function() {
@@ -330,7 +403,7 @@ var FileManager = new Class({
 		}
 		// ONLY do this when we're doing a COPY or on a failed attempt...
 		// CORRECTION: as even a failed 'drop' action will have moved the cursor, we can't keep this one selected right now:
-			if (0 && this.drop_pending != 2) {
+		if (this.drop_pending == 0) {
 			this.Current = el.addClass('selected');
 		}
 
@@ -469,7 +542,7 @@ var FileManager = new Class({
 		this.fireEvent('hide');
 	},
 
-	open: function(e){
+	open_on_click: function(e){
 		e.stop();
 		if (!this.Current) return;
 		this.fireEvent('complete', [
@@ -479,11 +552,19 @@ var FileManager = new Class({
 		this.hide();
 	},
 
-	download: function(e) {
+	download_on_click: function(e) {
 		e.stop();
 		if (!this.Current) return;
 		//if (typeof console !== 'undefined' && console.log) console.log('download: ' + this.Current.retrieve('file').path + ', ' + this.normalize(this.Current.retrieve('file').path));
 		var file = this.Current.retrieve('file');
+		this.download(file);
+	},
+
+	download: function(file) {
+		// the chained display:none code inside the Tips class doesn't fire when the 'Save As' dialog box appears right away (happens in FF3.6.15 at least):
+		if (this.tips.tip) {
+			this.tips.tip.setStyle('display', 'none');
+		}
 		window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 			event: 'download',
 			file: this.normalize(file.dir + file.name),
@@ -491,11 +572,10 @@ var FileManager = new Class({
 		})));
 	},
 
-	create: function(e) {
+	create_on_click: function(e) {
 		e.stop();
-		var input = new Element('input', {'class': 'createDirectory','autofocus':'autofocus'});
+		var input = new Element('input', {'class': 'createDirectory', 'autofocus': 'autofocus'});
 
-		var self = this;
 		new Dialog(this.language.createdir, {
 			language: {
 				confirm: this.language.create,
@@ -767,12 +847,34 @@ var FileManager = new Class({
 	},
 
 	browserSelection: function(direction) {
+		var csel;
+
+		//if (typeof console !== 'undefined' && console.log) console.log('browserSelection : direction = ' + direction);
 		if(this.browser.getElement('li') == null) return;
 
-		// none is selected
-		if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') == null)
+		if (direction == 'go-bottom')
 		{
-			// select first folder
+			// select first item of next page
+			current = this.browser.getFirst('li').getElement('span.fi');
+
+			// blow away any lingering 'selected' after a page switch like that
+			csel = this.browser.getElement('span.fi.selected');
+			if(csel != null)
+				csel.removeClass('selected');
+		}
+		else if (direction == 'go-top')
+		{
+			// select last item of previous page
+			current = this.browser.getLast('li').getElement('span.fi');
+
+			// blow away any lingering 'selected' after a page switch like that
+			csel = this.browser.getElement('span.fi.selected');
+			if(csel != null)
+				csel.removeClass('selected');
+		}
+		else if(this.browser.getElement('span.fi.hover') == null && this.browser.getElement('span.fi.selected') == null)
+		{
+			// none is selected: select first item (folder/file)
 			current = this.browser.getFirst('li').getElement('span.fi');
 		}
 		else
@@ -787,7 +889,12 @@ var FileManager = new Class({
 			}
 		}
 
+		this.browser.getElements('span.fi.hover').each(function(span){
+			span.removeClass('hover');
+		});
+
 		var stepsize = 1;
+
 		switch (direction) {
 		// go down
 		case 'end':
@@ -806,28 +913,31 @@ var FileManager = new Class({
 			}
 			/* fallthrough */
 		case 'down':
-			current.removeClass('hover');
 			current = current.getParent('li');
 			//if (typeof console !== 'undefined' && console.log) console.log('key DOWN: stepsize = ' + stepsize);
-			for ( ; stepsize > 0; stepsize--) {
-				var next = current.getNext('li');
-				if (next == null)
+
+			// when we're at the bottom of the view and there are more pages, go to the next page:
+			var next = current.getNext('li');
+			if (next == null)
+			{
+				if (this.paging_goto_next(null, 'go-bottom'))
 					break;
-				current = next;
+			}
+			else
+			{
+				for ( ; stepsize > 0; stepsize--) {
+					next = current.getNext('li');
+					if (next == null)
+						break;
+					current = next;
+				}
 			}
 			current = current.getElement('span.fi');
+			/* fallthrough */
+		case 'go-bottom':        // 'faked' key sent when done shifting one pagination page down
 			current.addClass('hover');
 			this.Current = current;
-			//if (typeof console !== 'undefined' && console.log) console.log('key DOWN: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y);
-			if (current.getPosition(this.browserScroll).y + current.getSize().y * 2 >= this.browserScroll.getSize().y)
-			{
-				// make scroll duration slightly dependent on the distance to travel:
-				var dy = (current.getPosition(this.browserScroll).y + current.getSize().y * 2 - this.browserScroll.getSize().y);
-				dy = 50 * dy / this.browserScroll.getSize().y;
-				//if (typeof console !== 'undefined' && console.log) console.log('key UP: DUR: ' + dy);
-				var browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy)) });
-				browserScrollFx.toElement(current);
-			}
+			direction = 'down';
 			break;
 
 		// go up
@@ -843,37 +953,41 @@ var FileManager = new Class({
 			}
 			/* fallthrough */
 		case 'up':
-			current.removeClass('hover');
 			current = current.getParent('li');
 			//if (typeof console !== 'undefined' && console.log) console.log('key UP: stepsize = ' + stepsize);
-			for ( ; stepsize > 0; stepsize--) {
-				var previous = current.getPrevious('li');
-				if (previous == null)
+
+			// when we're at the top of the view and there are pages before us, go to the previous page:
+			var previous = current.getPrevious('li');
+			if (previous == null)
+			{
+				if (this.paging_goto_prev(null, 'go-top'))
 					break;
-				current = previous;
+			}
+			else
+			{
+				for ( ; stepsize > 0; stepsize--) {
+					previous = current.getPrevious('li');
+					if (previous == null)
+						break;
+					current = previous;
+				}
 			}
 			current = current.getElement('span.fi');
+			/* fallthrough */
+		case 'go-top':        // 'faked' key sent when done shifting one pagination page up
 			current.addClass('hover');
 			this.Current = current;
-			//if (typeof console !== 'undefined' && console.log) console.log('key UP: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y + ', SCROLL = ' + this.browserScroll.getScroll().y + ', SIZE = ' + this.browserScroll.getSize().y);
-			if (current.getPosition(this.browserScroll).y <= current.getSize().y) {
-				var sy = this.browserScroll.getScroll().y + current.getPosition(this.browserScroll).y - this.browserScroll.getSize().y + current.getSize().y * 2;
-
-				// make scroll duration slightly dependent on the distance to travel:
-				var dy = this.browserScroll.getScroll().y - sy;
-				dy = 50 * dy / this.browserScroll.getSize().y;
-				//if (typeof console !== 'undefined' && console.log) console.log('key UP: SY = ' + sy + ', DUR: ' + dy);
-				var browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy)) });
-				browserScrollFx.start(current.getPosition(this.browserScroll).x, (sy >= 0 ? sy : 0));
-			}
+			direction = 'up';
 			break;
 
 		// select
 		case 'enter':
 			this.storeHistory = true;
 			this.Current = current;
-			if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
-				this.browser.getElement('span.fi.selected').removeClass('selected');
+			csel = this.browser.getElement('span.fi.selected');
+			if(csel != null) // remove old selected one
+				csel.removeClass('selected');
+
 			current.addClass('selected');
 			var currentFile = current.retrieve('file');
 			//if (typeof console !== 'undefined' && console.log) console.log('on key ENTER file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
@@ -889,9 +1003,9 @@ var FileManager = new Class({
 		case 'delete':
 			this.storeHistory = true;
 			this.Current = current;
-			current.removeClass('hover');
-			if(this.browser.getElement('span.fi.selected') != null) // remove old selected one
-				this.browser.getElement('span.fi.selected').removeClass('selected');
+			this.browser.getElements('span.fi.selected').each(function(span){
+				span.removeClass('selected');
+			});
 
 			// and before we go and delete the entry, see if we pick the next one down or up as our next cursor position:
 			var parent = current.getParent('li');
@@ -900,6 +1014,7 @@ var FileManager = new Class({
 				next = parent.getPrevious('li');
 			}
 			if (next != null) {
+				next = next.getElement('span.fi');
 				next.addClass('hover');
 			}
 
@@ -907,9 +1022,34 @@ var FileManager = new Class({
 			//if (typeof console !== 'undefined' && console.log) console.log('on key DELETE file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
 			this.destroy(currentFile);
 
-			this.Current = next;
-			// TODO: scroll to center the new item in view; multiple DELETE actions should not 'walk off the screen'.
+			current = next;
+			this.Current = current;
 			break;
+		}
+
+		// make sure to scroll the view so the selected/'hovered' item is within visible range:
+
+		//if (typeof console !== 'undefined' && console.log) console.log('key DOWN: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y);
+		//if (typeof console !== 'undefined' && console.log) console.log('key UP: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y + ', SCROLL = ' + this.browserScroll.getScroll().y + ', SIZE = ' + this.browserScroll.getSize().y);
+		if (direction != 'up' && current.getPosition(this.browserScroll).y + current.getSize().y * 2 >= this.browserScroll.getSize().y)
+		{
+			// make scroll duration slightly dependent on the distance to travel:
+			var dy = (current.getPosition(this.browserScroll).y + current.getSize().y * 2 - this.browserScroll.getSize().y);
+			dy = 50 * dy / this.browserScroll.getSize().y;
+			//if (typeof console !== 'undefined' && console.log) console.log('key UP: DUR: ' + dy);
+			var browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy)) });
+			browserScrollFx.toElement(current);
+		}
+		else if (direction != 'down' && current.getPosition(this.browserScroll).y <= current.getSize().y)
+		{
+			var sy = this.browserScroll.getScroll().y + current.getPosition(this.browserScroll).y - this.browserScroll.getSize().y + current.getSize().y * 2;
+
+			// make scroll duration slightly dependent on the distance to travel:
+			var dy = this.browserScroll.getScroll().y - sy;
+			dy = 50 * dy / this.browserScroll.getSize().y;
+			//if (typeof console !== 'undefined' && console.log) console.log('key UP: SY = ' + sy + ', DUR: ' + dy);
+			var browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy)) });
+			browserScrollFx.start(current.getPosition(this.browserScroll).x, (sy >= 0 ? sy : 0));
 		}
 	},
 
@@ -938,39 +1078,43 @@ var FileManager = new Class({
 	},
 
 	// clicked 'first' button in the paged list/thumb view:
-	paging_goto_prev: function()
+	paging_goto_prev: function(e, kbd_dir)
 	{
+		if (e) e.stop();
 		var startindex = this.get_view_fill_startindex();
 		if (!startindex)
-			return;
+			return false;
 
-		this.paging_goto_helper(startindex - this.listPaginationLastSize, this.listPaginationLastSize);
+		return this.paging_goto_helper(startindex - this.listPaginationLastSize, this.listPaginationLastSize, kbd_dir);
 	},
-	paging_goto_next: function()
+	paging_goto_next: function(e, kbd_dir)
 	{
+		if (e) e.stop();
 		var startindex = this.get_view_fill_startindex();
 		if (this.view_fill_json && startindex > this.view_fill_json.files.length - this.listPaginationLastSize)
-			return;
+			return false;
 
-		this.paging_goto_helper(startindex + this.listPaginationLastSize, this.listPaginationLastSize);
+		return this.paging_goto_helper(startindex + this.listPaginationLastSize, this.listPaginationLastSize, kbd_dir);
 	},
-	paging_goto_first: function()
+	paging_goto_first: function(e, kbd_dir)
 	{
+		if (e) e.stop();
 		var startindex = this.get_view_fill_startindex();
 		if (!startindex)
-			return;
+			return false;
 
-		this.paging_goto_helper(0);
+		return this.paging_goto_helper(0, null, kbd_dir);
 	},
-	paging_goto_last: function()
+	paging_goto_last: function(e, kbd_dir)
 	{
+		if (e) e.stop();
 		var startindex = this.get_view_fill_startindex();
 		if (this.view_fill_json && startindex > this.view_fill_json.files.length - this.options.listPaginationSize)
-			return;
+			return false;
 
-		this.paging_goto_helper(2E9 /* ~ maxint */);
+		return this.paging_goto_helper(2E9 /* ~ maxint */, null, kbd_dir);
 	},
-	paging_goto_helper: function(startindex, pagesize)
+	paging_goto_helper: function(startindex, pagesize, kbd_dir)
 	{
 		// similar activity as load(), but without the server communication...
 		this.deselect();
@@ -985,10 +1129,10 @@ var FileManager = new Class({
 		$clear(this.view_fill_timer);
 		this.view_fill_timer = null;
 
-		this.fill(null, startindex, pagesize);
+		return this.fill(null, startindex, pagesize, kbd_dir);
 	},
 
-	fill: function(j, startindex, pagesize) {
+	fill: function(j, startindex, pagesize, kbd_dir) {
 
 		if (!pagesize)
 		{
@@ -1058,7 +1202,7 @@ var FileManager = new Class({
 		if (!j.root)
 		{
 			new Dialog(('${error}: ' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
-			return;
+			return false;
 		}
 		var rootPath = j.root.slice(0,-1).split('/');
 		rootPath.pop();
@@ -1094,7 +1238,7 @@ var FileManager = new Class({
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
 
 		if (!j.files) {
-			return;
+			return false;
 		}
 
 		// ->> generate browser list
@@ -1112,12 +1256,12 @@ var FileManager = new Class({
 		 * alternative means to move/copy files should be provided in such cases instead.
 		 *
 		 * Hence we run through the list here and abort / limit the drag&drop assignment process when the hardcoded number of
-		 * directories or files have been reached (is_bloody_huge_directory).
+		 * directories or files have been reached (support_DnD_for_this_dir).
 		 *
 		 * TODO: make these numbers 'auto adaptive' based on timing measurements: how long does it take to initialize
 		 *       a view on YOUR machine? --> adjust limits accordingly.
 		 */
-		var is_bloody_huge_directory = false;
+		var support_DnD_for_this_dir = this.allow_DnD(j, pagesize);
 		var starttime = new Date().getTime();
 		//if (typeof console !== 'undefined' && console.log) console.log('fill list size = ' + j.files.length);
 
@@ -1125,7 +1269,6 @@ var FileManager = new Class({
 		var paging_now = 0;
 		if (pagesize)
 		{
-			is_bloody_huge_directory = (j.files.length > pagesize * 4);
 			// endindex MAY point beyond j.files.length; that's okay; we check the boundary every time in the other fill chunks.
 			endindex = startindex + pagesize;
 			// however for reasons of statistics gathering, we keep it bound to j.files.length at the moment:
@@ -1175,7 +1318,9 @@ var FileManager = new Class({
 		// remember pagination position history
 		this.store_view_fill_startindex(startindex);
 
-		this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [startindex, endindex, endindex - startindex, pagesize, is_bloody_huge_directory, starttime, els]);
+		this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [startindex, endindex, endindex - startindex, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir]);
+
+		return true;
 	},
 
 	/*
@@ -1187,7 +1332,7 @@ var FileManager = new Class({
 	 * The delay is the way to relinquish control to the browser and as a thank-you NOT get the dreaded
 	 * 'slow script, continue or abort?' dialog in your face. Ahh, the joy of cooperative multitasking is back again! :-)
 	 */
-	fill_chunkwise_1: function(startindex, endindex, render_count, pagesize, is_bloody_huge_directory, starttime, els) {
+	fill_chunkwise_1: function(startindex, endindex, render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir) {
 
 		var idx;
 		var self = this;
@@ -1225,7 +1370,7 @@ var FileManager = new Class({
 
 				if (loop_duration >= 100)
 				{
-					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [idx, endindex, render_count, pagesize, is_bloody_huge_directory, starttime, els]);
+					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [idx, endindex, render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir]);
 					return; // end call == break out of loop
 				}
 			}
@@ -1277,7 +1422,7 @@ var FileManager = new Class({
 
 			// add click event, only to directories, files use the revert function (to enable drag n drop)
 			// OR provide a basic click event for files too IFF this directory is too huge to support drag & drop.
-			if(isdir || is_bloody_huge_directory) {
+			if(isdir || !support_DnD_for_this_dir) {
 				el.addEvent('click', (function(e, target) {
 					//if (typeof console !== 'undefined' && console.log) console.log('is_dir:CLICK');
 					//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
@@ -1288,49 +1433,40 @@ var FileManager = new Class({
 			}
 
 			// -> add icons
-			var icons = [];
+			//var icons = [];
+			var editButtons = new Array();
 			// download icon
 			if(!isdir && this.options.download) {
-				icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e, target){
+				if(this.options.download) editButtons.push('download');
+			}
+
+			// rename, delete icon
+			if(file.name != '..') {
+				if(this.options.rename) editButtons.push('rename');
+				if(this.options.destroy) editButtons.push('destroy');
+			}
+
+			editButtons.each(function(v){
+				//icons.push(
+				new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target){
 					// this = el, self = FM instance
 					e.preventDefault();
 					this.store('edit',true);
 					// can't use 'file' in here directly anymore either:
 					var file = this.retrieve('file');
-					//if (typeof console !== 'undefined' && console.log) console.log('download: ' + file.path + ', ' + this.normalize(file.path));
-					window.open(self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
-						event: 'download',
-						file: self.normalize(file.dir + file.name),
-						filter: self.options.filter
-					})));
-				}).bind(el)).inject(el, 'top'));
-			}
-
-			// rename, delete icon
-			if(file.name != '..') {
-				var editButtons = new Array();
-				if(this.options.rename) editButtons.push('rename');
-				if(this.options.destroy) editButtons.push('destroy');
-				editButtons.each(function(v){
-					icons.push(new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').addEvent('mouseup', (function(e, target){
-						// this = el, self = FM instance
-						e.preventDefault();
-						this.store('edit',true);
-						// can't use 'file' in here directly anymore either:
-						var file = this.retrieve('file');
-						self.tips.hide();
-						self[v](file);
-					}).bind(el)).inject(el,'top'));
-				}, this);
-			}
+					self.tips.hide();
+					self[v](file);
+				}).bind(el)).inject(el,'top');
+				//);
+			}, this);
 
 			els[isdir ? 1 : 0].push(el);
 			//if (file.name == '..') el.fade(0.7);
 			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
-			icons = $$(icons.map((function(icon){
-				this.showFunctions(icon,icon,0.5,1);
-				this.showFunctions(icon,el.getParent('li'),1);
-			}).bind(this)));
+			//icons = $$(icons.map((function(icon){
+			//  this.showFunctions(icon,icon,0.5,1);
+			//  this.showFunctions(icon,el.getParent('li'),1);
+			//}).bind(this)));
 
 			// ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
 			if(this.onShow && typeof jsGET != 'undefined' && jsGET.get('fmFile') != null && file.name == jsGET.get('fmFile')) {
@@ -1351,16 +1487,14 @@ var FileManager = new Class({
 		//starttime = new Date().getTime();
 
 		// go to the next stage, right after these messages... ;-)
-		this.view_fill_timer = this.fill_chunkwise_2.delay(1, this, [render_count, pagesize, is_bloody_huge_directory, starttime, els]);
+		this.view_fill_timer = this.fill_chunkwise_2.delay(1, this, [render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir]);
 	},
 
 	/*
 	 * See comment for fill_chunkwise_1(): the makeDraggable() is a loop in itself and taking some considerable time
 	 * as well, so make it happen in a 'fresh' run here...
 	 */
-	fill_chunkwise_2: function(render_count, pagesize, is_bloody_huge_directory, starttime, els) {
-
-		var self = this;
+	fill_chunkwise_2: function(render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir) {
 
 		var duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_2() @ ' + duration);
@@ -1370,7 +1504,7 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal + revert = ' + duration);
 		//starttime = new Date().getTime();
 
-		if (!is_bloody_huge_directory) {
+		if (support_DnD_for_this_dir) {
 			// -> make draggable
 			$$(els[0]).makeDraggable({
 				droppables: $$(this.droppables.combine(els[1])),
@@ -1519,14 +1653,14 @@ var FileManager = new Class({
 		this.adaptive_update_pagination_size(render_count, render_count, render_count, pagesize, duration, 1.0 / 7.0, 1.02, 0.1 / 1000);
 
 		// go to the next stage, right after these messages... ;-)
-		this.view_fill_timer = this.fill_chunkwise_3.delay(1, this, [render_count, pagesize, is_bloody_huge_directory, starttime]);
+		this.view_fill_timer = this.fill_chunkwise_3.delay(1, this, [render_count, pagesize, support_DnD_for_this_dir, starttime, kbd_dir]);
 	},
 
 	/*
 	 * See comment for fill_chunkwise_1(): the tooltips need to be assigned with each icon (2..3 per list item)
 	 * and apparently that takes some considerable time as well for large directories and slightly slower machines.
 	 */
-	fill_chunkwise_3: function(render_count, pagesize, is_bloody_huge_directory, starttime) {
+	fill_chunkwise_3: function(render_count, pagesize, support_DnD_for_this_dir, starttime, kbd_dir) {
 
 		var duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_3() @ ' + duration);
@@ -1543,6 +1677,12 @@ var FileManager = new Class({
 
 		// we're done: erase the timer so it can be garbage collected
 		this.view_fill_timer = null;
+
+		// make sure the selection, when keyboard driven, is marked correctly
+		if (kbd_dir)
+		{
+			this.browserSelection(kbd_dir);
+		}
 
 		this.browserLoader.fade(0);
 	},
@@ -1587,7 +1727,7 @@ var FileManager = new Class({
 				if (newpsize < 20)
 					newpsize = 20;
 
-				if (typeof console !== 'undefined' && console.log) console.log('::auto-tune pagination: new page = ' + newpsize + ' @ tail:' + tail + ', p_est: ' + p_est + ', psize:' + pagesize + ', render:' + render_count + ', done%:' + done_so_far + '(' + (currentindex - orig_startindex) + '), t_est:' + t_est + ', dur:' + duration + ', pdelta: ' + delta);
+				//if (typeof console !== 'undefined' && console.log) console.log('::auto-tune pagination: new page = ' + newpsize + ' @ tail:' + tail + ', p_est: ' + p_est + ', psize:' + pagesize + ', render:' + render_count + ', done%:' + done_so_far + '(' + (currentindex - orig_startindex) + '), t_est:' + t_est + ', dur:' + duration + ', pdelta: ' + delta);
 				this.options.listPaginationSize = newpsize;
 			}
 		}
@@ -1736,7 +1876,7 @@ var FileManager = new Class({
 			'class': 'filemanager-' + name,
 			text: this.language[name]
 		}).inject(this.menu, 'top');
-		if (this[name]) el.addEvent('click', this[name].bind(this));
+		if (this[name+'_on_click']) el.addEvent('click', this[name+'_on_click'].bind(this));
 		return el;
 	},
 
@@ -1826,6 +1966,9 @@ var FileManager = new Class({
 		this.loader.fade(1);
 	},
 	onComplete: function(){
+		//this.loader.fade(0);
+	},
+	onSuccess: function(){
 		this.loader.fade(0);
 	},
 	onError: function(){
@@ -1857,6 +2000,7 @@ FileManager.Request = new Class({
 		if (filebrowser) this.addEvents({
 			request: filebrowser.onRequest.bind(filebrowser),
 			complete: filebrowser.onComplete.bind(filebrowser),
+			success: filebrowser.onSuccess.bind(filebrowser),
 			error: filebrowser.onError.bind(filebrowser),
 			failure: filebrowser.onFailure.bind(filebrowser)
 		});
