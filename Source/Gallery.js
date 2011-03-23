@@ -132,6 +132,9 @@ FileManager.Gallery = new Class({
   },
 
   onDragComplete: function(el, droppable) {
+
+	this.imageadd.fade(0);
+
     if(this.howto){
       this.howto.destroy();
       this.howto = null;
