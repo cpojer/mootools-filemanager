@@ -345,7 +345,7 @@ var FileManager = new Class({
 		this.initialShow();
 	},
 
-	initialShow: function() {
+	initialShowBase: function() {
 		if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID) {
 			this.show();
 		}
@@ -355,6 +355,11 @@ var FileManager = new Class({
 					this.show();
 			}).bind(this));
 		}
+	},
+
+	// overridable method:
+	initialShow: function() {
+		this.initialShowBase();
 	},
 
 	allow_DnD: function(j, pagesize)

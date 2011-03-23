@@ -67,6 +67,7 @@ FileManager.Gallery = new Class({
         this.hideClone();
         this.wrapper.setStyle('display', 'none');
       },
+
       modify: function(file){
         var name = this.normalize(file.path);
         var el = (this.gallery.getElements('li').filter(function(el){
@@ -117,14 +118,8 @@ FileManager.Gallery = new Class({
     this.howto = new Element('div', {'class': 'howto', text: this.language.gallery.drag}).inject(this.galleryContainer);
     this.switchButton();
 
-    if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
-        this.show();
-    else {
-      window.addEvent('jsGETloaded',(function(){
-        if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
-          this.show();
-      }).bind(this));
-      }
+	// invoke the parent method directly
+	this.initialShowBase();
   },
 
   // override the parent's initialShow method: we do not want to jump to the jsGET-stored position again!
