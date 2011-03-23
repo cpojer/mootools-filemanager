@@ -2114,7 +2114,7 @@ this.Dialog = new Class({
 				if (e.key == 'esc') {
 					e.stopPropagation();
 					this.fireEvent('close').destroy();
-				};
+				}
 			}).bind(this)
 		};
 
