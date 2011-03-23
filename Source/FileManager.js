@@ -547,9 +547,13 @@ var FileManager = new Class({
 	open_on_click: function(e){
 		e.stop();
 		if (!this.Current) return;
+		var file = this.Current.retrieve('file');
 		this.fireEvent('complete', [
-			this.normalize(this.Current.retrieve('file').path),
-			this.Current.retrieve('file')
+			this.normalize(file.path),                                       // URLencoded 'legal URI space' path to selected file
+			file,                                                            // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+			this.normalize(file.dir + file.name),                            // the 'legal URI space' path to selected  file (NOT URLencoded!)
+			this.normalize('/' + this.CurrentPath),                          // the absolute URL for the current directory
+			this.normalize('/' + this.root + file.dir + file.name)           // the absolute URL for the selected file
 		]);
 		this.hide();
 	},
@@ -1196,7 +1200,7 @@ var FileManager = new Class({
 		if(typeof jsGET != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')
 			jsGET.set({'fmPath':j.path});
 
-		this.CurrentPath = this.root + this.Directory;
+		this.CurrentPath = this.normalize(this.root + this.Directory);
 		var text = [], pre = [];
 		// on error reported by backend, there WON'T be a JSON 'root' element at all times:
 		//
