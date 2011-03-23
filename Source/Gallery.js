@@ -154,7 +154,7 @@ FileManager.Gallery = new Class({
       file = el.retrieve('file');
     }
 
-    var  self = this, name = this.normalize((file.dir ? file.dir + '/' : '') + file.name);
+    var self = this, name = this.normalize(file.dir + '/' + file.name);
 
     if (this.files.contains(name)) return true;
     this.files.push(name);
@@ -167,7 +167,7 @@ FileManager.Gallery = new Class({
 
     var li = new Element('li').store('file', file).adopt(
       destroyIcon,
-      new Asset.image(file.path, {
+      new Asset.image(this.normalize('/' + this.root + file.dir + '/' + file.name), {
         onload: function(){
           var el = this;
           li.setStyle('background', 'none').addEvent('click', function(e){
