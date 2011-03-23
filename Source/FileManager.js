@@ -521,20 +521,20 @@ var FileManager = new Class({
 				this.browserLoader.fade(1);
 
 				this.Request = new FileManager.Request({
-					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 						event: 'create'
 					})),
 					data: {
 						file: input.get('value'),
-						directory: self.Directory,
-						type: self.listType,
-						filter: self.options.filter
+						directory: this.Directory,
+						type: this.listType,
+						filter: this.options.filter
 					},
 					onRequest: function(){},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							// TODO: include j.error in the message, iff j.error exists
-							new Dialog(('' + j.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+							new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 							this.browserLoader.fade(0);
 							return;
 						}
@@ -545,18 +545,18 @@ var FileManager = new Class({
 						// the 'view' request may be an initial reload: keep the startindex (= page shown) intact then:
 						this.fill(j, this.get_view_fill_startindex());
 						//this.browserLoader.fade(0);
-					}).bind(self),
+					}).bind(this),
 					onComplete: function(){},
 					onError: (function(text, error) {
 						this.showError(text);
 						this.browserLoader.fade(0);
-					}).bind(self),
+					}).bind(this),
 					onFailure: (function(xmlHttpRequest) {
 						var text = this.cvtXHRerror2msg(xmlHttpRequest);
 						this.showError(text);
 						this.browserLoader.fade(0);
-					}).bind(self)
-				}, self).send();
+					}).bind(this)
+				}, this).send();
 			}).bind(this)
 		});
 	},
@@ -573,8 +573,6 @@ var FileManager = new Class({
 	},
 
 	load: function(dir) {
-
-		var self = this;
 
 		this.deselect();
 		this.info.fade(0);
@@ -601,7 +599,7 @@ var FileManager = new Class({
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onSuccess invoked");
 				if (!j || !j.status) {
 					// TODO: include j.error in the message, iff j.error exists
-					new Dialog(('' + j.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+					new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 					this.browserLoader.fade(0);
 					return;
 				}
@@ -612,80 +610,78 @@ var FileManager = new Class({
 				// the 'view' request may be an initial reload: keep the startindex (= page shown) intact then:
 				this.fill(j, this.get_view_fill_startindex());
 				//this.browserLoader.fade(0);
-			}).bind(self),
+			}).bind(this),
 			onComplete: (function() {
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onComplete invoked");
 				this.fitSizes();
-			}).bind(self),
+			}).bind(this),
 			onError: (function(text, error) {
 				// a JSON error
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onError invoked");
 				this.showError(text);
 				this.browserLoader.fade(0);
-			}).bind(self),
+			}).bind(this),
 			onFailure: (function(xmlHttpRequest) {
 				// a generic (non-JSON) communication failure
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onFailure invoked");
 				var text = this.cvtXHRerror2msg(xmlHttpRequest);
 				this.showError(text);
 				this.browserLoader.fade(0);
-			}).bind(self)
+			}).bind(this)
 		}, this).send();
 	},
 
 	destroy_noQasked: function(file) {
-		var self = this;
 
 		if (this.Request) this.Request.cancel();
 
 		this.browserLoader.fade(1);
 
 		this.Request = new FileManager.Request({
-			url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 				event: 'destroy'
 			})),
 			data: {
 				file: file.name,
-				directory: self.Directory,
-				filter: self.options.filter
+				directory: this.Directory,
+				filter: this.options.filter
 			},
 			onRequest: function(){},
 			onSuccess: (function(j) {
 				if (!j || !j.status) {
 					// TODO: include j.error in the message, iff j.error exists
-					var emsg = ('' + j.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g);
-					new Dialog(self.language.nodestroy + ' (' + emsg + ')', {language: {confirm: self.language.ok}, buttons: ['confirm']});
+					var emsg = ('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g);
+					new Dialog(this.language.nodestroy + ' (' + emsg + ')', {language: {confirm: this.language.ok}, buttons: ['confirm']});
 					this.browserLoader.fade(0);
 					return;
 				}
 
-				self.fireEvent('modify', [Object.clone(file)]);
+				this.fireEvent('modify', [Object.clone(file)]);
 				var p = file.element.getParent();
 				if (p) {
 					p.fade(0).get('tween').chain(function(){
 						this.element.destroy();
 					});
 				}
-				self.deselect(file.element);
+				this.deselect(file.element);
 				this.browserLoader.fade(0);
-			}).bind(self),
+			}).bind(this),
 			onComplete: function(){},
 			onError: (function(text, error) {
 				this.showError(text);
 				this.browserLoader.fade(0);
-			}).bind(self),
+			}).bind(this),
 			onFailure: (function(xmlHttpRequest) {
 				var text = this.cvtXHRerror2msg(xmlHttpRequest);
 				this.showError(text);
 				this.browserLoader.fade(0);
-			}).bind(self)
+			}).bind(this)
 		}, this).send();
 	},
 
 	destroy: function(file){
-		var self = this;
-		if (self.options.hideQonDelete) {
-			self.destroy_noQasked(file);
+		if (this.options.hideQonDelete) {
+			this.destroy_noQasked(file);
 		}
 		else {
 			new Dialog(this.language.destroyfile, {
@@ -703,7 +699,6 @@ var FileManager = new Class({
 	},
 
 	rename: function(file) {
-		var self = this;
 		var name = file.name;
 		var input = new Element('input', {'class': 'rename', value: name, 'autofocus': 'autofocus'});
 
@@ -737,36 +732,36 @@ var FileManager = new Class({
 					data: {
 						file: file.name,
 						name: input.get('value'),
-						directory: self.Directory,
-						filter: self.options.filter
+						directory: this.Directory,
+						filter: this.options.filter
 					},
 					onRequest: function(){},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							// TODO: include j.error in the message, iff j.error exists
-							new Dialog(('' + j.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+							new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 							this.browserLoader.fade(0);
 							return;
 						}
-						self.fireEvent('modify', [Object.clone(file)]);
+						this.fireEvent('modify', [Object.clone(file)]);
 						file.element.getElement('span.filename').set('text', j.name).set('title', j.name);
 						file.element.addClass('selected');
 						file.name = j.name;
 						//if (typeof console !== 'undefined' && console.log) console.log('move : onSuccess: fillInfo: file = ' + file.name);
-						self.fillInfo(file);
+						this.fillInfo(file);
 						this.browserLoader.fade(0);
-					}).bind(self),
+					}).bind(this),
 					onComplete: function(){},
 					onError: (function(text, error) {
 						this.showError(text);
 						this.browserLoader.fade(0);
-					}).bind(self),
+					}).bind(this),
 					onFailure: (function(xmlHttpRequest) {
 						var text = this.cvtXHRerror2msg(xmlHttpRequest);
 						this.showError(text);
 						this.browserLoader.fade(0);
-					}).bind(self)
-				}, self).send();
+					}).bind(this)
+				}, this).send();
 			}).bind(this)
 		});
 	},
@@ -1050,7 +1045,6 @@ var FileManager = new Class({
 		}
 		this.browser.empty();
 		this.root = j.root;
-		var self = this;
 
 		// set history
 		if(typeof jsGET != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')
@@ -1428,26 +1422,26 @@ var FileManager = new Class({
 					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onDrop');
 
 					var is_a_move = !(e.control || e.meta);
-					self.drop_pending = 1 + is_a_move;
+					this.drop_pending = 1 + is_a_move;
 
 					if (!is_a_move || !droppable) el.setStyles({left: 0, top: 0});
 					if (is_a_move && !droppable) {
-						self.drop_pending = 0;
+						this.drop_pending = 0;
 
-						revert(el);   // go and request the details anew, then refresh them in the view
+						this.revert(el);   // go and request the details anew, then refresh them in the view
 						return;
 					}
 
 					this.revert(el);       // do not send the 'detail' request in here: this.drop_pending takes care of that!
 
 					var dir;
-					if (droppable){
+					if (droppable) {
 						droppable.addClass('selected').removeClass('droppable');
 						(function() {
 							droppable.removeClass('selected');
 						}).delay(300);
-						if (self.onDragComplete(el, droppable)) {
-							self.drop_pending = 0;
+						if (this.onDragComplete(el, droppable)) {
+							this.drop_pending = 0;
 							return;
 						}
 
@@ -1455,19 +1449,19 @@ var FileManager = new Class({
 						//if (typeof console !== 'undefined' && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
 					}
 					var file = el.retrieve('file');
-					//if (typeof console !== 'undefined' && console.log) console.log('on drop file = ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve; droppable = "' + droppable + '"');
+					//if (typeof console !== 'undefined' && console.log) console.log('on drop file = ' + file.name + ' : ' + this.Directory + ', source = ' + 'retrieve; droppable = "' + droppable + '"');
 
 					if (this.Request) this.Request.cancel();
 
 					this.Request = new FileManager.Request({
-						url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+						url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 							event: 'move'
 						})),
 						data: {
 							file: file.name,
-							filter: self.options.filter,
-							directory: self.Directory,
-							newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : self.Directory,
+							filter: this.options.filter,
+							directory: this.Directory,
+							newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : this.Directory,
 							copy: is_a_move ? 0 : 1
 						},
 						onSuccess: (function(j) {
@@ -1481,28 +1475,28 @@ var FileManager = new Class({
 								this.load(this.Directory);
 							}
 							this.browserLoader.fade(0);
-						}).bind(self),
+						}).bind(this),
 						onError: (function(text, error) {
 							this.showError(text);
 							this.browserLoader.fade(0);
-						}).bind(self),
+						}).bind(this),
 						onFailure: (function(xmlHttpRequest) {
 							var text = this.cvtXHRerror2msg(xmlHttpRequest);
 							this.showError(text);
 							this.browserLoader.fade(0);
-						}).bind(self)
-					}, self).send();
+						}).bind(this)
+					}, this).send();
 
-					self.fireEvent('modify', [Object.clone(file)]);
+					this.fireEvent('modify', [Object.clone(file)]);
 
 					el.fade(0).get('tween').chain(function(){
 						el.getParent().destroy();
 					});
 
-					self.deselect(el);                  // and here, once again, do NOT send the 'detail' request while the 'move' is still ongoing (*async* communications!)
+					this.deselect(el);                  // and here, once again, do NOT send the 'detail' request while the 'move' is still ongoing (*async* communications!)
 
 					// the 'move' action will probably still be running by now, but we need this only to block simultaneous requests triggered from this run itself
-					self.drop_pending = 0;
+					this.drop_pending = 0;
 				}).bind(this)
 			});
 
@@ -1533,8 +1527,6 @@ var FileManager = new Class({
 	 * and apparently that takes some considerable time as well for large directories and slightly slower machines.
 	 */
 	fill_chunkwise_3: function(render_count, pagesize, is_bloody_huge_directory, starttime) {
-
-		var self = this;
 
 		var duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_3() @ ' + duration);
@@ -1603,8 +1595,6 @@ var FileManager = new Class({
 
 	fillInfo: function(file) {
 
-		var self = this;
-
 		if (!file) file = this.CurrentDir;
 		if (!file) return;
 
@@ -1622,7 +1612,7 @@ var FileManager = new Class({
 
 		this.switchButton4Current();
 
-		if (self.drop_pending != 2) {
+		if (this.drop_pending != 2) {
 			// only fade up when we are allowed to send a detail request next as well and we're doing a MOVE drop
 			this.info.fade(1).getElement('img').set({
 				src: icon,
@@ -1648,7 +1638,7 @@ var FileManager = new Class({
 
 		if (file.mime=='text/directory') return;
 
-		if (self.drop_pending != 2) {
+		if (this.drop_pending != 2) {
 			if (this.Request) this.Request.cancel();
 
 			this.Request = new FileManager.Request({
@@ -1663,7 +1653,7 @@ var FileManager = new Class({
 				onRequest: (function() {
 					this.previewLoader.inject(this.preview);
 					this.previewLoader.fade(1);
-				}).bind(self),
+				}).bind(this),
 				onSuccess: (function(j) {
 
 					if (!j || !j.status) {
@@ -1691,16 +1681,16 @@ var FileManager = new Class({
 							milkbox.reloadPageGalleries();
 
 					}).bind(this));
-				}).bind(self),
+				}).bind(this),
 				onError: (function(text, error) {
 					this.previewLoader.dispose();
 					this.showError(text);
-				}).bind(self),
+				}).bind(this),
 				onFailure: (function(xmlHttpRequest) {
 					this.previewLoader.dispose();
 					var text = this.cvtXHRerror2msg(xmlHttpRequest);
 					this.showError(text);
-				}).bind(self)
+				}).bind(this)
 			}, this).send();
 		}
 	},
@@ -1811,7 +1801,6 @@ var FileManager = new Class({
 
 	showError: function(text) {
 		var errorText = text;
-		var self = this;
 
 		if (!errorText) {
 			errorText = this.language['backend.unidentified_error'];
