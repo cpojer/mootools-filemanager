@@ -72,6 +72,7 @@ var FileManager = new Class({
 		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
 		this.view_fill_json = null;      // the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly consulting the server.
 		this.listPaginationLastSize = this.options.listPaginationSize;
+		this.Request = null;
 
 		this.language = Object.clone(FileManager.Language.en);
 		if(this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
@@ -511,7 +512,7 @@ var FileManager = new Class({
 					if (e.key == 'enter') e.target.getParent('div.dialog').getElement('button.dialog-confirm').fireEvent('click');
 				}).focus();
 			},
-			onConfirm: function() {
+			onConfirm: (function() {
 				if (this.Request) this.Request.cancel();
 
 				// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
@@ -519,7 +520,7 @@ var FileManager = new Class({
 
 				this.browserLoader.fade(1);
 
-				new FileManager.Request({
+				this.Request = new FileManager.Request({
 					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
 						event: 'create'
 					})),
@@ -556,7 +557,7 @@ var FileManager = new Class({
 						this.browserLoader.fade(0);
 					}).bind(self)
 				}, self).send();
-			}
+			}).bind(this)
 		});
 	},
 
@@ -634,9 +635,12 @@ var FileManager = new Class({
 
 	destroy_noQasked: function(file) {
 		var self = this;
+
+		if (this.Request) this.Request.cancel();
+
 		this.browserLoader.fade(1);
 
-		new FileManager.Request({
+		this.Request = new FileManager.Request({
 			url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
 				event: 'destroy'
 			})),
@@ -657,10 +661,11 @@ var FileManager = new Class({
 
 				self.fireEvent('modify', [Object.clone(file)]);
 				var p = file.element.getParent();
-				if (p)
+				if (p) {
 					p.fade(0).get('tween').chain(function(){
-					this.element.destroy();
-				});
+						this.element.destroy();
+					});
+				}
 				self.deselect(file.element);
 				this.browserLoader.fade(0);
 			}).bind(self),
@@ -690,9 +695,9 @@ var FileManager = new Class({
 				},
 				onOpen: this.onDialogOpen.bind(this),
 				onClose: this.onDialogClose.bind(this),
-				onConfirm: function() {
-					self.destroy_noQasked(file);
-				}
+				onConfirm: (function() {
+					this.destroy_noQasked(file);
+				}).bind(this)
 			});
 		}
 	},
@@ -721,9 +726,11 @@ var FileManager = new Class({
 				}).focus();
 			},
 			onConfirm: (function(){
+				if (this.Request) this.Request.cancel();
+
 				this.browserLoader.fade(1);
 
-				new FileManager.Request({
+				this.Request = new FileManager.Request({
 					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 						event: 'move'
 					})),
@@ -1076,10 +1083,10 @@ var FileManager = new Class({
 						'class': 'icon',
 						href: '#',
 						text: folderName
-					}).addEvent('click', function(e){
+					}).addEvent('click', (function(e){
 						e.stop();
-						self.load(path);
-					})
+						this.load(path);
+					}).bind(this))
 				);
 			}
 			text.push(new Element('span', {text: ' / '}));
@@ -1375,39 +1382,39 @@ var FileManager = new Class({
 				droppables: $$(this.droppables.combine(els[1])),
 				//stopPropagation: true,
 
-				onDrag: function(el, e){
-					self.imageadd.setStyles({
+				onDrag: (function(el, e){
+					this.imageadd.setStyles({
 						'left': e.page.x + 25,
 						'top': e.page.y + 25
 					});
-					self.imageadd.fade('in');
-				},
+					this.imageadd.fade('in');
+				}).bind(this),
 
-				onBeforeStart: function(el){
+				onBeforeStart: (function(el){
 					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onBeforeStart');
-					self.deselect();
-					self.tips.hide();
+					this.deselect();
+					this.tips.hide();
 					var position = el.getPosition();
 					el.addClass('drag').setStyles({
-						'z-index': self.dragZIndex,
+						'z-index': this.dragZIndex,
 						'position': 'absolute',
 						'width': el.getWidth() - el.getStyle('paddingLeft').toInt() - el.getStyle('paddingRight').toInt(),
 						'left': position.x,
 						'top': position.y
-					}).inject(self.container);
-				},
+					}).inject(this.container);
+				}).bind(this),
 
 				onCancel: this.revert.bind(this),
 
-				onStart: function(el){
+				onStart: (function(el) {
 					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onStart');
 					el.fade(0.7).addClass('move');
 					//if (typeof console !== 'undefined' && console.log) console.log('add keyboard up/down on drag start');
 					document.addEvents({
-						keydown: self.bound.keydown,
-						keyup: self.bound.keyup
+						keydown: this.bound.keydown,
+						keyup: this.bound.keyup
 					});
-				},
+				}).bind(this),
 
 				onEnter: function(el, droppable){
 					droppable.addClass('droppable');
@@ -1417,7 +1424,7 @@ var FileManager = new Class({
 					droppable.removeClass('droppable');
 				},
 
-				onDrop: function(el, droppable, e){
+				onDrop: (function(el, droppable, e){
 					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onDrop');
 
 					var is_a_move = !(e.control || e.meta);
@@ -1450,7 +1457,9 @@ var FileManager = new Class({
 					var file = el.retrieve('file');
 					//if (typeof console !== 'undefined' && console.log) console.log('on drop file = ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve; droppable = "' + droppable + '"');
 
-					new FileManager.Request({
+					if (this.Request) this.Request.cancel();
+
+					this.Request = new FileManager.Request({
 						url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
 							event: 'move'
 						})),
@@ -1494,7 +1503,7 @@ var FileManager = new Class({
 
 					// the 'move' action will probably still be running by now, but we need this only to block simultaneous requests triggered from this run itself
 					self.drop_pending = 0;
-				}
+				}).bind(this)
 			});
 
 			this.browser_dragndrop_info.setStyle('background-position', '0px 0px');
