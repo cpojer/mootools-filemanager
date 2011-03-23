@@ -342,16 +342,18 @@ var FileManager = new Class({
 		};
 
 		// ->> autostart filemanager when set
-		if(!this.galleryPlugin) {
-			if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID) {
+		this.initialShow();
+	},
+
+	initialShow: function() {
+		if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID) {
+			this.show();
+		}
+		else {
+			window.addEvent('jsGETloaded',(function(){
+				if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
 					this.show();
-			}
-			else {
-				window.addEvent('jsGETloaded',(function(){
-					if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
-						this.show();
-				}).bind(this));
-			}
+			}).bind(this));
 		}
 	},
 
