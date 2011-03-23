@@ -97,65 +97,15 @@ var FileManager = new Class({
 		this.header.adopt(this.pathTitle,this.clickablePath);
 
 		var self = this;
-		// -> catch a click on an element in the file/folder browser
-		this.relayClick = function(e, el) {
-			if(e) e.stop();
-			this.storeHistory = true;
-
-			var file = el.retrieve('file');
-			//if (typeof console !== 'undefined' && console.log) console.log('on relayClick file = ' + file.mime + ': ' + file.path + ' : ' + file.name + ' : ' + self.Directory + ', source = ' + 'retrieve');
-			if (el.retrieve('edit')) {
-				el.eliminate('edit');
-				return;
-			}
-			if (file.mime == 'text/directory'){
-				el.addClass('selected');
-				// reset the paging to page #0 as we clicked to change directory
-				this.store_view_fill_startindex(0);
-				this.load(this.Directory + file.name);
-				return;
-			}
-
-			// when we're right smack in the middle of a drag&drop, which may end up as a MOVE, do NOT send a 'detail' request
-			// alongside (through fillInfo) as that may lock the file being moved, server-side.
-			// It's good enough to disable the detail view, if we want/need to.
-			//
-			// Note that this info is stored in the instance variable: this.drop_pending -- more functions may check this one!
-			this.fillInfo(file);
-			if (this.Current) this.Current.removeClass('selected');
-			// ONLY do this when we're doing a COPY or on a failed attempt...
-			// CORRECTION: as even a failed 'drop' action will have moved the cursor, we can't keep this one selected right now:
-			if (0 && this.drop_pending != 2) {
-				this.Current = el.addClass('selected');
-			}
-
-			this.switchButton4Current();
-		};
-
-		this.toggleList = function(e) {
-			//if (typeof console !== 'undefined' && console.log) console.log('togglelist: key press: ' + (e ? e.key : '---'));
-			if(e) e.stop();
-			$$('.filemanager-browserheader a.listType').set('opacity',0.5);
-			if(!this.browserMenu_thumb.retrieve('set',false)) {
-				this.browserMenu_list.store('set',false);
-				this.browserMenu_thumb.store('set',true).set('opacity',1);
-				this.listType = 'thumb';
-				if(typeof jsGET != 'undefined') jsGET.set('fmListType=thumb');
-			} else {
-				this.browserMenu_thumb.store('set',false);
-				this.browserMenu_list.store('set',true).set('opacity',1);
-				this.listType = 'list';
-				if(typeof jsGET != 'undefined') jsGET.set('fmListType=list');
-			}
-			//if (typeof console !== 'undefined' && console.log) console.log('on toggleList dir = ' + this.Directory + ', source = ' + '---');
-			this.load(this.Directory);
-		};
 
 		this.browsercontainer = new Element('div',{'class': 'filemanager-browsercontainer'}).inject(this.filemanager);
 		this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
 		this.browserheader.adopt(this.browserLoader);
-		this.browserScroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer).addEvent('mouseover',(function(){
-			this.browser.getElements('span.fi.hover').each(function(span){ span.removeClass('hover'); });
+		this.browserScroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer).addEvent(
+			'mouseover',(function(){
+			this.browser.getElements('span.fi.hover').each(function(span){
+				span.removeClass('hover');
+			});
 		}).bind(this));
 		this.browserMenu_thumb = new Element('a',{
 				'id':'toggle_side_boxes',
@@ -244,7 +194,11 @@ var FileManager = new Class({
 				opacity: 0.5,
 				title: this.language.close,
 				events: {click: this.hide.bind(this)}
-			}).inject(this.filemanager).addEvent('mouseover',function(){this.fade(1);}).addEvent('mouseout',function(){this.fade(0.5);});
+			}).inject(this.filemanager).addEvent('mouseover',function(){
+					this.fade(1);
+				}).addEvent('mouseout',function(){
+					this.fade(0.5);
+				});
 		}
 
 		this.tips = new Tips({
@@ -281,7 +235,8 @@ var FileManager = new Class({
 				//if (typeof console !== 'undefined' && console.log) console.log('keydown: key press: ' + e.key);
 				if (e.control || e.meta) this.imageadd.fade(1);
 			}).bind(this),
-			keyup: (function(){
+			keyup: (function(e){
+				//if (typeof console !== 'undefined' && console.log) console.log('keyup: key press: ' + e.key);
 				this.imageadd.fade(0);
 			}).bind(this),
 			toggleList: (function(e){
@@ -299,7 +254,7 @@ var FileManager = new Class({
 				if (e.key=='esc') this.hide();
 			}).bind(this),
 			keyboardInput: (function(e) {
-				//if (typeof console !== 'undefined' && console.log) console.log('key press: ' + e.key);
+				//if (typeof console !== 'undefined' && console.log) console.log('keyboardInput key press: ' + e.key);
 				if(this.dialogOpen) return;
 				switch (e.key) {
 				case 'up':
@@ -321,15 +276,6 @@ var FileManager = new Class({
 			}).bind(this)
 		};
 
-		this.fitSizes = function() {
-			this.filemanager.center(this.offsets);
-			containerSize = this.filemanager.getSize();
-			headerSize = this.browserheader.getSize();
-			menuSize = this.menu.getSize();
-			this.browserScroll.setStyle('height',containerSize.y - headerSize.y);
-			this.info.setStyle('height',containerSize.y - menuSize.y);
-		};
-
 		// ->> autostart filemanager when set
 		if(!this.galleryPlugin) {
 			if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
@@ -341,6 +287,73 @@ var FileManager = new Class({
 				}).bind(this));
 			}
 		}
+	},
+
+	fitSizes: function() {
+		this.filemanager.center(this.offsets);
+		var containerSize = this.filemanager.getSize();
+		var headerSize = this.browserheader.getSize();
+		var menuSize = this.menu.getSize();
+		this.browserScroll.setStyle('height',containerSize.y - headerSize.y);
+		this.info.setStyle('height',containerSize.y - menuSize.y);
+	},
+
+	// -> catch a click on an element in the file/folder browser
+	relayClick: function(e, el) {
+		if(e) e.stop();
+
+		this.storeHistory = true;
+
+		var file = el.retrieve('file');
+		//if (typeof console !== 'undefined' && console.log) console.log('on relayClick file = ' + file.mime + ': ' + file.path + ' : ' + file.name + ' : ' + this.Directory + ', source = ' + 'retrieve');
+		if (el.retrieve('edit')) {
+			el.eliminate('edit');
+			return;
+		}
+		if (file.mime == 'text/directory'){
+			el.addClass('selected');
+			// reset the paging to page #0 as we clicked to change directory
+			this.store_view_fill_startindex(0);
+			this.load(this.Directory + file.name);
+			return;
+		}
+
+		// when we're right smack in the middle of a drag&drop, which may end up as a MOVE, do NOT send a 'detail' request
+		// alongside (through fillInfo) as that may lock the file being moved, server-side.
+		// It's good enough to disable the detail view, if we want/need to.
+		//
+		// Note that this info is stored in the instance variable: this.drop_pending -- more functions may check this one!
+		this.fillInfo(file);
+		if (this.Current) {
+			this.Current.removeClass('selected');
+		}
+		// ONLY do this when we're doing a COPY or on a failed attempt...
+		// CORRECTION: as even a failed 'drop' action will have moved the cursor, we can't keep this one selected right now:
+			if (0 && this.drop_pending != 2) {
+			this.Current = el.addClass('selected');
+		}
+
+		this.switchButton4Current();
+	},
+
+	toggleList: function(e) {
+		//if (typeof console !== 'undefined' && console.log) console.log('togglelist: key press: ' + (e ? e.key : '---'));
+		if(e) e.stop();
+
+		$$('.filemanager-browserheader a.listType').set('opacity',0.5);
+		if(!this.browserMenu_thumb.retrieve('set',false)) {
+			this.browserMenu_list.store('set',false);
+			this.browserMenu_thumb.store('set',true).set('opacity',1);
+			this.listType = 'thumb';
+			if(typeof jsGET != 'undefined') jsGET.set('fmListType=thumb');
+		} else {
+			this.browserMenu_thumb.store('set',false);
+			this.browserMenu_list.store('set',true).set('opacity',1);
+			this.listType = 'list';
+			if(typeof jsGET != 'undefined') jsGET.set('fmListType=list');
+		}
+		//if (typeof console !== 'undefined' && console.log) console.log('on toggleList dir = ' + this.Directory + ', source = ' + '---');
+		this.load(this.Directory);
 	},
 
 	hashHistory: function(vars) { // get called from the jsGET listener
@@ -413,9 +426,9 @@ var FileManager = new Class({
 		document.addEvent('keydown', this.bound.toggleList);
 		window.addEvent('keydown', this.bound.keyesc);
 		if((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
-		 document.addEvent('keydown', this.bound.keyboardInput);
+		  document.addEvent('keydown', this.bound.keyboardInput);
 		else
-		 document.addEvent('keypress', this.bound.keyboardInput);
+		  document.addEvent('keypress', this.bound.keyboardInput);
 		this.container.fade(1);
 
 		this.fitSizes();
@@ -501,6 +514,11 @@ var FileManager = new Class({
 			onConfirm: function() {
 				if (this.Request) this.Request.cancel();
 
+				// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+				this.reset_view_fill_store();
+
+				this.browserLoader.fade(1);
+
 				new FileManager.Request({
 					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
 						event: 'create'
@@ -511,12 +529,7 @@ var FileManager = new Class({
 						type: self.listType,
 						filter: self.options.filter
 					},
-					onRequest: (function(j) {
-						// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
-						this.reset_view_fill_store();
-
-						this.browserLoader.fade(1);
-					}).bind(self),
+					onRequest: function(){},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							// TODO: include j.error in the message, iff j.error exists
@@ -551,7 +564,9 @@ var FileManager = new Class({
 		if (el && this.Current != el) return;
 		//if (typeof console !== 'undefined' && console.log) console.log('deselect:Current');
 		if (el) this.fillInfo();
-		if (this.Current) this.Current.removeClass('selected');
+		if (this.Current) {
+			this.Current.removeClass('selected');
+		}
 		this.Current = null;
 		this.switchButton4Current();
 	},
@@ -565,6 +580,11 @@ var FileManager = new Class({
 
 		if (this.Request) this.Request.cancel();
 
+		//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onRequest invoked");
+		this.browserLoader.fade(1);
+		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+		this.reset_view_fill_store();
+
 		//if (typeof console !== 'undefined' && console.log) console.log('view URI: ' + this.options.url + ', ' + (this.options.url.indexOf('?') == -1 ? '?' : '&') + ', ' + Object.toQueryString(Object.merge({}, this.options.propagateData, {    event: 'view'  })));
 		this.Request = new FileManager.Request({
 			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
@@ -575,12 +595,7 @@ var FileManager = new Class({
 				type: this.listType,
 				filter: this.options.filter
 			},
-			onRequest: (function(){
-				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onRequest invoked");
-				this.browserLoader.fade(1);
-				// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
-				this.reset_view_fill_store();
-			}).bind(self),
+			onRequest: function(){},
 			onSuccess: (function(j) {
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onSuccess invoked");
 				if (!j || !j.status) {
@@ -619,6 +634,8 @@ var FileManager = new Class({
 
 	destroy_noQasked: function(file) {
 		var self = this;
+		this.browserLoader.fade(1);
+
 		new FileManager.Request({
 			url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
 				event: 'destroy'
@@ -628,7 +645,7 @@ var FileManager = new Class({
 				directory: self.Directory,
 				filter: self.options.filter
 			},
-			onRequest: self.browserLoader.fade(1),
+			onRequest: function(){},
 			onSuccess: (function(j) {
 				if (!j || !j.status) {
 					// TODO: include j.error in the message, iff j.error exists
@@ -683,7 +700,7 @@ var FileManager = new Class({
 	rename: function(file) {
 		var self = this;
 		var name = file.name;
-		var input = new Element('input', {'class': 'rename', value: name,'autofocus':'autofocus'});
+		var input = new Element('input', {'class': 'rename', value: name, 'autofocus': 'autofocus'});
 
 		// if (file.mime != 'text/directory') name = name.replace(/\..*$/, '');     -- unused
 
@@ -704,6 +721,8 @@ var FileManager = new Class({
 				}).focus();
 			},
 			onConfirm: (function(){
+				this.browserLoader.fade(1);
+
 				new FileManager.Request({
 					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 						event: 'move'
@@ -714,7 +733,7 @@ var FileManager = new Class({
 						directory: self.Directory,
 						filter: self.options.filter
 					},
-					onRequest: self.browserLoader.fade(1),
+					onRequest: function(){},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							// TODO: include j.error in the message, iff j.error exists
@@ -892,6 +911,30 @@ var FileManager = new Class({
 		}
 	},
 
+	// -> cancel dragging
+	revert: function(el) {
+		el.fade(1).removeClass('drag').removeClass('move').setStyles({
+			'z-index': 'auto',
+			position: 'relative',
+			width: 'auto',
+			left: 0,
+			top: 0
+		}).inject(el.retrieve('parent'));
+		// also dial down the opacity of the icons within this row (download, rename, delete):
+		var icons = el.getElements('img.browser-icon');
+		if (icons) {
+			icons.each(function(icon) {
+				icon.fade(0);
+			});
+		}
+
+		//if (typeof console !== 'undefined' && console.log) console.log('REMOVE keyboard up/down on revert');
+		document.removeEvent('keydown', this.bound.keydown).removeEvent('keyup', this.bound.keyup);
+		this.imageadd.fade(0);
+
+		this.relayClick.apply(this, [null, el]);
+	},
+
 	// clicked 'first' button in the paged list/thumb view:
 	paging_goto_prev: function()
 	{
@@ -988,7 +1031,9 @@ var FileManager = new Class({
 		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
 
 		// keyboard navigation sets the 'hover' class on the 'current' item: remove any of those:
-		this.browser.getElements('span.fi.hover').each(function(span){ span.removeClass('hover'); });
+		this.browser.getElements('span.fi.hover').each(function(span){
+			span.removeClass('hover');
+		});
 
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
@@ -1319,30 +1364,6 @@ var FileManager = new Class({
 		var duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_2() @ ' + duration);
 
-		// -> cancel dragging
-		var revert = function(el) {
-			el.fade(1).removeClass('drag').removeClass('move').setStyles({
-				'z-index': 'auto',
-				position: 'relative',
-				width: 'auto',
-				left: 0,
-				top: 0
-			}).inject(el.retrieve('parent'));
-			// also dial down the opacity of the icons within this row (download, rename, delete):
-			var icons = el.getElements('img.browser-icon');
-			if (icons) {
-				icons.each(function(icon) {
-					icon.fade(0);
-				});
-			}
-
-			//if (typeof console !== 'undefined' && console.log) console.log('REMOVE keyboard up/down on revert');
-			document.removeEvent('keydown', self.bound.keydown).removeEvent('keyup', self.bound.keyup);
-			self.imageadd.fade(0);
-
-			self.relayClick.apply(self, [null, el]);
-		};
-
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log('time taken in array traversal + revert = ' + duration);
@@ -1376,7 +1397,7 @@ var FileManager = new Class({
 					}).inject(self.container);
 				},
 
-				onCancel: revert,
+				onCancel: this.revert.bind(this),
 
 				onStart: function(el){
 					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onStart');
@@ -1410,7 +1431,7 @@ var FileManager = new Class({
 						return;
 					}
 
-					revert(el);       // do not send the 'detail' request in here: self.drop_pending takes care of that!
+					this.revert(el);       // do not send the 'detail' request in here: this.drop_pending takes care of that!
 
 					var dir;
 					if (droppable){
@@ -1885,11 +1906,13 @@ this.Dialog = new Class({
 	Implements: [Options, Events],
 
 	options: {
-		/*onShow: function(){},
+		/*
+		onShow: function(){},
 		onOpen: function(){},
 		onConfirm: function(){},
 		onDecline: function(){},
-		onClose: function(){},*/
+		onClose: function(){},
+		*/
 		request: null,
 		buttons: ['confirm', 'decline'],
 		language: {}
@@ -1932,8 +1955,10 @@ this.Dialog = new Class({
 
 		this.bound = {
 			scroll: (function(){
-				if (!this.el) this.destroy();
-				else this.el.center();
+				if (!this.el)
+					this.destroy();
+				else
+					this.el.center();
 			}).bind(this),
 			keyesc: (function(e){
 				//if (typeof console !== 'undefined' && console.log) console.log('keyEsc: key press: ' + e.key);
