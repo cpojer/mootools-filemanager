@@ -711,41 +711,49 @@ class FileManager
 				continue;
 			}
 
-			if ($list_type == 'thumb')
+			if (FileManagerUtility::startsWith($mime, 'image/'))
 			{
-				if (FileManagerUtility::startsWith($mime, 'image/'))
-				{
-					/*
-					 * offload the thumbnailing process to another event ('event=thumbnail') to be fired by the client
-					 * when it's time to render the thumbnail: the offloading helps us tremendously in coping with large
-					 * directories:
-					 * WE simply assume the thumbnail will be there, so we don't even need to check for its existence
-					 * (which saves us one more file_exists() per item at the very least). And when it doesn't, that's
-					 * for the event=thumbnail handler to worry about (creating the thumbnail on demand or serving
-					 * a generic icon image instead).
-					 */
-					$thumb = $this->mkEventHandlerURL(array(
-							'event' => 'thumbnail',
-							// directory and filename of the ORIGINAL image should follow next:
-							'directory' => $legal_url,
-							'file' => $filename,
-							'size' => 48,          // thumbnail suitable for 'view/type=thumb' list views
-							'filter' => $mime_filter,
-							'type' => $list_type
-						));
-				}
-				else
-				{
-					$thumb = $this->getIcon($iconspec, false);
-				}
-				$icon = $this->getIcon($iconspec, true);
+				/*
+				 * offload the thumbnailing process to another event ('event=thumbnail') to be fired by the client
+				 * when it's time to render the thumbnail: the offloading helps us tremendously in coping with large
+				 * directories:
+				 * WE simply assume the thumbnail will be there, so we don't even need to check for its existence
+				 * (which saves us one more file_exists() per item at the very least). And when it doesn't, that's
+				 * for the event=thumbnail handler to worry about (creating the thumbnail on demand or serving
+				 * a generic icon image instead).
+				 */
+				$thumb48 = $this->mkEventHandlerURL(array(
+						'event' => 'thumbnail',
+						// directory and filename of the ORIGINAL image should follow next:
+						'directory' => $legal_url,
+						'file' => $filename,
+						'size' => 48,          // thumbnail suitable for 'view/type=thumb' list views
+						'filter' => $mime_filter
+					));
+				$thumb250 = $this->mkEventHandlerURL(array(
+						'event' => 'thumbnail',
+						// directory and filename of the ORIGINAL image should follow next:
+						'directory' => $legal_url,
+						'file' => $filename,
+						'size' => 250,         // thumbnail suitable for 'view/type=thumb' list views
+						'filter' => $mime_filter
+					));
 			}
 			else
 			{
-				$icon = $this->getIcon($iconspec, true);
+				$thumb48 = $this->getIcon($iconspec, false);
+				$thumb250 = $thumb48;
+			}
+			$icon = $this->getIcon($iconspec, true);
+			
+			if ($list_type == 'thumb')
+			{
+				$thumb = $thumb48;
+			}
+			else
+			{
 				$thumb = $icon;
 			}
-
 
 			$out[$isdir ? 0 : 1][] = array(
 					'path' => FileManagerUtility::rawurlencode_path($url),
@@ -753,6 +761,8 @@ class FileManager
 					'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
 					'thumbnail' => $thumb,
+					'thumbnail48' => $thumb48,
+					'thumbnail250' => $thumb250,
 					//'_______thumbnail______' => FileManagerUtility::rawurlencode_path($thumb),
 					'icon' => FileManagerUtility::rawurlencode_path($icon),
 					'size' => @filesize($file)
