@@ -2254,17 +2254,61 @@ class FileManager
 			getid3_lib::CopyTagsToComments($getid3->info);
 
 			$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
-			// Note: these next several indexed array fetches were marked with @ in CCMS to catch some failures...
-			//
-			// TODO: do it cleaner then that!
-			//
-			// DONE!
+			
 			$content = '<dl>
 					<dt>${title}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'title', 0) . '</dd>
 					<dt>${artist}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'artist', 0) . '</dd>
 					<dt>${album}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'album', 0) . '</dd>
 					<dt>${length}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'playtime_string') . '</dd>
 					<dt>${bitrate}</dt><dd>' . round($this->getID3infoItem($getid3, 0, 'bitrate') / 1000) . 'kbps</dd>
+				</dl>
+				<h2>${preview}</h2>
+				<div class="object">
+					<object type="application/x-shockwave-flash" data="' . $dewplayer . '" width="200" height="20" id="dewplayer" name="dewplayer">
+						<param name="wmode" value="transparent" />
+						<param name="movie" value="' . $dewplayer . '" />
+						<param name="flashvars" value="mp3=' . FileManagerUtility::rawurlencode_path($url) . '&amp;volume=50&amp;showtime=1" />
+					</object>
+				</div>';
+		}
+		elseif (FileManagerUtility::startsWith($mime, 'video/'))
+		{
+			$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
+
+			$a_fmt = $this->getID3infoItem($getid3, '???', 'audio', 'dataformat');
+			$a_samplerate = $this->getID3infoItem($getid3, 0, 'audio', 'sample_rate') / 1000;
+			$a_bitrate = round($this->getID3infoItem($getid3, 0, 'audio', 'bitrate') / 1000);
+			$a_bitrate_mode = $this->getID3infoItem($getid3, '???', 'audio', 'bitrate_mode');
+			$a_channels = $this->getID3infoItem($getid3, 0, 'audio', 'channels');
+			$a_codec = $this->getID3infoItem($getid3, '', 'audio', 'codec');
+			$a_streams = $this->getID3infoItem($getid3, '???', 'audio', 'streams');
+			$a_streamcount = (is_array($a_streams) ? count($a_streams) : 0);
+
+			$v_fmt = $this->getID3infoItem($getid3, '???', 'video', 'dataformat');
+			$v_bitrate = round($this->getID3infoItem($getid3, 0, 'video', 'bitrate') / 1000);
+			$v_bitrate_mode = $this->getID3infoItem($getid3, '???', 'video', 'bitrate_mode');
+			$v_framerate = $this->getID3infoItem($getid3, '???', 'video', 'frame_rate');
+			$v_width = $this->getID3infoItem($getid3, '???', 'video', 'resolution_x');
+			$v_height = $this->getID3infoItem($getid3, '???', 'video', 'resolution_y');
+			$v_par = $this->getID3infoItem($getid3, 1.0, 'video', 'pixel_aspect_ratio');
+			$v_codec = $this->getID3infoItem($getid3, '', 'video', 'codec');
+			
+			$g_bitrate = round($this->getID3infoItem($getid3, 0, 'bitrate') / 1000);
+			$g_playtime_str = $this->getID3infoItem($getid3, '???', 'playtime_string');
+			
+			$content = '<dl>
+					<dt>Audio</dt><dd>' . $a_fmt . (!empty($a_codec) ? ' (' . $a_codec . ')' : '') . 
+										(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : $a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)') : '') .
+										': ' . $a_samplerate . ' kHz @ ' . $a_bitrate . ' kbps (' . strtoupper($a_bitrate_mode) . ')' . 
+										($a_streamcount > 1 ? ' (' . $a_streamcount . ' streams)' : '') . 
+								'</dd>
+					<dt>Video</dt><dd>' . $v_fmt . (!empty($v_codec) ? ' (' . $v_codec . ')' : '') .  ': ' . $v_framerate . ' fps @ ' . $v_bitrate . ' kbps (' . strtoupper($v_bitrate_mode) . ')' .
+										($v_par != 1.0 ? ', PAR: ' . $v_par : '') . 
+								'</dd>
+					<dt>${width}</dt><dd>' . $v_width . 'px</dd>
+					<dt>${height}</dt><dd>' . $v_height . 'px</dd>
+					<dt>${length}</dt><dd>' . $g_playtime_str . '</dd>
+					<dt>${bitrate}</dt><dd>' . $g_bitrate . 'kbps</dd>
 				</dl>
 				<h2>${preview}</h2>
 				<div class="object">
