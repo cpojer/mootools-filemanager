@@ -138,7 +138,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
       var el = $('example2');
       var div, manager2;
       var complete = function(encoded_path, file, legal_file_path, current_dir, full_file_path) {
-        el.set('value', encoded_path + ' : ' + legal_file_path + ' : ' + current_dir + ' : ' + full_file_path);
+        el.set('value', full_file_path);
         if(div) div.destroy();
         var icon = new Asset.image(this.assetBasePath+'Images/cancel.png', {'class': 'file-cancel', title: 'deselect'}).addEvent('click', function(e){
           e.stop();
