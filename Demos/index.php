@@ -13,8 +13,21 @@ $_SESSION['FileManager'] = 'DemoMagick';
 
 $_SESSION['UploadAuth'] = 'yes';
 
+$params = session_get_cookie_params();
+
 /* the remainder of the code does not need access to the session data. */
 session_write_close();
+
+// and add a couple other, slightly malicious cookies to check whether Flash will crash on it, or not.
+setcookie("ASP.NET_SessionId", 'ASP.NET: b0rk b0rk b0rk & ... b0rk!', time() + 600,
+	$params['path'], $params['domain'],
+	$params['secure'], $params['httponly']
+);
+setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
+	$params['path'], $params['domain'],
+	$params['secure'], $params['httponly']
+);
+
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -29,11 +42,11 @@ session_write_close();
     font-size: 11px;
     font-family: Tahoma, sans-serif;
   }
-  
+
   h1 {
     margin: 0 0 10px 0;
     padding: 0;
-    
+
     color: #666;
     font-weight: normal;
     font-size: 24px;
@@ -49,9 +62,9 @@ session_write_close();
     word-spacing: 0;
     text-shadow: none;
   }
-  
+
   .blue { color: #1f52b0; }
-  
+
   div.content {
     min-height: 200px;
     margin: 23px 34px;
@@ -62,21 +75,31 @@ session_write_close();
   -moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 10px;
   -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 10px;
   }
-  
+
   div.content div.example {
     float: left;
     clear: both;
     margin: 10px 0;
   }
-  
+
+  div.selected-file div {
+     padding: 3px;
+
+     line-height: 1.5em;
+  }
+
+  div.selected-file div img.preview {
+     padding: 3px;
+  }
+
   button {
     margin: 5px 0;
   }
   </style>
-  
-  <script type="text/javascript" src="mootools-core.js"></script>
-  <script type="text/javascript" src="mootools-more.js"></script>
-  
+
+    <script type="text/javascript" src="../../../../../lib/includes/js/mootools-core.js"></script>
+    <script type="text/javascript" src="../../../../../lib/includes/js/mootools-more.js"></script>
+
   <script type="text/javascript" src="../Source/FileManager.js"></script>
   <script type="text/javascript" src="../Source/Gallery.js"></script>
   <script type="text/javascript" src="../Source/Uploader/Fx.ProgressBar.js"></script>
@@ -84,10 +107,13 @@ session_write_close();
   <script type="text/javascript" src="../Source/Uploader.js"></script>
   <script type="text/javascript" src="../Language/Language.en.js"></script>
   <script type="text/javascript" src="../Language/Language.de.js"></script>
-  
+
+  <!-- extra, for viewing the gallery and selected picture: -->
+  <script type="text/javascript" src="../Assets/js/milkbox/milkbox.js"></script>
+
   <script type="text/javascript">
     window.addEvent('domready', function() {
-      
+
       /* Simple Example */
       var manager1 = new FileManager({
         url: 'manager.php',
@@ -100,15 +126,19 @@ session_write_close();
         destroy: true,
         rename: true,
         createFolders: true,
-		hideQonDelete: false     // DO ask 'are you sure' when the user hits the 'delete' button
+        hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
+        // and a couple of extra user defined parameters sent with EVERY request:
+        propagateData: {
+            origin: 'demo-FM-1'
+        }
       });
       $('example1').addEvent('click', manager1.show.bind(manager1));
 
       /* Select a file */
       var el = $('example2');
       var div, manager2;
-      var complete = function(path, file) {
-        el.set('value', path);
+      var complete = function(encoded_path, file, legal_file_path, current_dir, full_file_path) {
+        el.set('value', full_file_path);
         if(div) div.destroy();
         var icon = new Asset.image(this.assetBasePath+'Images/cancel.png', {'class': 'file-cancel', title: 'deselect'}).addEvent('click', function(e){
           e.stop();
@@ -122,13 +152,39 @@ session_write_close();
         });
         manager2.tips.attach(icon);
 
+        var img = null;
+        var mimetype = file.mime;
+        if (mimetype && mimetype.contains('image/'))
+        {
+            img = new Element('div', {
+                    'text': 'Click on the thumbnail to view the image/file in a lightbox (milkbox)'
+                }).adopt(
+                    new Element('br'),
+                    new Element('a', {
+                            'data-milkbox': 'single',
+                            'title': file.name,
+                            'href': encodeURI(full_file_path)              // see also:  http://www.javascripter.net/faq/escape.htm
+                        }).adopt(new Element('img', {
+                            'src': (file.thumbnail250 ? file.thumbnail250 : file.icon),
+                            'class': 'preview',
+                            'alt': 'preview (picked)'
+                        }))
+                );
+        }
+
         div = new Element('div', {'class': 'selected-file', text: 'Selected file: '}).adopt(
           new Asset.image(file.icon, {'class': 'mime-icon'}),
           new Element('span', {text: file.name}),
-          icon
+          icon,
+          img
         ).inject(el, 'after');
+
+        if (img && typeof milkbox != 'undefined')
+        {
+          milkbox.reloadPageGalleries();
+        }
       };
-      
+
       manager2 = new FileManager({
         url: 'selectImage.php',
         language: 'en',
@@ -142,19 +198,19 @@ session_write_close();
         rename: true,
         createFolders: true,
         onComplete: complete,
-		// and a couple of extra user defined parameters sent with EVERY request:
-		propagateData: {
-			origin: 'demo-selectFile'
-		}
+        // and a couple of extra user defined parameters sent with EVERY request:
+        propagateData: {
+            origin: 'demo-selectFile'
+        }
       });
-      
+
       el.setStyle('display', 'none');
       var val = el.get('value');
       if(val) complete.apply(manager2, [val, {
         name: val.split('/').getLast(),
         icon: '../Assets/Images/Icons/'+val.split('.').getLast()+'.png'
       }]);
-      
+
       new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager2.show.bind(manager2)).inject(el, 'before');
 
       /* Localized Example */
@@ -168,10 +224,10 @@ session_write_close();
         destroy: true,
         rename: true,
         createFolders: true,
-		// and a couple of extra user defined parameters sent with EVERY request:
-		propagateData: {
-			origin: 'demo-clickedLink'
-		}
+        // and a couple of extra user defined parameters sent with EVERY request:
+        propagateData: {
+            origin: 'demo-clickedLink'
+        }
       });
       $('example3').addEvent('click', manager3.show.bind(manager3));
 
@@ -185,9 +241,9 @@ session_write_close();
         filter: 'image',
         hideOnClick: true,
         uploadAuthData: {session: 'MySessionId'},
-		propagateData: {
-			origin: 'demo-Gallery'
-		},
+        propagateData: {
+            origin: 'demo-Gallery'
+        },
         onShow: function(){
           var obj;
           Function.attempt(function(){ obj = JSON.decode(example4.get('value')); });

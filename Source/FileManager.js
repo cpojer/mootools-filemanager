@@ -86,7 +86,7 @@ var FileManager = new Class({
 		this.browserLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 300}});
 		// switch the path, from clickable to input text
 		this.clickablePath = new Element('span', {'class': 'filemanager-dir'});
-		this.selectablePath = new Element('input',{'type':'text','class': 'filemanager-dir','readonly':'readonly'});
+		this.selectablePath = new Element('input',{'type': 'text', 'class': 'filemanager-dir', 'readonly': 'readonly'});
 		this.pathTitle = new Element('a', {href:'#','class': 'filemanager-dir-title',text: this.language.dir}).addEvent('click',(function(e){
 			e.stop();
 			if(this.header.getElement('span.filemanager-dir')!= null) {
@@ -345,7 +345,7 @@ var FileManager = new Class({
 		this.initialShow();
 	},
 
-	initialShow: function() {
+	initialShowBase: function() {
 		if(typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID) {
 			this.show();
 		}
@@ -355,6 +355,11 @@ var FileManager = new Class({
 					this.show();
 			}).bind(this));
 		}
+	},
+
+	// overridable method:
+	initialShow: function() {
+		this.initialShowBase();
 	},
 
 	allow_DnD: function(j, pagesize)
@@ -547,9 +552,13 @@ var FileManager = new Class({
 	open_on_click: function(e){
 		e.stop();
 		if (!this.Current) return;
+		var file = this.Current.retrieve('file');
 		this.fireEvent('complete', [
-			this.normalize(this.Current.retrieve('file').path),
-			this.Current.retrieve('file')
+			this.normalize(file.path),                                       // URLencoded 'legal URI space' path to selected file
+			file,                                                            // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+			this.normalize(file.dir + file.name),                            // the 'legal URI space' path to selected  file (NOT URLencoded!)
+			this.normalize('/' + this.CurrentPath),                          // the absolute URL for the current directory
+			this.normalize('/' + this.root + file.dir + file.name)           // the absolute URL for the selected file
 		]);
 		this.hide();
 	},
@@ -599,8 +608,6 @@ var FileManager = new Class({
 
 				// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 				this.reset_view_fill_store();
-
-				this.browserLoader.fade(1);
 
 				this.Request = new FileManager.Request({
 					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
@@ -662,7 +669,7 @@ var FileManager = new Class({
 		if (this.Request) this.Request.cancel();
 
 		//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onRequest invoked");
-		this.browserLoader.fade(1);
+
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 		this.reset_view_fill_store();
 
@@ -1124,10 +1131,8 @@ var FileManager = new Class({
 
 		// if (this.Request) this.Request.cancel();
 
-		this.browserLoader.fade(1);
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 		//this.reset_view_fill_store();
-		// abort any still running ('antiquated') fill chunks:
 		$clear(this.view_fill_timer);
 		this.view_fill_timer = null;
 
@@ -1167,17 +1172,6 @@ var FileManager = new Class({
 		startindex = Math.floor(startindex / pagesize);
 		startindex *= pagesize;
 
-		//this.browser_paging.fade(0);
-
-
-		// as this is a long-running process, make sure the hourglass-equivalent is visible for the duration:
-		//this.browserLoader.fade(1);
-
-		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
-		this.browser_dragndrop_info.fade(0.5);
-		this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
-		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
-
 		// keyboard navigation sets the 'hover' class on the 'current' item: remove any of those:
 		this.browser.getElements('span.fi.hover').each(function(span){
 			span.removeClass('hover');
@@ -1196,7 +1190,7 @@ var FileManager = new Class({
 		if(typeof jsGET != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')
 			jsGET.set({'fmPath':j.path});
 
-		this.CurrentPath = this.root + this.Directory;
+		this.CurrentPath = this.normalize(this.root + this.Directory);
 		var text = [], pre = [];
 		// on error reported by backend, there WON'T be a JSON 'root' element at all times:
 		//
@@ -1208,15 +1202,15 @@ var FileManager = new Class({
 		}
 		var rootPath = j.root.slice(0,-1).split('/');
 		rootPath.pop();
-		this.CurrentPath.split('/').each(function(folderName){
+		this.CurrentPath.split('/').each((function(folderName){
 			if (!folderName) return;
 
 			pre.push(folderName);
 			var path = ('/'+pre.join('/')+'/').replace(j.root,'');
 			//if (typeof console !== 'undefined' && console.log) console.log('on fill file = ' + j.root + ' : ' + path + ' : ' + folderName + ', source = ' + 'JSON');
 			// add non-clickable path
-			if(rootPath.contains(folderName)) {
-				text.push(new Element('span', {'class': 'icon',text: folderName}));
+			if (rootPath.contains(folderName)) {
+				text.push(new Element('span', {'class': 'icon', text: folderName}));
 			// add clickable path
 			} else {
 				text.push(new Element('a', {
@@ -1230,7 +1224,7 @@ var FileManager = new Class({
 				);
 			}
 			text.push(new Element('span', {text: ' / '}));
-		});
+		}).bind(this));
 
 		text.pop();
 		text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e) {
@@ -1891,10 +1885,18 @@ var FileManager = new Class({
 	// we may be reloading and we don't want to destroy the page indicator then!
 	reset_view_fill_store: function(j)
 	{
-		// abort any still running ('antiquated') fill chunks:
-		$clear(this.view_fill_timer);
+		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
+		this.browser_dragndrop_info.fade(0.5);
+		this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
+		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
+
+		// as this is a long-running process, make sure the hourglass-equivalent is visible for the duration:
+		this.browserLoader.fade(1);
 
 		this.browser_paging.fade(0);
+
+		// abort any still running ('antiquated') fill chunks:
+		$clear(this.view_fill_timer);
 
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
 		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?

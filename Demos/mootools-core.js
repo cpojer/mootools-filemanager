@@ -24,7 +24,7 @@ provides: [Core, MooTools, Type, typeOf, instanceOf, Native]
 
 this.MooTools = {
 	version: '1.3.2dev',
-	build: '5965c80516ead3e36360ae56c8383e3c891c263d'
+	build: 'bc652c9ab8a64331ef11801603a1b592ac8045ef'
 };
 
 // typeOf, instanceOf
@@ -508,7 +508,7 @@ this.$unlink = function(object){
 
 //</1.2compat>
 
-}).call(this);
+})();
 
 
 /*
@@ -1416,7 +1416,7 @@ this.$exec = Browser.exec;
 
 //</1.2compat>
 
-}).call(this);
+})();
 
 
 /*
@@ -1670,7 +1670,7 @@ Class.Mutators = {
 	}
 };
 
-}).call(this);
+})();
 
 
 /*
@@ -1793,7 +1793,7 @@ this.Options = new Class({
 
 });
 
-}).call(this);
+})();
 
 
 /*
@@ -4034,7 +4034,7 @@ Element.ShortStyles = {margin: {}, padding: {}, border: {}, borderWidth: {}, bor
 	Short.borderColor[bdc] = Short[bd][bdc] = All[bdc] = 'rgb(@, @, @)';
 });
 
-}).call(this);
+})();
 
 
 /*
@@ -4211,7 +4211,7 @@ Element.Events = new Hash(Element.Events);
 
 //</1.2compat>
 
-}).call(this);
+})();
 
 
 /*
@@ -4457,7 +4457,7 @@ function getCompatElement(element){
 	return (!doc.compatMode || doc.compatMode == 'CSS1Compat') ? doc.html : doc.body;
 }
 
-}).call(this);
+})();
 
 //aliases
 Element.alias({position: 'setPosition'}); //compatability
@@ -4677,7 +4677,7 @@ var pullInstance = function(fps){
 	}
 };
 
-}).call(this);
+})();
 
 
 /*
@@ -5205,7 +5205,7 @@ var Request = this.Request = new Class({
 		xhr.onreadystatechange = empty;
 		if (progressSupport) xhr.onprogress = xhr.onloadstart = empty;
 		clearTimeout(this.timer);
-		
+
 		this.response = {text: this.xhr.responseText || '', xml: this.xhr.responseXML};
 		if (this.options.isSuccess.call(this, this.status))
 			this.success(this.response.text, this.response.xml);
@@ -5242,15 +5242,15 @@ var Request = this.Request = new Class({
 	onFailure: function(){
 		this.fireEvent('complete').fireEvent('failure', this.xhr);
 	},
-	
+
 	loadstart: function(event){
 		this.fireEvent('loadstart', [event, this.xhr]);
 	},
-	
+
 	progress: function(event){
 		this.fireEvent('progress', [event, this.xhr]);
 	},
-	
+
 	timeout: function(){
 		this.fireEvent('timeout', this.xhr);
 	},
@@ -5274,7 +5274,7 @@ var Request = this.Request = new Class({
 		}
 		return false;
 	},
-	
+
 	send: function(options){
 		if (!this.check(options)) return this;
 
@@ -5310,7 +5310,7 @@ var Request = this.Request = new Class({
 		}
 
 		if (!url) url = document.location.pathname;
-		
+
 		var trimPosition = url.lastIndexOf('/');
 		if (trimPosition > -1 && (trimPosition = url.indexOf('#')) > -1) url = url.substr(0, trimPosition);
 
@@ -5330,7 +5330,7 @@ var Request = this.Request = new Class({
 
 		xhr.open(method.toUpperCase(), url, this.options.async, this.options.user, this.options.password);
 		if (this.options.user && 'withCredentials' in xhr) xhr.withCredentials = true;
-		
+
 		xhr.onreadystatechange = this.onStateChange.bind(this);
 
 		Object.each(this.headers, function(value, key){
@@ -5572,7 +5572,7 @@ JSON.decode = function(string, secure){
 	return eval('(' + string + ')');
 };
 
-}).call(this);
+})();
 
 
 /*
@@ -5921,5 +5921,5 @@ Swiff.remote = function(obj, fn){
 	return eval(rs);
 };
 
-}).call(this);
+})();
 

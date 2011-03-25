@@ -224,6 +224,9 @@ Swiff.Uploader = new Class({
   },
 
   initializeSwiff: function() {
+    this.appendCookieData();          // looks like there's a bit of trouble with xSetOptions, so we circumvent it by passing it all in one go through xInitialize
+	if (typeof console !== 'undefined' && console.log) console.log('initializeSwiff: data count = ' + this.options.data.length + ' : ' + this.options.data);
+
     // extracted options for the swf
     this.remote('xInitialize', {
       typeFilter: this.options.typeFilter,
@@ -247,8 +250,6 @@ Swiff.Uploader = new Class({
     });
 
     this.loaded = true;
-
-    this.appendCookieData();
   },
 
   targetRelay: function(name) {
@@ -265,11 +266,14 @@ Swiff.Uploader = new Class({
   },
 
   setOptions: function(options) {
+	if (typeof console !== 'undefined' && console.log) console.log('Swiff.Uploader: BASE::setOptions');
     if (options) {
       if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
       if (options.buttonImage) options.buttonImage = Swiff.Uploader.qualifyPath(options.buttonImage);
       this.parent(options);
-      if (this.loaded) this.remote('xSetOptions', options);
+      if (this.loaded) {
+		this.remote('xSetOptions', options);
+	  }
     }
     return this;
   },
@@ -311,13 +315,17 @@ Swiff.Uploader = new Class({
 
   appendCookieData: function() {
     var append = this.options.appendCookieData;
+	if (typeof console !== 'undefined' && console.log) console.log('appendCookieData: ' + (1 * append) + ' / ' + append);
     if (!append) return;
 
     var hash = {};
+    if (typeof console !== 'undefined' && console.log) console.log('appendCookieData: ENTIRE cookie: "' + document.cookie + '"');
     document.cookie.split(/;\s*/).each(function(cookie) {
       cookie = cookie.split('=');
+	  if (typeof console !== 'undefined' && console.log) console.log('appendCookieData: cookie: "' + cookie[0] + '"(' + cookie.length + ') = "' + (cookie.length > 1 ? cookie[1] : '???') + '"');
       if (cookie.length == 2) {
-        hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);    // allow session IDs such as the ASP.NET ones, which come with an underscore, etc.
+        //hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);    // allow session IDs such as the ASP.NET ones, which come with a dot, etc.
+        hash[decodeURIComponent(cookie[0])] = decodeURIComponent(cookie[1]);
       }
     });
 
@@ -467,6 +475,7 @@ Swiff.Uploader.File = new Class({
   },
 
   setOptions: function(options) {
+	if (typeof console !== 'undefined' && console.log) console.log('Swiff.Uploader: File::setOptions');
     if (options) {
       if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
       this.base.remote('xFileSetOptions', this.id, options);

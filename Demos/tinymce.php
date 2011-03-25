@@ -76,10 +76,10 @@ session_write_close();
 	<link rel="stylesheet" media="all" type="text/css" href="../Assets/Css/FileManager.css" />
 	<link rel="stylesheet" media="all" type="text/css" href="../Assets/Css/Additions.css" />
 	
-	<script type="text/javascript" src="tiny_mce_full.js"></script>
+	<script type="text/javascript" src="../../../../../lib/includes/js/tiny_mce/jscripts/tiny_mce/tiny_mce_src.js"></script>
 
-	<script type="text/javascript" src="mootools-core.js"></script>
-	<script type="text/javascript" src="mootools-more.js"></script>
+	<script type="text/javascript" src="../../../../../lib/includes/js/mootools-core.js"></script>
+	<script type="text/javascript" src="../../../../../lib/includes/js/mootools-more.js"></script>
 	
 	<script type="text/javascript" src="../Source/FileManager.js"></script>
 	<script type="text/javascript" src="../Source/Uploader/Fx.ProgressBar.js"></script>
@@ -113,7 +113,7 @@ session_write_close();
 				return {
 					url: 'manager.php?exhibit=A', // 'manager.php', but with a bogus query parameter included: latest FM can cope with such an URI
 					assetBasePath: '../Assets', // '/c/lib/includes/js/mootools-filemanager/Assets',
-					language: 'de',
+					language: 'en',
 					selectable: true,
 					destroy: true,
 					upload: true,
@@ -145,9 +145,11 @@ session_write_close();
 <body>
 <div id="content" class="content">
 	<h1>FileManager Demo</h1>
-	<div>
-	<textarea>Add an image or a link to a file!</textarea>
-	<button id="getEditorText" name="getEditorTextButton">Get editor content</button>
+	<div style="float: right;"><a href="index.php">Go to the examples' overview</a></div>
+	
+	<div style="clear: both;">
+		<textarea>Add an image or a link to a file!</textarea>
+		<button id="getEditorText" name="getEditorTextButton">Get editor content</button>
 	</div>
 	<div id="editorContent"></div>
 </div>

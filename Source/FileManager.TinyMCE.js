@@ -20,10 +20,12 @@ Usage:
 FileManager.TinyMCE = function(options){
   return function(field, url, type, win){
     var manager = new FileManager(Object.append({
-      onComplete: function(path){
+      onComplete: function(encoded_path, file, legal_file_path, current_dir, full_file_path) {
         if (!win.document) return;
-        win.document.getElementById(field).value = path;
-        if (win.ImageDialog) win.ImageDialog.showPreviewImage(path, 1);
+        win.document.getElementById(field).value = full_file_path;
+        if (win.ImageDialog) {
+			win.ImageDialog.showPreviewImage(full_file_path, 1);
+		}
         this.container.destroy();
       }
     }, options(type)));
