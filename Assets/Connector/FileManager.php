@@ -232,7 +232,7 @@ if(!defined("COMPACTCMS_CODE")) { die('Illegal entry point!'); } /*MARKER*/
  *
  *
  *         Note that this request originates from a Macromedia Flash client: hence you'll need to use the
- *         $_GET[session_name()] value to manually set the PHP session_id() before you start your your session
+ *         $_POST[session_name()] value to manually set the PHP session_id() before you start your your session
  *         again.
  *
  *         The frontend-specified options.uploadAuthData items will be available as further $_GET[] items, as well.

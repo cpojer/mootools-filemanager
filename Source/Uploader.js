@@ -92,8 +92,10 @@ FileManager.implement({
 
         this.parent(base, data);
 
+		if (typeof console !== 'undefined' && console.log) console.log('Uploader: setOptions');
         this.setOptions({
-          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.uploadAuthData, self.options.propagateData, {
+		  //data: Object.merge({}, base.options.data, self.options.uploadAuthData, self.options.propagateData),
+          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
             event: 'upload',
             directory: self.normalize(self.Directory),
 			filter: self.options.filter,
@@ -180,7 +182,7 @@ FileManager.implement({
         this.remove();
       },
 
-      onComplete: function(norm_path, file_obj) {
+      onComplete: function(file_obj) {
         this.ui.progress = this.ui.progress.cancel().element.destroy();
         this.ui.cancel = this.ui.cancel.destroy();
 
@@ -220,6 +222,7 @@ FileManager.implement({
   		return fileTypes;
     };
 
+	if (typeof console !== 'undefined' && console.log) console.log('Uploader: SWF init');
     this.swf = new Swiff.Uploader({
       id: 'SwiffFileManagerUpload',
       path: this.assetBasePath + 'Swiff.Uploader.swf',
@@ -228,6 +231,10 @@ FileManager.implement({
       allowDuplicates: true,
       instantStart: true,
 	  appendCookieData: true, // pass along any session cookie data, etc. in the request section (PHP: $_GET[])
+	  data: Object.merge({},
+			(self.options.propagateData  || {}),
+			(self.options.uploadAuthData || {})
+		),
       fileClass: File,
       timeLimit: 260,
       fileSizeMax: 2600 * 2600 * 25,

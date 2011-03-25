@@ -13,8 +13,21 @@ $_SESSION['FileManager'] = 'DemoMagick';
 
 $_SESSION['UploadAuth'] = 'yes';
 
+$params = session_get_cookie_params();
+
 /* the remainder of the code does not need access to the session data. */
 session_write_close();
+
+// and add a couple other, slightly malicious cookies to check whether Flash will crash on it, or not.
+setcookie("ASP.NET_SessionId", 'ASP.NET: b0rk b0rk b0rk & ... b0rk!', time() + 600,
+	$params['path'], $params['domain'],
+	$params['secure'], $params['httponly']
+);
+setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
+	$params['path'], $params['domain'],
+	$params['secure'], $params['httponly']
+);
+
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -113,7 +126,11 @@ session_write_close();
         destroy: true,
         rename: true,
         createFolders: true,
-        hideQonDelete: false     // DO ask 'are you sure' when the user hits the 'delete' button
+        hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
+        // and a couple of extra user defined parameters sent with EVERY request:
+        propagateData: {
+            origin: 'demo-FM-1'
+        }
       });
       $('example1').addEvent('click', manager1.show.bind(manager1));
 

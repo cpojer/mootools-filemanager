@@ -484,10 +484,10 @@ function start_session_ex()
 		$sesid = session_id();
 		$sesname = session_name();
 		// the SWF.Upload / FancyUpload FLASH components do pass along the cookies, but as extra URL query entities:
-		if (!empty($_GET[$sesname]))
+		if (!empty($_POST[$sesname]))
 		{
 			// legalize the sessionID; just a precaution for malicious intent
-			$alt_sesid = preg_replace('/[^A-Za-z0-9]/', 'X', $_GET[$sesname]);
+			$alt_sesid = preg_replace('/[^A-Za-z0-9]/', 'X', $_POST[$sesname]);
 
 			/*
 			 * Before we set the sessionID, we'd better make darn sure it's a legitimate request instead of a hacker trying to get in:
