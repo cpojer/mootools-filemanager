@@ -458,6 +458,8 @@ if (function_exists('UploadIsAuthenticated'))
 
 //-------------------------------------------------------------------------------------------------------------
 
+if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 0);   // make sure this #define is always known to us
+
 
 
 require_once('Tooling.php');
@@ -2080,12 +2082,15 @@ class FileManager
 				$content .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
 			}
 
-			$finfo = Image::guestimateRequiredMemorySpace($file);
-			if (!empty($finfo['usage_guestimate']) && !empty($finfo['usage_min_advised']))
+			if (DEVELOPMENT)
 			{
-				$content .= "\n" . '<p class="tech_info">memory used: ' . number_format(memory_get_peak_usage() / 1E6, 1) . ' MB / estimated: ' . number_format($finfo['usage_guestimate'] / 1E6, 1) . ' MB / suggested: ' . number_format($finfo['usage_min_advised'] / 1E6, 1) . ' MB</p>';
+				$finfo = Image::guestimateRequiredMemorySpace($file);
+				if (!empty($finfo['usage_guestimate']) && !empty($finfo['usage_min_advised']))
+				{
+					$content .= "\n" . '<p class="tech_info">memory used: ' . number_format(memory_get_peak_usage() / 1E6, 1) . ' MB / estimated: ' . number_format($finfo['usage_guestimate'] / 1E6, 1) . ' MB / suggested: ' . number_format($finfo['usage_min_advised'] / 1E6, 1) . ' MB</p>';
+				}
 			}
-
+			
 			$exif_data = $this->getID3infoItem($getid3, null, 'jpg', 'exif');
 			try
 			{

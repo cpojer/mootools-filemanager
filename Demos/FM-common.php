@@ -18,7 +18,7 @@ define('SITE_USES_ALIASES', 01);
 
 
 
-define('DEVELOPMENT', 0);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
+if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 01);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
 
 
 
