@@ -2064,7 +2064,7 @@ class FileManager
 			$tnpath = $this->url_path2file_path($thumbfile);
 			$tninf = @getimagesize($tnpath);
 
-			$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="preview" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+			$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
 						   <img src="' . $enc_thumbfile . '" class="preview" alt="preview" style="width: ' . $tninf[0] . 'px; height: ' . $tninf[1] . 'px;" />
 						 </a>';
 			if (!empty($emsg))
