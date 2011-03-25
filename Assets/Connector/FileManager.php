@@ -1030,15 +1030,15 @@ class FileManager
 	 *
 	 * Expected parameters:
 	 *
-	 * $_POST['directory']     path relative to basedir a.k.a. options['directory'] root
+	 * $_GET['directory']      path relative to basedir a.k.a. options['directory'] root
 	 *
-	 * $_POST['file']          filename (including extension, of course) of the file to
+	 * $_GET['file']           filename (including extension, of course) of the file to
 	 *                         be thumbnailed.
 	 *
-	 * $_POST['size']          the requested thumbnail maximum width / height (the bounding box is square).
+	 * $_GET['size']           the requested thumbnail maximum width / height (the bounding box is square).
 	 *                         Must be one of our 'authorized' sizes: 48, 250.
 	 *
-	 * $_POST['filter']        optional mimetype filter string, amy be the part up to and
+	 * $_GET['filter']         optional mimetype filter string, amy be the part up to and
 	 *                         including the slash '/' or the full mimetype. Only files
 	 *                         matching this (set of) mimetypes will be listed.
 	 *                         Examples: 'image/' or 'application/zip'

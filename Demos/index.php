@@ -120,7 +120,9 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         language: 'en',
         hideOnClick: true,
         assetBasePath: '../Assets',
-        uploadAuthData: {session: 'MySessionId'},
+        uploadAuthData: {
+			session: 'MySessionId'
+		},
         upload: true,
         download: true,
         destroy: true,
@@ -139,17 +141,22 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
       var div, manager2;
       var complete = function(encoded_path, file, legal_file_path, current_dir, full_file_path) {
         el.set('value', full_file_path);
-        if(div) div.destroy();
-        var icon = new Asset.image(this.assetBasePath+'Images/cancel.png', {'class': 'file-cancel', title: 'deselect'}).addEvent('click', function(e){
-          e.stop();
-          el.set('value', '');
-          var self = this;
-          div.fade(0).get('tween').chain(function(){
-            div.destroy();
-            manager2.tips.hide();
-            manager2.tips.detach(self);
-          });
-        });
+        if (div) div.destroy();
+        var icon = new Asset.image(
+			this.assetBasePath+'Images/cancel.png', 
+			{
+				'class': 'file-cancel', 
+				title: 'deselect'
+			}).addEvent('click', function(e){
+				e.stop();
+				el.set('value', '');
+				var self = this;
+				div.fade(0).get('tween').chain(function(){
+					div.destroy();
+					manager2.tips.hide();
+					manager2.tips.detach(self);
+				});
+			});
         manager2.tips.attach(icon);
 
         var img = null;
@@ -191,7 +198,9 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         filter: 'image',
         hideOnClick: true,
         assetBasePath: '../Assets',
-        uploadAuthData: {session: 'MySessionId'},
+        uploadAuthData: {
+			session: 'MySessionId'
+		},
         selectable: true,
         upload: true,
         destroy: true,
@@ -206,10 +215,12 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 
       el.setStyle('display', 'none');
       var val = el.get('value');
-      if(val) complete.apply(manager2, [val, {
-        name: val.split('/').getLast(),
-        icon: '../Assets/Images/Icons/'+val.split('.').getLast()+'.png'
-      }]);
+      if(val) {
+		complete.apply(manager2, [val, {
+			name: val.split('/').getLast(),
+			icon: '../Assets/Images/Icons/'+val.split('.').getLast()+'.png'
+		}]);
+	  }
 
       new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager2.show.bind(manager2)).inject(el, 'before');
 
@@ -219,7 +230,9 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         language: 'de',
         hideOnClick: true,
         assetBasePath: '../Assets',
-        uploadAuthData: {session: 'MySessionId'},
+        uploadAuthData: {
+			session: 'MySessionId'
+		},
         upload: true,
         destroy: true,
         rename: true,
@@ -240,13 +253,17 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         assetBasePath: '../Assets',
         filter: 'image',
         hideOnClick: true,
-        uploadAuthData: {session: 'MySessionId'},
+        uploadAuthData: {
+			session: 'MySessionId'
+		},
         propagateData: {
             origin: 'demo-Gallery'
         },
         onShow: function(){
           var obj;
-          Function.attempt(function(){ obj = JSON.decode(example4.get('value')); });
+          Function.attempt(function(){ 
+			obj = JSON.decode(example4.get('value')); 
+		  });
           this.populate(obj);
         },
         onComplete: function(serialized){
