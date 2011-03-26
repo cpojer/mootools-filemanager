@@ -92,7 +92,7 @@ FileManager.implement({
 
         this.parent(base, data);
 
-		if (typeof console !== 'undefined' && console.log) console.log('Uploader: setOptions');
+		//if (typeof console !== 'undefined' && console.log) console.log('Uploader: setOptions');
         this.setOptions({
 		  //data: Object.merge({}, base.options.data, self.options.uploadAuthData, self.options.propagateData),
           url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
@@ -222,7 +222,7 @@ FileManager.implement({
   		return fileTypes;
     };
 
-	if (typeof console !== 'undefined' && console.log) console.log('Uploader: SWF init');
+	//if (typeof console !== 'undefined' && console.log) console.log('Uploader: SWF init');
     this.swf = new Swiff.Uploader({
       id: 'SwiffFileManagerUpload',
       path: this.assetBasePath + 'Swiff.Uploader.swf',
