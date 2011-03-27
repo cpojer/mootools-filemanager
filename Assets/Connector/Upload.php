@@ -97,6 +97,9 @@ class Upload {
 				'extension' => strtolower(pathinfo($file, PATHINFO_EXTENSION)),
 			), (is_array($options) ? $options : array()));
 
+    // Xinha: Might have been overwritten by the options!
+    $options['extension'] = strtolower($options['extension']); 
+    
 		$mime = null;
 		$ini = error_reporting(0);
 		if (function_exists('finfo_open') && $f = finfo_open(FILEINFO_MIME, getenv('MAGIC'))){

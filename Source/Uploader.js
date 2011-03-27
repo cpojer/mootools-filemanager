@@ -68,7 +68,7 @@ FileManager.implement({
         }
       }),
       list: new Element('ul', {'class': 'filemanager-uploader-list'}),
-      uploader: new Element('div', {opacity: 0}).adopt(
+      uploader: new Element('div', {opacity: 0, 'class': 'filemanager-uploader-area'}).adopt(
         new Element('h2', {text: this.language.upload}),
         new Element('div', {'class': 'filemanager-uploader'})
       )
@@ -234,7 +234,7 @@ FileManager.implement({
       onSelectSuccess: function(){
         self.fillInfo();
         self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
-        self.preview.adopt(self.upload.uploader);
+        self.info.adopt(self.upload.uploader);
         self.upload.uploader.fade(1);
       },
       onComplete: function(){

@@ -31,7 +31,9 @@ var FileManager = new Class({
     onModify: function(){},
     onShow: function(){},
     onHide: function(){},
-    onPreview: function(){}*/
+    onPreview: $empty,
+    onDetails: $empty, // Xinha: Fired when an item is picked form the files list, supplied object (eg {width: 123, height:456} )
+    onHidePreview: $empty, // Xinha: Fired when the preview is hidden (eg when uploading) */
     directory: '',
     url: null,
     assetBasePath: null,
@@ -105,10 +107,11 @@ var FileManager = new Class({
         return;
       }
 
-      self.fillInfo(file);
+      
       if (self.Current) self.Current.removeClass('selected');
-      self.Current = this.addClass('selected');
-
+      self.Current = this.addClass('selected'); // NB: Also sets self.Current
+      // Xinha: We need to have Current assigned before fillInfo because fillInfo adds to it      
+      self.fillInfo(file);
       self.switchButton();
     };
 
@@ -163,7 +166,12 @@ var FileManager = new Class({
       new Element('h1')
     ]);
 
-    this.info.adopt([head, new Element('h2', {text: this.language.information})]);
+    // Xinha: We need to group the headers and lists togethor because we will
+    // use some CSS to reorganise a bit.  So we create "infoarea" which 
+    // will contain the h2 and list for the "Information", that is
+    // modification date, size, directory etc...
+    var infoarea = new Element('div', {'class': 'filemanager-info-area'});
+    this.info.adopt([head, infoarea.adopt(new Element('h2', {text: this.language.information}))]);
 
     new Element('dl').adopt([
       new Element('dt', {text: this.language.modified}),
@@ -172,15 +180,20 @@ var FileManager = new Class({
       new Element('dd', {'class': 'filemanager-type'}),
       new Element('dt', {text: this.language.size}),
       new Element('dd', {'class': 'filemanager-size'})
-    ]).inject(this.info);
+    ]).inject(infoarea);
 
     this.preview = new Element('div', {'class': 'filemanager-preview'}).addEvent('click:relay(img.preview)', function(){
       self.fireEvent('preview', [this.get('src')]);
     });
-    this.info.adopt([
+   
+    // Xinha: We need to group the headers and lists togethor because we will
+    // use some CSS to reorganise a bit.  So we create "filemanager-preview-area" which 
+    // will contain the h2 for the preview and also the preview content returned from
+    // Backend/FileManager.php
+    this.info.adopt((new Element('div', {'class': 'filemanager-preview-area'})).adopt([
       new Element('h2', {'class': 'filemanager-headline', text: this.language.more}),
       this.preview
-    ]);
+    ]));
 
     if(!this.options.hideClose) {
       this.closeIcon = new Element('a', {
@@ -308,7 +321,8 @@ var FileManager = new Class({
     },this);
   },
 
-  show: function(e) {
+  // Xinha: Add the ability to specify a path (relative to the base directory) and a file to preselect
+  show: function(e, loaddir, preselect) {
     if(e) e.stop();
     if(this.fmShown) return;
     this.fmShown = true;
@@ -328,8 +342,13 @@ var FileManager = new Class({
       jsGET.set({'fmID':this.ID,'fmPath':this.Directory});
       this.hashListenerId = jsGET.addListener(this.hashHistory,false,this);
     }
-
-    this.load(this.Directory);
+        
+    if(loaddir != null)
+    { 
+      this.Directory = loaddir;
+    }
+    
+    this.load(this.Directory, null, preselect);
     if(!this.options.hideOverlay)
       this.overlay.show();
 
@@ -402,7 +421,8 @@ var FileManager = new Class({
   download: function(e) {
     e.stop();
     if (!this.Current) return;
-    window.open(this.options.url + '?event=download&file='+this.normalize(this.Current.retrieve('file').path));
+    // Xinha: We need to have the authorisation data always sent to us.
+    window.open(this.options.url + '?event=download&file='+this.normalize(this.Current.retrieve('file').path)+Hash.toQueryString(this.options.uploadAuthData));
   },
 
   create: function(e) {
@@ -440,7 +460,7 @@ var FileManager = new Class({
             directory: self.Directory,
             type: self.listType
           }
-        }).send();
+        }, self ).send();
       }
     });
   },
@@ -453,8 +473,8 @@ var FileManager = new Class({
     this.switchButton();
   },
 
-  load: function(dir, nofade) {
-
+  // Xinha: add the ability to preselect a file in the dir
+  load: function(dir, nofade, preselect){    
     this.deselect();
     if (!nofade) this.info.fade(0);
 
@@ -466,7 +486,8 @@ var FileManager = new Class({
         this.browserLoader.set('opacity', 1);
       }).bind(this),
       onSuccess: (function(j) {
-        this.fill(j, nofade);
+  		 // Xinha: add the ability to preselect a file in the dir
+        this.fill(j, nofade, preselect);             
       }).bind(this),
       onComplete: (function() {
         this.fitSizes();
@@ -511,7 +532,7 @@ var FileManager = new Class({
 		this.showError(xmlHttpRequest);
 		this.browserLoader.fade(0);
 	  }).bind(self)
-	}).send();
+	}, self).send();
   },
 
   destroy: function(file){
@@ -580,7 +601,7 @@ var FileManager = new Class({
             filter: this.options.filter
           }
         }, self).send();
-      }).bind(this)
+      }, self).bind(this)
     });
   },
 
@@ -638,7 +659,8 @@ var FileManager = new Class({
     }
   },
 
-  fill: function(j, nofade) {
+  // Xinha: add the ability to preselect a file in the dir
+  fill: function(j, nofade, preselect) {
     this.Directory = j.path;
     this.CurrentDir = j.dir;
     if (!nofade && !this.onShow) this.fillInfo(j.dir);
@@ -710,7 +732,7 @@ var FileManager = new Class({
       ).store('file', file);
 
       // add click event, only to directories, files use the revert function (to enable drag n drop)
-      if(file.mime == 'text/directory')
+      // if(file.mime == 'text/directory')
         el.addEvent('click',this.relayClick);
 
       // -> add icons
@@ -720,7 +742,7 @@ var FileManager = new Class({
         icons.push(new Asset.image(this.assetBasePath + 'Images/disk.png', {title: this.language.download}).addClass('browser-icon').addEvent('mouseup', (function(e){
           e.preventDefault();
           el.store('edit',true);
-          window.open(this.options.url + '?event=download&file='+this.normalize(file.path));
+          window.open(this.options.url + '?event=download&file='+this.normalize(file.path)+Hash.toQueryString(this.options.uploadAuthData));
         }).bind(this)).inject(el, 'top'));
 
       // rename, delete icon
@@ -747,6 +769,15 @@ var FileManager = new Class({
       }).bind(this)));
 
       // ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
+      if(preselect && preselect == file.name)
+      {        
+        this.deselect();
+        this.Current = file.element;
+        new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(file.element);
+        file.element.addClass('selected');
+        this.fillInfo(file);
+      }
+      else
       if(this.onShow && typeof jsGET != 'undefined' && jsGET.get('fmFile') != null && file.name == jsGET.get('fmFile')) {
         this.deselect();
         this.Current = file.element;
@@ -775,6 +806,9 @@ var FileManager = new Class({
     };
 
     // -> make dragable
+   
+   if(0) // This (drag to move into subdirectory) is breaking IE, we don't need it that badly
+          // See: http://github.com/cpojer/mootools-filemanager/issues#issue/11
     $$(els[0]).makeDraggable({
       droppables: $$(this.droppables.combine(els[1])),
       //stopPropagation: true,
@@ -892,7 +926,10 @@ var FileManager = new Class({
 
     this.fireHooks('cleanup');
     this.preview.empty();
-
+    
+    // Xinha: We need to remove our custom attributes form when the preview is hidden 
+    this.fireEvent('hidePreview');
+    
     this.info.getElement('h1').set('text', file.name);
     this.info.getElement('h1').set('title', file.name);
     this.info.getElement('dd.filemanager-modified').set('text', file.date);
@@ -931,6 +968,15 @@ var FileManager = new Class({
             e.stop();
             window.open(this.get('value'));
           });
+       
+          // Xinha: We need to add in a form for setting the attributes of images etc,
+          // so we add this event and pass it the information we have about the item 
+          // as returned by Backend/FileManager.php
+          this.fireEvent('details', [j]);
+          
+          // Xinha: We also want to hold onto the data so we can access it
+          // when selecting the image.
+          if(this.Current) this.Current.file_data = j;
 
           if(typeof milkbox != 'undefined')
             milkbox.reloadPageGalleries();
@@ -1036,6 +1082,22 @@ FileManager.Request = new Class({
   secure: true,
 
   initialize: function(options, filebrowser){
+    // Xinha: We need ALL requests from the FileManager to have our authorisation data on it
+    // normal MootoolsFileManager only has the flash send it :-(    
+    if(options.data)
+    {
+        options.data = (new Hash(options.data)).extend(filebrowser.options.uploadAuthData);
+    }
+    else
+    {      
+        options.url += (options.url.match(/\?/) ? '&' : '?') +Hash.toQueryString(filebrowser.options.uploadAuthData);                    
+    }
+    
+    // Xinha: We also need to clean up the url because our backend already includes a query string
+    // and MootoolsFileManager adds ?event=..... indiscriminately, our query string always
+    // ends in an ampersand, so we can just clean up '&?event=' to be '&event='
+    options.url = options.url.replace(/&\?event=/, '&event=');
+    
     this.parent(options);
 
     if (filebrowser) this.addEvents({
@@ -1051,17 +1113,21 @@ FileManager.Language = {};
 (function(){
 
 // ->> load DEPENCIES
+if(typeof __MFM_ASSETS_DIR__ == 'undefined')
+{
 var __DIR__ = (function() {
     var scripts = document.getElementsByTagName('script');
     var script = scripts[scripts.length - 1].src;
     var host = window.location.href.replace(window.location.pathname+window.location.hash,'');
     return script.substring(0, script.lastIndexOf('/')).replace(host,'') + '/';
 })();
-Asset.javascript(__DIR__+'../Assets/js/milkbox/milkbox.js');
-Asset.css(__DIR__+'../Assets/js/milkbox/css/milkbox.css');
-Asset.css(__DIR__+'../Assets/Css/FileManager.css');
-Asset.css(__DIR__+'../Assets/Css/Additions.css');
-Asset.javascript(__DIR__+'../Assets/js/jsGET.js', { events: {load: (function(){ window.fireEvent('jsGETloaded'); }).bind(this)}});
+__MFM_ASSETS_DIR__ = __DIR__ + "../Assets";
+}
+Asset.javascript(__MFM_ASSETS_DIR__+'/js/milkbox/milkbox.js');
+Asset.css(__MFM_ASSETS_DIR__+'/js/milkbox/css/milkbox.css');
+Asset.css(__MFM_ASSETS_DIR__+'/Css/FileManager.css');
+Asset.css(__MFM_ASSETS_DIR__+'/Css/Additions.css');
+Asset.javascript(__MFM_ASSETS_DIR__+'/js/jsGET.js', { events: {load: (function(){ window.fireEvent('jsGETloaded'); }).bind(this)}});
 
 Element.implement({
 
@@ -1102,7 +1168,7 @@ this.Dialog = new Class({
     this.dialogOpen = false;
 
     this.el = new Element('div', {
-      'class': 'dialog' + (Browser.ie ? ' dialog-engine-trident' : '') + (Browser.ie ? ' dialog-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
+      'class': 'fm-dialog' + (Browser.ie ? ' fm-dialog-engine-trident' : '') + (Browser.ie ? ' fm-dialog-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
       opacity: 0,
       tween: {duration: 250}
     }).adopt([
@@ -1117,7 +1183,7 @@ this.Dialog = new Class({
     }
 
     Array.each(this.options.buttons, function(v){
-      new Element('button', {'class': 'dialog-' + v, text: this.options.language[v]}).addEvent('click', (function(e){
+      new Element('button', {'class': 'fm-dialog-' + v, text: this.options.language[v]}).addEvent('click', (function(e){
         if (e) e.stop();
         this.fireEvent(v).fireEvent('close');
         //if(!this.options.hideOverlay)
@@ -1127,7 +1193,7 @@ this.Dialog = new Class({
     }, this);
 
     this.overlay = new Overlay({
-      'class': 'overlay overlay-dialog',
+      'class': 'fm-overlay fm-overlay-dialog',
       events: {click: this.fireEvent.pass('close',this)},
       tween: {duration: 250}
     });
@@ -1153,7 +1219,7 @@ this.Dialog = new Class({
       this.overlay.show();
     var self = this.fireEvent('open');
     this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
-      var button = this.element.getElement('button.dialog-confirm') || this.element.getElement('button');
+      var button = this.element.getElement('button.fm-dialog-confirm') || this.element.getElement('button');
       if (button) button.focus();
       self.fireEvent('show');
     });
@@ -1182,7 +1248,7 @@ this.Overlay = new Class({
 
   initialize: function(options){
     this.el = new Element('div', Object.append({
-      'class': 'overlay'
+      'class': 'fm-overlay'
     }, options)).inject(document.body);
   },
 

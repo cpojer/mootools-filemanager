@@ -353,12 +353,12 @@ class Image {
 				$this->set($new);
 				unset($new);
 			}
-			return $this;
+			else
+      {
+        throw new Exception('imagecopyresampled_failed');
+      }			
 		}
-		else
-		{
-			throw new Exception('imagecopyresampled_failed');
-		}
+		return $this;
 	}
 
 	/**

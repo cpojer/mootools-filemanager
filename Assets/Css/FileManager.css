@@ -505,7 +505,7 @@ div.filemanager-engine-trident4 div.filemanager-preview img.preview {
   height: 100px;
 }
 
-div.filemanager-preview ul, div.filemanager-preview div.textpreview {
+div.filemanager-preview ul, div.filemanager-uploader ul, div.filemanager-preview div.textpreview {
   border: 1px solid #bebebe;
   background: #fff;
   

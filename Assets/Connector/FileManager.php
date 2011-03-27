@@ -138,12 +138,12 @@ class FileManager
       'mimeTypesPath' => MTFM_PATH . '/MimeTypes.ini',
       'dateFormat' => 'j M Y - H:i',
       'maxUploadSize' => 2600 * 2600 * 3,
-      'maxImageSize' => 1024,
-      'upload' => true,
-      'destroy' => true,
-      'create' => true,
-      'move' => true,
-      'download' => true,
+      'maxImageSize' => 999999, // Xinha: We have separate X/Y dimension in 'suggestedMaxImageDimension', don't want this
+      'upload' => false,
+      'destroy' => false,
+      'create' => false,
+      'move' => false,
+      'download' => false,
       /* ^^^ this last one is easily circumnavigated if it's about images: when you can view 'em, you can 'download' them anyway.
        *     However, for other mime types which are not previewable / viewable 'in their full bluntal nugity' ;-) , this will
        *     be a strong deterent.
@@ -157,7 +157,10 @@ class FileManager
       'DownloadIsAuthorized_cb' => null,
       'CreateIsAuthorized_cb' => null,
       'DestroyIsAuthorized_cb' => null,
-      'MoveIsAuthorized_cb' => null
+      'MoveIsAuthorized_cb' => null,
+      
+     // Xinha: Allow to specify the "Resize Large Images" tolerance level.
+     'suggestedMaxImageDimension' => array('width' => 1024, 'height' => 768),
     ), (is_array($options) ? $options : array()));
 
     $this->options['thumbnailPath'] = FileManagerUtility::getRealPath($this->options['thumbnailPath'], $this->options['chmod'], true); // create path if nonexistent
@@ -421,7 +424,16 @@ class FileManager
 
     $mime = $this->getMimeType($dir);
     $content = null;
-
+   
+    // Xinha: We want to get some more information about what has been selected in a way
+    // we can use it.  Effectively what gets put in here will be passed into the
+    // 'onDetails' event handler of your FileManager object (if any).
+    $extra_return_detail = array
+      (
+        'url'  => $url,
+        'mime' => $mime
+      );
+   
     // image
     if (FileManagerUtility::startsWith($mime, 'image/'))
     {
@@ -431,6 +443,12 @@ class FileManager
       // check for badly formatted image files (corruption); we'll handle the overly large ones next
       if (!$size)
         throw new FileManagerException('corrupt_img:' . $url);
+   
+        // Xinha: Return some information about the image which can be access 
+        // from the onDetails event handler in FileManager
+       $extra_return_detail['width']  = $size[0];
+       $extra_return_detail['height'] = $size[1];       
+        
       $thumbfile = $this->options['thumbnailPath'] . $this->getThumb($dir);
       $content = '<dl>
           <dt>${width}</dt><dd>' . $size[0] . 'px</dd>
@@ -522,12 +540,12 @@ class FileManager
     }
     // else: fall back to 'no preview available'
 
-    echo json_encode(array(
+    echo json_encode(array_merge(array(
       'status' => 1,
       'content' => $content ? $content : '<div class="margin">
         ${nopreview}
       </div>'                 //<br/><button value="' . $url . '">${download}</button>
-    ));
+    ), $extra_return_detail));
     }
     catch(FileManagerException $e)
     {
@@ -935,6 +953,13 @@ class FileManager
       {
         $img = new Image($file);
         $size = $img->getSize();
+        // Xinha: We have separate width/height max dimensions, if these fail, the fallback of the
+        //   maxImageSize is used, which we set to some very high number by default for back compat
+        if ($size['width'] > $this->options['suggestedMaxImageDimension']['width']) 
+          $img->resize( $this->options['suggestedMaxImageDimension']['width'])->save();
+        elseif ($size['height'] > $this->options['suggestedMaxImageDimension']['height']) 
+          $img->resize(null, $this->options['suggestedMaxImageDimension']['height'])->save();        
+        else
         // Image::resize() takes care to maintain the proper aspect ratio, so this is easy:
         if ($size['width'] > $this->options['maxImageSize'] || $size['height'] > $this->options['maxImageSize'])
           $img->resize($this->options['maxImageSize'], $this->options['maxImageSize'])->save();
