@@ -8,6 +8,7 @@
  *  - James Ehly (http://www.devtrench.com)
  *  - Fabian Vogelsteller (http://frozeman.de)
  *  - Ger Hobbelt (http://hebbut.net)
+ *  - James Sleeman (http://code.gogo.co.nz)
  *
  * License:
  *   MIT-style license.
@@ -28,12 +29,12 @@
  *   - mimeTypesPath: (string, optional) The filesystem path to the MimeTypes.ini file. May exist in a place outside the DocumentRoot tree.
  *   - dateFormat: (string, defaults to *j M Y - H:i*) The format in which dates should be displayed
  *   - maxUploadSize: (integer, defaults to *20280000* bytes) The maximum file size for upload in bytes
- *   - maxImageSize: (integer, default is 1024) The maximum number of pixels in both height and width an image can have, if the user enables "resize on upload"
- *   - upload: (boolean, defaults to *true*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
- *   - destroy: (boolean, defaults to *true*) allow files to get deleted, this is also set in the FileManager.js (this here is only for security protection when file/directory delete operations should be deactivated)
- *   - create: (boolean, defaults to *true*) allow creating new subdirectories, this is also set in the FileManager.js (this here is only for security protection when dir creates should be deactivated)
- *   - move: (boolean, defaults to *true*) allow file and directory move/rename and copy, this is also set in the FileManager.js (this here is only for security protection when rename/move/copy should be deactivated)
- *   - download: (boolean, defaults to *true*) allow downloads, this is also set in the FileManager.js (this here is only for security protection when downloads should be deactivated)
+ *   - maxImageDimension: (array, defaults to *array('width' => 1024, 'height' => 768)*) The maximum number of pixels in height and width an image can have, if the user enables "resize on upload".
+ *   - upload: (boolean, defaults to *false*) allow uploads, this is also set in the FileManager.js (this here is only for security protection when uploads should be deactivated)
+ *   - destroy: (boolean, defaults to *false*) allow files to get deleted, this is also set in the FileManager.js (this here is only for security protection when file/directory delete operations should be deactivated)
+ *   - create: (boolean, defaults to *false*) allow creating new subdirectories, this is also set in the FileManager.js (this here is only for security protection when dir creates should be deactivated)
+ *   - move: (boolean, defaults to *false*) allow file and directory move/rename and copy, this is also set in the FileManager.js (this here is only for security protection when rename/move/copy should be deactivated)
+ *   - download: (boolean, defaults to *false*) allow downloads, this is also set in the FileManager.js (this here is only for security protection when downloads should be deactivated)
  *   - allowExtChange: (boolean, defaults to *false*) allow the file extension to be changed when performing a rename operation.
  *   - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
  *   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
@@ -55,6 +56,18 @@
  *   - MoveIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file / subdirectory may be renamed, moved or copied.
  *     Note that currently support for copying subdirectories is missing.
  *     The parameter $action = 'move'.
+ *
+ * Obsoleted options:
+ *   - maxImageSize: (integer, default is 1024) The maximum number of pixels in both height and width an image can have, if the user enables "resize on upload". (This option is obsoleted by the 'suggestedMaxImageDimension' option.)
+ *
+ *
+ * About the action permissions (upload|destroy|create|move|download):
+ *
+ *     All the option "permissions" are set to FALSE by default. Developers should always SPECIFICALLY enable a permission to have that permission, for two reasons:
+ *
+ *     1. Developers forget to disable permissions, they don't forget to enable them (because things don't work!)
+ *
+ *     2. Having open permissions by default leaves potential for security vulnerabilities where those open permissions are exploited.
  *
  *
  * For all authorization hooks (callback functions) the following applies:
@@ -492,12 +505,14 @@ class FileManager
 			'mimeTypesPath' => dirname(__FILE__) . '/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 2600 * 2600 * 3,
-			'maxImageSize' => 1024,
-			'upload' => true,
-			'destroy' => true,
-			'create' => true,
-			'move' => true,
-			'download' => true,
+			// 'maxImageSize' => 99999,									// obsoleted, replaced by 'suggestedMaxImageDimension'
+			// Xinha: Allow to specify the "Resize Large Images" tolerance level.
+			'maxImageDimension' => array('width' => 1024, 'height' => 768),
+			'upload' => false,
+			'destroy' => false,
+			'create' => false,
+			'move' => false,
+			'download' => false,
 			/* ^^^ this last one is easily circumnavigated if it's about images: when you can view 'em, you can 'download' them anyway.
 			 *     However, for other mime types which are not previewable / viewable 'in their full bluntal nugity' ;-) , this will
 			 *     be a strong deterent.
@@ -518,6 +533,12 @@ class FileManager
 			'MoveIsAuthorized_cb' => null
 		), (is_array($options) ? $options : array()));
 
+		// transform the obsoleted/deprecated options:
+		if (!empty($this->options['maxImageSize']) && $this->options['maxImageSize'] != 1024 && $this->options['maxImageDimension']['width'] == 1024 && $this->options['maxImageDimension']['height'] == 768)
+		{
+			$this->options['maxImageDimension'] = array('width' => $this->options['maxImageSize'], 'height' => $this->options['maxImageSize']);
+		}
+		
 		// only calculate the guestimated defaults when they are indeed required:
 		if ($this->options['directory'] == null || $this->options['assetBasePath'] == null || $this->options['thumbnailPath'] == null)
 		{
@@ -1608,7 +1629,7 @@ class FileManager
 	 *
 	 * $_GET['directory']     path relative to basedir a.k.a. options['directory'] root
 	 *
-	 * $_GET['resize']        nonzero value indicates any uploaded image should be resized to the configured options['maxImageSize'] width and height whenever possible
+	 * $_GET['resize']        nonzero value indicates any uploaded image should be resized to the configured options['maxImageDimension'] width and height whenever possible
 	 *
 	 * $_GET['filter']        optional mimetype filter string, amy be the part up to and
 	 *                        including the slash '/' or the full mimetype. Only files
@@ -1737,7 +1758,7 @@ class FileManager
 				$size = $img->getSize();
 				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy
 				// (default quality is 100% for JPEG so we get the cleanest resized images here)
-				$img->resize($this->options['maxImageSize'], $this->options['maxImageSize'])->save();
+				$img->resize($this->options['maxImageDimension']['width'], $this->options['maxImageDimension']['height'])->save();
 				unset($img);
 			}
 

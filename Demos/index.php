@@ -97,8 +97,8 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
   }
   </style>
 
-    <script type="text/javascript" src="../../../../../lib/includes/js/mootools-core.js"></script>
-    <script type="text/javascript" src="../../../../../lib/includes/js/mootools-more.js"></script>
+  <script type="text/javascript" src="mootools-core.js"></script>
+  <script type="text/javascript" src="mootools-more.js"></script>
 
   <script type="text/javascript" src="../Source/FileManager.js"></script>
   <script type="text/javascript" src="../Source/Gallery.js"></script>
@@ -121,7 +121,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         hideOnClick: true,
         assetBasePath: '../Assets',
         uploadAuthData: {
-			session: 'MySessionId'
+			session: 'MySessionData'
 		},
         upload: true,
         download: true,
@@ -199,7 +199,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         hideOnClick: true,
         assetBasePath: '../Assets',
         uploadAuthData: {
-			session: 'MySessionId'
+			session: 'MySessionData'
 		},
         selectable: true,
         upload: true,
@@ -231,7 +231,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         hideOnClick: true,
         assetBasePath: '../Assets',
         uploadAuthData: {
-			session: 'MySessionId'
+			session: 'MySessionData'
 		},
         upload: true,
         destroy: true,
@@ -254,7 +254,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         filter: 'image',
         hideOnClick: true,
         uploadAuthData: {
-			session: 'MySessionId'
+			session: 'MySessionData'
 		},
         propagateData: {
             origin: 'demo-Gallery'

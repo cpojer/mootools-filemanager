@@ -1,5 +1,5 @@
 <?php
-
+die(json_encode(array('status'=> 0, 'error' => "\nSecurity precaution... to enable the demo, edit\nDemos/".basename(__FILE__)."\nand comment out line 2.")));
 error_reporting(E_ALL | E_STRICT);
 
 define("FILEMANAGER_CODE", true);
@@ -41,6 +41,11 @@ $browser = mkNewFileManager(array(
 	'directory' => 'Files/',                   // relative paths: are relative to the URI request script path, i.e. dirname(__FILE__) or rather: $_SERVER['SCRIPT_NAME']
 
 	'filter' => 'image/',
+	'upload' => true,
+	'destroy' => false,
+	'create' => true,
+	'move' => true,
+	'download' => false,
 	'allowExtChange' => false                 // allow file name extensions to be changed; the default however is: NO (FALSE)
 ));
 

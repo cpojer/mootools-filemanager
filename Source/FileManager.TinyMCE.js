@@ -18,6 +18,12 @@ Usage:
 */
 
 FileManager.TinyMCE = function(options){
+  /*
+   * field: Id of the element to set value in.
+   * url: value currently stored in the indicated element
+   * type: Type of browser to open image/file/flash.
+   * win: window object reference
+   */
   return function(field, url, type, win){
     var manager = new FileManager(Object.append({
       onComplete: function(encoded_path, file, legal_file_path, current_dir, full_file_path) {

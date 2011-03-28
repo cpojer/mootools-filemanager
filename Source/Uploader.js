@@ -68,7 +68,7 @@ FileManager.implement({
         }
       }),
       list: new Element('ul', {'class': 'filemanager-uploader-list'}),
-      uploader: new Element('div', {opacity: 0}).adopt(
+      uploader: new Element('div', {opacity: 0, 'class': 'filemanager-uploader-area'}).adopt(
         new Element('h2', {text: this.language.upload}),
         new Element('div', {'class': 'filemanager-uploader'})
       )
@@ -94,8 +94,8 @@ FileManager.implement({
 
 		//if (typeof console !== 'undefined' && console.log) console.log('Uploader: setOptions');
         this.setOptions({
-		  //data: Object.merge({}, base.options.data, self.options.uploadAuthData, self.options.propagateData),
-          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
+		  //data: Object.merge({}, base.options.data, self.options.uploadAuthData),
+          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
             event: 'upload',
             directory: self.normalize(self.Directory),
 			filter: self.options.filter,
@@ -232,7 +232,7 @@ FileManager.implement({
       instantStart: true,
 	  appendCookieData: true, // pass along any session cookie data, etc. in the request section (PHP: $_GET[])
 	  data: Object.merge({},
-			(self.options.propagateData  || {}),
+			//(self.options.propagateData  || {}),
 			(self.options.uploadAuthData || {})
 		),
       fileClass: File,
@@ -243,7 +243,7 @@ FileManager.implement({
       onSelectSuccess: function(){
         self.fillInfo();
         self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
-        self.preview.adopt(self.upload.uploader);
+        self.info.adopt(self.upload.uploader);
         self.upload.uploader.fade(1);
       },
       onComplete: function(){
