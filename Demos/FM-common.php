@@ -14,7 +14,7 @@ if (!defined('FILEMANAGER_CODE')) { header('HTTP/1.0 403 Forbidden', true, 403);
  *
  * Edit the 'Aliases' sub-array below to mimic your local site setup; see the notes there for a few hints.
  */
-define('SITE_USES_ALIASES', 01);
+if (!defined('SITE_USES_ALIASES')) define('SITE_USES_ALIASES', 0);
 
 
 
