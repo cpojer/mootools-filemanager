@@ -5,7 +5,7 @@ error_reporting(E_ALL | E_STRICT);
 define("FILEMANAGER_CODE", true);
 
 
-define('DEVELOPMENT', 01);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
+define('DEVELOPMENT', 0);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
 
 
 require_once('FM-common.php');  // this one loads the appropriate FileManager AND the support functions used in this demo

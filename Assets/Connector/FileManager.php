@@ -613,14 +613,14 @@ class FileManager
 	 *
 	 * Return the directory listing in a nested array, suitable for JSON encoding.
 	 */
-	protected function _onView($legal_url, $json, $mime_filter, $list_type)
+	protected function _onView($legal_url, $json, $mime_filter, $list_type, $filemask = '*')
 	{
 		$dir = $this->legal_url_path2file_path($legal_url);
 		if (!is_dir($dir))
 		{
 			throw new FileManagerException('nofile');
 		}
-		$files = $this->scandir($dir);
+		$files = $this->scandir($dir, $filemask);
 
 		if ($files === false)
 			throw new FileManagerException('nofile');
@@ -975,17 +975,11 @@ class FileManager
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
 
-			$content = $this->extractDetailInfo($legal_url, $file, $mime, $mime_filter);
+			$jserr = $this->extractDetailInfo($jserr, $legal_url, $file, $mime, $mime_filter);
 
 			if (!headers_sent()) header('Content-Type: application/json');
 
-			echo json_encode(array(
-					'status' => 1,
-					'mimetype' => $mime,
-					'content' => !empty($content) ? $content : self::compressHTML('<div class="margin">
-						${nopreview}
-					</div>')                 //<br/><button value="' . $url . '">${download}</button>
-				));
+			echo json_encode($jserr);
 			return;
 		}
 		catch(FileManagerException $e)
@@ -1026,15 +1020,15 @@ class FileManager
 	 *
 	 * Expected parameters:
 	 *
-	 * $_POST['directory']     path relative to basedir a.k.a. options['directory'] root
+	 * $_GET['directory']      path relative to basedir a.k.a. options['directory'] root
 	 *
-	 * $_POST['file']          filename (including extension, of course) of the file to
+	 * $_GET['file']           filename (including extension, of course) of the file to
 	 *                         be thumbnailed.
 	 *
-	 * $_POST['size']          the requested thumbnail maximum width / height (the bounding box is square).
+	 * $_GET['size']           the requested thumbnail maximum width / height (the bounding box is square).
 	 *                         Must be one of our 'authorized' sizes: 48, 250.
 	 *
-	 * $_POST['filter']        optional mimetype filter string, amy be the part up to and
+	 * $_GET['filter']         optional mimetype filter string, amy be the part up to and
 	 *                         including the slash '/' or the full mimetype. Only files
 	 *                         matching this (set of) mimetypes will be listed.
 	 *                         Examples: 'image/' or 'application/zip'
@@ -1991,21 +1985,102 @@ class FileManager
 
 
 	/**
-	 * Produce a HTML snippet detailing the given file.
+	 * Produce a HTML snippet detailing the given file in the JSON 'content' element; place additional info
+	 * in the JSON elements 'thumbnail', 'thumbnail48', 'thumbnail250', 'width', 'height', ...
 	 *
-	 * Return NULL on error.
+	 * Return an augmented JSON array.
+	 *
+	 * Throw an exception on error.
 	 */
-	public function extractDetailInfo($legal_url, $file, $mime, $mime_filter)
+	public function extractDetailInfo($json, $legal_url, $file, $mime, $mime_filter)
 	{
 		$url = $this->legal2abs_url_path($legal_url);
 		$filename = pathinfo($url, PATHINFO_BASENAME);
 
+		$isdir = !is_file($file);
+		if (!$isdir)
+		{
+			$iconspec = $filename;
+		}
+		else if (is_dir($file))
+		{
+			$mime = 'text/directory';
+			$iconspec = ($filename == '..' ? 'is.dir_up' : 'is.dir');
+		}
+		else
+		{
+			// simply do NOT list anything that we cannot cope with.
+			// That includes clearly inaccessible files (and paths) with non-ASCII characters:
+			// PHP5 and below are a real mess when it comes to handling Unicode filesystems
+			// (see the php.net site too: readdir / glob / etc. user comments and the official
+			// notice that PHP will support filesystem UTF-8/Unicode only when PHP6 is released.
+			//
+			// Big, fat bummer!
+			throw new FileManagerException('nofile');
+		}
+
+		if (FileManagerUtility::startsWith($mime, 'image/'))
+		{
+			/*
+			 * offload the thumbnailing process to another event ('event=thumbnail') to be fired by the client
+			 * when it's time to render the thumbnail: the offloading helps us tremendously in coping with large
+			 * directories:
+			 * WE simply assume the thumbnail will be there, so we don't even need to check for its existence
+			 * (which saves us one more file_exists() per item at the very least). And when it doesn't, that's
+			 * for the event=thumbnail handler to worry about (creating the thumbnail on demand or serving
+			 * a generic icon image instead).
+			 */
+			$thumb48 = $this->mkEventHandlerURL(array(
+					'event' => 'thumbnail',
+					// directory and filename of the ORIGINAL image should follow next:
+					'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
+					'file' => pathinfo($legal_url, PATHINFO_BASENAME),
+					'size' => 48,          // thumbnail suitable for 'view/type=thumb' list views
+					'filter' => $mime_filter
+				));
+			$thumb250 = $this->mkEventHandlerURL(array(
+					'event' => 'thumbnail',
+					// directory and filename of the ORIGINAL image should follow next:
+					'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
+					'file' => pathinfo($legal_url, PATHINFO_BASENAME),
+					'size' => 250,         // thumbnail suitable for 'view/type=thumb' list views
+					'filter' => $mime_filter
+				));
+		}
+		else
+		{
+			$thumb48 = $this->getIcon($iconspec, false);
+			$thumb250 = $thumb48;
+		}
+		$icon = $this->getIcon($iconspec, true);
+		
+		$json = array_merge(array(
+				//'status' => 1,
+				//'mimetype' => $mime,
+				'content' => self::compressHTML('<div class="margin">
+					${nopreview}
+				</div>')
+			), 
+			(is_array($json) ? $json : array()),
+			array(
+				'path' => FileManagerUtility::rawurlencode_path($url),
+				'name' => preg_replace('/[^ -~]/', '?', $filename),       // HACK/TWEAK: PHP5 and below are completely b0rked when it comes to international filenames   :-(
+				'date' => date($this->options['dateFormat'], @filemtime($file)),
+				'mime' => $mime,
+				//'thumbnail' => $thumb,
+				'thumbnail48' => $thumb48,
+				'thumbnail250' => $thumb250,
+				'icon' => FileManagerUtility::rawurlencode_path($icon),
+				'size' => @filesize($file)
+			));
+
+		
 		// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
 		// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
 		$getid3 = new getID3();
 		$getid3->encoding = 'UTF-8';
 		$getid3->Analyze($file);
-
+		
 		$content = null;
 
 		if (FileManagerUtility::startsWith($mime, 'image/'))
@@ -2021,9 +2096,14 @@ class FileManager
 			$sw_make = $this->getID3infoItem($getid3, null, 'jpg', 'exif', 'IFD0', 'Software');
 			$time_make = $this->getID3infoItem($getid3, null, 'jpg', 'exif', 'IFD0', 'DateTime');
 
+			$width = $this->getID3infoItem($getid3, 0, 'video', 'resolution_x');
+			$height = $this->getID3infoItem($getid3, 0, 'video', 'resolution_y');
+			$json['width'] = $width;
+			$json['height'] = $height;
+			
 			$content = '<dl>
-					<dt>${width}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'video', 'resolution_x') . 'px</dd>
-					<dt>${height}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'video', 'resolution_y') . 'px</dd>
+					<dt>${width}</dt><dd>' . $width . 'px</dd>
+					<dt>${height}</dt><dd>' . $height . 'px</dd>
 				</dl>';
 			if (!empty($sw_make) || !empty($time_make))
 			{
@@ -2037,30 +2117,28 @@ class FileManager
 			try
 			{
 				$thumbfile = $this->getThumb($legal_url, $file, 250);
-				$enc_thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
 				/*
 				 * the thumbnail may be produced now, but we want to stay in control when the thumbnail is
 				 * fetched by the client, so we force them to travel through this backend.
 				 */
-				$enc_thumbfile = $this->mkEventHandlerURL(array(
-						'event' => 'thumbnail',
-						// directory and filename of the ORIGINAL image should follow next:
-						'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
-						'file' => pathinfo($legal_url, PATHINFO_BASENAME),
-						'size' => 250,
-						'filter' => $mime_filter
-					));
+				$enc_thumbfile = $thumb250;
 			}
 			catch (Exception $e)
 			{
 				$emsg = $e->getMessage();
 				$thumbfile = $this->getIconForError($emsg, $legal_url, false);
 				$enc_thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
+				
+				$json['thumbnail48'] = $thumbfile;
+				$json['thumbnail250'] = $thumbfile;
 			}
 
 			// get the size of the thumbnail/icon: the <img> is styled with width and height to ensure the background 'loader' image is shown correctly:
 			$tnpath = $this->url_path2file_path($thumbfile);
 			$tninf = @getimagesize($tnpath);
+
+			$json['tn_width'] = $tninf[0];
+			$json['tn_height'] = $tninf[1];
 
 			$content .= '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
 						   <img src="' . $enc_thumbfile . '" class="preview" alt="preview" style="width: ' . $tninf[0] . 'px; height: ' . $tninf[1] . 'px;" />
@@ -2099,7 +2177,6 @@ class FileManager
 					self::clean_EXIF_results($exif_data);
 					ob_start();
 						var_dump($exif_data);
-					//return $content;
 					$dump = ob_get_clean();
 					$content .= $dump;
 				}
@@ -2148,10 +2225,15 @@ class FileManager
 			{
 				// Note: preview data= urls were formatted like this in CCMS:
 				// $this->options['assetBasePath'] . 'dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30'
+				
+				$width = $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_width') / 10;
+				$height = $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_height') / 10;
+				$json['width'] = $width;
+				$json['height'] = $height;
 
 				$content = '<dl>
-						<dt>${width}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_width') / 10 . 'px</dd>
-						<dt>${height}</dt><dd>' . $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_height') / 10 . 'px</dd>
+						<dt>${width}</dt><dd>' . $width . 'px</dd>
+						<dt>${height}</dt><dd>' . $height . 'px</dd>
 						<dt>${length}</dt><dd>' . round($this->getID3infoItem($getid3, 0, 'swf', 'header', 'length') / $this->getID3infoItem($getid3, 25, 'swf', 'header', 'frame_count')) . 's</dd>
 					</dl>
 					<h2>${preview}</h2>
@@ -2168,17 +2250,61 @@ class FileManager
 			getid3_lib::CopyTagsToComments($getid3->info);
 
 			$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
-			// Note: these next several indexed array fetches were marked with @ in CCMS to catch some failures...
-			//
-			// TODO: do it cleaner then that!
-			//
-			// DONE!
+			
 			$content = '<dl>
 					<dt>${title}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'title', 0) . '</dd>
 					<dt>${artist}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'artist', 0) . '</dd>
 					<dt>${album}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'album', 0) . '</dd>
 					<dt>${length}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'playtime_string') . '</dd>
 					<dt>${bitrate}</dt><dd>' . round($this->getID3infoItem($getid3, 0, 'bitrate') / 1000) . 'kbps</dd>
+				</dl>
+				<h2>${preview}</h2>
+				<div class="object">
+					<object type="application/x-shockwave-flash" data="' . $dewplayer . '" width="200" height="20" id="dewplayer" name="dewplayer">
+						<param name="wmode" value="transparent" />
+						<param name="movie" value="' . $dewplayer . '" />
+						<param name="flashvars" value="mp3=' . FileManagerUtility::rawurlencode_path($url) . '&amp;volume=50&amp;showtime=1" />
+					</object>
+				</div>';
+		}
+		elseif (FileManagerUtility::startsWith($mime, 'video/'))
+		{
+			$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
+
+			$a_fmt = $this->getID3infoItem($getid3, '???', 'audio', 'dataformat');
+			$a_samplerate = $this->getID3infoItem($getid3, 0, 'audio', 'sample_rate') / 1000;
+			$a_bitrate = round($this->getID3infoItem($getid3, 0, 'audio', 'bitrate') / 1000);
+			$a_bitrate_mode = $this->getID3infoItem($getid3, '???', 'audio', 'bitrate_mode');
+			$a_channels = $this->getID3infoItem($getid3, 0, 'audio', 'channels');
+			$a_codec = $this->getID3infoItem($getid3, '', 'audio', 'codec');
+			$a_streams = $this->getID3infoItem($getid3, '???', 'audio', 'streams');
+			$a_streamcount = (is_array($a_streams) ? count($a_streams) : 0);
+
+			$v_fmt = $this->getID3infoItem($getid3, '???', 'video', 'dataformat');
+			$v_bitrate = round($this->getID3infoItem($getid3, 0, 'video', 'bitrate') / 1000);
+			$v_bitrate_mode = $this->getID3infoItem($getid3, '???', 'video', 'bitrate_mode');
+			$v_framerate = $this->getID3infoItem($getid3, '???', 'video', 'frame_rate');
+			$v_width = $this->getID3infoItem($getid3, '???', 'video', 'resolution_x');
+			$v_height = $this->getID3infoItem($getid3, '???', 'video', 'resolution_y');
+			$v_par = $this->getID3infoItem($getid3, 1.0, 'video', 'pixel_aspect_ratio');
+			$v_codec = $this->getID3infoItem($getid3, '', 'video', 'codec');
+			
+			$g_bitrate = round($this->getID3infoItem($getid3, 0, 'bitrate') / 1000);
+			$g_playtime_str = $this->getID3infoItem($getid3, '???', 'playtime_string');
+			
+			$content = '<dl>
+					<dt>Audio</dt><dd>' . $a_fmt . (!empty($a_codec) ? ' (' . $a_codec . ')' : '') . 
+										(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : $a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)') : '') .
+										': ' . $a_samplerate . ' kHz @ ' . $a_bitrate . ' kbps (' . strtoupper($a_bitrate_mode) . ')' . 
+										($a_streamcount > 1 ? ' (' . $a_streamcount . ' streams)' : '') . 
+								'</dd>
+					<dt>Video</dt><dd>' . $v_fmt . (!empty($v_codec) ? ' (' . $v_codec . ')' : '') .  ': ' . $v_framerate . ' fps @ ' . $v_bitrate . ' kbps (' . strtoupper($v_bitrate_mode) . ')' .
+										($v_par != 1.0 ? ', PAR: ' . $v_par : '') . 
+								'</dd>
+					<dt>${width}</dt><dd>' . $v_width . 'px</dd>
+					<dt>${height}</dt><dd>' . $v_height . 'px</dd>
+					<dt>${length}</dt><dd>' . $g_playtime_str . '</dd>
+					<dt>${bitrate}</dt><dd>' . $g_bitrate . 'kbps</dd>
 				</dl>
 				<h2>${preview}</h2>
 				<div class="object">
@@ -2215,27 +2341,31 @@ class FileManager
 								<h2>${preview}</h2>
 								<pre>' . "\n" . $dump . "\n" . '</pre></div>';
 					//@file_put_contents('getid3.log', $dump);
-
-					return $content;
 				}
 				catch(Exception $e)
 				{
 					// ignore
-					$content = $e->getMessage();
+					$content = '<div class="margin">
+								${nopreview}
+								<p class="err_info">' . $e->getMessage() . '</p>
+							</div>';
 				}
 			}
 			else
 			{
-				$content = implode(', ', $getid3->info['error']);
+				$content = '<div class="margin">
+							${nopreview}
+							<p class="err_info">' . implode(', ', $getid3->info['error']) . '</p>
+						</div>';
 			}
-
-			$content = '<div class="margin">
-						${nopreview}
-						<p class="err_info">' . $content . '</p>
-					</div>';
 		}
 
-		return self::compressHTML($content);
+		if (!empty($content))
+		{
+			$json['content'] = self::compressHTML($content);
+		}
+		
+		return $json;
 	}
 
 	/**

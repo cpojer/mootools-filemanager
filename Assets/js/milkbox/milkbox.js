@@ -165,7 +165,10 @@ this.Milkbox = new Class({
 	//show a file on the fly without gallery functionalities
 	openWithFile:function(file){
 		var g = new MilkboxGallery([file]);
-		this.open(g,0);
+		// [i_a] make sure this gallery is only created when there's actually something to show (supported formats and all that)
+		if (g.items && g.items.length > 0) {
+			this.open(g,0);
+		}
 	},
 
 	getPreloads:function(){
@@ -310,14 +313,22 @@ this.Milkbox = new Class({
 		links.each(function(link){
 			var name = link.get('data-milkbox');
 			if(name == 'single'){
-				this.galleries.push(new MilkboxGallery(link,{name:'single'+this.singlePageLinkId++}));
+				var gallery = new MilkboxGallery(link,{name:'single'+this.singlePageLinkId++});
+				// [i_a] make sure this gallery is only created when there's actually something to show (supported formats and all that)
+				if (gallery.items && gallery.items.length > 0) {
+					this.galleries.push(gallery);
+				}
 			} else if(!names.contains(name)){
 				names.push(name);
 			}
 		},this);
 
 		names.each(function(name){
-			this.galleries.push(new MilkboxGallery($$('a[data-milkbox='+name+']'),{ name:name }));
+			var gallery = new MilkboxGallery($$('a[data-milkbox='+name+']'),{ name:name });
+			// [i_a] make sure this gallery is only created when there's actually something to show (supported formats and all that)
+			if (gallery.items && gallery.items.length > 0) {
+				this.galleries.push(gallery);
+			}
 		},this);
 
 		//set default autoplay // override with setAutoPlay
@@ -399,7 +410,11 @@ this.Milkbox = new Class({
 				return { href:tag.href, size:tag.get('data-milkbox-size'), title:tag.get('title') }
 			},this);
 
-			this.galleries.push(new MilkboxGallery(links,options));
+			var gallery = new MilkboxGallery(links,options);
+			// [i_a] make sure this gallery is only created when there's actually something to show (supported formats and all that)
+			if (gallery.items && gallery.items.length > 0) {
+				this.galleries.push(gallery);
+			}
 		},this);
 
 		this.fireEvent('xmlGalleries');
@@ -414,7 +429,11 @@ this.Milkbox = new Class({
 				autoplay:newobj.autoplay,
 				autoplay_delay:newobj.autoplay_delay
 			}
-			this.galleries.push(new MilkboxGallery(newobj.files,options));
+			var gallery = new MilkboxGallery(newobj.files,options);
+			// [i_a] make sure this gallery is only created when there's actually something to show (supported formats and all that)
+			if (gallery.items && gallery.items.length > 0) {
+				this.galleries.push(gallery);
+			}
 		},this);
 	},
 
@@ -1024,6 +1043,8 @@ var MilkboxGallery = new Class({
 	//turns everything into an object
 	prepare_elements:function(){
 		//console.log('items gallery', this.items);
+		if(!this.items || this.items.length == 0) return;   // [i_a] prevent crash when none have been set up
+
 		this.items = this.items.map(function(item){
 			var splitted_url = item.href.split('?');
 			var output = {};
