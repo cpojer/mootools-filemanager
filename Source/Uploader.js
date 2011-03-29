@@ -184,6 +184,11 @@ FileManager.implement({
         this.ui.cancel = this.ui.cancel.destroy();
 
         var response = JSON.decode(this.response.text);
+        if (!response)
+        {            
+          new Dialog(self.language.uploader.mod_security, {language: {confirm: self.language.ok}, buttons: ['confirm']});            
+        }
+        
         if (!response.status)
           new Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
 

@@ -1274,7 +1274,7 @@ class FileManager
 
   protected function generateThumbName($file)
   {
-    return 'thumb_'.str_replace('.','_',basename($file)).'.png';
+    return 'thumb_'.md5($file).'_'.str_replace('.','_',basename($file)).'.png';
   }
 
   protected function generateThumb($file,$thumbPath)
@@ -1656,10 +1656,7 @@ class FileManagerUtility
   public static function rawurlencode_path($path)
   {
     $encoded_path = explode('/', $path);
-    array_walk($encoded_path, function(&$value, $key)
-        {
-            $value = rawurlencode($value);
-        });
+    array_walk($encoded_path, create_function('&$value', '$value = rawurlencode($value);'));
     return implode('/', $encoded_path);
   }
 

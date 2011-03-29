@@ -89,7 +89,8 @@ FileManager.Language.en = {
 	uploader: {
 		unknown: 'Unknown Error',
 		sizeLimitMin: 'You can not attach "<em>${name}</em>" (${size}), the file size minimum is <strong>${size_min}</strong>!',
-		sizeLimitMax: 'You can not attach "<em>${name}</em>" (${size}), the file size limit is <strong>${size_max}</strong>!'
+		sizeLimitMax: 'You can not attach "<em>${name}</em>" (${size}), the file size limit is <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 	
 	flash: {
