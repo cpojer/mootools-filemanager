@@ -2014,7 +2014,7 @@ class FileManager
 		$our_handler_url = $_SERVER['SCRIPT_NAME'];
 
 		// next, construct the query part of the URI:
-		$qstr = http_build_query($spec, null, '&');
+		$qstr = http_build_query_ex($spec, null, '&', null, PHP_QUERY_RFC3986);
 
 		return $our_handler_url . '?' . $qstr;
 	}
@@ -2440,22 +2440,25 @@ class FileManager
 		return $o;
 	}
 
+	// helper function for clean_EXIF_results() as PHP < 5.3 lacks lambda functions
+	protected static function __clean_EXIF_results(&$value, $key)
+	{
+		if (is_string($value))
+		{
+			if (FileManagerUtility::isBinary($value))
+			{
+				$value = '(binary data... length = ' . strlen($value) . ')';
+			}
+		}
+	}
+	
 	protected static function clean_EXIF_results(&$arr)
 	{
 		// see http://nl2.php.net/manual/en/function.array-walk-recursive.php#81835
 		// --> we don't mind about it because we're not worried about the references occurring in here, now or later.
 		// Indeed, that does assume we (as in 'we' being this particular function!) know about how the
 		// data we process will be used. Risky, but fine with me. Hence the 'protected'.
-		array_walk_recursive($arr, function(&$value, $key)
-			{
-				if (is_string($value))
-				{
-					if (FileManagerUtility::isBinary($value))
-					{
-						$value = '(binary data... length = ' . strlen($value) . ')';
-					}
-				}
-			});
+		array_walk_recursive($arr, 'self::__clean_EXIF_results');
 	}
 
 	/**
@@ -3413,6 +3416,12 @@ class FileManagerUtility
 		return false;
 	}
 
+	// helper function for rawurlencode_path(); as PHP < 5.3 lacks lambda functions
+	protected static function __rawurlencode_path(&$value, $key)
+	{
+		$value = rawurlencode($value);
+	}
+
 	/**
 	 * Apply rawurlencode() to each of the elements of the given path
 	 *
@@ -3424,10 +3433,7 @@ class FileManagerUtility
 	public static function rawurlencode_path($path)
 	{
 		$encoded_path = explode('/', $path);
-		array_walk($encoded_path, function(&$value, $key)
-			{
-				$value = rawurlencode($value);
-			});
+		array_walk($encoded_path, 'self::__rawurlencode_path');
 		return implode('/', $encoded_path);
 	}
 

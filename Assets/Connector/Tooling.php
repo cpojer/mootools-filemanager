@@ -85,3 +85,80 @@ if (!function_exists('safe_glob'))
 		}
 	}
 }
+
+
+
+
+// derived from http://nl.php.net/manual/en/function.http-build-query.php#90438
+if (!function_exists('http_build_query_ex')) 
+{
+	if (!defined('PHP_QUERY_RFC1738')) define('PHP_QUERY_RFC1738', 1); // encoding is performed per RFC 1738 and the application/x-www-form-urlencoded media type, which implies that spaces are encoded as plus (+) signs.
+	if (!defined('PHP_QUERY_RFC3986')) define('PHP_QUERY_RFC3986', 2); // encoding is performed according to » RFC 3986, and spaces will be percent encoded (%20). 
+	
+    function http_build_query_ex($data, $prefix = '', $sep = '', $key = '', $enc_type = PHP_QUERY_RFC1738) 
+	{
+        $ret = array();
+		if (!is_array($data) && !is_object($data))
+		{
+			if ($enc_type == PHP_QUERY_RFC1738)
+			{
+				$ret[] = urlencode($data);
+			}
+			else
+			{
+				$ret[] = rawurlencode($data);
+			}
+		}
+		else
+		{
+			if (!empty($prefix)) 
+			{
+				if ($enc_type == PHP_QUERY_RFC1738)
+				{
+					$prefix = urlencode($prefix);
+				}
+				else
+				{
+					$prefix = rawurlencode($prefix);
+				}
+			}
+			foreach ($data as $k => $v) 
+			{
+				if (is_int($k))
+				{
+					$k = $prefix . $k;
+				}
+				else if ($enc_type == PHP_QUERY_RFC1738)
+				{
+					$k = urlencode($k);
+				}
+				else
+				{
+					$k = rawurlencode($k);
+				}
+				if (!empty($key) || $key === 0)
+				{
+					$k = $key . '[' . $k . ']';
+				}
+				if (is_array($v) || is_object($v))
+				{
+					$ret[] = http_build_query_ex($v, '', $sep, $k, $enc_type);
+				} 
+				else 
+				{
+					if ($enc_type == PHP_QUERY_RFC1738)
+					{
+						$v = urlencode($v);
+					}
+					else
+					{
+						$v = rawurlencode($v);
+					}
+					$ret[] = $k . '=' . $v;
+				}
+			}
+		}
+        if (empty($sep)) $sep = ini_get('arg_separator.output');
+        return implode($sep, $ret);
+    }
+}
