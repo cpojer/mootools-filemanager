@@ -1170,7 +1170,7 @@ var FileManager = new Class({
 
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 		//this.reset_view_fill_store();
-		$clear(this.view_fill_timer);
+		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;
 
 		return this.fill(null, startindex, pagesize, kbd_dir);
@@ -1730,6 +1730,7 @@ var FileManager = new Class({
 		this.adaptive_update_pagination_size(render_count, render_count, render_count, pagesize, duration, 1.0 / 5.0, 1.0, 0);
 
 		// we're done: erase the timer so it can be garbage collected
+		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;
 
 		// make sure the selection, when keyboard driven, is marked correctly
@@ -1968,9 +1969,9 @@ var FileManager = new Class({
 		this.browser_paging.fade(0);
 
 		// abort any still running ('antiquated') fill chunks:
-		$clear(this.view_fill_timer);
-
+		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
+
 		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
 		if (this.view_fill_json)
 		{
