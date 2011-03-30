@@ -21,7 +21,7 @@ FileManager.TinyMCE = function(options){
   /*
    * field: Id of the element to set value in.
    * url: value currently stored in the indicated element
-   * type: Type of browser to open image/file/flash.
+   * type: Type of browser to open image/file/flash: 'file' ~ page links, 'image' ~ insert picture, 'media' ~ insert media/movie
    * win: window object reference
    */
   return function(field, url, type, win){

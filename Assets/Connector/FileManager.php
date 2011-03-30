@@ -244,7 +244,9 @@
  *         $_POST[session_name()] value to manually set the PHP session_id() before you start your your session
  *         again.
  *
- *         The frontend-specified options.uploadAuthData items will be available as further $_GET[] items, as well.
+ *         The frontend-specified options.propagateData items will be available as $_GET[] items.
+ *
+ *         The frontend-specified options.uploadAuthData items will be available as $_POST[] items.
  *
  *
  *  'download':
@@ -266,6 +268,8 @@
  *                                       and including the slash, e.g. 'image/'
  *
  *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *         The frontend-specified options.propagateData items will be available as $_GET[] items.
  *
  *
  *  'create': // create directory
@@ -291,6 +295,8 @@
  *                                       this allows us to map even not-existing 'directories' to possibly disparate filesystem locations.
  *
  *               'chmod'                 (integer) UNIX access rights (default: 0777) for the directory-to-be-created (RWX for user,group,world)
+ *
+ *         The frontend-specified options.propagateData items will be available as $_GET[] items.
  *
  *
  *  'destroy':
@@ -319,6 +325,8 @@
  *
  *                                       The design idea behind this approach is that you are only allowed what you can see ('view'), so
  *                                       all 'view' restrictions should equally to the 'delete' operation.
+ *
+ *         The frontend-specified options.propagateData items will be available as $_GET[] items.
  *
  *
  *  'move':  // move or copy!
@@ -360,6 +368,8 @@
  *
  *               'function'              (string) PHP call which will perform the operation. ('rename' or 'copy')
  *
+ *         The frontend-specified options.propagateData items will be available as $_GET[] items.
+ *
  *
  *  'view':
  *
@@ -393,6 +403,8 @@
  *                                       we are performing a view operation as the second part of another otherwise failed action, e.g. a
  *                                       failed 'create directory'.
  *
+ *         The frontend-specified options.propagateData items will be available as $_GET[] items.
+ *
  *
  *  'detail':
  *
@@ -415,6 +427,8 @@
  *                                       and including the slash, e.g. 'image/'
  *
  *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *         The frontend-specified options.propagateData items will be available as $_GET[] items.
  *
  *
  *  'thumbnail':
@@ -440,6 +454,8 @@
  *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
  *
  *               'requested_size'        (integer) the size (maximum width and height) in pixels of the thumbnail to be produced.
+ *
+ *         The frontend-specified options.propagateData items will be available as $_GET[] items.
  *
  *
  *

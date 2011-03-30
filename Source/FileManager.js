@@ -28,13 +28,21 @@ var FileManager = new Class({
 
 	options: {
 		/*
-		onComplete: function(){},
-		onModify: function(){},
+		onComplete: function(path,      // URLencoded 'legal URI space' path to selected file
+							 file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+							 legal_url, // (file.dir + file.name): the 'legal URI space' path to selected  file (NOT URLencoded!)
+							 cur_dir,   // (this.CurrentPath): the absolute URL for the current directory
+							 url        // ('/' + this.root + file.dir + file.name): the absolute URL for the selected file
+							){},
+		onModify: function(file         // a CLONE of the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+						  ){},
 		onShow: function(){},
 		onHide: function(){},
-		onPreview: function(){},
-		onDetails: function(){}, // Fired when an item is picked form the files list, supplies object (e.g. {width: 123, height:456} )
-		onHidePreview: function(){}, // Fired when the preview is hidden (e.g. when uploading)
+		onPreview: function(src			// this.get('src') ???
+						   ){},
+		onDetails: function(json        // The JSON data as sent by the server for this 'detail' request
+						   ){},         // Fired when an item is picked form the files list, supplies object (e.g. {width: 123, height:456} )
+		onHidePreview: function(){},    // Fired when the preview is hidden (e.g. when uploading)
 		*/
 		directory: '',
 		url: null,

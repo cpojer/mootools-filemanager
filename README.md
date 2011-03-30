@@ -92,11 +92,13 @@ Options if Uploader is included
 
 Events
 
-* onComplete(path, file): fired when a file gets selected via the "Select file" button
+* onComplete(path, file, legal_url, cur_dir, url): fired when a file gets selected via the "Select file" button
 * onModify(file): fired when a file gets renamed/deleted or modified in another way
-* onShow: fired when the FileManager opens
-* onHide: event fired when FileManager closes
-* onPreview: event fired when the user clicks an image in the preview
+* onShow(): fired when the FileManager opens
+* onHide(): event fired when FileManager closes
+* onPreview(src): event fired when the user clicks an image in the preview
+* onDetails(json): event fired when an item is picked form the files list, supplies object (e.g. {width: 123, height:456} )
+* onHidePreview(): event fired when the preview is hidden (e.g. when uploading)
 
 Backend
 
