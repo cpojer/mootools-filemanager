@@ -151,7 +151,14 @@ class Image_XMP
 				$segdatastart = ftell($filehnd);
 
 				// Read the segment data with length indicated by the previously read size
-				$segdata = fread($filehnd, $decodedsize['size'] - 2);
+				if ($decodedsize['size'] - 2 > 0)	// [i_a] bugfix
+				{
+					$segdata = fread($filehnd, $decodedsize['size'] - 2);
+				}
+				else
+				{
+					$segdata = null;
+				}
 
 				// Store the segment information in the output array
 				$headerdata[] = array(

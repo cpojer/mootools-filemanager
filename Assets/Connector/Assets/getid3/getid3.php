@@ -1187,7 +1187,7 @@ class getID3
 
 				foreach ($this->info[$comment_name]['comments'] as $tag_key => $valuearray) {
 					foreach ($valuearray as $key => $value) {
-						$value = (is_string($value) ? trim($value) : $value);
+						// $value = (is_string($value) ? trim($value) : $value);     // [i_a] http://www.getid3.org/phpBB3/viewtopic.php?f=4&t=1136
 						if (!empty($value) > 0) {
 							$this->info['tags'][trim($tag_name)][trim($tag_key)][] = $value; // do not trim!! Unicode characters will get mangled if trailing nulls are removed!
 						}
