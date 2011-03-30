@@ -76,7 +76,7 @@ session_write_close();
 	<link rel="stylesheet" media="all" type="text/css" href="../Assets/Css/FileManager.css" />
 	<link rel="stylesheet" media="all" type="text/css" href="../Assets/Css/Additions.css" />
 	
-	<script type="text/javascript" src="tiny_mce_src.js"></script>
+	<script type="text/javascript" src="../../../../../lib/includes/js/tiny_mce/jscripts/tiny_mce/tiny_mce_src.js"></script>
 
 	<script type="text/javascript" src="mootools-core.js"></script>
 	<script type="text/javascript" src="mootools-more.js"></script>
