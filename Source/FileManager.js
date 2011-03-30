@@ -1348,6 +1348,14 @@ var FileManager = new Class({
 			}
 		}
 		this.browser_paging.fade(paging_now);
+		// fix for MSIE8: also fade out the pagination icons themselves
+		if (!paging_now)
+		{
+			this.browser_paging_first.fade(0);
+			this.browser_paging_prev.fade(0);
+			this.browser_paging_last.fade(0);
+			this.browser_paging_next.fade(0);
+		}
 
 		// remember pagination position history
 		this.store_view_fill_startindex(startindex);
