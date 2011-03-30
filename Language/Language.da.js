@@ -96,7 +96,8 @@ FileManager.Language.da = {
 	uploader: {
 		unknown: 'Ukendt fejl',
 		sizeLimitMin: 'Du kan ikke tilføje "<em>${name}</em>" (${size}), mindst tilladte filstørrelse er <strong>${size_min}</strong>!',
-		sizeLimitMax: 'Du kan ikke tilføje "<em>${name}</em>" (${size}), højst tilladte filstørrelse er <strong>${size_max}</strong>!'
+		sizeLimitMax: 'Du kan ikke tilføje "<em>${name}</em>" (${size}), højst tilladte filstørrelse er <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 
 	flash: {

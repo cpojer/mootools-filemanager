@@ -96,7 +96,8 @@ FileManager.Language.br = {
 	uploader: {
 		unknown: 'Erro desconhecido',
 		sizeLimitMin: 'Não é permitido anexar "<em>${name}</em>" (${size}), o tamanho mínimo para o arquivo é de <strong>${size_min}</strong>!',
-		sizeLimitMax: 'Não é permitido anexar "<em>${name}</em>" (${size}), o tamanho máximo para o arquivo é de <strong>${size_max}</strong>!'
+		sizeLimitMax: 'Não é permitido anexar "<em>${name}</em>" (${size}), o tamanho máximo para o arquivo é de <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 
 	flash: {

@@ -97,7 +97,8 @@ FileManager.Language.es = {
 		unknown: 'Error desconocido',
 		duplicate: 'No se puede subir "<em>${name}</em>" (${size}), ya ha sido añadido!',
 		sizeLimitMin: 'No se puede subir "<em>${name}</em>" (${size}), el tamaño mínimo de fichero es <strong>${size_min}</strong>!',
-		sizeLimitMax: 'No se puede subir "<em>${name}</em>" (${size}), el tamaño máximo de fichero es <strong>${size_max}</strong>!'
+		sizeLimitMax: 'No se puede subir "<em>${name}</em>" (${size}), el tamaño máximo de fichero es <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 
 	flash: {

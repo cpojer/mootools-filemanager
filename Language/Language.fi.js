@@ -97,7 +97,8 @@ FileManager.Language.fi = {
 		unknown: 'Tunnistamaton virhe',
 		duplicate: 'Et voi lisätä seuraavaa tiedostoa: "<em>${name}</em>" (${size}), koska se on jo siirtolistalla!',
 		sizeLimitMin: 'Et voi lisätä seuraavaa tiedostoa: "<em>${name}</em>" (${size}). Tiedostojen minimikoko on <strong>${size_min}</strong>!',
-		sizeLimitMax: 'Et voi lisätä seuraavaa tiedostoa: "<em>${name}</em>" (${size}). Tiedostojen maksimikoko on <strong>${size_max}</strong>!'
+		sizeLimitMax: 'Et voi lisätä seuraavaa tiedostoa: "<em>${name}</em>" (${size}). Tiedostojen maksimikoko on <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 
 	flash: {

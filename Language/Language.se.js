@@ -97,7 +97,8 @@ FileManager.Language.se = {
 		unknown: 'Okänt fel',
 		duplicate: 'Du kan inte ladda upp "<em>${name}</em>" (${size}), filen existerar redan!',
 		sizeLimitMin: 'Du kan inte ladda upp "<em>${name}</em>" (${size}), minsta storlek som accepteras är <strong>${size_min}</strong>!',
-		sizeLimitMax: 'Du kan inte ladda upp "<em>${name}</em>" (${size}), filens storlek får inte överstiga <strong>${size_max}</strong>!'
+		sizeLimitMax: 'Du kan inte ladda upp "<em>${name}</em>" (${size}), filens storlek får inte överstiga <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 
 	flash: {

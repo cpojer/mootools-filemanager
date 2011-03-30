@@ -517,7 +517,7 @@ var FileManager = new Class({
 		}
 
 		//if (typeof console !== 'undefined' && console.log) console.log('on show file = ' + this.Directory + ', source = ' + '---');
-		if(loaddir != null)
+		if(typeof loaddir != 'undefined' && loaddir != null)
 		{
 			this.Directory = loaddir;
 		}
@@ -1511,7 +1511,7 @@ var FileManager = new Class({
 			//}).bind(this)));
 
 			// ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
-			if(preselect && preselect == file.name)
+			if(typeof preselect != 'undefined' && preselect == file.name)
 			{
 				this.deselect();
 				this.Current = file.element;

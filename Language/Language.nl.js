@@ -96,7 +96,8 @@ FileManager.Language.nl = {
 	uploader: {
 		unknown: 'Onbekende fout',
 		sizeLimitMin: 'Je kan het bestand "<em>${name}</em>" (${size}) niet toevoegen, de minimum bestandsgrootte voor upload is <strong>${size_min}</strong>!',
-		sizeLimitMax: 'Je kan het bestand "<em>${name}</em>" (${size}) niet toevoegen, de minimum bestandsgrootte voor upload is <strong>${size_max}</strong>!'
+		sizeLimitMax: 'Je kan het bestand "<em>${name}</em>" (${size}) niet toevoegen, de minimum bestandsgrootte voor upload is <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 
 	flash: {

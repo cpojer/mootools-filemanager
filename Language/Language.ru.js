@@ -96,7 +96,8 @@ FileManager.Language.ru = {
 	uploader: {
 		unknown: 'Неизвестная ошибка',
 		sizeLimitMin: 'Невозможно прикрепить файл "<em>${name}</em>" (${size}), минимальный размер фала <strong>${size_min}</strong>!',
-		sizeLimitMax: 'Невозможно прикрепить файл "<em>${name}</em>" (${size}), максимальный размер файла <strong>${size_max}</strong>!'
+		sizeLimitMax: 'Невозможно прикрепить файл "<em>${name}</em>" (${size}), максимальный размер файла <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 
 	flash: {

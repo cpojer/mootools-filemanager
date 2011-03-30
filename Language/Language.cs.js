@@ -96,7 +96,8 @@ FileManager.Language.cs = {
 	uploader: {
 		unknown: 'Neznámá chyba',
 		sizeLimitMin: 'Nelze přidat soubor „<em>${name}</em>“ (${size}), minimální povolená velikost souboru je <strong>${size_min}</strong>!',
-		sizeLimitMax: 'Nelze přidat soubor „<em>${name}</em>“ (${size}), maximální povolená velikost souboru je <strong>${size_max}</strong>!'
+		sizeLimitMax: 'Nelze přidat soubor „<em>${name}</em>“ (${size}), maximální povolená velikost souboru je <strong>${size_max}</strong>!',
+		mod_security: 'No response was given from the uploader, this may mean that "mod_security" is active on the server and one of the rules in mod_security has cancelled this request.  If you can not disable mod_security, you may need to use the NoFlash Uploader.'
 	},
 
 	flash: {
