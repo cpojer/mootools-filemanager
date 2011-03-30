@@ -316,3 +316,4 @@ FileManager.Gallery = new Class({
 });
 
 })();
+

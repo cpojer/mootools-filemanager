@@ -60,3 +60,4 @@ var Dialog = new Class({
   }
 
 });
+
