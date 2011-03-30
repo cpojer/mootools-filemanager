@@ -58,7 +58,7 @@ Fx.ProgressBar = new Class({
   },
 
   start: function(to, total) {
-    return this.parent(this.now, (!total) ? to.limit(0, 100) : to / total * 100);
+    return this.parent(this.now, (arguments.length == 1 || !total) ? to.limit(0, 100) : to / total * 100);
   },
 
   set: function(to) {
