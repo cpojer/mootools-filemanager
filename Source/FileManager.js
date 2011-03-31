@@ -28,22 +28,50 @@ var FileManager = new Class({
 
 	options: {
 		/*
-		onComplete: function(path,      // URLencoded 'legal URI space' path to selected file
-							 file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
-							 legal_url, // (file.dir + file.name): the 'legal URI space' path to selected  file (NOT URLencoded!)
-							 cur_dir,   // (this.CurrentPath): the absolute URL for the current directory
-							 url        // ('/' + this.root + file.dir + file.name): the absolute URL for the selected file
-							){},
-		onModify: function(file         // a CLONE of the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
-						  ){},
-		onShow: function(){},
-		onHide: function(){},
-		onPreview: function(src         // this.get('src') ???
-						   ){},
-		onDetails: function(json        // The JSON data as sent by the server for this 'detail' request
-						   ){},         // Fired when an item is picked form the files list, supplies object (e.g. {width: 123, height:456} )
-		onHidePreview: function(){},    // Fired when the preview is hidden (e.g. when uploading)
-		*/
+		 * onComplete: function(           // Fired when the 'Select' button is clicked
+		 *                      path,      // URLencoded absolute URL path to selected file
+		 *                      file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+		 *                      fmobj      // reference to the FileManager instance which fired the event
+		 *                     ){},
+		 *
+		 * onModify: function(             // Fired when either the 'Rename' or 'Delete' icons are clicked or when a file is drag&dropped.
+		 *                                 // Fired AFTER the action is executed.
+		 *                    file,        // a CLONE of the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+		 *                    json,        // The JSON data as sent by the server for this 'destroy/rename/move/copy' request
+		 *                    mode,        // string specifying the action: 'destroy', 'rename', 'move', 'copy'
+		 *                    fmobj        // reference to the FileManager instance which fired the event
+		 *                   )
+		 *
+		 * onShow: function(               // Fired AFTER the file manager is rendered
+		 *                  fmobj          // reference to the FileManager instance which fired the event
+		 *                 )
+		 *
+		 * onHide: function(               // Fired AFTER the file manager is removed from the DOM
+		 *                  fmobj          // reference to the FileManager instance which fired the event
+		 *                 )
+		 *
+		 * onScroll: function(             // Cascade of the window scroll event
+		 *                    e,           // reference to the event object (argument passed from the window.scroll event)
+		 *                    fmobj        // reference to the FileManager instance which fired the event
+		 *                   )
+		 *
+		 * onPreview: function(            // Fired when the preview thumbnail image is clicked
+		 *                     src,        // this.get('src') ???
+		 *                     fmobj,      // reference to the FileManager instance which fired the event
+		 *                     el          // reference to the 'this' ~ the element which was clicked
+		 *                    )
+		 *
+		 * onDetails: function(            // Fired when an item is picked from the files list to be previewed
+		 *                                 // Fired AFTER the server request is completed and BEFORE the preview is rendered.
+		 *                     json,       // The JSON data as sent by the server for this 'detail' request
+		 *                     fmobj       // reference to the FileManager instance which fired the event
+		 *                    )
+		 *
+		 * onHidePreview: function(        // Fired when the preview is hidden (e.g. when uploading)
+		 *                                 // Fired BEFORE the preview is removed from the DOM.
+		 *                         fmobj   // reference to the FileManager instance which fired the event
+		 *                        )
+		 */
 		directory: '',
 		url: null,
 		assetBasePath: null,
@@ -267,7 +295,7 @@ var FileManager = new Class({
 		]).inject(infoarea);
 
 		this.preview = new Element('div', {'class': 'filemanager-preview'}).addEvent('click:relay(img.preview)', function(){
-			self.fireEvent('preview', [this.get('src')]);
+			self.fireEvent('preview', [this.get('src'), self, this]);
 		});
 
 		// We need to group the headers and lists together because we will
@@ -361,8 +389,8 @@ var FileManager = new Class({
 					break;
 				}
 			}).bind(this),
-			scroll: (function(){
-				this.fireEvent('scroll');
+			scroll: (function(e){
+				this.fireEvent('scroll', [e, this]);
 				this.fitSizes();
 			}).bind(this)
 		};
@@ -403,6 +431,22 @@ var FileManager = new Class({
 		var menuSize = this.menu.getSize();
 		this.browserScroll.setStyle('height',containerSize.y - headerSize.y);
 		this.info.setStyle('height',containerSize.y - menuSize.y);
+	},
+
+	// see also: http://cass-hacks.com/articles/discussion/js_url_encode_decode/
+	// and: http://xkr.us/articles/javascript/encode-compare/
+	// This is a much simplified version as we do not need exact PHP rawurlencode equivalence.
+	//
+	// We have one mistake to fix: + instead of %2B. We don't mind
+	// that * and / remain unencoded. Not exactly RFC3986, but there you have it...
+	//
+	// WARNING: given the above, we ASSUME this function will ONLY be used to encode the
+	//          a single URI 'path', 'query' or 'fragment' component at a time!
+	escapeRFC3986: function(s) {
+		return encodeURI(s.toString()).replace(/\+/g, '%2B');
+	},
+	unescapeRFC3986: function(s) {
+		return decodeURI(s.toString());
 	},
 
 	// -> catch a click on an element in the file/folder browser
@@ -557,7 +601,7 @@ var FileManager = new Class({
 		this.container.fade(1);
 
 		this.fitSizes();
-		this.fireEvent('show');
+		this.fireEvent('show', [this]);
 		this.fireHooks('show');
 	},
 
@@ -590,7 +634,7 @@ var FileManager = new Class({
 			document.removeEvent('keypress', this.bound.keyboardInput);
 
 		this.fireHooks('cleanup');
-		this.fireEvent('hide');
+		this.fireEvent('hide', [this]);
 	},
 
 	open_on_click: function(e){
@@ -598,11 +642,9 @@ var FileManager = new Class({
 		if (!this.Current) return;
 		var file = this.Current.retrieve('file');
 		this.fireEvent('complete', [
-			this.normalize(file.path),                                       // URLencoded 'legal URI space' path to selected file
-			file,                                                            // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
-			this.normalize(file.dir + file.name),                            // the 'legal URI space' path to selected  file (NOT URLencoded!)
-			this.normalize('/' + this.CurrentPath),                          // the absolute URL for the current directory
-			this.normalize('/' + this.root + file.dir + file.name)           // the absolute URL for the selected file
+			this.escapeRFC3986(this.normalize('/' + this.root + file.dir + file.name)), // the absolute URL for the selected file, rawURLencoded
+			file,                 // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+			this
 		]);
 		this.hide();
 	},
@@ -799,7 +841,7 @@ var FileManager = new Class({
 					return;
 				}
 
-				this.fireEvent('modify', [Object.clone(file)]);
+				this.fireEvent('modify', [Object.clone(file), j, 'destroy', this]);
 				var p = file.element.getParent();
 				if (p) {
 					p.fade(0).get('tween').chain(function(){
@@ -886,7 +928,7 @@ var FileManager = new Class({
 							this.browserLoader.fade(0);
 							return;
 						}
-						this.fireEvent('modify', [Object.clone(file)]);
+						this.fireEvent('modify', [Object.clone(file), j, 'rename', this]);
 						file.element.getElement('span.filemanager-filename').set('text', j.name).set('title', j.name);
 						file.element.addClass('selected');
 						file.name = j.name;
@@ -1682,6 +1724,9 @@ var FileManager = new Class({
 								this.browserLoader.fade(0);
 								return;
 							}
+
+							this.fireEvent('modify', [Object.clone(file), j, (is_a_move ? 'move' : 'copy'), this]);
+
 							if (!dir) {
 								this.load(this.Directory);
 							}
@@ -1697,8 +1742,6 @@ var FileManager = new Class({
 							this.browserLoader.fade(0);
 						}).bind(this)
 					}, this).send();
-
-					this.fireEvent('modify', [Object.clone(file)]);
 
 					el.fade(0).get('tween').chain(function(){
 						el.getParent().destroy();
@@ -1844,11 +1887,11 @@ var FileManager = new Class({
 			});
 		}
 
-		this.fireHooks('cleanup');
-		this.preview.empty();
-
+		this.fireHooks('cleanup_preview');
 		// We need to remove our custom attributes form when the preview is hidden
-		this.fireEvent('hidePreview');
+		this.fireEvent('hidePreview', [this]);
+
+		this.preview.empty();
 
 		this.info.getElement('h1').set('text', file.name);
 		this.info.getElement('h1').set('title', file.name);
@@ -1907,7 +1950,7 @@ var FileManager = new Class({
 					// Xinha: We need to add in a form for setting the attributes of images etc,
 					// so we add this event and pass it the information we have about the item
 					// as returned by Backend/FileManager.php
-					this.fireEvent('details', [j]);
+					this.fireEvent('details', [j, this]);
 
 					// Xinha: We also want to hold onto the data so we can access it
 					// when selecting the image.

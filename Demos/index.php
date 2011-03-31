@@ -107,6 +107,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
   <script type="text/javascript" src="../Source/Uploader.js"></script>
   <script type="text/javascript" src="../Language/Language.en.js"></script>
   <script type="text/javascript" src="../Language/Language.de.js"></script>
+  <script type="text/javascript" src="dev_support.js"></script>
 
   <!-- extra, for viewing the gallery and selected picture: -->
   <script type="text/javascript" src="../Assets/js/milkbox/milkbox.js"></script>
@@ -129,6 +130,30 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         rename: true,
         createFolders: true,
         hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
+		onComplete: function(path, file, mgr) {
+			if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ' + path + ', ' + dump(file) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+		},
+		onModify: function(file, json, mode, mgr) {
+			if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ' + mode + ', ' + dump(file) + ', ' + dump(json) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+		},
+		onShow: function(mgr) {
+			if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+		},
+		onHide: function(mgr) {
+			if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+		},
+		onScroll: function(e, mgr) {
+			if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ' + dump(e) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+		},
+		onPreview: function(src, mgr, el) {
+			if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ' + dump(src) + ', ' + dump(el) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+		},
+		onDetails: function(json, mgr) {
+			if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ' + dump(json) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+		},
+		onHidePreview: function(mgr) {
+			if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+		},
         // and a couple of extra user defined parameters sent with EVERY request:
         propagateData: {
             origin: 'demo-FM-1'
@@ -139,11 +164,11 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
       /* Select a file */
       var el = $('example2');
       var div, manager2;
-      var complete = function(encoded_path, file, legal_file_path, current_dir, full_file_path) {
-        el.set('value', full_file_path);
+      var complete = function(path, file, mgr) {
+        el.set('value', path);
         if (div) div.destroy();
         var icon = new Asset.image(
-			this.assetBasePath+'Images/cancel.png', 
+			mgr.assetBasePath+'Images/cancel.png', 
 			{
 				'class': 'file-cancel', 
 				title: 'deselect'
@@ -153,11 +178,11 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 				var self = this;
 				div.fade(0).get('tween').chain(function(){
 					div.destroy();
-					manager2.tips.hide();
-					manager2.tips.detach(self);
+					mgr.tips.hide();
+					mgr.tips.detach(self);
 				});
 			});
-        manager2.tips.attach(icon);
+        mgr.tips.attach(icon);
 
         var img = null;
         var mimetype = file.mime;

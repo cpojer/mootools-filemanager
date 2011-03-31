@@ -6,7 +6,7 @@ description: Implements Upload functionality into the FileManager without using 
              server restrictions (eg, mod_security), or perhaps users refuse to use flash.
 
              This Upload handler will allow the MFM to continue to function, without multiple-upload-at-once
-             function and without progress bars.  But otherwise, it should, work.
+             function and without progress bars.  But otherwise, it should work.
 
 authors: James Sleeman (@sleemanj)
 
@@ -38,7 +38,12 @@ FileManager.implement({
       upload: function(){
         if (!this.options.upload  || !this.upload) return;
 
-        try { if (this.upload.uploader) this.upload.uploader.set('opacity', 0).dispose(); } catch(e) { }
+        try {
+			if (this.upload.uploader) {
+				this.upload.uploader.set('opacity', 0).dispose();
+			}
+		}
+		catch(e) { }
       }
     }
   },
@@ -97,7 +102,9 @@ FileManager.implement({
 
     if (this.options.resizeImages){
       var resizer = new Element('div', {'class': 'checkbox'}),
-        check = (function(){ this.toggleClass('checkboxChecked'); }).bind(resizer);
+        check = (function(){
+			this.toggleClass('checkboxChecked');
+		}).bind(resizer);
       check();
       uploadButton.label = new Element('label').adopt(
         resizer, new Element('span', {text: this.language.resizeImages})
@@ -124,7 +131,6 @@ FileManager.implement({
         catch(e)
         {
           // Maybe this.contentDocument.documentElement.innerText isn't where we need to look?
-
         }
     });
   }
