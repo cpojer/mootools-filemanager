@@ -2,16 +2,16 @@
 /*
  * Script: Tooling.php
  *   MooTools FileManager - Backend for the FileManager Script - Support Code
- * 
+ *
  * Authors:
  *  - Christoph Pojer (http://cpojer.net) (author)
  *  - James Ehly (http://www.devtrench.com)
  *  - Fabian Vogelsteller (http://frozeman.de)
  *  - Ger Hobbelt (http://hebbut.net)
- * 
+ *
  * License:
  *   MIT-style license.
- * 
+ *
  * Copyright:
  *   Copyright (c) 2011 [Christoph Pojer](http://cpojer.net)
  */
@@ -30,7 +30,7 @@ if (!function_exists('safe_glob'))
 	if (!defined('GLOB_RECURSE'))     define('GLOB_RECURSE',2048);
 	/**#@-*/
 
-	
+
 	/**
 	 * A safe empowered glob().
 	 *
@@ -90,14 +90,14 @@ if (!function_exists('safe_glob'))
 
 
 // derived from http://nl.php.net/manual/en/function.http-build-query.php#90438
-if (!function_exists('http_build_query_ex')) 
+if (!function_exists('http_build_query_ex'))
 {
 	if (!defined('PHP_QUERY_RFC1738')) define('PHP_QUERY_RFC1738', 1); // encoding is performed per RFC 1738 and the application/x-www-form-urlencoded media type, which implies that spaces are encoded as plus (+) signs.
-	if (!defined('PHP_QUERY_RFC3986')) define('PHP_QUERY_RFC3986', 2); // encoding is performed according to » RFC 3986, and spaces will be percent encoded (%20). 
-	
-    function http_build_query_ex($data, $prefix = '', $sep = '', $key = '', $enc_type = PHP_QUERY_RFC1738) 
+	if (!defined('PHP_QUERY_RFC3986')) define('PHP_QUERY_RFC3986', 2); // encoding is performed according to » RFC 3986, and spaces will be percent encoded (%20).
+
+	function http_build_query_ex($data, $prefix = '', $sep = '', $key = '', $enc_type = PHP_QUERY_RFC1738)
 	{
-        $ret = array();
+		$ret = array();
 		if (!is_array($data) && !is_object($data))
 		{
 			if ($enc_type == PHP_QUERY_RFC1738)
@@ -111,7 +111,7 @@ if (!function_exists('http_build_query_ex'))
 		}
 		else
 		{
-			if (!empty($prefix)) 
+			if (!empty($prefix))
 			{
 				if ($enc_type == PHP_QUERY_RFC1738)
 				{
@@ -122,7 +122,7 @@ if (!function_exists('http_build_query_ex'))
 					$prefix = rawurlencode($prefix);
 				}
 			}
-			foreach ($data as $k => $v) 
+			foreach ($data as $k => $v)
 			{
 				if (is_int($k))
 				{
@@ -143,8 +143,8 @@ if (!function_exists('http_build_query_ex'))
 				if (is_array($v) || is_object($v))
 				{
 					$ret[] = http_build_query_ex($v, '', $sep, $k, $enc_type);
-				} 
-				else 
+				}
+				else
 				{
 					if ($enc_type == PHP_QUERY_RFC1738)
 					{
@@ -158,9 +158,9 @@ if (!function_exists('http_build_query_ex'))
 				}
 			}
 		}
-        if (empty($sep)) $sep = ini_get('arg_separator.output');
-        return implode($sep, $ret);
-    }
+		if (empty($sep)) $sep = ini_get('arg_separator.output');
+		return implode($sep, $ret);
+	}
 }
 
 

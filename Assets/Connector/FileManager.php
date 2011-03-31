@@ -527,7 +527,7 @@ class FileManager
 			'mimeTypesPath' => str_replace('\\', '/', dirname(__FILE__)) . '/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 2600 * 2600 * 3,
-			// 'maxImageSize' => 99999,									// obsoleted, replaced by 'suggestedMaxImageDimension'
+			// 'maxImageSize' => 99999,                                 // obsoleted, replaced by 'suggestedMaxImageDimension'
 			// Xinha: Allow to specify the "Resize Large Images" tolerance level.
 			'maxImageDimension' => array('width' => 1024, 'height' => 768),
 			'upload' => false,
@@ -561,7 +561,7 @@ class FileManager
 		{
 			$this->options['maxImageDimension'] = array('width' => $this->options['maxImageSize'], 'height' => $this->options['maxImageSize']);
 		}
-		
+
 		// only calculate the guestimated defaults when they are indeed required:
 		if ($this->options['directory'] == null || $this->options['assetBasePath'] == null || $this->options['thumbnailPath'] == null)
 		{
@@ -719,7 +719,7 @@ class FileManager
 
 		$file_preselect_index = -1;
 		$idx = array(0, 0);
-		
+
 		foreach ($files as $filename)
 		{
 			$url = $legal_url . $filename;
@@ -740,7 +740,7 @@ class FileManager
 					continue;
 				}
 				$iconspec = $filename;
-				
+
 				if ($filename == $file_preselect_arg)
 				{
 					$file_preselect_index = $idx[0];
@@ -797,7 +797,7 @@ class FileManager
 				$thumb250 = $thumb48;
 			}
 			$icon = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, true));
-			
+
 			if ($list_type == 'thumb')
 			{
 				$thumb = $thumb48;
@@ -907,7 +907,7 @@ class FileManager
 			$dir_arg = $this->getPOSTparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
-			
+
 			$file_preselect_arg = $this->getPOSTparam('file_preselect');
 			if (!empty($file_preselect_arg))
 			{
@@ -2029,7 +2029,7 @@ class FileManager
 			// the items in 'spec' always win over any entries in 'URIpropagateData':
 			$spec = array_merge(array(), $this->options['URIpropagateData'], $spec);
 		}
-		
+
 		// next, construct the query part of the URI:
 		$qstr = http_build_query_ex($spec, null, '&', null, PHP_QUERY_RFC3986);
 
@@ -2107,14 +2107,14 @@ class FileManager
 			$thumb250 = $thumb48;
 		}
 		$icon = $this->getIcon($iconspec, true);
-		
+
 		$json = array_merge(array(
 				//'status' => 1,
 				//'mimetype' => $mime,
 				'content' => self::compressHTML('<div class="margin">
 					${nopreview}
 				</div>')
-			), 
+			),
 			(is_array($json) ? $json : array()),
 			array(
 				'path' => FileManagerUtility::rawurlencode_path($url),
@@ -2128,13 +2128,13 @@ class FileManager
 				'size' => @filesize($file)
 			));
 
-		
+
 		// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
 		// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
 		$getid3 = new getID3();
 		$getid3->encoding = 'UTF-8';
 		$getid3->Analyze($file);
-		
+
 		$content = null;
 
 		if (FileManagerUtility::startsWith($mime, 'image/'))
@@ -2154,7 +2154,7 @@ class FileManager
 			$height = $this->getID3infoItem($getid3, 0, 'video', 'resolution_y');
 			$json['width'] = $width;
 			$json['height'] = $height;
-			
+
 			$content = '<dl>
 					<dt>${width}</dt><dd>' . $width . 'px</dd>
 					<dt>${height}</dt><dd>' . $height . 'px</dd>
@@ -2182,7 +2182,7 @@ class FileManager
 				$emsg = $e->getMessage();
 				$thumbfile = $this->getIconForError($emsg, $legal_url, false);
 				$enc_thumbfile = FileManagerUtility::rawurlencode_path($thumbfile);
-				
+
 				$json['thumbnail48'] = $thumbfile;
 				$json['thumbnail250'] = $thumbfile;
 			}
@@ -2218,7 +2218,7 @@ class FileManager
 					$content .= "\n" . '<p class="tech_info">memory used: ' . number_format(memory_get_peak_usage() / 1E6, 1) . ' MB / estimated: ' . number_format($finfo['usage_guestimate'] / 1E6, 1) . ' MB / suggested: ' . number_format($finfo['usage_min_advised'] / 1E6, 1) . ' MB</p>';
 				}
 			}
-			
+
 			$exif_data = $this->getID3infoItem($getid3, null, 'jpg', 'exif');
 			try
 			{
@@ -2279,7 +2279,7 @@ class FileManager
 			{
 				// Note: preview data= urls were formatted like this in CCMS:
 				// $this->options['assetBasePath'] . 'dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30'
-				
+
 				$width = $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_width') / 10;
 				$height = $this->getID3infoItem($getid3, 0, 'swf', 'header', 'frame_height') / 10;
 				$json['width'] = $width;
@@ -2304,7 +2304,7 @@ class FileManager
 			getid3_lib::CopyTagsToComments($getid3->info);
 
 			$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
-			
+
 			$content = '<dl>
 					<dt>${title}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'title', 0) . '</dd>
 					<dt>${artist}</dt><dd>' . $this->getID3infoItem($getid3, '???', 'comments', 'artist', 0) . '</dd>
@@ -2342,18 +2342,18 @@ class FileManager
 			$v_height = $this->getID3infoItem($getid3, '???', 'video', 'resolution_y');
 			$v_par = $this->getID3infoItem($getid3, 1.0, 'video', 'pixel_aspect_ratio');
 			$v_codec = $this->getID3infoItem($getid3, '', 'video', 'codec');
-			
+
 			$g_bitrate = round($this->getID3infoItem($getid3, 0, 'bitrate') / 1000);
 			$g_playtime_str = $this->getID3infoItem($getid3, '???', 'playtime_string');
-			
+
 			$content = '<dl>
-					<dt>Audio</dt><dd>' . $a_fmt . (!empty($a_codec) ? ' (' . $a_codec . ')' : '') . 
+					<dt>Audio</dt><dd>' . $a_fmt . (!empty($a_codec) ? ' (' . $a_codec . ')' : '') .
 										(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : $a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)') : '') .
-										': ' . $a_samplerate . ' kHz @ ' . $a_bitrate . ' kbps (' . strtoupper($a_bitrate_mode) . ')' . 
-										($a_streamcount > 1 ? ' (' . $a_streamcount . ' streams)' : '') . 
+										': ' . $a_samplerate . ' kHz @ ' . $a_bitrate . ' kbps (' . strtoupper($a_bitrate_mode) . ')' .
+										($a_streamcount > 1 ? ' (' . $a_streamcount . ' streams)' : '') .
 								'</dd>
 					<dt>Video</dt><dd>' . $v_fmt . (!empty($v_codec) ? ' (' . $v_codec . ')' : '') .  ': ' . $v_framerate . ' fps @ ' . $v_bitrate . ' kbps (' . strtoupper($v_bitrate_mode) . ')' .
-										($v_par != 1.0 ? ', PAR: ' . $v_par : '') . 
+										($v_par != 1.0 ? ', PAR: ' . $v_par : '') .
 								'</dd>
 					<dt>${width}</dt><dd>' . $v_width . 'px</dd>
 					<dt>${height}</dt><dd>' . $v_height . 'px</dd>
@@ -2418,7 +2418,7 @@ class FileManager
 		{
 			$json['content'] = self::compressHTML($content);
 		}
-		
+
 		return $json;
 	}
 
@@ -2468,7 +2468,7 @@ class FileManager
 			}
 		}
 	}
-	
+
 	protected static function clean_EXIF_results(&$arr)
 	{
 		// see http://nl2.php.net/manual/en/function.array-walk-recursive.php#81835
