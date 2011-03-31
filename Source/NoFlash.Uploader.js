@@ -80,9 +80,12 @@ FileManager.implement({
           e.stop();
           mfm.browserLoader.set('opacity', 1);
           f.action = mfm.options.url
-                     + 'event=upload'
-                     + '&directory='+encodeURIComponent(mfm.Directory)
-                     + ((this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? '&resize=1' : 'resize=0');
+					+ (mfm.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+						event: 'upload',
+						directory: self.normalize(mfm.Directory),
+						filter: mfm.options.filter,
+						resize: (this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0
+					  }));
 
           f.submit();
         },
@@ -125,8 +128,10 @@ FileManager.implement({
           {
             new Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: mfm.language.ok}, buttons: ['confirm']});
           }
-
-          mfm.load(mfm.Directory,true, response.name ? response.name : null);
+		  else
+		  {
+			mfm.load(mfm.Directory, true, response.name ? response.name : null);
+		  }
         }
         catch(e)
         {
