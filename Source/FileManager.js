@@ -2087,7 +2087,7 @@ var FileManager = new Class({
 	cvtXHRerror2msg: function(xmlHttpRequest) {
 		var status = xmlHttpRequest.status;
 		var orsc = xmlHttpRequest.onreadystatechange;
-		var response = (xmlHttpRequest.responseText || xmlHttpRequest.responseXML || '');
+		var response = (xmlHttpRequest.responseText || xmlHttpRequest.responseXML || this.language['backend.unidentified_error']);
 
 		var text = response.substitute(this.language, /\\?\$\{([^{}]+)\}/g);
 		return text;
