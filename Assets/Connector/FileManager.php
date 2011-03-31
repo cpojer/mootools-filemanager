@@ -491,9 +491,9 @@ if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 0);   // make sure this #defi
 
 
 
-require_once('Tooling.php');
-require_once('Image.class.php');
-require_once('Assets/getid3/getid3.php');
+require_once(str_replace('\\', '/', dirname(__FILE__)) . '/Tooling.php');
+require_once(str_replace('\\', '/', dirname(__FILE__)) . '/Image.class.php');
+require_once(str_replace('\\', '/', dirname(__FILE__)) . '/Assets/getid3/getid3.php');
 
 
 
@@ -522,7 +522,7 @@ class FileManager
 			'directory' => null,                                       // MUST be in the DocumentRoot tree
 			'assetBasePath' => null,                                   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
 			'thumbnailPath' => null,                                   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
-			'mimeTypesPath' => dirname(__FILE__) . '/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
+			'mimeTypesPath' => str_replace('\\', '/', dirname(__FILE__)) . '/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 2600 * 2600 * 3,
 			// 'maxImageSize' => 99999,									// obsoleted, replaced by 'suggestedMaxImageDimension'

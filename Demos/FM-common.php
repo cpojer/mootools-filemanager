@@ -24,12 +24,12 @@ if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 01);   // set to 01 / 1 / non
 
 if (!SITE_USES_ALIASES)
 {
-	require_once('../Assets/Connector/FileManager.php');
+	require_once(str_replace('\\', '/', dirname(__FILE__)) . '/../Assets/Connector/FileManager.php');
 }
 else
 {
 	// you don't need the additional sophistication of this one when you don't need path mapping support
-	require_once('../Assets/Connector/FMgr4Alias.php');
+	require_once(str_replace('\\', '/', dirname(__FILE__)) . '/../Assets/Connector/FMgr4Alias.php');
 }
 
 
