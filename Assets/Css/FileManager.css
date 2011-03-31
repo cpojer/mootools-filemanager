@@ -668,6 +668,16 @@ div.filemanager-preview ul li img, div.filemanager-uploader ul li img {
   float: left;
 }
 
+div.filemanager-preview p.tech_info {
+  font-size: 9px;
+  line-height: 1.2em;
+}
+
+div.filemanager-preview p.err_info {
+  color: red;
+  font-weight: bold;
+}
+
 div.filemanager-engine-trident4 div.filemanager-preview img.preview {
   height: 100px;
 }
