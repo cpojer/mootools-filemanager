@@ -77,7 +77,9 @@ FileManager.implement({
 
     if (this.options.resizeImages){
       var resizer = new Element('div', {'class': 'checkbox'}),
-        check = (function(){ this.toggleClass('checkboxChecked'); }).bind(resizer);
+        check = (function(){
+			this.toggleClass('checkboxChecked');
+		}).bind(resizer);
       check();
       this.upload.label = new Element('label').adopt(
         resizer, new Element('span', {text: this.language.resizeImages})

@@ -8,8 +8,8 @@
  * license: MIT-style license
  *
  * requires:
- *  core/1.3.1: '*'
- *  more/1.3.1.1: [Array.Extras, String.QueryString, Hash, Element.Delegation, Element.Measure, Fx.Scroll, Fx.SmoothScroll, Drag, Drag.Move, Assets, Tips ]
+ *  core/1.3.x: '*'
+ *  more/1.3.x: [Array.Extras, String.QueryString, Hash, Element.Delegation, Element.Measure, Fx.Scroll, Fx.SmoothScroll, Drag, Drag.Move, Assets, Tips ]
  *
  * provides: Filemanager
  *
@@ -38,7 +38,7 @@ var FileManager = new Class({
 						  ){},
 		onShow: function(){},
 		onHide: function(){},
-		onPreview: function(src			// this.get('src') ???
+		onPreview: function(src         // this.get('src') ???
 						   ){},
 		onDetails: function(json        // The JSON data as sent by the server for this 'detail' request
 						   ){},         // Fired when an item is picked form the files list, supplies object (e.g. {width: 123, height:456} )
@@ -83,7 +83,7 @@ var FileManager = new Class({
 		this.dialogOpen = false;
 		this.usingHistory = false;
 		this.fmShown = false;
-		this.drop_pending = 0;   // state: 0: no drop pending, 1: copy pending, 2: move pending
+		this.drop_pending = 0;           // state: 0: no drop pending, 1: copy pending, 2: move pending
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
 		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
 		this.view_fill_json = null;      // the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly consulting the server.
@@ -270,7 +270,7 @@ var FileManager = new Class({
 			self.fireEvent('preview', [this.get('src')]);
 		});
 
-		// We need to group the headers and lists togethor because we will
+		// We need to group the headers and lists together because we will
 		// use some CSS to reorganise a bit.  So we create "filemanager-preview-area" which
 		// will contain the h2 for the preview and also the preview content returned from
 		// Backend/FileManager.php
@@ -500,6 +500,23 @@ var FileManager = new Class({
 		if(this.fmShown) return;
 		this.fmShown = true;
 		this.onShow = false;
+
+		//if (typeof console !== 'undefined' && console.log) console.log('on show file = ' + this.Directory + ', source = ' + '---');
+		if(typeof loaddir != 'undefined' && loaddir != null)
+		{
+			this.Directory = loaddir;
+
+			// override jsGET storage!
+			if(typeof jsGET != 'undefined')
+			{
+				jsGET.set({'fmPath': this.Directory});
+			}
+		}
+		if(typeof preselect != 'undefined' && preselect != null)
+		{
+			this.onShow = true;
+		}
+
 		// get and set history
 		if(typeof jsGET != 'undefined') {
 			if(jsGET.get('fmFile') != null) this.onShow = true;
@@ -514,12 +531,6 @@ var FileManager = new Class({
 			if(jsGET.get('fmPath') != null) this.Directory = jsGET.get('fmPath');
 			jsGET.set({'fmID': this.ID, 'fmPath': this.Directory});
 			this.hashListenerId = jsGET.addListener(this.hashHistory,false,this);
-		}
-
-		//if (typeof console !== 'undefined' && console.log) console.log('on show file = ' + this.Directory + ', source = ' + '---');
-		if(typeof loaddir != 'undefined' && loaddir != null)
-		{
-			this.Directory = loaddir;
 		}
 
 		this.load(this.Directory, preselect);
@@ -717,7 +728,8 @@ var FileManager = new Class({
 			data: {
 				directory: dir,
 				type: this.listType,
-				filter: this.options.filter
+				filter: this.options.filter,
+				file_preselect: preselect
 			},
 			onRequest: function(){},
 			onSuccess: (function(j) {
@@ -734,7 +746,12 @@ var FileManager = new Class({
 
 				// the 'view' request may be an initial reload: keep the startindex (= page shown) intact then:
 				// Xinha: add the ability to preselect a file in the dir
-				this.fill(j, this.get_view_fill_startindex(), null, null, preselect);
+				var start_idx = this.get_view_fill_startindex();
+				if (j.preselect_index >= 0)
+				{
+					start_idx = j.preselect_index;
+				}
+				this.fill(j, start_idx, null, null, preselect);
 				//this.browserLoader.fade(0);
 			}).bind(this),
 			onComplete: (function() {
@@ -1412,7 +1429,7 @@ var FileManager = new Class({
 
 				if (loop_duration >= 100)
 				{
-					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [idx, endindex, render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir]);
+					this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [idx, endindex, render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir, preselect]);
 					return; // end call == break out of loop
 				}
 			}
@@ -1511,16 +1528,21 @@ var FileManager = new Class({
 			//}).bind(this)));
 
 			// ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
-			if(typeof preselect != 'undefined' && preselect == file.name)
+			if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: onShow = ' + this.onShow + ', file = ' + file.name + ', preselect = ' + (typeof preselect != 'undefined' ? preselect : '???'));
+			if(this.onShow && typeof preselect != 'undefined')
 			{
-				this.deselect();
-				this.Current = file.element;
-				new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(file.element);
-				file.element.addClass('selected');
-				//if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: fillInfo: file = ' + file.name);
-				this.fillInfo(file);
+				if (preselect == file.name)
+				{
+					this.deselect();
+					this.Current = file.element;
+					new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(file.element);
+					file.element.addClass('selected');
+					//if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: fillInfo: file = ' + file.name);
+					this.fillInfo(file);
+				}
 			}
-			else if(this.onShow && typeof jsGET != 'undefined' && jsGET.get('fmFile') != null && file.name == jsGET.get('fmFile')) {
+			else if(this.onShow && typeof jsGET != 'undefined' && jsGET.get('fmFile') != null && file.name == jsGET.get('fmFile'))
+			{
 				this.deselect();
 				this.Current = file.element;
 				new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(file.element);
@@ -1528,7 +1550,8 @@ var FileManager = new Class({
 				//if (typeof console !== 'undefined' && console.log) console.log('fill: fillInfo: file = ' + file.name);
 				this.fillInfo(file);
 			}
-			else if(this.onShow && jsGET.get('fmFile') == null) {
+			else if(this.onShow && jsGET.get('fmFile') == null)
+			{
 				this.onShow = false;
 			}
 		}
@@ -1756,9 +1779,9 @@ var FileManager = new Class({
 			if (done_so_far > 0.05)
 			{
 				/*
-				and it turns out our fudge factors are not telling the whole story: the total number of elements
-				to render are still a factor then.
-				*/
+				 * and it turns out our fudge factors are not telling the whole story: the total number of elements
+				 * to render are still a factor then.
+				 */
 				future_fudge_factor *= (1 + compensation * render_count);
 
 				var t_est = duration * future_fudge_factor / done_so_far;
@@ -1797,9 +1820,9 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log(this.storeHistory);
 		if(typeof jsGET != 'undefined' && this.storeHistory) {
 			if(file.mime != 'text/directory')
-				jsGET.set({'fmFile':file.name});
+				jsGET.set({'fmFile': file.name});
 			else
-				jsGET.set({'fmFile':''});
+				jsGET.set({'fmFile': ''});
 		}
 
 		var size = this.size(file.size);
@@ -2137,12 +2160,12 @@ this.Dialog = new Class({
 
 	options: {
 		/*
-		onShow: function(){},
-		onOpen: function(){},
-		onConfirm: function(){},
-		onDecline: function(){},
-		onClose: function(){},
-		*/
+		 * onShow: function(){},
+		 * onOpen: function(){},
+		 * onConfirm: function(){},
+		 * onDecline: function(){},
+		 * onClose: function(){},
+		 */
 		request: null,
 		buttons: ['confirm', 'decline'],
 		language: {}

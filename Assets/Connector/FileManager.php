@@ -398,6 +398,10 @@
  *
  *               'list_type'             (string) the type of view requested: 'list' or 'thumb'.
  *
+ *               'file_preselect'        (optional, string) filename of a file in this directory which should be located and selected:
+ *                                       when specified, the backend will provide an index number pointing at the corresponding JSON files[]
+ *                                       entry to assist the front-end in jumping to that particular item in the view.
+ *
  *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular view
  *                                       operation (possibly as the second half of a copy/move/delete operation), when the ['status']==0,
  *                                       we are performing a view operation as the second part of another otherwise failed action, e.g. a
@@ -650,7 +654,7 @@ class FileManager
 	 *
 	 * Return the directory listing in a nested array, suitable for JSON encoding.
 	 */
-	protected function _onView($legal_url, $json, $mime_filter, $list_type, $filemask = '*')
+	protected function _onView($legal_url, $json, $mime_filter, $list_type, $file_preselect_arg = null, $filemask = '*')
 	{
 		$dir = $this->legal_url_path2file_path($legal_url);
 		if (!is_dir($dir))
@@ -693,6 +697,7 @@ class FileManager
 				'mime_filters' => $mime_filters,
 				'guess_mime' => $just_guess_mime,
 				'list_type' => $list_type,
+				'file_preselect' => $file_preselect_arg,
 				'preliminary_json' => $json
 			);
 
@@ -706,15 +711,19 @@ class FileManager
 		$mime_filters = $fileinfo['mime_filters'];
 		$just_guess_mime = $fileinfo['guess_mime'];
 		$list_type = $fileinfo['list_type'];
+		$file_preselect_arg = $fileinfo['file_preselect'];
 		$json = $fileinfo['preliminary_json'];
 
+		$file_preselect_index = -1;
+		$idx = array(0, 0);
+		
 		foreach ($files as $filename)
 		{
 			$url = $legal_url . $filename;
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($url);
 
-			$isdir = !is_file($file);
+			$isdir = (is_file($file) ? 0 : 1);
 			if (!$isdir)
 			{
 				$mime = $this->getMimeType($file, $just_guess_mime);
@@ -728,6 +737,11 @@ class FileManager
 					continue;
 				}
 				$iconspec = $filename;
+				
+				if ($filename == $file_preselect_arg)
+				{
+					$file_preselect_index = $idx[0];
+				}
 			}
 			else if (is_dir($file))
 			{
@@ -776,10 +790,10 @@ class FileManager
 			}
 			else
 			{
-				$thumb48 = $this->getIcon($iconspec, false);
+				$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, false));
 				$thumb250 = $thumb48;
 			}
-			$icon = $this->getIcon($iconspec, true);
+			$icon = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, true));
 			
 			if ($list_type == 'thumb')
 			{
@@ -790,7 +804,7 @@ class FileManager
 				$thumb = $icon;
 			}
 
-			$out[$isdir ? 0 : 1][] = array(
+			$out[$isdir][] = array(
 					'path' => FileManagerUtility::rawurlencode_path($url),
 					'name' => preg_replace('/[^ -~]/', '?', $filename),       // HACK/TWEAK: PHP5 and below are completely b0rked when it comes to international filenames   :-(
 					'date' => date($this->options['dateFormat'], @filemtime($file)),
@@ -798,10 +812,10 @@ class FileManager
 					'thumbnail' => $thumb,
 					'thumbnail48' => $thumb48,
 					'thumbnail250' => $thumb250,
-					//'_______thumbnail______' => FileManagerUtility::rawurlencode_path($thumb),
-					'icon' => FileManagerUtility::rawurlencode_path($icon),
+					'icon' => $icon,
 					'size' => @filesize($file)
 				);
+			$idx[$isdir]++;
 
 			if (0)
 			{
@@ -811,23 +825,35 @@ class FileManager
 			}
 		}
 
-		return array_merge((is_array($json) ? $json : array()), array(
-				//'assetBasePath' => $this->options['assetBasePath'],
-				//'thumbnailPath' => $this->options['thumbnailPath'],
-				//'ia_directory' => $this->options['directory'],
-				//'ia_dir' => $dir,
-				//'ia_basedir' => $this->url_path2file_path($this->options['directory']),
+		$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon('is.dir', false));
+		$icon = FileManagerUtility::rawurlencode_path($this->getIcon('is.dir', true));
+		if ($list_type == 'thumb')
+		{
+			$thumb = $thumb48;
+		}
+		else
+		{
+			$thumb = $icon;
+		}
+		return array(
+			'dirs' => (!empty($out[0]) ? $out[0] : array()),
+			'files' => (!empty($out[1]) ? $out[1] : array()),
+			'json' => array_merge((is_array($json) ? $json : array()), array(
 				'root' => substr($this->options['directory'], 1),
 				'path' => $legal_url,                                  // is relative to options['directory']
 				'dir' => array(
-						'name' => pathinfo($legal_url, PATHINFO_BASENAME),
-						'date' => date($this->options['dateFormat'], @filemtime($dir)),
-						'mime' => 'text/directory',
-						'thumbnail' => $this->getIcon('is.dir', $list_type != 'thumb'),
-						'icon' => $this->getIcon('is.dir', true)
-					),
-				'files' => array_merge(!empty($out[0]) ? $out[0] : array(), !empty($out[1]) ? $out[1] : array())
-			));
+					'path' => FileManagerUtility::rawurlencode_path($legal_url),
+					'name' => pathinfo($legal_url, PATHINFO_BASENAME),
+					'date' => date($this->options['dateFormat'], @filemtime($dir)),
+					'mime' => 'text/directory',
+					'thumbnail' => $thumb,
+					'thumbnail48' => $thumb48,
+					'thumbnail250' => $thumb48,
+					'icon' => $icon
+				),
+				'preselect_index' => $file_preselect_index
+			))
+		);
 	}
 
 	/**
@@ -878,17 +904,25 @@ class FileManager
 			$dir_arg = $this->getPOSTparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
+			
+			$file_preselect_arg = $this->getPOSTparam('file_preselect');
+			if (!empty($file_preselect_arg))
+			{
+				$file_preselect_arg = pathinfo($file_preselect_arg, PATHINFO_BASENAME);
+			}
 		}
 		catch(FileManagerException $e)
 		{
 			$emsg = $e->getMessage();
 			$legal_url = '/';
+			$file_preselect_arg = null;
 		}
 		catch(Exception $e)
 		{
 			// catching other severe failures; since this can be anything it may not be a translation keyword in the message...
 			$emsg = $e->getMessage();
 			$legal_url = '/';
+			$file_preselect_arg = null;
 		}
 
 		// loop until we drop below the bottomdir; meanwhile getDir() above guarantees that $dir is a subdir of bottomdir, hence dir >= bottomdir.
@@ -896,11 +930,11 @@ class FileManager
 		{
 			try
 			{
-				$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
+				$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type, $file_preselect_arg);
 
 				if (!headers_sent()) header('Content-Type: application/json');
 
-				echo json_encode($rv);
+				echo json_encode(array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files']))));
 				return;
 			}
 			catch(FileManagerException $e)
@@ -917,6 +951,7 @@ class FileManager
 
 			// step down to the parent dir and retry:
 			$legal_url = self::getParentDir($legal_url);
+			$file_preselect_arg = null;
 
 			$jserr['status']++;
 
@@ -1438,7 +1473,7 @@ class FileManager
 
 			// success, now show the new directory as a list view:
 			$rv = $this->_onView($legal_url . $file . '/', $jserr, $mime_filter, $list_type);
-			echo json_encode($rv);
+			echo json_encode(array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files']))));
 			return;
 		}
 		catch(FileManagerException $e)
@@ -1451,7 +1486,7 @@ class FileManager
 			try
 			{
 				$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
-				$jserr = $rv;
+				$jserr = array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files'])));
 			}
 			catch (Exception $e)
 			{
@@ -1460,7 +1495,7 @@ class FileManager
 				{
 					$legal_url = $this->options['directory'];
 					$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
-					$jserr = $rv;
+					$jserr = array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files'])));
 				}
 				catch (Exception $e)
 				{
@@ -1480,7 +1515,7 @@ class FileManager
 			try
 			{
 				$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
-				$jserr = $rv;
+				$jserr = array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files'])));
 			}
 			catch (Exception $e)
 			{
@@ -1489,7 +1524,7 @@ class FileManager
 				{
 					$legal_url = $this->options['directory'];
 					$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
-					$jserr = $rv;
+					$jserr = array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files'])));
 				}
 				catch (Exception $e)
 				{
@@ -3103,7 +3138,6 @@ class FileManager
 	{
 		return (strrpos($string, '/') === strlen($string) - 1 ? $string : $string . '/');
 	}
-
 
 
 
