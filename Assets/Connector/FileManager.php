@@ -56,6 +56,8 @@
  *   - MoveIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file / subdirectory may be renamed, moved or copied.
  *     Note that currently support for copying subdirectories is missing.
  *     The parameter $action = 'move'.
+ *   - URIpropagateData (array, default is *null*) the data elements which will be passed along as part of the generated request URIs, i.e. the thumbnail request URIs. Use this to pass custom data elements to the
+ *     handler which delivers the thumbnails to the front-end.
  *
  * Obsoleted options:
  *   - maxImageSize: (integer, default is 1024) The maximum number of pixels in both height and width an image can have, if the user enables "resize on upload". (This option is obsoleted by the 'suggestedMaxImageDimension' option.)
@@ -550,7 +552,8 @@ class FileManager
 			'DownloadIsAuthorized_cb' => null,
 			'CreateIsAuthorized_cb' => null,
 			'DestroyIsAuthorized_cb' => null,
-			'MoveIsAuthorized_cb' => null
+			'MoveIsAuthorized_cb' => null,
+			'URIpropagateData' => null
 		), (is_array($options) ? $options : array()));
 
 		// transform the obsoleted/deprecated options:
@@ -2048,6 +2051,12 @@ class FileManager
 		// first determine how the client can reach us; assume that's the same URI as he went to right now.
 		$our_handler_url = $_SERVER['SCRIPT_NAME'];
 
+		if (is_array($this->options['URIpropagateData']))
+		{
+			// the items in 'spec' always win over any entries in 'URIpropagateData':
+			$spec = array_merge(array(), $this->options['URIpropagateData'], $spec);
+		}
+		
 		// next, construct the query part of the URI:
 		$qstr = http_build_query_ex($spec, null, '&', null, PHP_QUERY_RFC3986);
 
