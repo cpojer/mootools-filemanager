@@ -26,11 +26,11 @@ FileManager.TinyMCE = function(options){
    */
   return function(field, url, type, win){
     var manager = new FileManager(Object.append({
-      onComplete: function(encoded_path, file, legal_file_path, current_dir, full_file_path) {
+      onComplete: function(path, file, mgr) {
         if (!win.document) return;
-        win.document.getElementById(field).value = full_file_path;
+        win.document.getElementById(field).value = path;
         if (win.ImageDialog) {
-			win.ImageDialog.showPreviewImage(full_file_path, 1);
+			win.ImageDialog.showPreviewImage(path, 1);
 		}
         this.container.destroy();
       }
@@ -42,7 +42,22 @@ FileManager.TinyMCE = function(options){
     manager.filemanager.setStyle('zIndex', 400001);
     if (manager.overlay) manager.overlay.el.setStyle('zIndex', 400000); // i.e. only do this when FileManager settings has 'hideOverlay: false' (default)
     document.id(manager.tips).setStyle('zIndex', 400010);
-    manager.show();
+	var src = win.document.getElementById(field).value;
+
+	src = decodeURI(src);
+
+	if (src.length > 0)
+	{
+		src = this.documentBaseURI.toAbsolute(src);
+	}
+	if (src.match(/^[a-z]+:/i))
+	{
+		// strip off scheme + authority sections:
+		src = src.replace(/^[a-z]+:(\/\/?)[^\/]*/i, '');
+	}
+
+	// pass full path to 'preselect': backend will take care of it for us
+	manager.show(null, null, (src.length > 0 ? src : null));
     return manager;
   };
 };

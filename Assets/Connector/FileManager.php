@@ -400,8 +400,8 @@
  *
  *               'list_type'             (string) the type of view requested: 'list' or 'thumb'.
  *
- *               'file_preselect'        (optional, string) filename of a file in this directory which should be located and selected:
- *                                       when specified, the backend will provide an index number pointing at the corresponding JSON files[]
+ *               'file_preselect'        (optional, string) filename of a file in this directory which should be located and selected.
+ *                                       When found, the backend will provide an index number pointing at the corresponding JSON files[]
  *                                       entry to assist the front-end in jumping to that particular item in the view.
  *
  *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular view
@@ -854,7 +854,8 @@ class FileManager
 					'thumbnail250' => $thumb48,
 					'icon' => $icon
 				),
-				'preselect_index' => $file_preselect_index
+				'preselect_index' => $file_preselect_index,
+				'preselect_name' => ($file_preselect_index >= 0 ? $file_preselect_arg : null)
 			))
 		);
 	}
@@ -867,6 +868,32 @@ class FileManager
 	 * Expected parameters:
 	 *
 	 * $_POST['directory']     path relative to basedir a.k.a. options['directory'] root
+	 *
+	 * $_POST['file_preselect']     optional filename or path:
+	 *                         when a filename, this is the filename of a file in this directory 
+	 *                         which should be located and selected. When found, the backend will 
+	 *                         provide an index number pointing at the corresponding JSON files[]
+	 *                         entry to assist the front-end in jumping to that particular item 
+	 *                         in the view.
+	 *
+	 *                         when a path, it is either an absolute or a relative path:
+	 *                         either is assumed to be a URI URI path, i.e. rooted at
+	 *                           DocumentRoot.
+	 *                         The path will be transformed to a LEGAL URI path and
+	 *                         will OVERRIDE the $_POST['directory'] path.
+	 *                         Otherwise, this mode acts as when only a filename was specified here.
+	 *                         This mode is useful to help a frontend to quickly jump to a file
+	 *                         pointed at by a URI.
+	 *
+	 *                         N.B.: This also the only entry which accepts absolute URI paths and 
+	 *                               transforms them to LEGAL URI paths.
+	 *
+	 *                         When the specified path is illegal, i.e. does not reside inside the
+	 *                         options['directory']-rooted LEGAL URI subtree, it will be discarded
+	 *                         entirely (as all file paths, whether they are absolute or relative,
+	 *                         must end up inside the options['directory']-rooted subtree to be
+	 *                         considered manageable files) and the process will continue as if 
+	 *                         the $_POST['file_preselect'] entry had not been set.
 	 *
 	 * $_POST['filter']        optional mimetype filter string, amy be the part up to and
 	 *                         including the slash '/' or the full mimetype. Only files
@@ -909,9 +936,32 @@ class FileManager
 			$legal_url = self::enforceTrailingSlash($legal_url);
 
 			$file_preselect_arg = $this->getPOSTparam('file_preselect');
-			if (!empty($file_preselect_arg))
+			try
 			{
-				$file_preselect_arg = pathinfo($file_preselect_arg, PATHINFO_BASENAME);
+				if (!empty($file_preselect_arg))
+				{
+					// check if this a path instead of just a basename, then convert to legal_url and split across filename and directory.
+					if (strpos($file_preselect_arg, '/') !== false)
+					{
+						// this will also convert a relative path to an absolute path before transforming it to a LEGAL URI path:
+						$legal_presel = $this->abs2legal_url_path($file_preselect_arg);
+						
+						$prseli = pathinfo($legal_presel);
+						$file_preselect_arg = $prseli['basename'];
+						// override the directory!
+						$legal_url = $prseli['dirname'];
+						$legal_url = self::enforceTrailingSlash($legal_url);
+					}
+					else
+					{
+						$file_preselect_arg = pathinfo($file_preselect_arg, PATHINFO_BASENAME);
+					}
+				}
+			}
+			catch(FileManagerException $e)
+			{
+				// discard the preselect input entirely:
+				$file_preselect_arg = null;
 			}
 		}
 		catch(FileManagerException $e)
@@ -3007,6 +3057,39 @@ class FileManager
 			$path = $based . $path;
 		}
 		return $this->normalize($path);
+	}
+
+	/**
+	 * Accept an absolute URI path, i.e. rooted against DocumentRoot, and transform it to a LEGAL URI absolute path, i.e. rooted against options['directory'].
+	 *
+	 * Relative paths are assumed to be relative to the current request path, i.e. the getRequestPath() produced path.
+	 *
+	 * Note: as it uses normalize(), any illegal path will throw a FileManagerException
+	 *
+	 * Returns a fully normalized LEGAL URI path.
+	 *
+	 * Throws a FileManagerException when the given path cannot be converted to a LEGAL URL, i.e. when it resides outside the options['directory'] subtree.
+	 */
+	public function abs2legal_url_path($path)
+	{
+		$root = $this->options['directory'];
+
+		$path = $this->rel2abs_url_path($path);
+		//$path = $this->normalize($path);    -- taken care of by rel2abs_url_path already
+
+		// but we MUST make sure the path is still a LEGAL URI, i.e. sutting inside options['directory']:
+		if (strlen($path) < strlen($root))
+			$path = self::enforceTrailingSlash($path);
+
+		if (!FileManagerUtility::startsWith($path, $root))
+		{
+			throw new FileManagerException('path_tampering:' . $path);
+		}
+
+		// clip the trailing '/' off the $root path before reduction:
+		$path = str_replace(substr($root, 0, -1), '', $path);
+		
+		return $path;
 	}
 
 	/**

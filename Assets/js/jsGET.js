@@ -78,7 +78,7 @@ var jsGET = {
     return (this.vars.current[get]) ? this.vars.current[get] : null;
   },
   set: function(set) {
-    //console.log('savedHistory');
+    //if (typeof console !== 'undefined' && console.log) console.log('savedHistory');
     this.load();
 
     if(typeof set != 'object') {
@@ -104,7 +104,7 @@ var jsGET = {
 		  // given the loop, the condition should be always TRUE
           hashString += sep+this.encode(key)+'='+this.encode(this.vars.current[key]);
         } else {
-		  console.log('jsGET: *** SHOULD NEVER GET HERE! *** @ 101 ' + key);
+		  if (typeof console !== 'undefined' && console.log) console.log('jsGET: *** SHOULD NEVER GET HERE! *** @ 101 ' + key);
           hashString += sep+this.encode(key);
 		}
         sep = '&';
@@ -118,9 +118,9 @@ var jsGET = {
 		// ^^^ first part should be always TRUE, second part merely filters out the set key=null items,
 		//     as get(key) would always produce NULL here...
         if (typeof this.vars.current[key] != 'undefined')
-		  console.log('jsGET: *** SHOULD NEVER GET HERE! *** @ 116');
+		  if (typeof console !== 'undefined' && console.log) console.log('jsGET: *** SHOULD NEVER GET HERE! *** @ 116');
         if (this.get(key) !== null)
-		  console.log('jsGET: *** SHOULD NEVER GET HERE! *** @ 118');
+		  if (typeof console !== 'undefined' && console.log) console.log('jsGET: *** SHOULD NEVER GET HERE! *** @ 118');
 
         hashString += sep+this.encode(key)+'='+this.encode(set[key]);
         sep = '&';
@@ -155,7 +155,7 @@ var jsGET = {
         if(typeof this.vars.current[key] != 'undefined') {
           hashString += sep+this.encode(key)+'='+this.encode(this.vars.current[key]);
         } else {
-		  console.log('jsGET: *** SHOULD NEVER GET HERE! *** @ 153 ' + key);
+		  if (typeof console !== 'undefined' && console.log) console.log('jsGET: *** SHOULD NEVER GET HERE! *** @ 153 ' + key);
           hashString += sep+this.encode(key);
 		}
         sep = '&';
@@ -214,9 +214,9 @@ var jsGET = {
             self.load();
             setChangedVars();
             /*
-            console.log('-----');
-            console.log(self.vars.old);
-            console.log(self.vars.changed);
+            if (typeof console !== 'undefined' && console.log) console.log('-----');
+            if (typeof console !== 'undefined' && console.log) console.log(self.vars.old);
+            if (typeof console !== 'undefined' && console.log) console.log(self.vars.changed);
             */
             // call the given listener function
             if(typeof listener == 'function') {
@@ -226,10 +226,10 @@ var jsGET = {
             setChangedVars();
 		  }
           /*
-          console.log('-----');
-          console.log(self.vars.current);
-          console.log(self.vars.old);
-          console.log(self.vars.changed);
+          if (typeof console !== 'undefined' && console.log) console.log('-----');
+          if (typeof console !== 'undefined' && console.log) console.log(self.vars.current);
+          if (typeof console !== 'undefined' && console.log) console.log(self.vars.old);
+          if (typeof console !== 'undefined' && console.log) console.log(self.vars.changed);
           */
           self.vars.old = new self.vars.current.constructor();
 		  for(var key in self.vars.current) {

@@ -553,11 +553,12 @@ var FileManager = new Class({
 		if(typeof loaddir != 'undefined' && loaddir != null)
 		{
 			this.Directory = loaddir;
-
-			// override jsGET storage!
-			if(typeof jsGET != 'undefined')
+		}
+		else if(typeof jsGET != 'undefined')
+		{
+			if(jsGET.get('fmPath') != null)
 			{
-				jsGET.set({'fmPath': this.Directory});
+				this.Directory = jsGET.get('fmPath');
 			}
 		}
 		if(typeof preselect != 'undefined' && preselect != null)
@@ -576,7 +577,6 @@ var FileManager = new Class({
 				else
 					this.browserMenu_list.store('set',true).set('opacity',1);
 			}
-			if(jsGET.get('fmPath') != null) this.Directory = jsGET.get('fmPath');
 			jsGET.set({'fmID': this.ID, 'fmPath': this.Directory});
 			this.hashListenerId = jsGET.addListener(this.hashHistory,false,this);
 		}
@@ -793,9 +793,11 @@ var FileManager = new Class({
 				// the 'view' request may be an initial reload: keep the startindex (= page shown) intact then:
 				// Xinha: add the ability to preselect a file in the dir
 				var start_idx = this.get_view_fill_startindex();
+				preselect = null;
 				if (j.preselect_index >= 0)
 				{
 					start_idx = j.preselect_index;
+					preselect = j.preselect_name;
 				}
 				this.fill(j, start_idx, null, null, preselect);
 				//this.browserLoader.fade(0);
@@ -1278,6 +1280,7 @@ var FileManager = new Class({
 			span.removeClass('hover');
 		});
 
+		this.root = j.root;
 		this.Directory = j.path;
 		this.CurrentDir = j.dir;
 		if (!this.onShow) {
@@ -1285,7 +1288,6 @@ var FileManager = new Class({
 			this.fillInfo(j.dir);
 		}
 		this.browser.empty();
-		this.root = j.root;
 
 		// set history
 		if(typeof jsGET != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')

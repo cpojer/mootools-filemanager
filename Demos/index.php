@@ -195,7 +195,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
                     new Element('a', {
                             'data-milkbox': 'single',
                             'title': file.name,
-                            'href': encodeURI(full_file_path)              // see also:  http://www.javascripter.net/faq/escape.htm
+                            'href': encodeURI(path)              // see also:  http://www.javascripter.net/faq/escape.htm
                         }).adopt(new Element('img', {
                             'src': (file.thumbnail250 ? file.thumbnail250 : file.icon),
                             'class': 'preview',
@@ -244,7 +244,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         complete.apply(manager2, [val, {
             name: val.split('/').getLast(),
             icon: '../Assets/Images/Icons/'+val.split('.').getLast()+'.png'
-        }]);
+        }, manager2]);
       }
 
       new Element('button', {'class': 'browser', text: 'Select an image'}).addEvent('click', manager2.show.bind(manager2)).inject(el, 'before');
