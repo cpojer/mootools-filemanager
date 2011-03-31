@@ -109,7 +109,7 @@ function var_dump_ex($value, $level = 0, $sort_before_dump = 0, $show_whitespace
 		break;
 
 	case 'object':
-		$props = get_class_vars(get_class($value));
+		$props = get_object_vars($value);
 		if ($sort_before_dump > $level)
 		{
 			ksort($props);
@@ -277,8 +277,8 @@ function dump_request_to_logfile($extra = null, $dump_options = __DUMP2LOG_DEFAU
 			'extension'      => (($dump_options & DUMP2LOG_FORMAT_AS_HTML) ? 'html' : 'log')
 		), (is_array($filename_options) ? $filename_options : array()));
 
-	$fname = $filename_options['namebase'] . $tstamp . '.' . sprintf('%03u', $sequence_number) . '-' . $filename_options['origin-section'] . '.' . $filename_options['extension'];
-	$fname = preg_replace('/[^A-Za-z0-9_.-]+/', '_', $fname);    // make suitable for filesystem
+	$fname = $filename_options['namebase'] . $tstamp . '.' . sprintf('%03u', $sequence_number) . '-' . $filename_options['origin-section'];
+	$fname = substr(preg_replace('/[^A-Za-z0-9_.-]+/', '_', $fname), 0, 46) . '.' . substr(preg_replace('/[^A-Za-z0-9_.-]+/', '_', $filename_options['extension']), 0, 9);    // make suitable for filesystem
 	if (isset($_SESSION))
 	{
 		$_SESSION['dbg_last_dump'] = $fname;
@@ -299,7 +299,10 @@ function dump_request_to_logfile($extra = null, $dump_options = __DUMP2LOG_DEFAU
 	{
 		$fname = str_replace('\\', '/', dirname(__FILE__)) . '/' . $fname;
 
-		@file_put_contents($fname, $rv);
+		if (@file_put_contents($fname, $rv) === false)
+		{
+			throw new Exception('b0rk at ' . $fname);
+		}
 	}
 
 	if ($dump_options & DUMP2LOG_FORMAT_AS_HTML)
