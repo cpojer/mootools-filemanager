@@ -79,6 +79,7 @@ var FileManager = new Class({
 		selectable: false,
 		destroy: false,
 		rename: false,
+		move_or_copy: false,
 		download: false,
 		createFolders: false,
 		filter: '',
@@ -418,6 +419,9 @@ var FileManager = new Class({
 
 	allow_DnD: function(j, pagesize)
 	{
+		if (!this.options.move_or_copy)
+			return false;
+
 		if (!j || !j.files || !pagesize)
 			return true;
 
@@ -1678,7 +1682,7 @@ var FileManager = new Class({
 					if (!is_a_move || !droppable) {
 						el.setStyles({left: 0, top: 0});
 					}
-					if (is_a_move && !droppable) {
+					if ((!this.options.move_or_copy) || (is_a_move && !droppable)) {
 						this.drop_pending = 0;
 
 						this.revert(el);   // go and request the details anew, then refresh them in the view
