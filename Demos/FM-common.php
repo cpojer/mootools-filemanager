@@ -668,19 +668,6 @@ function FM_IsAuthorized($mgr, $action, &$info)
 
 
 
-
-
-
-
-
-
-
-if (DEVELOPMENT) // debugging
-{
-	// fake a POST submit through a GET request so we can easily diag/debug event requests:
-	if (!isset($_POST)) $_POST = array();
-	foreach($_GET as $k => $v)
-	{
-		$_POST[$k] = $v;
-	}
-}
+// Do *NOT* add a <?php ?-> close tag here! Any whitespace after that makes PHP output both a Content-Type: test/html header AND the whitespace as content.
+// This BREAKS any operation (such as mootools-filemanager::event=thumbnail) which outputs BINARY DATA (in that particular case, PHP spits out an image)
+// The safest way to prevent ANY PHP file from producing undesirable [whitespace] output is to never add that ?-> close tag.
