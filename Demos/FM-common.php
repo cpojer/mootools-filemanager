@@ -643,7 +643,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		force the thumbnail to become a thumbnail of the 'nuke':
 		*/
 		$fsize = filesize($info['file']);
-		if ($info['mime'] == 'image/jpeg' && $fsize >= 500 * 1024 && $fsize <= 2 * 1024 * 1024)
+		if (DEVELOPMENT && $info['mime'] == 'image/jpeg' && $fsize >= 500 * 1024 && $fsize <= 2 * 1024 * 1024)
 		{
 			// force the manager to fetch the 'nuke' icon:
 			$info['filename'] = 'is.default-error';
