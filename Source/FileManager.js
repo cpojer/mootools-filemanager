@@ -2275,7 +2275,8 @@ this.Dialog = new Class({
 	show: function(){
 		if(!this.options.hideOverlay)
 			this.overlay.show();
-		var self = this.fireEvent('open');
+		var self = this;
+		this.fireEvent('open');
 		this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
 			var button = this.element.getElement('button.filemanager-dialog-confirm') || this.element.getElement('button');
 			if (button) button.focus();
