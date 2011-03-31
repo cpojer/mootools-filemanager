@@ -1251,17 +1251,8 @@ class FileManager
 		}
 		catch(Exception $e)
 		{
-			if (function_exists('send_response_status_header'))
-			{
-				send_response_status_header(500);
-				echo 'Cannot produce thumbnail: ' . $emsg . ' :: ' . $img_filepath;
-			}
-			else
-			{
-				// no smarties detection whether we're running on fcgi or bare iron, we assume the latter:
-				header('HTTP/1.0 500 Internal Error', true, 500);
-				echo 'Cannot produce thumbnail: ' . $emsg . ' :: ' . $img_filepath;
-			}
+			send_response_status_header(500);
+			echo 'Cannot produce thumbnail: ' . $emsg . ' :: ' . $img_filepath;
 		}
 	}
 
@@ -1642,32 +1633,14 @@ class FileManager
 		catch(FileManagerException $e)
 		{
 			// we don't care whether it's a 404, a 403 or something else entirely: we feed 'em a 403 and that's final!
-			if (function_exists('send_response_status_header'))
-			{
-				send_response_status_header(403);
-				echo $e->getMessage();
-			}
-			else
-			{
-				// no smarties detection whether we're running on fcgi or bare iron, we assume the latter:
-				header('HTTP/1.0 403 Forbidden', true, 403);
-				echo $e->getMessage();
-			}
+			send_response_status_header(403);
+			echo $e->getMessage();
 		}
 		catch(Exception $e)
 		{
 			// we don't care whether it's a 404, a 403 or something else entirely: we feed 'em a 403 and that's final!
-			if (function_exists('send_response_status_header'))
-			{
-				send_response_status_header(403);
-				echo $e->getMessage();
-			}
-			else
-			{
-				// no smarties detection whether we're running on fcgi or bare iron, we assume the latter:
-				header('HTTP/1.0 403 Forbidden', true, 403);
-				echo $e->getMessage();
-			}
+			send_response_status_header(403);
+			echo $e->getMessage();
 		}
 	}
 

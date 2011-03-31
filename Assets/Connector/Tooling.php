@@ -162,3 +162,177 @@ if (!function_exists('http_build_query_ex'))
         return implode($sep, $ret);
     }
 }
+
+
+
+/**
+ * Determine how the PHP interpreter was invoked: cli/cgi/fastcgi/server,
+ * where 'server' implies PHP is part of a webserver in the form of a 'module' (e.g. mod_php5) or similar.
+ *
+ * This information is used, for example, to decide the correct way to send the 'respose header code':
+ * see send_response_status_header().
+ */
+if (!function_exists('get_interpreter_invocation_mode'))
+{
+	function get_interpreter_invocation_mode()
+	{
+		global $_ENV;
+		global $_SERVER;
+
+		/*
+		 * see
+		 *
+		 * http://nl2.php.net/manual/en/function.php-sapi-name.php
+		 * http://stackoverflow.com/questions/190759/can-php-detect-if-its-run-from-a-cron-job-or-from-the-command-line
+		 */
+		$mode = "server";
+		$name = php_sapi_name();
+		if (preg_match("/fcgi/", $name) == 1)
+		{
+			$mode = "fastcgi";
+		}
+		else if (preg_match("/cli/", $name) == 1)
+		{
+			$mode = "cli";
+		}
+		else if (preg_match("/cgi/", $name) == 1)
+		{
+			$mode = "cgi";
+		}
+
+		/*
+		 * check whether POSIX functions have been compiled/enabled; xampp on Win32/64 doesn't have the buggers! :-(
+		 */
+		if (function_exists('posix_isatty'))
+		{
+			if (posix_isatty(STDOUT))
+			{
+				/* even when seemingly run as cgi/fastcgi, a valid stdout TTY implies an interactive commandline run */
+				$mode = 'cli';
+			}
+		}
+
+		if (!empty($_ENV['TERM']) && empty($_SERVER['REMOTE_ADDR']))
+		{
+			/* even when seemingly run as cgi/fastcgi, a valid stdout TTY implies an interactive commandline run */
+			$mode = 'cli';
+		}
+
+		return $mode;
+	}
+}
+
+
+
+
+
+
+/**
+ * Return the HTTP response code string for the given response code
+ */
+if (!function_exists('get_response_code_string'))
+{
+	function get_response_code_string($response_code)
+	{
+		$response_code = intval($response_code);
+		switch ($response_code)
+		{
+		case 100:   return "RFC2616 Section 10.1.1: Continue";
+		case 101:   return "RFC2616 Section 10.1.2: Switching Protocols";
+		case 200:   return "RFC2616 Section 10.2.1: OK";
+		case 201:   return "RFC2616 Section 10.2.2: Created";
+		case 202:   return "RFC2616 Section 10.2.3: Accepted";
+		case 203:   return "RFC2616 Section 10.2.4: Non-Authoritative Information";
+		case 204:   return "RFC2616 Section 10.2.5: No Content";
+		case 205:   return "RFC2616 Section 10.2.6: Reset Content";
+		case 206:   return "RFC2616 Section 10.2.7: Partial Content";
+		case 300:   return "RFC2616 Section 10.3.1: Multiple Choices";
+		case 301:   return "RFC2616 Section 10.3.2: Moved Permanently";
+		case 302:   return "RFC2616 Section 10.3.3: Found";
+		case 303:   return "RFC2616 Section 10.3.4: See Other";
+		case 304:   return "RFC2616 Section 10.3.5: Not Modified";
+		case 305:   return "RFC2616 Section 10.3.6: Use Proxy";
+		case 307:   return "RFC2616 Section 10.3.8: Temporary Redirect";
+		case 400:   return "RFC2616 Section 10.4.1: Bad Request";
+		case 401:   return "RFC2616 Section 10.4.2: Unauthorized";
+		case 402:   return "RFC2616 Section 10.4.3: Payment Required";
+		case 403:   return "RFC2616 Section 10.4.4: Forbidden";
+		case 404:   return "RFC2616 Section 10.4.5: Not Found";
+		case 405:   return "RFC2616 Section 10.4.6: Method Not Allowed";
+		case 406:   return "RFC2616 Section 10.4.7: Not Acceptable";
+		case 407:   return "RFC2616 Section 10.4.8: Proxy Authentication Required";
+		case 408:   return "RFC2616 Section 10.4.9: Request Time-out";
+		case 409:   return "RFC2616 Section 10.4.10: Conflict";
+		case 410:   return "RFC2616 Section 10.4.11: Gone";
+		case 411:   return "RFC2616 Section 10.4.12: Length Required";
+		case 412:   return "RFC2616 Section 10.4.13: Precondition Failed";
+		case 413:   return "RFC2616 Section 10.4.14: Request Entity Too Large";
+		case 414:   return "RFC2616 Section 10.4.15: Request-URI Too Large";
+		case 415:   return "RFC2616 Section 10.4.16: Unsupported Media Type";
+		case 416:   return "RFC2616 Section 10.4.17: Requested range not satisfiable";
+		case 417:   return "RFC2616 Section 10.4.18: Expectation Failed";
+		case 500:   return "RFC2616 Section 10.5.1: Internal Server Error";
+		case 501:   return "RFC2616 Section 10.5.2: Not Implemented";
+		case 502:   return "RFC2616 Section 10.5.3: Bad Gateway";
+		case 503:   return "RFC2616 Section 10.5.4: Service Unavailable";
+		case 504:   return "RFC2616 Section 10.5.5: Gateway Time-out";
+		case 505:   return "RFC2616 Section 10.5.6: HTTP Version not supported";
+	/*
+		case 102:   return "Processing";  // http://www.askapache.com/htaccess/apache-status-code-headers-errordocument.html#m0-askapache3
+		case 207:   return "Multi-Status";
+		case 418:   return "I'm a teapot";
+		case 419:   return "unused";
+		case 420:   return "unused";
+		case 421:   return "unused";
+		case 422:   return "Unproccessable entity";
+		case 423:   return "Locked";
+		case 424:   return "Failed Dependency";
+		case 425:   return "Node code";
+		case 426:   return "Upgrade Required";
+		case 506:   return "Variant Also Negotiates";
+		case 507:   return "Insufficient Storage";
+		case 508:   return "unused";
+		case 509:   return "unused";
+		case 510:   return "Not Extended";
+	*/
+		default:   return rtrim("Unknown Response Code " . $response_code);
+		}
+	}
+}
+
+
+
+/**
+ * Performs the correct way of transmitting the response status code header: PHP header() must be invoked in different ways
+ * dependent on the way the PHP interpreter has been invoked.
+ *
+ * See also:
+ *
+ * http://nl2.php.net/manual/en/function.header.php
+ */
+if (!function_exists('send_response_status_header'))
+{
+	function send_response_status_header($response_code)
+	{
+		$mode = get_interpreter_invocation_mode();
+		switch ($mode)
+		{
+		default:
+		case 'fcgi':
+			header('Status: ' . $response_code, true, $response_code);
+			break;
+
+		case 'server':
+			header('HTTP/1.0 ' . $response_code . ' ' . get_response_code_string($response_code), true, $response_code);
+			break;
+		}
+	}
+}
+
+
+
+
+
+
+
+
