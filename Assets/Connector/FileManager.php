@@ -1201,7 +1201,7 @@ class FileManager
 			if (FileManagerUtility::startsWith($mime, 'image/'))
 			{
 				// access the image and create a thumbnail image; this can fail dramatically
-				$thumb_path = $this->getThumb($legal_url, $file, $reqd_size);
+				$thumb_path = $this->getThumb($legal_url, $file, $reqd_size, $reqd_size);
 			}
 
 			$img_filepath = (!empty($thumb_path) ? $thumb_path : $this->getIcon($filename, $reqd_size <= 16));
@@ -2197,7 +2197,7 @@ class FileManager
 			$emsg = null;
 			try
 			{
-				$thumbfile = $this->getThumb($legal_url, $file, 250);
+				$thumbfile = $this->getThumb($legal_url, $file, 250, 250);
 				/*
 				 * the thumbnail may be produced now, but we want to stay in control when the thumbnail is
 				 * fetched by the client, so we force them to travel through this backend.
@@ -2737,10 +2737,13 @@ class FileManager
 	 * @param string $path         filesystem path to the original image. Is used to derive
 	 *                             the thumbnail content from.
 	 *
-	 * @param integer $width       the maximum number of pixels for width and height of the
+	 * @param integer $width       the maximum number of pixels for width of the
+	 *                             thumbnail.
+	 *
+	 * @param integer $height      the maximum number of pixels for height of the
 	 *                             thumbnail.
 	 */
-	public function getThumb($legal_url, $path, $width = 250)
+	public function getThumb($legal_url, $path, $width, $height)
 	{
 		$thumb = $this->generateThumbName($legal_url, $width);
 		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumb);
@@ -2752,7 +2755,7 @@ class FileManager
 			}
 			$img = new Image($path);
 			// generally save as lossy / lower-Q jpeg to reduce filesize, unless orig is PNG/GIF, higher quality for smaller thumbnails:
-			$img->resize($width,$width)->save($thumbPath, min(98, max(MTFM_THUMBNAIL_JPEG_QUALITY, MTFM_THUMBNAIL_JPEG_QUALITY + 0.15 * (250 - $width))), true);
+			$img->resize($width,$height)->save($thumbPath, min(98, max(MTFM_THUMBNAIL_JPEG_QUALITY, MTFM_THUMBNAIL_JPEG_QUALITY + 0.15 * (250 - min($width, $height)))), true);
 			unset($img);
 		}
 		return $this->options['thumbnailPath'] . $thumb;
