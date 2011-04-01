@@ -1523,8 +1523,7 @@ var FileManager = new Class({
             
             new FileManager.Request({
               url: file.thumbnail + '&asJson=1',
-              onComplete: function(j) {
-                console.log(list_row.getElement('span.fm-thumb-bg'));
+              onComplete: function(j) {                
                 if(!j || !j.status)
                 {
                   // Should we display the error here?

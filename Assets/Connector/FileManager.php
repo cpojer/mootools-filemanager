@@ -554,6 +554,7 @@ class FileManager
 			'CreateIsAuthorized_cb' => null,
 			'DestroyIsAuthorized_cb' => null,
 			'MoveIsAuthorized_cb' => null,
+			'thumbnailsMustGoThroughBackend' => true, // If set true (default) all thumbnail requests go through the backend (onThumbnail), if false, thumbnails will "shortcircuit" if they exist, saving roundtrips when using POST type propagateData
 			'URIpropagateData' => null
 		), (is_array($options) ? $options : array()));
 
@@ -775,6 +776,21 @@ class FileManager
 				 * for the event=thumbnail handler to worry about (creating the thumbnail on demand or serving
 				 * a generic icon image instead).
 				 */
+				
+				unset($thumb48, $thumb250);
+				if(!$this->options['thumbnailsMustGoThroughBackend'])
+        {
+          try
+          {
+            $thumb48  = $this->getThumb ($legal_url, $file, 48, 48, true);
+            $thumb250 = $this->getThumb ($legal_url, $file, 250, 250, true);
+          }
+          catch(Exception $E)
+          {
+            // Fallback to event request
+          }
+        }
+				if(!isset($thumb48))
 				$thumb48 = $this->mkEventHandlerURL(array(
 						'event' => 'thumbnail',
 						// directory and filename of the ORIGINAL image should follow next:
@@ -783,6 +799,8 @@ class FileManager
 						'size' => 48,          // thumbnail suitable for 'view/type=thumb' list views
 						'filter' => $mime_filter
 					));
+					
+        if(!isset($thumb250))
 				$thumb250 = $this->mkEventHandlerURL(array(
 						'event' => 'thumbnail',
 						// directory and filename of the ORIGINAL image should follow next:
@@ -2797,14 +2815,16 @@ class FileManager
 	 * @param integer $height      the maximum number of pixels for height of the
 	 *                             thumbnail.
 	 */
-	public function getThumb($legal_url, $path, $width, $height)
+	public function getThumb($legal_url, $path, $width, $height, $onlyIfExists = FALSE)
 	{
 		$thumb = $this->generateThumbName($legal_url, $width);
 		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumb);
 		if (!is_file($thumbPath))
 		{
+      if($onlyIfExists) return FALSE;
+      
 			if (!file_exists(dirname($thumbPath)))
-			{
+			{        
 				@mkdir(dirname($thumbPath), $this->options['chmod'], true);
 			}
 			$img = new Image($path);
