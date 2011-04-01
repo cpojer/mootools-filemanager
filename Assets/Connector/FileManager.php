@@ -458,7 +458,8 @@
  *                                       and including the slash, e.g. 'image/'
  *
  *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
- *
+ *The parameter $action = 'thumbnail'.
+ *   - UploadIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be uploaded.
  *               'requested_size'        (integer) the size (maximum width and height) in pixels of the thumbnail to be produced.
  *
  *         The frontend-specified options.propagateData items will be available as $_GET[] items.
@@ -1158,6 +1159,8 @@ class FileManager
 	 *                         matching this (set of) mimetypes will be listed.
 	 *                         Examples: 'image/' or 'application/zip'
 	 *
+	 * $_GET['asJson']        return some JSON {status: 1, thumbnail: 'path/to/thumbnail.png' }
+	 *
 	 * Errors will produce a JSON encoded error report, including at least two fields:
 	 *
 	 * status                  0 for error; nonzero for success
@@ -1273,6 +1276,20 @@ class FileManager
 			{
 				$img_filepath = $this->getIconForError($emsg, $filename, $reqd_size <= 16);
 			}
+
+      if($this->getGETParam('asJson', 0))
+      {
+        $Response = array('status' => 1, 'thumbnail' => $img_filepath);
+        if(@$emsg)
+        {
+          $Response['status'] = 0;
+          $Response['error']  = $emsg;
+        }        
+        
+        if (!headers_sent()) header('Content-Type: application/json');
+        echo json_encode($Response);
+        return;
+      }
 
 			$file = $this->url_path2file_path($img_filepath);
 			$mime = $this->getMimeType($file);
@@ -2074,7 +2091,8 @@ class FileManager
 		// first determine how the client can reach us; assume that's the same URI as he went to right now.
 		$our_handler_url = $_SERVER['SCRIPT_NAME'];
 
-		if (is_array($this->options['URIpropagateData']))
+    // Disabled the addition of propagateData here, this is done only in the client
+		if (0 &&  is_array($this->options['URIpropagateData']))
 		{
 			// the items in 'spec' always win over any entries in 'URIpropagateData':
 			$spec = array_merge(array(), $this->options['URIpropagateData'], $spec);

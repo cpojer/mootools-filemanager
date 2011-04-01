@@ -89,7 +89,8 @@ var FileManager = new Class({
 		hideQonDelete: false,
 		listPaginationSize: 100,          // add pagination per N items for huge directories (speed up interaction)
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
-		propagateData: {}                 // extra query parameters sent with every request to the backend
+		propagateData: {},                // extra query parameters sent with every request to the backend
+    propagateType: 'GET'             // either POST or GET
 	},
 
 	/*
@@ -666,6 +667,8 @@ var FileManager = new Class({
 		if (this.tips.tip) {
 			this.tips.tip.setStyle('display', 'none');
 		}
+		
+		// @FIXME propagateData may need to be passed by POST
 		window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 			event: 'download',
 			file: this.normalize(file.dir + file.name),
@@ -700,7 +703,7 @@ var FileManager = new Class({
 				this.reset_view_fill_store();
 
 				this.Request = new FileManager.Request({
-					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
 						event: 'create'
 					})),
 					data: {
@@ -768,7 +771,7 @@ var FileManager = new Class({
 
 		//if (typeof console !== 'undefined' && console.log) console.log('view URI: ' + this.options.url + ', ' + (this.options.url.indexOf('?') == -1 ? '?' : '&') + ', ' + Object.toQueryString(Object.merge({}, this.options.propagateData, {    event: 'view'  })));
 		this.Request = new FileManager.Request({
-			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
 				event: 'view'
 			})),
 			data: {
@@ -829,7 +832,7 @@ var FileManager = new Class({
 		this.browserLoader.fade(1);
 
 		this.Request = new FileManager.Request({
-			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
 				event: 'destroy'
 			})),
 			data: {
@@ -917,7 +920,7 @@ var FileManager = new Class({
 				this.browserLoader.fade(1);
 
 				this.Request = new FileManager.Request({
-					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
 						event: 'move'
 					})),
 					data: {
@@ -1492,14 +1495,60 @@ var FileManager = new Class({
 			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 			var isdir = (file.mime == 'text/directory');
 
-			var el = file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
-				new Element('span', {
-					'class': this.listType,
-					'style': 'background-image: url(' + file.thumbnail + ')'
-				}) /* .adopt(icon) */ ,
-				new Element('span', {'class': 'filemanager-filename', text: file.name, title:file.name})
-			).store('file', file);
-
+      function list_row_maker(thumbnail_url)
+      {
+        return file.element = new Element('span', {'class': 'fi ' + self.listType, href: '#'}).adopt(
+          new Element('span', {
+            'class': self.listType,
+            'style': thumbnail_url ? ('background-image: url(' + thumbnail_url + ')') : ''
+          }).addClass('fm-thumb-bg') /* .adopt(icon) */ ,
+          new Element('span', {'class': 'filemanager-filename', text: file.name, title:file.name})
+        ).store('file', file);
+      }
+            
+      if(file.thumbnail.indexOf('?') == -1)
+      {
+        // This is just a raw image
+        console.log(file.thumbnail);
+        var el = list_row_maker(file.thumbnail);
+      }
+      else if(this.options.propagateType == 'POST')
+      {
+        // We must POST our propagateData, so we need to do the post and take the url to the
+        // thumbnail from the post results.
+        
+        var el = 
+          (function() {           // Closure
+            var list_row = list_row_maker();
+            
+            new FileManager.Request({
+              url: file.thumbnail + '&asJson=1',
+              onComplete: function(j) {
+                console.log(list_row.getElement('span.fm-thumb-bg'));
+                if(!j || !j.status)
+                {
+                  // Should we display the error here?
+                  if(j && j.thumbnail)
+                  {
+                    list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url('+j.thumbnail+')');
+                  }
+                }
+                else
+                {
+                  list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url('+j.thumbnail+')');
+                }
+              }
+            }, self).send();
+            
+            return list_row;
+          })();
+      }
+      else
+      {
+        // If we are just GET, append the data to the url
+        var el = list_row_maker(file.thumbnail + '&' + Object.toQueryString(this.options.propagateData));
+      }
+      
 			/*
 			 * WARNING: for some (to me) incomprehensible reason the old code which bound the event handlers to 'this==self' and which used the 'el' variable
 			 *          available here, does NOT WORK ANY MORE - tested in FF3.6. Turns out 'el' is pointing anywhere but where you want it by the time
@@ -1713,7 +1762,7 @@ var FileManager = new Class({
 					if (this.Request) this.Request.cancel();
 
 					this.Request = new FileManager.Request({
-						url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+						url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
 							event: 'move'
 						})),
 						data: {
@@ -1912,7 +1961,7 @@ var FileManager = new Class({
 			if (this.Request) this.Request.cancel();
 
 			this.Request = new FileManager.Request({
-				url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
+				url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
 					event: 'detail'
 				})),
 				data: {
@@ -2152,7 +2201,19 @@ FileManager.Request = new Class({
 
 	initialize: function(options, filebrowser){
 		this.parent(options);
-
+    
+    if(filebrowser) // When is this NOT supplied, I think it always should be, we are always dealing with a filebrowser somewhere eh?
+    {
+      if(filebrowser.options.propagateType == 'GET')
+      {
+        this.options.url += (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(filebrowser.options.propagateData);
+      }
+      else
+      {        
+        this.options.data = Object.merge({}, this.options.data, filebrowser.options.propagateData);
+      }      
+    }
+    
 		if (filebrowser) this.addEvents({
 			request: filebrowser.onRequest.bind(filebrowser),
 			complete: filebrowser.onComplete.bind(filebrowser),
