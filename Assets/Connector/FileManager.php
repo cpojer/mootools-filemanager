@@ -1173,7 +1173,7 @@ class FileManager
 	 * 'fallback view list' so proper client code should check the 'status' field in the
 	 * JSON output.
 	 */
-	protected function onThumbnail()
+	protected function onThumbnail($GET = NULL)
 	{
 		// try to produce the view; if it b0rks, retry with the parent, until we've arrived at the basedir:
 		// then we fail more severely.
@@ -1185,18 +1185,18 @@ class FileManager
 
 		try
 		{
-			$reqd_size = intval($this->getGETparam('size'));
+			$reqd_size = isset($GET) ? @$GET['size'] : intval($this->getGETparam('size'));
 			if (empty($reqd_size))
 				throw new FileManagerException('disabled');
 			// and when not requesting one of our 'authorized' thumbnail sizes, you're gonna burn as well!
 			if (!in_array($reqd_size, array(16, 48, 250)))
 				throw new FileManagerException('disabled');
 
-			$file_arg = $this->getGETparam('file');
+			$file_arg = isset($GET) ? @$GET['file'] :$this->getGETparam('file');
 			if (empty($file_arg))
 				throw new FileManagerException('nofile');
 
-			$dir_arg = $this->getGETparam('directory');
+			$dir_arg = isset($GET) ? @$GET['directory'] :$this->getGETparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
 
@@ -1208,7 +1208,7 @@ class FileManager
 			if (!is_readable($file))
 				throw new FileManagerException('nofile');
 
-			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
+			$mime_filter = isset($GET) ? (isset($GET['filter']) ? $GET['filter'] : $this->options['filter']) :$this->getGETparam('filter', $this->options['filter']);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 			$mime = $this->getMimeType($file);
 			if (is_file($file))
@@ -1276,7 +1276,12 @@ class FileManager
 			{
 				$img_filepath = $this->getIconForError($emsg, $filename, $reqd_size <= 16);
 			}
-
+      
+      if(isset($GET))
+      {
+        return $img_filepath;
+      }
+      
       if($this->getGETParam('asJson', 0))
       {
         $Response = array('status' => 1, 'thumbnail' => $img_filepath);
@@ -2160,7 +2165,7 @@ class FileManager
 					'size' => 48,          // thumbnail suitable for 'view/type=thumb' list views
 					'filter' => $mime_filter
 				));
-			$thumb250 = $this->mkEventHandlerURL(array(
+			$thumb250 = $this->onThumbnail(array(
 					'event' => 'thumbnail',
 					// directory and filename of the ORIGINAL image should follow next:
 					'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
@@ -2238,7 +2243,15 @@ class FileManager
 			$emsg = null;
 			try
 			{
-				$thumbfile = $this->getThumb($legal_url, $file, 250, 250);
+        $thumbfile = $thumb250;
+				
+				// sleemanj (gogo @ Xinha): the below makes not a lot of sense I can think of,
+				//    if you are creating the thumbnail anyway then what is the logic
+				//    in requiring a round trip through the backend to display it?
+				//    Anyway, doesn't matter now because we created it "through" the backend
+				//    as thumb250 above.
+				
+				// $thumbfile = $this->getThumb($legal_url, $file, 250, 250);				
 				/*
 				 * the thumbnail may be produced now, but we want to stay in control when the thumbnail is
 				 * fetched by the client, so we force them to travel through this backend.
