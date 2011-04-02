@@ -1821,7 +1821,7 @@ class FileManager
 			// tmp_name does not include an extention, if we don't provide it, the mime detection is too
 			// easily thwarted and returns application/octet-stream, if you are using a filter to only have images, you're dead
 			// even if it was an image (because the GD based image check only checks if the extention is recognised)			
-			$mime = $this->getMimeType($tmppath, false, strtolower(preg_replace('/.*\.([a-z0-9]+)$/', '$1',$_FILES['Filedata']['name'])) );
+			$mime = $this->getMimeType($tmppath, false, strtolower(preg_replace('/.*\.([a-z0-9]+)$/i', '$1',$_FILES['Filedata']['name'])) );
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 			if (!$this->IsAllowedMimeType($mime, $mime_filters))
 				throw new FileManagerException('extension');
