@@ -24,6 +24,8 @@ FileManager.implement({
   options: {
     resizeImages: true,
     upload: true,
+
+    // Is there a useful reason to have this different from propagateData... dubious :-/
     uploadAuthData: {}
   },
 
@@ -57,6 +59,7 @@ FileManager.implement({
   },
 
   startUpload: function(){
+    var self = this;
 
     if (!this.options.upload || typeof this._dummyframe != 'undefined') return;
 
@@ -68,11 +71,16 @@ FileManager.implement({
       .set('target', 'dummyframe')
       .setStyles({ 'float': 'left', 'padding-left': '3px', 'display':'block'});
 
-    (new Object(this.options.uploadAuthData)).each(function(v, k){
+    (new Hash(this.options.uploadAuthData)).each(function(v, k){
         f.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
     });
 
     f.adopt((new Element('input')).set({type:'file', 'name':'Filedata'}).setStyles({width:120}));
+    
+    // The FileManager.php can't make up it's mind about which it wants, directory is documented as GET, 
+    // but is checked as POST, we'll send both.
+    f.adopt((new Element('input')).set({type:'hidden', 'name':'directory'}));
+    
     f.inject(this.menu, 'top');
 
     var uploadButton = this.addMenuButton('upload').addEvents({
@@ -80,13 +88,13 @@ FileManager.implement({
           e.stop();
           mfm.browserLoader.set('opacity', 1);
           f.action = mfm.options.url
-					+ (mfm.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+					+ (mfm.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
 						event: 'upload',
 						directory: self.normalize(mfm.Directory),
 						filter: mfm.options.filter,
 						resize: (this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0
 					  }));
-
+          f.getElement('input[name=directory]').value = mfm.Directory;
           f.submit();
         },
         mouseenter: function(){
@@ -123,19 +131,35 @@ FileManager.implement({
 
         try
         {
-          var response = JSON.decode(this.contentDocument.documentElement.innerText);
+          var response;
+            try { response = this.contentDocument.documentElement.textContent; } catch(e) {}
+          
+          if(!response)
+            try { response = this.contentWindow.document.innerText; } catch(e) {}
+          
+          if(!response)
+            try { response = this.contentDocument.innerText; } catch(e) {}
+          
+          if(!response) throw "Can't find response.";
+            
+          response = JSON.decode(response);
+          
           if (response && !response.status)
           {
             new Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: mfm.language.ok}, buttons: ['confirm']});
           }
-		  else
-		  {
-			mfm.load(mfm.Directory, true, response.name ? response.name : null);
-		  }
+          else
+          {
+            console.log(response.name);
+            console.log(mfm.Directory);
+            mfm.load(mfm.Directory.replace(/\/$/, ''), response.name ? response.name : null);
+          }
         }
         catch(e)
         {
           // Maybe this.contentDocument.documentElement.innerText isn't where we need to look?
+          // debugger; console.log(this);
+          mfm.load(mfm.Directory);
         }
     });
   }
