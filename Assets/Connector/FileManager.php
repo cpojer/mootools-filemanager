@@ -1817,7 +1817,7 @@ class FileManager
 			if (empty($file_arg))
 				throw new FileManagerException('nofile');
 
-			$dir_arg = $this->getPOSTparam('directory');
+			$dir_arg = $this->getGETparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:

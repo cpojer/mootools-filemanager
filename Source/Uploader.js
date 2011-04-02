@@ -97,10 +97,10 @@ FileManager.implement({
 		//if (typeof console !== 'undefined' && console.log) console.log('Uploader: setOptions');
         this.setOptions({
 		  //data: Object.merge({}, base.options.data, self.options.uploadAuthData),
-          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, self.options.propagateData, {
+          url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (self.options.propagateType == 'GET' ? self.options.propagateData : {}), {
             event: 'upload',
             directory: self.normalize(self.Directory),
-			filter: self.options.filter,
+            filter: self.options.filter,
             resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0
           }))
         });
@@ -188,7 +188,15 @@ FileManager.implement({
         this.ui.progress = this.ui.progress.cancel().element.destroy();
         this.ui.cancel = this.ui.cancel.destroy();
 
-        var response = JSON.decode(this.response.text);
+        try
+        {
+          var response = JSON.decode(this.response.text);
+        }
+        catch(E)
+        { 
+          console.log(this.response);
+        }
+        
         if (!response)
         {
           new FileManager.Dialog(self.language.uploader.mod_security, {language: {confirm: self.language.ok}, buttons: ['confirm']});
@@ -206,7 +214,10 @@ FileManager.implement({
             this.element.destroy();
             if (!self.upload.list.getElements('li').length)
               self.upload.uploader.fade(0).get('tween').chain(function(){
-                self.fillInfo();
+                self.upload.uploader.setStyle('display', 'none');
+                self.onShow = true;
+                self.load(self.Directory, self._lastFileUploaded);//true);
+                // self.fillInfo();
               });
           });
         }).delay(5000, this);
@@ -240,7 +251,7 @@ FileManager.implement({
 	  appendCookieData: true, // pass along any session cookie data, etc. in the request section (PHP: $_GET[])
 	  data: Object.merge({},
 			//(self.options.propagateData  || {}),
-			(self.options.uploadAuthData || {})
+			(self.options.uploadAuthData || (self.options.propagateType == 'POST' ? self.options.propagateData : {}))
 		),
       fileClass: File,
       timeLimit: 260,
@@ -250,11 +261,14 @@ FileManager.implement({
       onSelectSuccess: function(){
         self.fillInfo();
         self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
-        self.info.adopt(self.upload.uploader);
+        self.info.adopt(self.upload.uploader.setStyle('display', 'block'));
         self.upload.uploader.fade(1);
       },
       onComplete: function(){
-        self.load(self.Directory, true);
+        
+      },
+      onFileComplete: function(f){
+        self._lastFileUploaded = f.name;
       },
       onFail: function(error) {
         if(error != 'empty') {
