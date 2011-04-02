@@ -150,8 +150,6 @@ FileManager.implement({
           }
           else
           {
-            console.log(response.name);
-            console.log(mfm.Directory);
             mfm.load(mfm.Directory.replace(/\/$/, ''), response.name ? response.name : null);
           }
         }
