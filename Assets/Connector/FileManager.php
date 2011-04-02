@@ -1817,7 +1817,11 @@ class FileManager
 
 			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
 			$tmppath = $_FILES['Filedata']['tmp_name'];
-			$mime = $this->getMimeType($tmppath);
+			
+			// tmp_name does not include an extention, if we don't provide it, the mime detection is too
+			// easily thwarted and returns application/octet-stream, if you are using a filter to only have images, you're dead
+			// even if it was an image (because the GD based image check only checks if the extention is recognised)			
+			$mime = $this->getMimeType($tmppath, false, strtolower(preg_replace('/.*\.([a-z0-9]+)$/', '$1',$_FILES['Filedata']['name'])) );
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 			if (!$this->IsAllowedMimeType($mime, $mime_filters))
 				throw new FileManagerException('extension');
@@ -1926,7 +1930,7 @@ class FileManager
 
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
-		echo json_encode($jserr);
+		echo json_encode(array_merge($jserr, $_FILES));
 	}
 
 	/**
@@ -3390,11 +3394,12 @@ class FileManager
 	 *                            but instead only the swift (and blunt) process of guestimating
 	 *                            the mime type from the file extension is performed.
 	 */
-	public function getMimeType($file, $just_guess = false)
+	public function getMimeType($file, $just_guess = false, $ext = NULL)
 	{
 		if (is_dir($file))
 			return 'text/directory';
 
+    if(!isset($ext)) // _FILES['tmp_name'] does not have an extention, we need to provide it   
 		$ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 		$mime = null;
