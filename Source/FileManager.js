@@ -668,12 +668,37 @@ var FileManager = new Class({
 			this.tips.tip.setStyle('display', 'none');
 		}
 		
-		// @FIXME propagateData may need to be passed by POST
+		// propagateData may need to be passed by POST
+    if(this.options.propagateType == 'POST')
+    {
+      var self = this;
+      new FileManager.Request(
+      { 
+        url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({
+              event: 'download',
+              file: this.normalize(file.dir + file.name),
+              filter: this.options.filter,
+              asJson: true
+            })),
+                              
+        fmDisplayErrors: true,
+                              
+        onSuccess: function(j)
+        {
+          if(j && j.status)
+          {
+            window.open(j.url);
+          }
+        }
+      }, this).send();
+      return;
+    }
+    
 		window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
 			event: 'download',
 			file: this.normalize(file.dir + file.name),
 			filter: this.options.filter
-		})));
+		})));    
 	},
 
 	create_on_click: function(e) {
@@ -1509,7 +1534,6 @@ var FileManager = new Class({
       if(file.thumbnail.indexOf('?') == -1)
       {
         // This is just a raw image
-        console.log(file.thumbnail);
         var el = list_row_maker(file.thumbnail);
       }
       else if(this.options.propagateType == 'POST')
@@ -1523,16 +1547,14 @@ var FileManager = new Class({
             
             new FileManager.Request({
               url: file.thumbnail + '&asJson=1',
-              onComplete: function(j) {                
+              onSuccess: function(j) {                
                 if(!j || !j.status)
                 {
                   // Should we display the error here?
-                  if(j && j.thumbnail)
-                  {
-                    list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url('+j.thumbnail+')');
-                  }
+                  // Probably not, could be too noisy.
                 }
-                else
+                
+                if(j && j.thumbnail)
                 {
                   list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url('+j.thumbnail+')');
                 }
@@ -1624,7 +1646,7 @@ var FileManager = new Class({
 			//}).bind(this)));
 
 			// ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
-			if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: onShow = ' + this.onShow + ', file = ' + file.name + ', preselect = ' + (typeof preselect != 'undefined' ? preselect : '???'));
+			//if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: onShow = ' + this.onShow + ', file = ' + file.name + ', preselect = ' + (typeof preselect != 'undefined' ? preselect : '???'));
 			if(this.onShow && typeof preselect != 'undefined')
 			{
 				if (preselect == file.name)
@@ -2195,12 +2217,17 @@ var FileManager = new Class({
 });
 
 FileManager.Request = new Class({
-	Extends: Request.JSON,
-	secure: true,
-
+	Extends: Request.JSON,	
+                                
+  options:
+  { 
+    secure:          true, // Isn't this true by default anyway in REQUEST.JSON?
+    fmDisplayErrors: false // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
+  },
+                                
 	initialize: function(options, filebrowser){
 		this.parent(options);
-    
+        
     if(filebrowser) // When is this NOT supplied, I think it always should be, we are always dealing with a filebrowser somewhere eh?
     {
       if(filebrowser.options.propagateType == 'GET')
@@ -2211,6 +2238,25 @@ FileManager.Request = new Class({
       {        
         this.options.data = Object.merge({}, this.options.data, filebrowser.options.propagateData);
       }      
+      
+      if(this.options.fmDisplayErrors)
+      {
+        this.addEvents({
+          success: function(j) {             
+            if(!j)        return filebrowser.showError();             
+            if(!j.status) return filebrowser.showError(j.error);
+          },
+                       
+          error: function(text, error) {
+            filebrowser.showError(text);            
+          },
+          
+          failure: function(xmlHttpRequest) {
+            var text = filebrowser.cvtXHRerror2msg(xmlHttpRequest);
+            filebrowser.showError(text);            
+          }  
+        });
+      }
     }
     
 		if (filebrowser) this.addEvents({
@@ -2220,6 +2266,7 @@ FileManager.Request = new Class({
 			error: filebrowser.onError.bind(filebrowser),
 			failure: filebrowser.onFailure.bind(filebrowser)
 		});
+    
 	}
 });
 
