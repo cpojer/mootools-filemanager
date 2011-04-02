@@ -121,7 +121,7 @@ FileManager.implement({
           else if (this.validationError == 'sizeLimitMax')
               sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
 
-          new Dialog(new Element('div', {html: message.substitute(sub, /\\?\$\{([^{}]+)\}/g)}) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+          new FileManager.Dialog(new Element('div', {html: message.substitute(sub, /\\?\$\{([^{}]+)\}/g)}) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
           return this;
         }
 
@@ -191,11 +191,11 @@ FileManager.implement({
         var response = JSON.decode(this.response.text);
         if (!response)
         {
-          new Dialog(self.language.uploader.mod_security, {language: {confirm: self.language.ok}, buttons: ['confirm']});
+          new FileManager.Dialog(self.language.uploader.mod_security, {language: {confirm: self.language.ok}, buttons: ['confirm']});
         }
 
         if (!response.status)
-          new Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
+          new FileManager.Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: self.language.ok}, buttons: ['confirm']});
 
         this.ui.element.set('tween', {duration: 2000}).highlight(response.status ? '#e6efc2' : '#f0c2c2');
         (function(){
@@ -259,7 +259,7 @@ FileManager.implement({
       onFail: function(error) {
         if(error != 'empty') {
           $$(self.upload.button, self.upload.label).dispose();
-          new Dialog(new Element('div', {html: self.language.flash[error] || self.language.flash.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
+          new FileManager.Dialog(new Element('div', {html: self.language.flash[error] || self.language.flash.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
         }
       }
     });

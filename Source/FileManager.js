@@ -730,7 +730,7 @@ var FileManager = new Class({
 		e.stop();
 		var input = new Element('input', {'class': 'createDirectory', 'autofocus': 'autofocus'});
 
-		new Dialog(this.language.createdir, {
+		new FileManager.Dialog(this.language.createdir, {
 			language: {
 				confirm: this.language.create,
 				decline: this.language.cancel
@@ -766,7 +766,7 @@ var FileManager = new Class({
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							// TODO: include j.error in the message, iff j.error exists
-							new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+							new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 							this.browserLoader.fade(0);
 							return;
 						}
@@ -835,7 +835,7 @@ var FileManager = new Class({
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onSuccess invoked");
 				if (!j || !j.status) {
 					// TODO: include j.error in the message, iff j.error exists
-					new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+					new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 					this.browserLoader.fade(0);
 					return;
 				}
@@ -895,7 +895,7 @@ var FileManager = new Class({
 				if (!j || !j.status) {
 					// TODO: include j.error in the message, iff j.error exists
 					var emsg = ('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g);
-					new Dialog(this.language.nodestroy + ' (' + emsg + ')', {language: {confirm: this.language.ok}, buttons: ['confirm']});
+					new FileManager.Dialog(this.language.nodestroy + ' (' + emsg + ')', {language: {confirm: this.language.ok}, buttons: ['confirm']});
 					this.browserLoader.fade(0);
 					return;
 				}
@@ -928,7 +928,7 @@ var FileManager = new Class({
 			this.destroy_noQasked(file);
 		}
 		else {
-			new Dialog(this.language.destroyfile, {
+			new FileManager.Dialog(this.language.destroyfile, {
 				language: {
 					confirm: this.language.destroy,
 					decline: this.language.cancel
@@ -948,7 +948,7 @@ var FileManager = new Class({
 
 		// if (file.mime != 'text/directory') name = name.replace(/\..*$/, '');     -- unused
 
-		new Dialog(this.language.renamefile, {
+		new FileManager.Dialog(this.language.renamefile, {
 			language: {
 				confirm: this.language.rename,
 				decline: this.language.cancel
@@ -983,7 +983,7 @@ var FileManager = new Class({
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							// TODO: include j.error in the message, iff j.error exists
-							new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+							new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 							this.browserLoader.fade(0);
 							return;
 						}
@@ -1353,7 +1353,7 @@ var FileManager = new Class({
 		// TODO: how to handle that error condition correctly?
 		if (!j.root)
 		{
-			new Dialog(('${error}: ' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+			new FileManager.Dialog(('${error}: ' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 			return false;
 		}
 		var rootPath = j.root.slice(0,-1).split('/');
@@ -1821,7 +1821,7 @@ var FileManager = new Class({
 						onSuccess: (function(j) {
 							if (!j || !j.status) {
 								// TODO: include j.error in the message, iff j.error exists
-								new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+								new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 								this.browserLoader.fade(0);
 								return;
 							}
@@ -2023,7 +2023,7 @@ var FileManager = new Class({
 
 					if (!j || !j.status) {
 						// TODO: include j.error in the message, iff j.error exists
-						new Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+						new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 						this.previewLoader.dispose();
 						return;
 					}
@@ -2200,7 +2200,7 @@ var FileManager = new Class({
 			errorText = errorText.substring(0,errorText.indexOf('{'));
 		}
 
-		new Dialog(this.language.error, {
+		new FileManager.Dialog(this.language.error, {
 			buttons: ['confirm'],
 			language: {
 				confirm: this.language.ok
@@ -2215,7 +2215,7 @@ var FileManager = new Class({
 
   showMessage: function(textOrElement, title) {    
     if(!title) title = '';
-    new Dialog(title, {
+    new FileManager.Dialog(title, {
       buttons: ['confirm'],
       language: {
         confirm: this.language.ok
@@ -2350,7 +2350,7 @@ Element.implement({
 
 });
 
-this.Dialog = new Class({
+FileManager.Dialog = new Class({
 
 	Implements: [Options, Events],
 

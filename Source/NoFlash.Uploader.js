@@ -146,7 +146,7 @@ FileManager.implement({
           
           if (response && !response.status)
           {
-            new Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: mfm.language.ok}, buttons: ['confirm']});
+            new FileManager.Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: mfm.language.ok}, buttons: ['confirm']});
           }
           else
           {
