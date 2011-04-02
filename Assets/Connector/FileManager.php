@@ -555,6 +555,7 @@ class FileManager
 			'DestroyIsAuthorized_cb' => null,
 			'MoveIsAuthorized_cb' => null,
 			'thumbnailsMustGoThroughBackend' => true, // If set true (default) all thumbnail requests go through the backend (onThumbnail), if false, thumbnails will "shortcircuit" if they exist, saving roundtrips when using POST type propagateData
+			'showHiddenFoldersAndFiles'      => false, // Hide dot dirs/files ?
 			'URIpropagateData' => null
 		), (is_array($options) ? $options : array()));
 
@@ -667,6 +668,19 @@ class FileManager
 			throw new FileManagerException('nofile');
 		}
 		$files = $this->scandir($dir, $filemask);
+
+    // This can not be done in scandir, because other stuff (particularly delete)
+    // might need those dotfiles.
+    if(!$this->options['showHiddenFoldersAndFiles'])
+    {
+      $nohidden = array();
+      foreach($files as $file)
+      {
+        if($file[0] == '.' && $file != '.' & $file != '..') continue;
+        $nohidden[] = $file;
+      }
+      $files = $nohidden;
+    }
 
 		if ($files === false)
 			throw new FileManagerException('nofile');
