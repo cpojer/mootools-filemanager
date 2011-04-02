@@ -2813,7 +2813,7 @@ class FileManager
 	 */
 	public function getIcon($file, $smallIcon)
 	{
-		$ext = pathinfo($file, PATHINFO_EXTENSION);
+		$ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 		$largeDir = (!$smallIcon ? 'Large/' : '');
 		$url_path = $this->options['assetBasePath'] . 'Images/Icons/' .$largeDir.$ext.'.png';
