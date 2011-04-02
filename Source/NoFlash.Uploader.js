@@ -75,7 +75,21 @@ FileManager.implement({
         f.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
     });
 
-    f.adopt((new Element('input')).set({type:'file', 'name':'Filedata'}).setStyles({width:120}));
+    // Writing to file input values is not permitted, we replace the field to blank it.
+    function make_file_input()
+    {
+      var fileinput = (new Element('input')).set({type:'file', 'name':'Filedata'}).setStyles({width:120});
+      if(f.getElement('input[type=file]'))
+      {
+        fileinput.replaces(f.getElement('input[type=file]'));
+      }
+      else
+      {
+        f.adopt(fileinput);
+      }
+    }
+    
+    make_file_input();
     
     // The FileManager.php can't make up it's mind about which it wants, directory is documented as GET, 
     // but is checked as POST, we'll send both.
@@ -162,6 +176,8 @@ FileManager.implement({
           // debugger; console.log(this);
           mfm.load(mfm.Directory);
         }
+        
+        make_file_input();
     });
   }
 
