@@ -220,7 +220,7 @@ FileManager.implement({
                 // self.fillInfo();
               });
           });
-        }).delay(5000, this);
+        }).delay(response.status ? 1000 : 5000, this);
       }
     });
 
