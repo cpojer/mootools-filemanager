@@ -50,6 +50,8 @@ FileManager.Language.ru = {
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
+  
+  popup_blocked_download: 'To download the file, use this URL: {link} ',
 
 	'backend.disabled': 'Загрузка файлов отключена на сервере.',
 	'backend.authorized': 'Вам не разрешено загружать файлы.',

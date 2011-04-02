@@ -51,6 +51,8 @@ FileManager.Language.en = {
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
 
+  popup_blocked_download: 'To download the file, use this URL: {link} ',
+
 	'backend.disabled': 'This operation has been disabled on this Server.',
 	'backend.authorized': 'You are not authorized to perform this operation.',
 	'backend.path': 'The specified Folder does not exist. Please contact the administrator of this Website.',

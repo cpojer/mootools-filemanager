@@ -51,6 +51,8 @@ FileManager.Language.se = {
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
 
+  popup_blocked_download: 'To download the file, use this URL: {link} ',
+
 	'backend.disabled': 'Uppladdning är avstängt på denna server.',
 	'backend.authorized': 'Du har inte behörighet att ladda upp filer.',
 	'backend.path': 'Den angivna uppladdnings-mappen existerar inte. Vänligen kontakta serveradministratören.',

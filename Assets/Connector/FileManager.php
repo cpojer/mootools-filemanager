@@ -1692,7 +1692,7 @@ class FileManager
 
       if($this->getGETparam('asJson', 0))
       {
-        $Response = array('status' => 1, 'url' => $this->options['directory'] . $fileinfo['legal_url'], 'fileinfo' => $fileinfo);
+        $Response = array('status' => 1, 'url' => $this->legal2abs_url_path($fileinfo['legal_url']), 'fileinfo' => $fileinfo);
         echo json_encode($Response);
         exit;
       }

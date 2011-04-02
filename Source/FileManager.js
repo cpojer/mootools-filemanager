@@ -684,10 +684,23 @@ var FileManager = new Class({
         fmDisplayErrors: true,
                               
         onSuccess: function(j)
-        {
+        {            
           if(j && j.status)
-          {
-            window.open(j.url);
+          {  
+            // For popup blockers, and browsers we can't reliably detect popup blocks
+            // we display the link in a dialog
+            function show_link_in_dialog()
+            {
+              console.log(self.language);
+              self.showMessage(self.language.popup_blocked_download.substitute({link: " <a href=\"" + j.url +"\" target=\"_blank\">"+j.url+"</a>"}));
+            }
+            
+            var popup = window.open(j.url);
+            if(Browser.chrome || !popup)
+            {
+              // Blocked
+              show_link_in_dialog();
+            }            
           }
         }
       }, this).send();
@@ -2188,6 +2201,21 @@ var FileManager = new Class({
 		});
 	},
 
+  showMessage: function(textOrElement, title) {    
+    if(!title) title = '';
+    new Dialog(title, {
+      buttons: ['confirm'],
+      language: {
+        confirm: this.language.ok
+      },
+      content: [
+        textOrElement
+      ],
+      onOpen: this.onDialogOpen.bind(this),
+      onClose: this.onDialogClose.bind(this)
+    });
+  },                            
+                            
 	onRequest: function(){
 		this.loader.fade(1);
 	},

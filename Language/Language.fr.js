@@ -50,6 +50,8 @@ FileManager.Language.fr = {
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
+  
+  popup_blocked_download: 'To download the file, use this URL: {link} ',
 
 	'backend.disabled': 'Le téléversement de fichier a été désactivé sur ce serveur.',
 	'backend.authorized': 'Vous n\'êtes pas authentifié et ne pouvez pas téléverser de fichier.',
