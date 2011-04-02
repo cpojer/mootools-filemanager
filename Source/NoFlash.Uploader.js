@@ -106,7 +106,8 @@ FileManager.implement({
 						event: 'upload',
 						directory: self.normalize(mfm.Directory),
 						filter: mfm.options.filter,
-						resize: (this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0
+						resize: (this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0,
+            reportContentType: 'text/plain' // Safer for iframes
 					  }));
           f.getElement('input[name=directory]').value = mfm.Directory;
           f.submit();

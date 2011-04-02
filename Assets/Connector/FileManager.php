@@ -1792,6 +1792,10 @@ class FileManager
 	 *
 	 * $_FILES[]              the metadata for the uploaded file
 	 *
+	 * $_GET['reportContentType'] if you want a specific content type header set on our response, put it here
+   *                               this is needed for when we are posting an upload to a hidden iframe, the 
+	 *                               default application/json breaks down in that case at least for Firefox 3.X
+	 *
 	 * Errors will produce a JSON encoded error report, including at least two fields:
 	 *
 	 * status                  0 for error; nonzero for success
@@ -1920,7 +1924,7 @@ class FileManager
 				unset($img);
 			}
 
-			if (!headers_sent()) header('Content-Type: text/plain');//application/json');
+			if (!headers_sent()) header('Content-Type: '.$this->getGetparam('reportContentType', 'application/json'));
 
 			echo json_encode(array(
 					'status' => 1,
@@ -1940,7 +1944,7 @@ class FileManager
 
 		$this->modify_json4exception($jserr, $emsg);
 
-		if (!headers_sent()) header('Content-Type: text/plain');//application/json');
+		if (!headers_sent()) header('Content-Type: '.$this->getGetparam('reportContentType', 'application/json'));
 
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
