@@ -150,6 +150,9 @@ FileManager.implement({
           }
           else
           {
+            mfm.onShow = true; // why exactly do we need to set this, what purpose does the default of NOT preselecting the thing
+                               // we asked to preselect have?
+                               
             mfm.load(mfm.Directory.replace(/\/$/, ''), response.name ? response.name : null);
           }
         }
