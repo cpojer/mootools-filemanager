@@ -1906,7 +1906,7 @@ class FileManager
 				unset($img);
 			}
 
-			if (!headers_sent()) header('Content-Type: application/json');
+			if (!headers_sent()) header('Content-Type: text/plain');//application/json');
 
 			echo json_encode(array(
 					'status' => 1,
@@ -1926,7 +1926,7 @@ class FileManager
 
 		$this->modify_json4exception($jserr, $emsg);
 
-		if (!headers_sent()) header('Content-Type: application/json');
+		if (!headers_sent()) header('Content-Type: text/plain');//application/json');
 
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
