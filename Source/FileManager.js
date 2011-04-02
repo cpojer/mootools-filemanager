@@ -691,7 +691,6 @@ var FileManager = new Class({
             // we display the link in a dialog
             function show_link_in_dialog()
             {
-              console.log(self.language);
               self.showMessage(self.language.popup_blocked_download.substitute({link: " <a href=\"" + j.url +"\" target=\"_blank\">"+j.url+"</a>"}));
             }
             
