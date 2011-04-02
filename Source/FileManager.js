@@ -668,62 +668,31 @@ var FileManager = new Class({
 			this.tips.tip.setStyle('display', 'none');
 		}
 		
-		// propagateData may need to be passed by POST
-    if(this.options.propagateType == 'POST')
+		if(!this._downloadIframe)
     {
-      var self = this;
-      new FileManager.Request(
-      { 
-        url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({
-              event: 'download',
-              file: this.normalize(file.dir + file.name),
-              filter: this.options.filter,
-              asJson: true
-            })),
-                              
-        fmDisplayErrors: true,
-                              
-        onSuccess: function(j)
-        {            
-          if(j && j.status)
-          {             
-            // For popup blockers, and browsers we can't reliably detect popup blocks
-            // we display the link in a dialog
-            function show_link_in_dialog(title)
-            {
-              self.showMessage(self.language.popup_blocked_download.substitute({link: " <a href=\"" + j.url +"\" target=\"_blank\">"+j.url+"</a>"}),title ? title : '');
-            }
-            
-            if(!Browser.chrome)
-            {
-              var popup;
-              setTimeout(function() {
-                if(!popup)
-                {                  
-                  // Blocked
-                  show_link_in_dialog(self.language.popup_blocked);
-                }
-              }, 1500);              
-              popup = window.open(j.url);         
-            }
-            else
-            {
-              // Chrome has no good way to detect a blocked popup and it's 
-              // blocked popup notification icon is really easy to miss, so we will 
-              // always show the dialog.
-              show_link_in_dialog();
-            }            
-          }
-        }
-      }, this).send();
-      return;
+      this._downloadIframe = (new IFrame).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});         
+      this.menu.adopt(this._downloadIframe);
+      
+      this._downloadForm = new Element('form', {target: '_downloadIframe', method: 'post'});     
+      this.menu.adopt(this._downloadForm);
+      
+      
+      if(this.options.propagateType == 'POST')
+      {
+        var self = this;
+        (new Hash(this.options.propagateData)).each(function(v, k){
+            self._downloadForm.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
+        });
+      }
     }
-    
-		window.open(this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, this.options.propagateData, {
-			event: 'download',
-			file: this.normalize(file.dir + file.name),
-			filter: this.options.filter
-		})));    
+                
+    this._downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (this.options.propagateType == 'GET' ? this.options.propagateData : {}), {
+        event: 'download',
+        file: this.normalize(file.dir + file.name),
+        filter: this.options.filter
+      }));
+		
+    return this._downloadForm.submit();      
 	},
 
 	create_on_click: function(e) {
