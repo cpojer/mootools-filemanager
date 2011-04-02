@@ -686,18 +686,31 @@ var FileManager = new Class({
         onSuccess: function(j)
         {            
           if(j && j.status)
-          {  
+          {             
             // For popup blockers, and browsers we can't reliably detect popup blocks
             // we display the link in a dialog
-            function show_link_in_dialog()
+            function show_link_in_dialog(title)
             {
-              self.showMessage(self.language.popup_blocked_download.substitute({link: " <a href=\"" + j.url +"\" target=\"_blank\">"+j.url+"</a>"}));
+              self.showMessage(self.language.popup_blocked_download.substitute({link: " <a href=\"" + j.url +"\" target=\"_blank\">"+j.url+"</a>"}),title ? title : '');
             }
             
-            var popup = window.open(j.url);
-            if(Browser.chrome || !popup)
+            if(!Browser.chrome)
             {
-              // Blocked
+              var popup;
+              setTimeout(function() {
+                if(!popup)
+                {                  
+                  // Blocked
+                  show_link_in_dialog(self.language.popup_blocked);
+                }
+              }, 1500);              
+              popup = window.open(j.url);         
+            }
+            else
+            {
+              // Chrome has no good way to detect a blocked popup and it's 
+              // blocked popup notification icon is really easy to miss, so we will 
+              // always show the dialog.
               show_link_in_dialog();
             }            
           }
