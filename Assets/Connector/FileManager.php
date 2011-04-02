@@ -858,8 +858,8 @@ class FileManager
 			$thumb = $icon;
 		}
 		return array(
-			'dirs' => (!empty($out[0]) ? $out[0] : array()),
-			'files' => (!empty($out[1]) ? $out[1] : array()),
+			'dirs' => (!empty($out[1]) ? $out[1] : array()),
+			'files' => (!empty($out[0]) ? $out[0] : array()),
 			'json' => array_merge((is_array($json) ? $json : array()), array(
 				'root' => substr($this->options['directory'], 1),
 				'path' => $legal_url,                                  // is relative to options['directory']
