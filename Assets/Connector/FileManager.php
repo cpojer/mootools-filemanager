@@ -795,9 +795,9 @@ class FileManager
 				if(!$this->options['thumbnailsMustGoThroughBackend'])
         {
           try
-          {
-            $thumb48  = $this->getThumb ($legal_url, $file, 48, 48, true);
-            $thumb250 = $this->getThumb ($legal_url, $file, 250, 250, true);
+          {  
+            $thumb48  = $this->getThumb ($url, $file, 48, 48, true);
+            $thumb250 = $this->getThumb ($url, $file, 250, 250, true);
           }
           catch(Exception $E)
           {
