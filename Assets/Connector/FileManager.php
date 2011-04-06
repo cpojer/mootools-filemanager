@@ -2161,8 +2161,7 @@ class FileManager
 		// first determine how the client can reach us; assume that's the same URI as he went to right now.
 		$our_handler_url = $_SERVER['SCRIPT_NAME'];
 
-    // Disabled the addition of propagateData here, this is done only in the client
-		if (0 &&  is_array($this->options['URIpropagateData']))
+		if (is_array($this->options['URIpropagateData']))
 		{
 			// the items in 'spec' always win over any entries in 'URIpropagateData':
 			$spec = array_merge(array(), $this->options['URIpropagateData'], $spec);
