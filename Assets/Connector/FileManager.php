@@ -707,7 +707,7 @@ class FileManager
 
 		// remove the imageinfo() call overhead per file for very large directories; just guess at the mimetye from the filename alone.
 		// The real mimetype will show up in the 'details' view anyway! This is only for the 'filter' function:
-		$just_guess_mime = (count($files) > 100);
+		$just_guess_mime = true; // (count($files) > 100);
 
 		$fileinfo = array(
 				'legal_url' => $legal_url,
