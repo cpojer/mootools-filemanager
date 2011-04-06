@@ -250,8 +250,8 @@ FileManager.implement({
 			instantStart: true,
 			appendCookieData: true, // pass along any session cookie data, etc. in the request section (PHP: $_GET[])
 			data: Object.merge({},
-			//(self.options.propagateData  || {}),
-			(self.options.uploadAuthData || (self.options.propagateType == 'POST' ? self.options.propagateData : {}))
+				(self.options.propagateType == 'POST' ? self.options.propagateData : {}),
+				(self.options.uploadAuthData || {})
 			),
 			fileClass: File,
 			timeLimit: 260,
