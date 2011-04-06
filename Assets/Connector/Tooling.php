@@ -28,6 +28,7 @@ if (!function_exists('safe_glob'))
 	if (!defined('GLOB_PATH'))        define('GLOB_PATH',512);
 	if (!defined('GLOB_NODOTS'))      define('GLOB_NODOTS',1024);
 	if (!defined('GLOB_RECURSE'))     define('GLOB_RECURSE',2048);
+	if (!defined('GLOB_NOHIDDEN'))    define('GLOB_NOHIDDEN',4096);
 	/**#@-*/
 
 
@@ -41,13 +42,14 @@ if (!function_exists('safe_glob'))
 	 *
 	 * safe_glob() intends to replace glob() using readdir() & fnmatch() instead.
 	 * Supported flags: GLOB_MARK, GLOB_NOSORT, GLOB_ONLYDIR
-	 * Additional flags: GLOB_NODIR, GLOB_PATH, GLOB_NODOTS, GLOB_RECURSE
+	 * Additional flags: GLOB_NODIR, GLOB_PATH, GLOB_NODOTS, GLOB_RECURSE, GLOB_NOHIDDEN
 	 * (not original glob() flags)
 	 *
 	 * @author BigueNique AT yahoo DOT ca
 	 * @updates
 	 * - 080324 Added support for additional flags: GLOB_NODIR, GLOB_PATH,
 	 *   GLOB_NODOTS, GLOB_RECURSE
+	 * - [i_a] Added support for GLOB_NOHIDDEN
 	 */
 	function safe_glob($pattern, $flags = 0)
 	{
@@ -69,7 +71,8 @@ if (!function_exists('safe_glob'))
 				{
 					if ( ( (!($flags & GLOB_ONLYDIR)) || is_dir($path . '/' . $file) )
 					  && ( (!($flags & GLOB_NODIR)) || (!is_dir($path . '/' . $file)) )
-					  && ( (!($flags & GLOB_NODOTS)) || (!in_array($file, array('.', '..'))) ) )
+					  && ( (!($flags & GLOB_NODOTS)) || (!in_array($file, array('.', '..'))) ) 
+					  && ( (!($flags & GLOB_NOHIDDEN)) || ($file[0] != '.' || $file == '..')) )
 					{
 						$glob[] = ($flags & GLOB_PATH ? $path . '/' : '') . $file . (($flags & GLOB_MARK) && is_dir($path . '/' . $file) ? '/' : '');
 					}
