@@ -1732,7 +1732,7 @@ class FileManager
 
 				// add here more headers for diff. extensions
 
-				default;
+				default:
 					header('Content-Type: application/octet-stream');
 					header('Content-Disposition: filename="' . $path_parts["basename"] . '"');
 					break;
