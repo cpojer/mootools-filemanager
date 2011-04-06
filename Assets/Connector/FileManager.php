@@ -668,14 +668,14 @@ class FileManager
 		{
 			throw new FileManagerException('nofile');
 		}
-		$files = $this->scandir($dir, $filemask);
+			$files = $this->scandir($dir, $filemask, false, 0, ($this->options['showHiddenFoldersAndFiles'] ? ~GLOB_NOHIDDEN : ~0));
 
     // This can not be done in scandir, because other stuff (particularly delete)
     // might need those dotfiles.
     if(!$this->options['showHiddenFoldersAndFiles'])
     {
       $nohidden = array();
-      foreach($files as $file)
+      foreach($files as $file)         // b0rks on empty directories but we refactor this anyway
       {
         if($file[0] == '.' && $file != '.' & $file != '..') continue;
         $nohidden[] = $file;
@@ -2644,7 +2644,7 @@ class FileManager
 		{
 			$dir = self::enforceTrailingSlash($file);
 			$url = self::enforceTrailingSlash($legal_url);
-			$files = $this->scandir($dir);
+			$files = $this->scandir($dir, '*', false, 0, ~GLOB_NOHIDDEN);
 			foreach ($files as $f)
 			{
 				if(in_array($f, array('.','..')))
@@ -2689,7 +2689,7 @@ class FileManager
 	 *            entry is the very last entry in the array.
 	 *            This guarantee is important as onView() et al depend on it.
 	 */
-	protected function scandir($dir, $filemask = '*', $see_thumbnail_dir = false)
+	protected function scandir($dir, $filemask, $see_thumbnail_dir, $glob_flags_or, $glob_flags_and)
 	{
 		// list files, except the thumbnail folder itself or any file in it:
 		$dir = self::enforceTrailingSlash($dir);
@@ -2709,9 +2709,10 @@ class FileManager
 
 		$at_basedir = ($this->url_path2file_path($this->options['directory']) == $dir);
 
-
-		$files = safe_glob($dir . $filemask, GLOB_NODOTS | GLOB_NOSORT);
-
+		$flags = GLOB_NODOTS | GLOB_NOHIDDEN | GLOB_NOSORT;
+		$flags &= $glob_flags_and;
+		$flags |= $glob_flags_or;
+		$files = safe_glob($dir . $filemask, $flags);
 
 		if ($just_below_thumbnail_dir)
 		{
@@ -2982,7 +2983,7 @@ class FileManager
 		$thumbPath = self::enforceTrailingSlash($thumbPath);
 
 		// remove thumbnails (any size) and any other related cached files (TODO: future version should cache getID3 metadata as well -- and delete it here!)
-		$files = $this->scandir($thumbPath, $tfi['filename'] . '.*', true);
+		$files = $this->scandir($thumbPath, $tfi['filename'] . '.*', true, 0, ~GLOB_NOHIDDEN);
 
 		$rv = true;
 		if (is_array($files))

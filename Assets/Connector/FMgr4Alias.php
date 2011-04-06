@@ -104,16 +104,20 @@ class FileManagerWithAliasSupport extends FileManager
 	 * An augmented scandir() which will ensure any Aliases are included in the relevant
 	 * directory scans; this makes the Aliases behave very similarly to actual directories.
 	 */
-	public function scandir($dir, $filemask = '*', $see_thumbnail_dir = false)
+	protected function scandir($dir, $filemask, $see_thumbnail_dir, $glob_flags_or, $glob_flags_and)
 	{
 		$dir = self::enforceTrailingSlash($dir);
 
 		// collect the real items first:
-		$coll = parent::scandir($dir, $filemask, $see_thumbnail_dir);
+		$coll = parent::scandir($dir, $filemask, $see_thumbnail_dir, $glob_flags_or, $glob_flags_and);
 		if ($coll === false)
 			return $coll;
 
 
+		$flags = GLOB_NODOTS | GLOB_NOHIDDEN | GLOB_NOSORT;
+		$flags &= $glob_flags_and;
+		$flags |= $glob_flags_or;
+		
 		// make sure we keep the guarantee that the '..' entry, when present, is the very last one, intact:
 		$doubledot = array_pop($coll);
 		if ($doubledot !== null && $doubledot !== '..')
@@ -147,8 +151,11 @@ class FileManagerWithAliasSupport extends FileManager
 		{
 			foreach($this->scandir_alias_lu_arr[$dir] as $a_elem)
 			{
-				if (!in_array($a_elem, $coll, true) && $tndir !== $a_elem)
+				if (!in_array($a_elem, $coll, true) && $tndir !== $a_elem 
+					&& (!($flags & GLOB_NOHIDDEN) || $a_elem[0] != '.') )
+				{
 					$coll[] = $a_elem;
+				}
 			}
 		}
 
