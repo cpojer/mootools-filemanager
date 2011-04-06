@@ -670,31 +670,30 @@ var FileManager = new Class({
 			this.tips.tip.setStyle('display', 'none');
 		}
 
-		if(!this._downloadIframe)
-    {
-      this._downloadIframe = (new IFrame).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});
-      this.menu.adopt(this._downloadIframe);
+		if (!this._downloadIframe)
+		{
+			this._downloadIframe = (new IFrame).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});
+			this.menu.adopt(this._downloadIframe);
 
-      this._downloadForm = new Element('form', {target: '_downloadIframe', method: 'post'});
-      this.menu.adopt(this._downloadForm);
+			this._downloadForm = new Element('form', {target: '_downloadIframe', method: 'post'});
+			this.menu.adopt(this._downloadForm);
 
-
-      if(this.options.propagateType == 'POST')
-      {
-        var self = this;
+			if (this.options.propagateType == 'POST')
+			{
+				var self = this;
 				Object.each(this.options.propagateData, function(v, k) {
-            self._downloadForm.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
-        });
-      }
-    }
+					self._downloadForm.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
+				});
+			}
+		}
 
-    this._downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (this.options.propagateType == 'GET' ? this.options.propagateData : {}), {
-        event: 'download',
-        file: this.normalize(file.dir + file.name),
-        filter: this.options.filter
-      }));
+		this._downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (this.options.propagateType == 'GET' ? this.options.propagateData : {}), {
+			event: 'download',
+			file: this.normalize(file.dir + file.name),
+			filter: this.options.filter
+		  }));
 
-    return this._downloadForm.submit();
+		return this._downloadForm.submit();
 	},
 
 	create_on_click: function(e) {
@@ -2230,44 +2229,44 @@ var FileManager = new Class({
 FileManager.Request = new Class({
 	Extends: Request.JSON,
 
-  options:
-  {
-    secure:          true, // Isn't this true by default anyway in REQUEST.JSON?
-    fmDisplayErrors: false // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
-  },
+	options:
+	{
+		secure:          true, // Isn't this true by default anyway in REQUEST.JSON?
+		fmDisplayErrors: false // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
+	},
 
 	initialize: function(options, filebrowser){
 		this.parent(options);
 
     if(filebrowser) // When is this NOT supplied, I think it always should be, we are always dealing with a filebrowser somewhere eh?
     {
-      if(filebrowser.options.propagateType == 'GET')
-      {
-        this.options.url += (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(filebrowser.options.propagateData);
-      }
-      else
-      {
+		if (filebrowser.options.propagateType == 'GET')
+		{
+			this.options.url += (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(filebrowser.options.propagateData);
+		}
+		else
+		{
         this.options.data = Object.merge({}, this.options.data, filebrowser.options.propagateData);
-      }
+		}
 
-      if(this.options.fmDisplayErrors)
-      {
-        this.addEvents({
-          success: function(j) {
-            if(!j)        return filebrowser.showError();
-            if(!j.status) return filebrowser.showError(j.error);
-          },
+		if (this.options.fmDisplayErrors)
+		{
+			this.addEvents({
+				success: function(j) {
+					if (!j)        return filebrowser.showError();
+					if (!j.status) return filebrowser.showError(j.error);
+				},
 
-          error: function(text, error) {
-            filebrowser.showError(text);
-          },
+				error: function(text, error) {
+					filebrowser.showError(text);
+				},
 
-          failure: function(xmlHttpRequest) {
-            var text = filebrowser.cvtXHRerror2msg(xmlHttpRequest);
-            filebrowser.showError(text);
-          }
-        });
-      }
+				failure: function(xmlHttpRequest) {
+					var text = filebrowser.cvtXHRerror2msg(xmlHttpRequest);
+					filebrowser.showError(text);
+				}
+			});
+		}
     }
 
 		if (filebrowser) this.addEvents({
@@ -2277,7 +2276,6 @@ FileManager.Request = new Class({
 			error: filebrowser.onError.bind(filebrowser),
 			failure: filebrowser.onFailure.bind(filebrowser)
 		});
-
 	}
 });
 
