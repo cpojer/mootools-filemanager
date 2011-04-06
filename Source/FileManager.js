@@ -682,7 +682,7 @@ var FileManager = new Class({
       if(this.options.propagateType == 'POST')
       {
         var self = this;
-        (new Hash(this.options.propagateData)).each(function(v, k){
+				Object.each(this.options.propagateData, function(v, k) {
             self._downloadForm.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
         });
       }

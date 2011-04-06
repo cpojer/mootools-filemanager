@@ -71,7 +71,7 @@ FileManager.implement({
       .set('target', 'dummyframe')
       .setStyles({ 'float': 'left', 'padding-left': '3px', 'display':'block'});
 
-    (new Hash(this.options.uploadAuthData)).each(function(v, k){
+	Object.each(this.options.uploadAuthData, function(v, k){
         f.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
     });
 
