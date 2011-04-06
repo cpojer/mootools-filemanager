@@ -1453,6 +1453,17 @@ var FileManager = new Class({
 		return true;
 	},
 
+	list_row_maker: function(thumbnail_url, file)
+	{
+		return file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
+			new Element('span', {
+				'class': this.listType,
+				'style': thumbnail_url ? 'background-image: url(' + thumbnail_url + ')' : 'background-image: url(' + this.assetBasePath + 'Images/loader.gif' + ')'
+			}).addClass('fm-thumb-bg') /* .adopt(icon) */ ,
+			new Element('span', {'class': 'filemanager-filename', text: file.name, title: file.name})
+		).store('file', file);
+	},
+
 	/*
 	 * The old one-function-does-all fill() would take an awful long time when processing large directories. This function
 	 * contains the most costly code chunk of the old fill() and has adjusted the looping through the j.files[] list
@@ -1514,56 +1525,65 @@ var FileManager = new Class({
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
 			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 			var isdir = (file.mime == 'text/directory');
+			var el;
 
-      function list_row_maker(thumbnail_url)
-      {
-        return file.element = new Element('span', {'class': 'fi ' + self.listType, href: '#'}).adopt(
-          new Element('span', {
-            'class': self.listType,
-            'style': thumbnail_url ? ('background-image: url(' + thumbnail_url + ')') : ''
-          }).addClass('fm-thumb-bg') /* .adopt(icon) */ ,
-          new Element('span', {'class': 'filemanager-filename', text: file.name, title:file.name})
-        ).store('file', file);
-      }
+			if (file.thumbnail.indexOf('.php?') == -1)
+			{
+				// This is just a raw image
+				el = this.list_row_maker(file.thumbnail, file);
+			}
+			else if (this.options.propagateType == 'POST')
+			{
+				// We must AJAX POST our propagateData, so we need to do the post and take the url to the
+				// thumbnail from the post results.
+				//
+				// The alternative here, taking only 1 round trip instead of 2, would have been to FORM POST
+				// to a tiny iframe, which is suitably sized to contain the generated thumbnail and the POST
+				// actually returning the binary image data, thus the iframe contents becoming the thumbnail image.
 
-      if(file.thumbnail.indexOf('?') == -1)
-      {
-        // This is just a raw image
-        var el = list_row_maker(file.thumbnail);
-      }
-      else if(this.options.propagateType == 'POST')
-      {
-        // We must POST our propagateData, so we need to do the post and take the url to the
-        // thumbnail from the post results.
+				el = (function(file) {           // Closure
+					var list_row = this.list_row_maker(null, file);
 
-        var el =
-          (function() {           // Closure
-            var list_row = list_row_maker();
+					new FileManager.Request({
+						url: file.thumbnail,
+						data: {
+							asJSON: 1
+						},
+						onRequest: function(){},
+						onSuccess: (function(j) {
+							var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
+							if (!j || !j.status)
+							{
+								// Should we display the error here? No, we just display the general error icon instead
+								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+							}
+							else if (j && j.thumbnail)
+							{
+								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + j.thumbnail + ')');
+							}
+							else
+							{
+								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+							}
+						}).bind(this),
+						onError: (function(text, error) {
+							var iconpath = this.options['assetBasePath'] + 'Images/Icons/default-error.png';
+							list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+						}).bind(this),
+						onFailure: (function(xmlHttpRequest) {
+							var iconpath = this.options['assetBasePath'] + 'Images/Icons/default-error.png';
+							list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+						}).bind(this)
+					}, this).send();
 
-            new FileManager.Request({
-              url: file.thumbnail + '&asJson=1',
-              onSuccess: function(j) {
-                if(!j || !j.status)
-                {
-                  // Should we display the error here?
-                  // Probably not, could be too noisy.
-                }
-
-                if(j && j.thumbnail)
-                {
-                  list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url('+j.thumbnail+')');
-                }
-              }
-            }, self).send();
-
-            return list_row;
-          })();
-      }
-      else
-      {
-        // If we are just GET, append the data to the url
-        var el = list_row_maker(file.thumbnail + '&' + Object.toQueryString(this.options.propagateData));
-      }
+					return list_row;
+				}).bind(this)(file);
+			}
+			else
+			{
+				// If we are using GET, append the data to the url
+				el = this.list_row_maker(file.thumbnail + '&' + Object.toQueryString(this.options.propagateData), file);
+			}
 
 			/*
 			 * WARNING: for some (to me) incomprehensible reason the old code which bound the event handlers to 'this==self' and which used the 'el' variable
@@ -2238,15 +2258,13 @@ FileManager.Request = new Class({
 	initialize: function(options, filebrowser){
 		this.parent(options);
 
-    if(filebrowser) // When is this NOT supplied, I think it always should be, we are always dealing with a filebrowser somewhere eh?
-    {
 		if (filebrowser.options.propagateType == 'GET')
 		{
 			this.options.url += (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(filebrowser.options.propagateData);
 		}
 		else
 		{
-        this.options.data = Object.merge({}, this.options.data, filebrowser.options.propagateData);
+			this.options.data = Object.merge({}, filebrowser.options.propagateData, this.options.data);
 		}
 
 		if (this.options.fmDisplayErrors)
@@ -2267,9 +2285,8 @@ FileManager.Request = new Class({
 				}
 			});
 		}
-    }
 
-		if (filebrowser) this.addEvents({
+		this.addEvents({
 			request: filebrowser.onRequest.bind(filebrowser),
 			complete: filebrowser.onComplete.bind(filebrowser),
 			success: filebrowser.onSuccess.bind(filebrowser),
