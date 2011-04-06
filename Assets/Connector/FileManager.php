@@ -39,6 +39,8 @@
  *   - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
  *   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
  *   - filter: (string, defaults to *null*) If not empty, this is a list of allowed mimetypes (overruled by the GET request 'filter' parameter: single requests can thus overrule the common setup in the constructor for this option)
+ *   - thumbnailsMustGoThroughBackend: (boolean, defaults to *true*) When set to TRUE (default) all thumbnail requests go through the backend (onThumbnail). When set to FALSE, thumbnails will "shortcircuit" if they exist in the cache, saving roundtrips when using POST type propagateData
+ *   - showHiddenFoldersAndFiles: (boolean, defaults to *false*) whether or not to show 'dotted' directories and files -- such files are considered 'hidden' on UNIX file systems
  *   - ViewIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given directory may be viewed.
  *     The parameter $action = 'view'.
  *   - DetailIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be inspected (and the details listed).
@@ -458,8 +460,7 @@
  *                                       and including the slash, e.g. 'image/'
  *
  *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
- *The parameter $action = 'thumbnail'.
- *   - UploadIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given file may be uploaded.
+ *
  *               'requested_size'        (integer) the size (maximum width and height) in pixels of the thumbnail to be produced.
  *
  *         The frontend-specified options.propagateData items will be available as $_GET[] items.
@@ -555,7 +556,7 @@ class FileManager
 			'DestroyIsAuthorized_cb' => null,
 			'MoveIsAuthorized_cb' => null,
 			'thumbnailsMustGoThroughBackend' => true, // If set true (default) all thumbnail requests go through the backend (onThumbnail), if false, thumbnails will "shortcircuit" if they exist, saving roundtrips when using POST type propagateData
-			'showHiddenFoldersAndFiles'      => false, // Hide dot dirs/files ?
+			'showHiddenFoldersAndFiles' => false,     // Hide dot dirs/files ?
 			'URIpropagateData' => null
 		), (is_array($options) ? $options : array()));
 
@@ -1792,15 +1793,16 @@ class FileManager
 	 *
 	 * $_FILES[]              the metadata for the uploaded file
 	 *
-	 * $_GET['reportContentType'] if you want a specific content type header set on our response, put it here
-   *                               this is needed for when we are posting an upload to a hidden iframe, the 
-	 *                               default application/json breaks down in that case at least for Firefox 3.X
+	 * $_GET['reportContentType'] if you want a specific content type header set on our response, put it here.
+	 *                        This is needed for when we are posting an upload response to a hidden iframe, the 
+	 *                        default application/json mimetype breaks down in that case at least for Firefox 3.X
+	 *                        as the browser will pop up a save/view dialog before JS can access the transmitted data.
 	 *
 	 * Errors will produce a JSON encoded error report, including at least two fields:
 	 *
-	 * status                  0 for error; nonzero for success
+	 * status                 0 for error; nonzero for success
 	 *
-	 * error                   error message
+	 * error                  error message
 	 */
 	protected function onUpload()
 	{
@@ -1924,7 +1926,7 @@ class FileManager
 				unset($img);
 			}
 
-			if (!headers_sent()) header('Content-Type: '.$this->getGetparam('reportContentType', 'application/json'));
+			if (!headers_sent()) header('Content-Type: ' . $this->getGetparam('reportContentType', 'application/json'));
 
 			echo json_encode(array(
 					'status' => 1,
@@ -1944,7 +1946,7 @@ class FileManager
 
 		$this->modify_json4exception($jserr, $emsg);
 
-		if (!headers_sent()) header('Content-Type: '.$this->getGetparam('reportContentType', 'application/json'));
+		if (!headers_sent()) header('Content-Type: ' . $this->getGetparam('reportContentType', 'application/json'));
 
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
@@ -2627,7 +2629,7 @@ class FileManager
 	 *
 	 * Return TRUE on success, FALSE when an error occurred.
 	 *
-	 * Note that the routine will try to percevere and keep deleting other subdirectories
+	 * Note that the routine will try to persevere and keep deleting other subdirectories
 	 * and files, even when an error occurred for one or more of the subitems: this is
 	 * a best effort policy.
 	 */
@@ -2869,7 +2871,7 @@ class FileManager
       if($onlyIfExists) return FALSE;
       
 			if (!file_exists(dirname($thumbPath)))
-			{        
+			{
 				@mkdir(dirname($thumbPath), $this->options['chmod'], true);
 			}
 			$img = new Image($path);
@@ -2881,7 +2883,7 @@ class FileManager
 	}
 
 	/**
-	 * Assitant function which produces the best possible icon image path for the given error/exception message.
+	 * Assistant function which produces the best possible icon image path for the given error/exception message.
 	 */
 	public function getIconForError($emsg, $original_filename, $small_icon)
 	{

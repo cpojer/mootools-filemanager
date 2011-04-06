@@ -48,8 +48,8 @@ class Image {
 	/**
 	 * @param string $file The path to the image file
 	 */
-	public function __construct($file){
-
+	public function __construct($file)
+	{
 		$this->dirty = false;
 
 		$finfo = self::guestimateRequiredMemorySpace($file);
@@ -101,9 +101,11 @@ class Image {
 				throw new Exception('cvt2truecolor_failed:' . $this->meta['width'] . ' x ' . $this->meta['height']);
 			imagedestroy($original);
 			unset($original);
-		} else {
+		} 
+		else 
+		{
 			$this->image = @imagecreatefromjpeg($file);
-			if (!$this->image) throw new Exception('imagecreate_failed');
+			if (!$this->image) throw new Exception('imagecreate_failed:imagecreatefromjpeg');
 		}
 	}
 
@@ -144,19 +146,6 @@ class Image {
 		$limit = $val;
 
 		$in_use = (function_exists('memory_get_usage') ? memory_get_usage() : 1000000 /* take a wild guess, er, excuse me, 'apply a heuristic' */ );
-
-		// we'll assume the $file path fed to us is CLEAN and CORRECT; the code below will b0rk evverything no end in Alias-ed web sites anyway!
-		if (0)
-		{
-			$file = str_replace('\\','/',$file);
-			$file = preg_replace('#/+#','/',$file);
-			$file = str_replace($_SERVER['DOCUMENT_ROOT'],'',$file);
-			$file = $_SERVER['DOCUMENT_ROOT'].$file;
-			$file = str_replace('\\','/',$file);
-			$file = preg_replace('#/+#','/',$file);
-			$file = realpath($file);
-			$file = str_replace('\\','/',$file);
-		}
 
 		$rv = array(
 			'memory_limit' => $limit,

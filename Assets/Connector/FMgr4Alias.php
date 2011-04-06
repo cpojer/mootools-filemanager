@@ -94,14 +94,14 @@ class FileManagerWithAliasSupport extends FileManager
 	public function getSettings()
 	{
 		return array_merge(array(
-				'scandir_alias_lu_arr' => $this->scandir_alias_lu_arr
+			'scandir_alias_lu_arr' => $this->scandir_alias_lu_arr
 		), parent::getSettings());
 	}
 
 
 
 	/**
-	 * An augmented scandir() whih will ensure any Aliases are included in the relevant
+	 * An augmented scandir() which will ensure any Aliases are included in the relevant
 	 * directory scans; this makes the Aliases behave very similarly to actual directories.
 	 */
 	public function scandir($dir, $filemask = '*', $see_thumbnail_dir = false)

@@ -1,23 +1,23 @@
 /*
----
-
-description: Implements Upload functionality into the FileManager without using Flash
-             While the flash uploader is preferable, sometimes it is not possible to use it due to
-             server restrictions (eg, mod_security), or perhaps users refuse to use flash.
-
-             This Upload handler will allow the MFM to continue to function, without multiple-upload-at-once
-             function and without progress bars.  But otherwise, it should work.
-
-authors: James Sleeman (@sleemanj)
-
-license: MIT-style license.
-
-requires: [Core/*]
-
-provides: Filemanager.Uploader
-
-...
-*/
+ * ---
+ *
+ * description: Implements Upload functionality into the FileManager without using Flash
+ *              While the flash uploader is preferable, sometimes it is not possible to use it due to
+ *              server restrictions (eg, mod_security), or perhaps users refuse to use flash.
+ *
+ *              This Upload handler will allow the MFM to continue to function, without multiple-upload-at-once
+ *              function and without progress bars.  But otherwise, it should work.
+ *
+ * authors: James Sleeman (@sleemanj)
+ *
+ * license: MIT-style license.
+ *
+ * requires: [Core/*]
+ *
+ * provides: Filemanager.Uploader
+ *
+ * ...
+ */
 
 FileManager.implement({
 
@@ -88,13 +88,13 @@ FileManager.implement({
         f.adopt(fileinput);
       }
     }
-    
+
     make_file_input();
-    
-    // The FileManager.php can't make up it's mind about which it wants, directory is documented as GET, 
+
+    // The FileManager.php can't make up it's mind about which it wants, directory is documented as GET,
     // but is checked as POST, we'll send both.
     f.adopt((new Element('input')).set({type:'hidden', 'name':'directory'}));
-    
+
     f.inject(this.menu, 'top');
 
     var uploadButton = this.addMenuButton('upload').addEvents({
@@ -148,26 +148,26 @@ FileManager.implement({
         {
           var response;
             try { response = this.contentDocument.documentElement.textContent; } catch(e) {}
-          
+
           if(!response)
             try { response = this.contentWindow.document.innerText; } catch(e) {}
-          
+
           if(!response)
             try { response = this.contentDocument.innerText; } catch(e) {}
-          
+
           if(!response) throw "Can't find response.";
-            
+
           response = JSON.decode(response);
-          
+
           if (response && !response.status)
           {
             new FileManager.Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: mfm.language.ok}, buttons: ['confirm']});
           }
           else
           {
-            mfm.onShow = true; // why exactly do we need to set this, what purpose does the default of NOT preselecting the thing
-                               // we asked to preselect have?
-                               
+					mfm.onShow = true; // why exactly do we need to set this, what purpose does the default of NOT preselecting the thing we asked to preselect have?
+
+
             mfm.load(mfm.Directory.replace(/\/$/, ''), response.name ? response.name : null);
           }
         }
@@ -177,7 +177,7 @@ FileManager.implement({
           // debugger; console.log(this);
           mfm.load(mfm.Directory);
         }
-        
+
         make_file_input();
     });
   }

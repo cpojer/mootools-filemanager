@@ -1,25 +1,25 @@
 /*
----
-
-description: Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
-
-authors: Christoph Pojer (@cpojer)
-
-license: MIT-style license.
-
-requires: [Core/*]
-
-provides: Filemanager.Uploader
-
-...
-*/
+ * ---
+ *
+ * description: Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
+ *
+ * authors: Christoph Pojer (@cpojer)
+ *
+ * license: MIT-style license.
+ *
+ * requires: [Core/*]
+ *
+ * provides: Filemanager.Uploader
+ *
+ * ...
+ */
 
 FileManager.implement({
 
   options: {
     resizeImages: true,
     upload: true,
-    uploadAuthData: {}
+		uploadAuthData: {}            // deprecated; use FileManager.propagateData instead!
   },
 
   hooks: {
@@ -192,11 +192,11 @@ FileManager.implement({
         {
           var response = JSON.decode(this.response.text);
         }
-        catch(E)
-        { 
-          console.log(this.response);
-        }
-        
+				catch(e)
+				{
+					if (typeof console !== 'undefined' && console.log) console.log(this.response);
+				}
+
         if (!response)
         {
           new FileManager.Dialog(self.language.uploader.mod_security, {language: {confirm: self.language.ok}, buttons: ['confirm']});
@@ -216,7 +216,7 @@ FileManager.implement({
               self.upload.uploader.fade(0).get('tween').chain(function(){
                 self.upload.uploader.setStyle('display', 'none');
                 self.onShow = true;
-                self.load(self.Directory, self._lastFileUploaded);//true);
+				self.load(self.Directory, self._lastFileUploaded);
                 // self.fillInfo();
               });
           });
@@ -265,7 +265,7 @@ FileManager.implement({
         self.upload.uploader.fade(1);
       },
       onComplete: function(){
-        
+
       },
       onFileComplete: function(f){
         self._lastFileUploaded = f.name;
