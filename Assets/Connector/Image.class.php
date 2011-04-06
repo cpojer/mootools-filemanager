@@ -52,45 +52,18 @@ class Image {
 	{
 		$this->dirty = false;
 
-		$finfo = self::guestimateRequiredMemorySpace($file);
-		$file = $finfo['path'];
-
-		// is it a valid file existing on disk?
-		if (!isset($finfo['imageinfo']))
-			throw new Exception('no_imageinfo');
+		$this->meta = self::checkFileForProcessing($file);
 
 		// only set the new memory limit of IMAGE_PROCESSING_MEMORY_MAX_USAGE MB when the configured one is smaller:
-		if ($finfo['memory_limit'] < IMAGE_PROCESSING_MEMORY_MAX_USAGE * 1024 * 1024)
+		if ($this->meta['fileinfo']['memory_limit'] < IMAGE_PROCESSING_MEMORY_MAX_USAGE * 1024 * 1024)
 		{
 			ini_set('memory_limit', IMAGE_PROCESSING_MEMORY_MAX_USAGE . 'M'); //  handle large images
-
-			// recalc the 'will_fit' indicator now:
-			$finfo['will_fit'] = ($finfo['usage_min_advised'] < IMAGE_PROCESSING_MEMORY_MAX_USAGE * 1024 * 1024);
 		}
 
 		$this->file = $file;
-		$img = $finfo['imageinfo'];
 
-		// and will it fit in available memory if we go and load the bugger?
-		if (!$finfo['will_fit'])
-			throw new Exception('img_will_not_fit:' . ceil($finfo['usage_min_advised'] / 1E6) . ' MByte');
-
-		$explarr = explode('/', $img['mime']); // make sure the end() call doesn't throw an error next in E_STRICT mode:
-		$ext_from_mime = end($explarr);
-		$this->meta = array(
-			'width' => $img[0],
-			'height' => $img[1],
-			'mime' => $img['mime'],
-			'ext' => $ext_from_mime,
-			'fileinfo' => $finfo
-		);
-
-		if($this->meta['ext']=='jpg')
-			$this->meta['ext'] = 'jpeg';
-		if(!in_array($this->meta['ext'], array('gif', 'png', 'jpeg')))
-			throw new Exception('unsupported_imgfmt:' . $this->meta['ext']);
-
-		if($this->meta['ext'] != 'jpeg'){
+		if($this->meta['ext'] != 'jpeg')
+		{
 			$this->image = $this->create();
 
 			$fn = 'imagecreatefrom'.$this->meta['ext'];
@@ -214,6 +187,56 @@ class Image {
 		return $rv;
 	}
 
+	/**
+	 * Check whether the given file is really an image file and whether it can be processed by our Image class, given the PHP
+	 * memory restrictions.
+	 *
+	 * Return the meta data array when the expectation is that the given file can be processed; throw an exception otherwise.
+	 */
+	public static function checkFileForProcessing($file)
+	{
+		$finfo = self::guestimateRequiredMemorySpace($file);
+		if (!empty($finfo['not_an_image_file']))
+			throw new Exception('no_imageinfo');
+
+		// is it a valid file existing on disk?
+		if (!isset($finfo['imageinfo']))
+			throw new Exception('no_imageinfo');
+
+		$file = $finfo['path'];
+
+		// only set the new memory limit of IMAGE_PROCESSING_MEMORY_MAX_USAGE MB when the configured one is smaller:
+		if ($finfo['memory_limit'] < IMAGE_PROCESSING_MEMORY_MAX_USAGE * 1024 * 1024)
+		{
+			// recalc the 'will_fit' indicator now:
+			$finfo['will_fit'] = ($finfo['usage_min_advised'] < IMAGE_PROCESSING_MEMORY_MAX_USAGE * 1024 * 1024);
+		}
+
+		$img = $finfo['imageinfo'];
+
+		// and will it fit in available memory if we go and load the bugger?
+		if (!$finfo['will_fit'])
+			throw new Exception('img_will_not_fit:' . ceil($finfo['usage_min_advised'] / 1E6) . ' MByte');
+
+		$explarr = explode('/', $img['mime']); // make sure the end() call doesn't throw an error next in E_STRICT mode:
+		$ext_from_mime = end($explarr);
+		$meta = array(
+			'width' => $img[0],
+			'height' => $img[1],
+			'mime' => $img['mime'],
+			'ext' => $ext_from_mime,
+			'fileinfo' => $finfo
+		);
+
+		if($meta['ext'] == 'jpg')
+			$meta['ext'] = 'jpeg';
+		if(!in_array($meta['ext'], array('gif', 'png', 'jpeg')))
+			throw new Exception('unsupported_imgfmt:' . $meta['ext']);
+
+		return $meta;
+	}
+
+	
 	/**
 	 * Returns the size of the image
 	 *
