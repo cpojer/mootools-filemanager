@@ -1580,11 +1580,11 @@ var FileManager = new Class({
 							}
 						}).bind(this),
 						onError: (function(text, error) {
-							var iconpath = this.options['assetBasePath'] + 'Images/Icons/default-error.png';
+							var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
 							list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 						}).bind(this),
 						onFailure: (function(xmlHttpRequest) {
-							var iconpath = this.options['assetBasePath'] + 'Images/Icons/default-error.png';
+							var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
 							list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 						}).bind(this)
 					}, this).send();
@@ -2187,7 +2187,7 @@ var FileManager = new Class({
 	cvtXHRerror2msg: function(xmlHttpRequest) {
 		var status = xmlHttpRequest.status;
 		var orsc = xmlHttpRequest.onreadystatechange;
-		var response = (xmlHttpRequest.responseText || xmlHttpRequest.responseXML || this.language['backend.unidentified_error']);
+		var response = (xmlHttpRequest.responseText || this.language['backend.unidentified_error']);
 
 		var text = response.substitute(this.language, /\\?\$\{([^{}]+)\}/g);
 		return text;
