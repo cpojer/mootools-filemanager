@@ -1658,8 +1658,6 @@ class FileManager
 	 *                        matching this (set of) mimetypes will be listed.
 	 *                        Examples: 'image/' or 'application/zip'
 	 *
-	 * $_GET['asJson']        if true, returns { status:1, url: '.....' } or { status:0, error: '......' }
-	 *
 	 * On errors a HTTP 403 error response will be sent instead.
 	 */
 	protected function onDownload()
@@ -1704,13 +1702,6 @@ class FileManager
 				);
 			if (!empty($this->options['DownloadIsAuthorized_cb']) && function_exists($this->options['DownloadIsAuthorized_cb']) && !$this->options['DownloadIsAuthorized_cb']($this, 'download', $fileinfo))
 				throw new FileManagerException('authorized');
-
-      if($this->getGETparam('asJson', 0))
-      {
-        $Response = array('status' => 1, 'url' => $this->legal2abs_url_path($fileinfo['legal_url']), 'fileinfo' => $fileinfo);
-        echo json_encode($Response);
-        exit;
-      }
       
 			$legal_url = $fileinfo['legal_url'];
 			$file = $fileinfo['file'];
@@ -1746,26 +1737,12 @@ class FileManager
 		}
 		catch(FileManagerException $e)
 		{ 
-      if($this->getGETparam('asJson', 0))
-      {
-        $Response = array('status' => 0, 'error' => $e->getMessage());
-        echo json_encode($Response);
-        exit;
-      }
-      
 			// we don't care whether it's a 404, a 403 or something else entirely: we feed 'em a 403 and that's final!
 			send_response_status_header(403);
 			echo $e->getMessage();
 		}
 		catch(Exception $e)
 		{
-      if($this->getGETparam('asJson', 0))
-      {
-        $Response = array('status' => 0, 'error' => $e->getMessage());
-        echo json_encode($Response);
-        exit;
-      }
-      
 			// we don't care whether it's a 404, a 403 or something else entirely: we feed 'em a 403 and that's final!
 			send_response_status_header(403);
 			echo $e->getMessage();
