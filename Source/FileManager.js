@@ -119,6 +119,8 @@ var FileManager = new Class({
 		this.view_fill_json = null;      // the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly consulting the server.
 		this.listPaginationLastSize = this.options.listPaginationSize;
 		this.Request = null;
+		this._downloadIframe = null;
+		this._downloadForm = null;
 
 		this.language = Object.clone(FileManager.Language.en);
 		if (this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
@@ -670,21 +672,32 @@ var FileManager = new Class({
 			this.tips.tip.setStyle('display', 'none');
 		}
 
-		if (!this._downloadIframe)
+		// discard old iframe, if it exists:
+		if (this._downloadIframe)
 		{
-			this._downloadIframe = (new IFrame).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});
-			this.menu.adopt(this._downloadIframe);
+			// remove fro the menu (dispose) and trash it (destroy)
+			this._downloadIframe.dispose().destroy();
+			this._downloadIframe = null;
+		}
+		if (this._downloadForm)
+		{
+			// remove fro the menu (dispose) and trash it (destroy)
+			this._downloadForm.dispose().destroy();
+			this._downloadForm = null;
+		}
 
-			this._downloadForm = new Element('form', {target: '_downloadIframe', method: 'post'});
-			this.menu.adopt(this._downloadForm);
+		this._downloadIframe = (new IFrame).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});
+		this.menu.adopt(this._downloadIframe);
 
-			if (this.options.propagateType == 'POST')
-			{
-				var self = this;
-				Object.each(this.options.propagateData, function(v, k) {
-					self._downloadForm.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
-				});
-			}
+		this._downloadForm = new Element('form', {target: '_downloadIframe', method: 'post'});
+		this.menu.adopt(this._downloadForm);
+
+		if (this.options.propagateType == 'POST')
+		{
+			var self = this;
+			Object.each(this.options.propagateData, function(v, k) {
+				self._downloadForm.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
+			});
 		}
 
 		this._downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (this.options.propagateType == 'GET' ? this.options.propagateData : {}), {
