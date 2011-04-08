@@ -1235,6 +1235,7 @@ class FileManager
 		}
 
 		// loop until we drop below the bottomdir; meanwhile getDir() above guarantees that $dir is a subdir of bottomdir, hence dir >= bottomdir.
+		$original_legal_url = $legal_url;
 		do
 		{
 			try
@@ -1266,7 +1267,7 @@ class FileManager
 
 		} while ($legal_url !== false);
 
-		$this->modify_json4exception($jserr, $emsg . ' : path :: ' . $legal_url);
+		$this->modify_json4exception($jserr, $emsg . ' : path :: ' . $original_legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
