@@ -208,5 +208,23 @@ class FileManagerWithAliasSupport extends FileManager
 
 		return $url_path;
 	}
+
+	/**
+	 * Return the filesystem absolute path for the relative URI path or absolute LEGAL URI path.
+	 *
+	 * Note: as it uses normalize(), any illegal path will throw an FileManagerException
+	 *
+	 * Returns a fully normalized filesystem absolute path.
+	 */
+	public function legal_url_path2file_path($url_path)
+	{
+		$url_path = $this->rel2abs_legal_url_path($url_path);
+
+		$url_path = substr($this->options['directory'], 0, -1) . $url_path;
+
+		$path = $this->url_path2file_path($url_path);
+
+		return $path;
+	}
 }
 

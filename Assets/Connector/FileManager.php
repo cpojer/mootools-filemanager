@@ -625,15 +625,14 @@ class FileManager
 			$this->options['maxImageDimension'] = array('width' => $this->options['maxImageSize'], 'height' => $this->options['maxImageSize']);
 		}
 
+		$assumed_root = @realpath($_SERVER['DOCUMENT_ROOT']);
+		$assumed_root = str_replace('\\', '/', $assumed_root);
+		$assumed_root = rtrim($assumed_root, '/');
+		$this->options['assumed_root_filepath'] = $assumed_root;
+		
 		// only calculate the guestimated defaults when they are indeed required:
 		if ($this->options['directory'] == null || $this->options['assetBasePath'] == null || $this->options['thumbnailPath'] == null)
 		{
-			$assumed_root = @realpath($_SERVER['DOCUMENT_ROOT']);
-			$assumed_root = str_replace('\\', '/', $assumed_root);
-			if (FileManagerUtility::endsWith($assumed_root, '/'))
-			{
-				$assumed_root = substr($assumed_root, 0, -1);
-			}
 			$my_path = @realpath(dirname(__FILE__));
 			$my_path = str_replace('\\', '/', $my_path);
 			if (!FileManagerUtility::endsWith($my_path, '/'))
@@ -644,7 +643,10 @@ class FileManager
 
 			// we throw an Exception here because when these do not apply, the user should have specified all three these entries!
 			if (empty($assumed_root) || empty($my_path) || !FileManagerUtility::startsWith($my_path, $assumed_root))
+			{
+				FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 				throw new FileManagerException('nofile');
+			}
 
 			if ($this->options['directory'] == null)
 			{
@@ -669,6 +671,8 @@ class FileManager
 		$this->options['directory'] = '/';      // use DocumentRoot temporarily as THE root for this optional transform
 		$this->options['directory'] = self::enforceTrailingSlash($this->rel2abs_url_path($new_root));
 
+		$this->options['assumed_base_filepath'] = $this->url_path2file_path($this->options['directory']);
+		
 		// now that the correct options['directory'] has been set up, go and check/clean the other paths in the options[]:
 
 		$this->options['thumbnailPath'] = self::enforceTrailingSlash($this->rel2abs_url_path($this->options['thumbnailPath']));
@@ -676,7 +680,10 @@ class FileManager
 
 		$this->options['mimeTypesPath'] = @realpath($this->options['mimeTypesPath']);
 		if (empty($this->options['mimeTypesPath']))
+		{
+			FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 			throw new FileManagerException('nofile');
+		}
 		$this->options['mimeTypesPath'] = str_replace('\\', '/', $this->options['mimeTypesPath']);
 
 		if (!headers_sent())
@@ -3369,9 +3376,8 @@ class FileManager
 		$root = $this->options['directory'];
 
 		$path = $this->rel2abs_url_path($path);
-		//$path = $this->normalize($path);    -- taken care of by rel2abs_url_path already
 
-		// but we MUST make sure the path is still a LEGAL URI, i.e. sutting inside options['directory']:
+		// but we MUST make sure the path is still a LEGAL URI, i.e. sitting inside options['directory']:
 		if (strlen($path) < strlen($root))
 			$path = self::enforceTrailingSlash($path);
 
@@ -3380,8 +3386,7 @@ class FileManager
 			throw new FileManagerException('path_tampering:' . $path);
 		}
 
-		// clip the trailing '/' off the $root path before reduction:
-		$path = str_replace(substr($root, 0, -1), '', $path);
+		$path = str_replace($root, '/', $path);
 		
 		return $path;
 	}
@@ -3407,7 +3412,6 @@ class FileManager
 		}
 
 		$path = $this->rel2abs_url_path($path);
-		//$path = $this->normalize($path);    -- taken care of by rel2abs_url_path already
 
 		// but we MUST make sure the path is still a LEGAL URI, i.e. sutting inside options['directory']:
 		if (strlen($path) < strlen($root))
@@ -3468,12 +3472,7 @@ class FileManager
 	{
 		$url_path = $this->rel2abs_url_path($url_path);
 
-		$root = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
-		if (FileManagerUtility::endsWith($root, '/'))
-		{
-			$root = substr($root, 0, -1);
-		}
-		$path = $root . $url_path;
+		$path = $this->options['assumed_root_filepath'] . $url_path;
 		//$path = $this->normalize($path);    -- taken care of by rel2abs_url_path already
 		return $path;
 	}
@@ -3489,9 +3488,7 @@ class FileManager
 	{
 		$path = $this->rel2abs_legal_url_path($url_path);
 
-		$path = substr($this->options['directory'], 0, -1) . $path;
-
-		$path = $this->url_path2file_path($path);
+		$path = substr($this->options['assumed_base_filepath'], 0, -1) . $path;
 
 		return $path;
 	}
@@ -3813,25 +3810,17 @@ class FileManagerUtility
 		return false;
 	}
 
-	// helper function for rawurlencode_path(); as PHP < 5.3 lacks lambda functions
-	protected static function __rawurlencode_path(&$value, $key)
-	{
-		$value = rawurlencode($value);
-	}
-
 	/**
 	 * Apply rawurlencode() to each of the elements of the given path
 	 *
 	 * @note
-	 *   this method is provided as rawurlencode() tself also encodes the '/' separators in a path/string
+	 *   this method is provided as rawurlencode() itself also encodes the '/' separators in a path/string
 	 *   and we do NOT want to 'revert' such change with the risk of also picking up other %2F bits in
 	 *   the string (this assumes crafted paths can be fed to us).
 	 */
 	public static function rawurlencode_path($path)
 	{
-		$encoded_path = explode('/', $path);
-		array_walk($encoded_path, 'self::__rawurlencode_path');
-		return implode('/', $encoded_path);
+		return str_replace('%2F', '/', rawurlencode($path));
 	}
 
 	/**
