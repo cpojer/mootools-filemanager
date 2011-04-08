@@ -780,18 +780,46 @@ class FileManager
 				 */
 				
 				unset($thumb48, $thumb250);
-				if(!$this->options['thumbnailsMustGoThroughBackend'])
-        {
-          try
-          {  
-            $thumb48  = $this->getThumb ($url, $file, 48, 48, true);
-            $thumb250 = $this->getThumb ($url, $file, 250, 250, true);
-          }
-          catch(Exception $E)
-          {
-            // Fallback to event request
-          }
-        }
+				if (0)
+				{
+					/*
+					 * DISABLED PERMANENTLY. This *may* look like smart code, but it is not. The dirscan result is 
+					 * long-lived on the client side (particularly for large directories, where you can browse multiple
+					 * pages' worth of directory view: all that data originates from a single request and is cached
+					 * client-side. 
+					 * Hence any thumbnails being generated during the browsing of that directory do not get to 
+					 * 'short circuit' anyway, as the client-side cached dirscan output still lists the PHP-based
+					 * requests.
+					 *
+					 * Besides, there's another issue with large lists: the server is bombarded with thumbnail 
+					 * requests, lamost like a DoS attack. So the client should really queue the thumbnail requests
+					 * for the thumb view, irrespective of the propagateType being POST or GET.
+					 *
+					 * Last, and minor, quible with this: when the thumbnail cache is purged while a directory is
+					 * browsed, the user must hit [F5] to refresh the entire filemanger too receive an up-to-date
+					 * scandir, i.e. one with PHP-based thumbnail requests. (For onDetail, on the other hand, such a
+					 * short-cut is fine as a mishap there can simply be recovered by clicking on the entry in the 
+					 * thumb/list directory view again: that's minimal fuss. The same recovery for a dirview is
+					 * non-intuitive and not recognized by users: browse to other directory and then back again. Of
+					 * course that non-intuitive 'fix' only works if you actually have multiple directories to view.
+					 * User tests show the only thing that makes sense at all is hitting [F5] anyway and that is
+					 * regarded as a nuisance.)
+					 *
+					 * I don't mind this adds 'one more round trip' to the propagateType=POST approach; the shortcut
+					 * is simply causing too much bother for the users. And that extra trip is hidden among the other
+					 * thumbnail requests anyway: a fast image fetch, while the other thumbnails are requested/generated.
+					 *
+					 * And besides: this 'shortcut' reintroduced the previously optimized-out file_exist per file:
+					 * this time around, it's at least one extra file_exists() check in the thumbnail cache tree, and we
+					 * could do very well without it, particularly for large directories where every bit of file access 
+					 * is slowing this bugger down, while the user is twiddling his thumbs.
+					 */
+					if (!$this->options['thumbnailsMustGoThroughBackend'])
+					{
+						$thumb48  = $this->getThumb($url, $file, 48, 48, true);
+						$thumb250 = $this->getThumb($url, $file, 250, 250, true);
+					}
+				}
 				if(!isset($thumb48))
 				$thumb48 = $this->mkEventHandlerURL(array(
 						'event' => 'thumbnail',
