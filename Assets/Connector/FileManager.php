@@ -670,19 +670,6 @@ class FileManager
 		}
 			$files = $this->scandir($dir, $filemask, false, 0, ($this->options['showHiddenFoldersAndFiles'] ? ~GLOB_NOHIDDEN : ~0));
 
-    // This can not be done in scandir, because other stuff (particularly delete)
-    // might need those dotfiles.
-    if(!$this->options['showHiddenFoldersAndFiles'])
-    {
-      $nohidden = array();
-      foreach($files as $file)         // b0rks on empty directories but we refactor this anyway
-      {
-        if($file[0] == '.' && $file != '.' & $file != '..') continue;
-        $nohidden[] = $file;
-      }
-      $files = $nohidden;
-    }
-
 		if ($files === false)
 			throw new FileManagerException('nofile');
 
