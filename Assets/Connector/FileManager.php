@@ -422,8 +422,9 @@
  *
  *               'dir'                   (string) physical filesystem path to the directory being viewed/scanned.
  *
- *               'files'                 (array of strings) array of files and directories (including '..' entry at the top when this is a
- *                                       subdirectory of the FM-managed tree): only names, not full paths.
+ *               'collection'            (dual array of strings) arrays of files and directories (including '..' entry at the top when this is a
+ *                                       subdirectory of the FM-managed tree): only names, not full paths. The files array is located at the
+ *                                       ['files'] index, while the directories are available at the ['dirs'] index.
  *
  *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
  *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
@@ -736,26 +737,22 @@ class FileManager
 		$coll = null;
 		if (is_dir($dir))
 		{
-			$files = $this->scandir($dir, $filemask, false, 0, ($this->options['showHiddenFoldersAndFiles'] ? ~GLOB_NOHIDDEN : ~0));
-
-			if ($files !== false)
+			$coll = $this->scandir($dir, $filemask, false, 0, ($this->options['showHiddenFoldersAndFiles'] ? ~GLOB_NOHIDDEN : ~0));
+			if ($coll !== false)
 			{
 				/*
 				 * To ensure '..' ends up at the very top of the view, no matter what the other entries in $coll['dirs'][] are made of,
 				 * we pop the last element off the array, check whether it's the double-dot, and if so, keep it out while we
 				 * let the sort run.
 				 */
-				$doubledot = array_pop($files);
+				$doubledot = array_pop($coll['dirs']);
 				if ($doubledot !== null && $doubledot !== '..')
 				{
-					$files[] = $doubledot;
+					$coll['dirs'][] = $doubledot;
 					$doubledot = null;
 				}
-				natcasesort($files);
-				if ($doubledot !== null)
-				{
-					array_unshift($files, $doubledot);
-				}
+				natcasesort($coll['dirs']);
+				natcasesort($coll['files']);
 				
 				$v_ex_code = null;
 			}
@@ -766,12 +763,12 @@ class FileManager
 
 		// remove the imageinfo() call overhead per file for very large directories; just guess at the mimetye from the filename alone.
 		// The real mimetype will show up in the 'details' view anyway! This is only for the 'filter' function:
-		$just_guess_mime = true; // (count($files) > 100);
+		$just_guess_mime = true; // (count($coll['files']) + count($coll['dirs']) > 100);
 
 		$fileinfo = array(
 				'legal_url' => $legal_url,
 				'dir' => $dir,
-				'files' => $files,
+				'collection' => $coll,
 				'mime_filter' => $mime_filter,
 				'mime_filters' => $mime_filters,
 				'guess_mime' => $just_guess_mime,
@@ -792,7 +789,7 @@ class FileManager
 
 		$legal_url = $fileinfo['legal_url'];
 		$dir = $fileinfo['dir'];
-		$files = $fileinfo['files'];
+		$coll = $fileinfo['collection'];
 		$mime_filter = $fileinfo['mime_filter'];
 		$mime_filters = $fileinfo['mime_filters'];
 		$just_guess_mime = $fileinfo['guess_mime'];
@@ -801,49 +798,155 @@ class FileManager
 		$json = $fileinfo['preliminary_json'];
 
 		$file_preselect_index = -1;
-		$idx = array(0, 0);
+		$out = array(array(), array());
 
-		foreach ($files as $filename)
+		$_iconspec = 'is.dir';
+		$_icon = FileManagerUtility::rawurlencode_path($this->getIcon($_iconspec, true));
+		$_thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon($_iconspec, false));
+		$_thumb250 = $_thumb48;
+		if ($list_type == 'thumb')
 		{
+			$_thumb = $_thumb48;
+		}
+		else
+		{
+			$_thumb = $_icon;
+		}
+
+
+		$mime = 'text/directory';
+		$iconspec = false;
+		$thumb = null;
+		$thumb48 = null;
+		//$thumb250 = null;
+		$icon = null;
+		
+		if ($doubledot !== null)
+		{
+			$filename = '..';
+			
 			$url = $legal_url . $filename;
+		
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($url);
 
-			$isdir = (is_file($file) ? 0 : 1);
-			if (!$isdir)
-			{
-				$mime = $this->getMimeType($file, $just_guess_mime);
-				if (is_file($file))
-				{
-					if (!$this->IsAllowedMimeType($mime, $mime_filters))
-						continue;
-				}
-				else
-				{
-					continue;
-				}
-				$iconspec = $filename;
+			$iconspec = 'is.dir_up';
 
-				if ($filename == $file_preselect_arg)
-				{
-					$file_preselect_index = $idx[0];
-				}
-			}
-			else if (is_dir($file))
+			$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, false));
+			//$thumb250 = $thumb48;
+
+			$icon = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, true));
+
+			if ($list_type == 'thumb')
 			{
-				$mime = 'text/directory';
-				$iconspec = ($filename == '..' ? 'is.dir_up' : 'is.dir');
+				$thumb = $thumb48;
 			}
 			else
 			{
-				// simply do NOT list anything that we cannot cope with.
-				// That includes clearly inaccessible files (and paths) with non-ASCII characters:
-				// PHP5 and below are a real mess when it comes to handling Unicode filesystems
-				// (see the php.net site too: readdir / glob / etc. user comments and the official
-				// notice that PHP will support filesystem UTF-8/Unicode only when PHP6 is released.
-				//
-				// Big, fat bummer!
+				$thumb = $icon;
+			}
+			
+			$url_p = FileManagerUtility::rawurlencode_path($url);
+			
+			$out[1][] = array(
+					'path' => $url_p,
+					'name' => $filename,
+					//'date' => date($this->options['dateFormat'], @filemtime($file)),
+					'mime' => $mime,
+					'thumbnail' => $thumb,
+					'thumbnail48' => $thumb48,
+					//'thumbnail250' => $thumb250,
+					//'size' => @filesize($file),
+					'icon' => $icon
+				);
+		}
+
+		// now precalc the directory-common items (a.k.a. invariant computation / common subexpression hoisting)
+		$iconspec_d = 'is.dir';
+
+		$thumb48_d = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec_d, false));
+		//$thumb250_d = $thumb48_d;
+
+		$icon_d = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec_d, true));
+
+		if ($list_type == 'thumb')
+		{
+			$thumb_d = $thumb48_d;
+		}
+		else
+		{
+			$thumb_d = $icon_d;
+		}
+
+		foreach ($coll['dirs'] as $filename)
+		{
+			$url = $legal_url . $filename;
+
+			$url_p = FileManagerUtility::rawurlencode_path($url);
+			
+			$out[1][] = array(
+					'path' => $url_p,
+					'name' => $filename,
+					//'date' => date($this->options['dateFormat'], @filemtime($file)),
+					'mime' => $mime,
+					'thumbnail' => $thumb_d,
+					'thumbnail48' => $thumb48_d,
+					//'thumbnail250' => $thumb250,
+					//'size' => @filesize($file),
+					'icon' => $icon_d
+				);
+		}
+
+		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
+
+		/*
+		 * ... and another bit of invariant computation: this time it's a bit more complex, but the mkEventHandlerURL() call is rather costly,
+		 * so we do that one as a 'template' and str_replace() -- which is fast -- the template variables in there:
+		 */
+		$thumb_tpl = $this->mkEventHandlerURL(array(
+				'event' => 'thumbnail',
+				// directory and filename of the ORIGINAL image should follow next:
+				'directory' => $legal_url,
+				'file' => '..F..',
+				'size' => '..S..',          // thumbnail suitable for 'view/type=thumb' list views
+				'filter' => $mime_filter
+			));
+		$thumb_tpl48 = str_replace('..S..', '48', $thumb_tpl);
+		//$thumb_tpl250 = str_replace('..S..', '250', $thumb_tpl);
+		
+		$idx = 0;
+		//$next_reqd_mapping_idx = array_pop($coll['special_indir_mappings'][1]);
+
+		foreach ($coll['files'] as $filename)
+		{
+			$mime = 'bogus/bogus';
+			$thumb = $_thumb;
+			$thumb48 = $_thumb48;
+			$thumb250 = $_thumb250;
+			$icon = $_icon;
+			$iconspec = $_iconspec;
+			
+			$url = $legal_url . $filename;
+			
+			// no need to transform URL to FILE path as the filename will remain intact (unless we've got some really contrived aliasing in FileManagerWithAliasSupport: we don't care too much here about such wicked mappings, as speed is paramount)
+			if (!$just_guess_mime)
+			{
+				$file = $this->legal_url_path2file_path($url);
+
+				$mime = $this->getMimeType($file, false);
+				$iconspec = basename($file);
+			}
+			else
+			{
+				$mime = $this->getMimeType($filename, true);
+				$iconspec = $filename;
+			}
+			if (!$this->IsAllowedMimeType($mime, $mime_filters))
 				continue;
+
+			if ($filename == $file_preselect_arg)
+			{
+				$file_preselect_index = $idx;
 			}
 
 			if (FileManagerUtility::startsWith($mime, 'image/'))
@@ -858,7 +961,9 @@ class FileManager
 				 * a generic icon image instead).
 				 */
 				
-				unset($thumb48, $thumb250);
+				$thumb48 = false;
+				//$thumb250 = false;
+				
 				if (0)
 				{
 					/*
@@ -896,33 +1001,32 @@ class FileManager
 					if (!$this->options['thumbnailsMustGoThroughBackend'])
 					{
 						$thumb48  = $this->getThumb($url, $file, 48, 48, true);
-						$thumb250 = $this->getThumb($url, $file, 250, 250, true);
+						//$thumb250 = $this->getThumb($url, $file, 250, 250, true);
 					}
 				}
-				if(!isset($thumb48))
-				$thumb48 = $this->mkEventHandlerURL(array(
-						'event' => 'thumbnail',
-						// directory and filename of the ORIGINAL image should follow next:
-						'directory' => $legal_url,
-						'file' => $filename,
-						'size' => 48,          // thumbnail suitable for 'view/type=thumb' list views
-						'filter' => $mime_filter
-					));
-					
-        if(!isset($thumb250))
-				$thumb250 = $this->mkEventHandlerURL(array(
-						'event' => 'thumbnail',
-						// directory and filename of the ORIGINAL image should follow next:
-						'directory' => $legal_url,
-						'file' => $filename,
-						'size' => 250,         // thumbnail suitable for 'view/type=thumb' list views
-						'filter' => $mime_filter
-					));
+				
+				if ($thumb48 === false)
+				{
+					$thumb48 = str_replace('..F..', FileManagerUtility::rawurlencode_path($filename), $thumb_tpl48); 
+				}
+				else
+				{
+					$thumb48 = FileManagerUtility::rawurlencode_path($thumb48);
+				}
+
+				//if ($thumb250 === false)
+				//{
+				//	$thumb250 = str_replace('..F..', FileManagerUtility::rawurlencode_path($filename), $thumb_tpl250); 
+				//}
+				//else
+				//{
+				//	$thumb250 = FileManagerUtility::rawurlencode_path($thumb250);
+				//}
 			}
 			else
 			{
 				$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, false));
-				$thumb250 = $thumb48;
+				//$thumb250 = $thumb48;
 			}
 			$icon = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, true));
 
@@ -934,20 +1038,22 @@ class FileManager
 			{
 				$thumb = $icon;
 			}
-
-			$out[$isdir][] = array(
-					'path' => FileManagerUtility::rawurlencode_path($url),
-					'name' => preg_replace('/[^ -~]/', '?', $filename),       // HACK/TWEAK: PHP5 and below are completely b0rked when it comes to international filenames   :-(
-					'date' => date($this->options['dateFormat'], @filemtime($file)),
+			
+			$url_p = FileManagerUtility::rawurlencode_path($url);
+			
+			$out[0][] = array(
+					'path' => $url_p,
+					'name' => $filename,
+					//'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
 					'thumbnail' => $thumb,
 					'thumbnail48' => $thumb48,
-					'thumbnail250' => $thumb250,
-					'icon' => $icon,
-					'size' => @filesize($file)
+					//'thumbnail250' => $thumb250,
+					//'size' => @filesize($file),
+					'icon' => $icon
 				);
-			$idx[$isdir]++;
-
+			$idx++;
+		
 			if (0)
 			{
 				// help PHP when 'doing' large image directories: reset the timeout for each thumbnail / entry we produce:
@@ -956,19 +1062,22 @@ class FileManager
 			}
 		}
 
-		$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon('is.dir', false));
-		$icon = FileManagerUtility::rawurlencode_path($this->getIcon('is.dir', true));
-		if ($list_type == 'thumb')
-		{
-			$thumb = $thumb48;
-		}
-		else
-		{
-			$thumb = $icon;
-		}
+		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__, $idx);
+		//die(json_encode(array('coll' => $out)));
+
+		//$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon('is.dir', false));
+		//$icon = FileManagerUtility::rawurlencode_path($this->getIcon('is.dir', true));
+		//if ($list_type == 'thumb')
+		//{
+		//	$thumb = $thumb48;
+		//}
+		//else
+		//{
+		//	$thumb = $icon;
+		//}
 		return array(
-			'dirs' => (!empty($out[1]) ? $out[1] : array()),
-			'files' => (!empty($out[0]) ? $out[0] : array()),
+			'dirs' => $out[1],
+			'files' => $out[0],
 			'json' => array_merge((is_array($json) ? $json : array()), array(
 				'root' => substr($this->options['directory'], 1),
 				'path' => $legal_url,                                  // is relative to options['directory']
@@ -977,12 +1086,12 @@ class FileManager
 					'name' => pathinfo($legal_url, PATHINFO_BASENAME),
 					'date' => date($this->options['dateFormat'], @filemtime($dir)),
 					'mime' => 'text/directory',
-					'thumbnail' => $thumb,
-					'thumbnail48' => $thumb48,
-					'thumbnail250' => $thumb48,
-					'icon' => $icon
+					'thumbnail' => $thumb_d,
+					'thumbnail48' => $thumb48_d,
+					//'thumbnail250' => $thumb48_d,
+					'icon' => $icon_d
 				),
-				'preselect_index' => $file_preselect_index,
+				'preselect_index' => ($file_preselect_index >= 0 ? $file_preselect_index + count($out[1]) + 1 : 0),
 				'preselect_name' => ($file_preselect_index >= 0 ? $file_preselect_arg : null)
 			))
 		);
@@ -2846,17 +2955,24 @@ class FileManager
 		{
 			$dir = self::enforceTrailingSlash($file);
 			$url = self::enforceTrailingSlash($legal_url);
-			$files = $this->scandir($dir, '*', false, 0, ~GLOB_NOHIDDEN);
-			foreach ($files as $f)
+			$coll = $this->scandir($dir, '*', false, 0, ~GLOB_NOHIDDEN);
+			if ($coll !== false)
 			{
-				if(in_array($f, array('.','..')))
-					continue;
+				foreach ($coll['dirs'] as $f)
+				{
+					if($f == '.' || $f == '..')
+						continue;
 
-				$rv2 = $this->unlink($url . $f, $mime_filters);
-				if ($rv2)
-					$rv &= $this->deleteThumb($url . $f);
-				else
-					$rv = false;
+					$rv &= $this->unlink($url . $f, $mime_filters);
+				}
+				foreach ($coll['files'] as $f)
+				{
+					$rv &= $this->unlink($url . $f, $mime_filters);
+				}
+			}
+			else
+			{
+				$rv = false;
 			}
 
 			$rv &= @rmdir($file);
@@ -2885,7 +3001,7 @@ class FileManager
 	 * However, this method will also ensure the '..' directory entry is only returned,
 	 * even while asked for, when the parent directory can be legally traversed by the FileManager.
 	 *
-	 * Always return an array (possibly empty)
+	 * Return a dual array (possibly empty) of directories and files, or FALSE on error.
 	 *
 	 * IMPORTANT: this function GUARANTEES that, when present at all, the double-dot '..'
 	 *            entry is the very last entry in the array.
@@ -2909,31 +3025,40 @@ class FileManager
 			$tndir = basename(substr($this->options['thumbnailPath'], 0, -1));
 		}
 
-		$at_basedir = ($this->url_path2file_path($this->options['directory']) == $dir);
+		$at_basedir = ($this->options['assumed_base_filepath'] == $dir);
 
 		$flags = GLOB_NODOTS | GLOB_NOHIDDEN | GLOB_NOSORT;
 		$flags &= $glob_flags_and;
 		$flags |= $glob_flags_or;
-		$files = safe_glob($dir . $filemask, $flags);
+		$coll = safe_glob($dir . $filemask, $flags);
 
-		if ($just_below_thumbnail_dir)
+		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
+
+		if ($coll !== false)
 		{
-			$f = array();
-			foreach($files as $file)
+			if ($just_below_thumbnail_dir)
 			{
-				if ($file !== $tndir)
-					$f[] = $file;
+				foreach($coll['dirs'] as $k => $dir)
+				{
+					if ($dir === $tndir)
+					{
+						unset($coll['dirs'][$k]);
+						break;
+					}
+				}
 			}
-			unset($files);
-			$files = $f;
+
+			if (!$at_basedir)
+			{
+				$coll['dirs'][] = '..';
+			}
+			
+			//$coll['special_indir_mappings'] = array(array(), array());
 		}
 
-		if (!$at_basedir)
-		{
-			$files[] = '..';
-		}
+		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 
-		return $files;
+		return $coll;
 	}
 
 	/**
@@ -3169,7 +3294,7 @@ class FileManager
 		$fn = '_' . $fi['filename'];
 		$fn = substr($dircode, 0, 4) . preg_replace('/[^A-Za-z0-9]+/', '_', $fn);
 		$fn = substr($fn . $dircode, 0, 38);
-		$ext = preg_replace('/[^A-Za-z0-9_]+/', '_', $ext);
+		$ext = preg_replace('/[^A-Za-z0-9]+/', '_', $ext);
 
 		$rv .= $fn . '-' . $width . '.' . $ext;
 		return $rv;
@@ -3185,19 +3310,15 @@ class FileManager
 		$thumbPath = self::enforceTrailingSlash($thumbPath);
 
 		// remove thumbnails (any size) and any other related cached files (TODO: future version should cache getID3 metadata as well -- and delete it here!)
-		$files = $this->scandir($thumbPath, $tfi['filename'] . '.*', true, 0, ~GLOB_NOHIDDEN);
+		$coll = $this->scandir($thumbPath, $tfi['filename'] . '.*', true, 0, ~GLOB_NOHIDDEN);
 
 		$rv = true;
-		if (is_array($files))
+		if ($coll !== false)
 		{
-			foreach($files as $filename)
+			foreach($coll['files'] as $filename)
 			{
-				if(in_array($filename, array('.','..')))
-					continue;
-
 				$file = $thumbPath . $filename;
-				if(is_file($file))
-					$rv &= @unlink($file);
+				$rv &= @unlink($file);
 			}
 		}
 

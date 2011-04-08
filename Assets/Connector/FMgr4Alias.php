@@ -70,6 +70,8 @@ class FileManagerWithAliasSupport extends FileManager
 
 			foreach($alias_arr as $uri => $file)
 			{
+				$isdir = !is_file($file);
+				
 				$p_uri = parent::getParentDir($uri);
 				$a_name = pathinfo($uri, PATHINFO_BASENAME);
 
@@ -81,7 +83,11 @@ class FileManagerWithAliasSupport extends FileManager
 				{
 					$scandir_lookup_arr[$p_dir] = array();
 				}
-				$scandir_lookup_arr[$p_dir][] = /* 'alias' => */ $a_name;
+				if (!isset($scandir_lookup_arr[$p_dir][!$isdir]))
+				{
+					$scandir_lookup_arr[$p_dir][!$isdir] = array();
+				}
+				$scandir_lookup_arr[$p_dir][!$isdir][] = /* 'alias' => */ $a_name;
 			}
 
 			$this->scandir_alias_lu_arr = $scandir_lookup_arr;
@@ -110,19 +116,19 @@ class FileManagerWithAliasSupport extends FileManager
 
 		// collect the real items first:
 		$coll = parent::scandir($dir, $filemask, $see_thumbnail_dir, $glob_flags_or, $glob_flags_and);
+		FM_vardumper($this, 'scandir4Alias', $coll);
 		if ($coll === false)
 			return $coll;
-
 
 		$flags = GLOB_NODOTS | GLOB_NOHIDDEN | GLOB_NOSORT;
 		$flags &= $glob_flags_and;
 		$flags |= $glob_flags_or;
 		
 		// make sure we keep the guarantee that the '..' entry, when present, is the very last one, intact:
-		$doubledot = array_pop($coll);
+		$doubledot = array_pop($coll['dirs']);
 		if ($doubledot !== null && $doubledot !== '..')
 		{
-			$coll[] = $doubledot;
+			$coll['dirs'][] = $doubledot;
 			$doubledot = null;
 		}
 
@@ -149,12 +155,25 @@ class FileManagerWithAliasSupport extends FileManager
 		// now see if we need to add any aliases as elements:
 		if (isset($this->scandir_alias_lu_arr) && !empty($this->scandir_alias_lu_arr[$dir]))
 		{
-			foreach($this->scandir_alias_lu_arr[$dir] as $a_elem)
+			$a_base = $this->scandir_alias_lu_arr[$dir];
+			$d = $coll['dirs'];
+			$f = $coll['files'];
+			foreach($a_base[false] as $a_elem)
 			{
-				if (!in_array($a_elem, $coll, true) && $tndir !== $a_elem 
+				if (!in_array($a_elem, $d, true) && $tndir !== $a_elem 
 					&& (!($flags & GLOB_NOHIDDEN) || $a_elem[0] != '.') )
 				{
-					$coll[] = $a_elem;
+					//$coll['special_indir_mappings'][1][] = array_push($coll['dirs'], $a_elem) - 1;
+					$coll['dirs'][] = $a_elem;
+				}
+			}
+			foreach($a_base[true] as $a_elem)
+			{
+				if (!in_array($a_elem, $f, true)
+					&& (!($flags & GLOB_NOHIDDEN) || $a_elem[0] != '.') )
+				{
+					//$coll['special_indir_mappings'][0][] = array_push($coll['files'], $a_elem) - 1;
+					$coll['files'][] = $a_elem;
 				}
 			}
 		}
@@ -162,7 +181,7 @@ class FileManagerWithAliasSupport extends FileManager
 		// make sure we keep the guarantee that the '..' entry, when present, is the very last one, intact:
 		if ($doubledot !== null)
 		{
-			$coll[] = $doubledot;
+			$coll['dirs'][] = $doubledot;
 		}
 
 		return $coll;

@@ -49,7 +49,7 @@ if (!function_exists('safe_glob'))
 	 * @updates
 	 * - 080324 Added support for additional flags: GLOB_NODIR, GLOB_PATH,
 	 *   GLOB_NODOTS, GLOB_RECURSE
-	 * - [i_a] Added support for GLOB_NOHIDDEN
+	 * - [i_a] Added support for GLOB_NOHIDDEN, split output in directories and files subarrays
 	 */
 	function safe_glob($pattern, $flags = 0)
 	{
@@ -58,29 +58,63 @@ if (!function_exists('safe_glob'))
 		$path = implode('/', $split);
 		if (($dir = @opendir($path)) !== false)
 		{
-			$glob = array();
+			$dirs = array();
+			$files = array();
 			while(($file = readdir($dir)) !== false)
 			{
-				// Recurse subdirectories (GLOB_RECURSE); speedup: no need to sort the intermediate results
-				if (($flags & GLOB_RECURSE) && is_dir($file) && (!in_array($file, array('.', '..'))))
+				// HACK/TWEAK: PHP5 and below are completely b0rked when it comes to international filenames   :-(
+				//             --> do not show such files/directories in the list as they won't be accessible anyway!
+				if (preg_match('/[^ -~]/', $file))
 				{
-					$glob = array_merge($glob, array_prepend(safe_glob($path . '/' . $file . '/' . $mask, $flags | GLOB_NOSORT), ($flags & GLOB_PATH ? '' : $file . '/')));
+					// simply do NOT list anything that we cannot cope with.
+					// That includes clearly inaccessible files (and paths) with non-ASCII characters:
+					// PHP5 and below are a real mess when it comes to handling Unicode filesystems
+					// (see the php.net site too: readdir / glob / etc. user comments and the official
+					// notice that PHP will support filesystem UTF-8/Unicode only when PHP6 is released.
+					//
+					// Big, fat bummer!
+					continue;
+				}
+			
+				$filepath = $path . '/' . $file;
+				$isdir = is_dir($filepath);
+				
+				// Recurse subdirectories (GLOB_RECURSE); speedup: no need to sort the intermediate results
+				if (($flags & GLOB_RECURSE) && $isdir && !($file == '.' || $file == '..'))
+				{
+					$subsect = safe_glob($filepath . '/' . $mask, $flags | GLOB_NOSORT);
+					if (is_array($subsect))
+					{
+						$dirs = array_merge($dirs, array_prepend($subject['dirs'], ($flags & GLOB_PATH ? '' : $file . '/')));
+						$files = array_merge($files, array_prepend($subject['files'], ($flags & GLOB_PATH ? '' : $file . '/')));
+					}
 				}
 				// Match file mask
 				if (fnmatch($mask, $file))
 				{
-					if ( ( (!($flags & GLOB_ONLYDIR)) || is_dir($path . '/' . $file) )
-					  && ( (!($flags & GLOB_NODIR)) || (!is_dir($path . '/' . $file)) )
-					  && ( (!($flags & GLOB_NODOTS)) || (!in_array($file, array('.', '..'))) ) 
+					if ( ( (!($flags & GLOB_ONLYDIR)) || $isdir )
+					  && ( (!($flags & GLOB_NODIR)) || !$isdir )
+					  && ( (!($flags & GLOB_NODOTS)) || !($file == '.' || $file == '..') ) 
 					  && ( (!($flags & GLOB_NOHIDDEN)) || ($file[0] != '.' || $file == '..')) )
 					{
-						$glob[] = ($flags & GLOB_PATH ? $path . '/' : '') . $file . (($flags & GLOB_MARK) && is_dir($path . '/' . $file) ? '/' : '');
+						if ($isdir)
+						{
+							$dirs[] = ($flags & GLOB_PATH ? $path . '/' : '') . $file . (($flags & GLOB_MARK) ? '/' : '');
+						}
+						else
+						{
+							$files[] = ($flags & GLOB_PATH ? $path . '/' : '') . $file;
+						}
 					}
 				}
 			}
 			closedir($dir);
-			if (!($flags & GLOB_NOSORT)) sort($glob);
-			return $glob;
+			if (!($flags & GLOB_NOSORT)) 
+			{
+				sort($dirs);
+				sort($files);
+			}
+			return array('dirs' => $dirs, 'files' => $files);
 		}
 		else
 		{
