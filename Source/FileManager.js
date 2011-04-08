@@ -1292,7 +1292,7 @@ var FileManager = new Class({
 			j = this.view_fill_json;
 		}
 
-		startindex = parseInt(startindex);     // make sure it's an int number
+		startindex = parseInt(startindex || 0);     // make sure it's an int number
 		if (!pagesize)
 		{
 			// no paging: always go to position 0 then!
