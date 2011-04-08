@@ -678,6 +678,10 @@ div.filemanager-preview p.err_info {
   font-weight: bold;
 }
 
+div.filemanager-preview div.preview_bad_mime {
+  background-color: #f99;
+}
+
 div.filemanager-engine-trident4 div.filemanager-preview img.preview {
   height: 100px;
 }

@@ -189,9 +189,18 @@ function dump_request_to_logfile($extra = null, $dump_options = __DUMP2LOG_DEFAU
 
 	if (!empty($_SESSION['dbg_last_dump']) && ($dump_options & DUMP2LOG_FORMAT_AS_HTML))
 	{
-		$rv .= '<p><a href="' . $_SESSION['dbg_last_dump'] . '">Go to previous dump</a></p>' ."\n";
+		$rv .= '<p><a href="' . $_SESSION['dbg_last_dump'] . '">Go to previous dump</a></p>' . "\n";
 	}
 
+	$now = microtime(true);
+	if (!empty($_SERVER['REQUEST_TIME']))
+	{
+		$start = $_SERVER['REQUEST_TIME'];
+		$diff = $now - $start;
+		
+		$rv .= '<p>Time elapses since request start: ' . number_format($diff, 3) . ' seconds</p>' . "\n";
+	}
+	
 	if (!empty($extra))
 	{
 		$rv .= '<h1>EXTRA</h1>';
@@ -269,7 +278,7 @@ function dump_request_to_logfile($extra = null, $dump_options = __DUMP2LOG_DEFAU
 
 	$rv .= '</body></html>';
 
-	$tstamp = date('Y-m-d.His') . '.' . sprintf('%07d', fmod(microtime(true), 1) * 1E6);
+	$tstamp = date('Y-m-d.His') . '.' . sprintf('%07d', fmod($now, 1) * 1E6);
 
 	$filename_options = array_merge(array(
 			'namebase'       => 'LOG-',
@@ -335,7 +344,22 @@ function dump_request_to_logfile($extra = null, $dump_options = __DUMP2LOG_DEFAU
 /**
  * dumper useful in development
  */
-function FM_vardumper($mgr = null, $action = null, $info = null, $extra = null)
+define('__MTFM_VARDUMP_DEFAULT_OPTIONS', (0
+										| DUMP2LOG_SERVER_GLOBALS
+										| DUMP2LOG_ENV_GLOBALS
+										| DUMP2LOG_SESSION_GLOBALS
+										| DUMP2LOG_POST_GLOBALS
+										| DUMP2LOG_GET_GLOBALS
+										| DUMP2LOG_REQUEST_GLOBALS
+										| DUMP2LOG_FILES_GLOBALS
+										| DUMP2LOG_COOKIE_GLOBALS
+										//| DUMP2LOG_STACKTRACE
+										| DUMP2LOG_SORT
+										//| DUMP2LOG_FORMAT_AS_HTML
+										| DUMP2LOG_WRITE_TO_FILE
+										//| DUMP2LOG_WRITE_TO_STDOUT
+									));
+function FM_vardumper($mgr = null, $action = null, $info = null, $extra = null, $dump_options = __MTFM_VARDUMP_DEFAULT_OPTIONS)
 {
 	if (DEVELOPMENT)
 	{
@@ -357,21 +381,7 @@ function FM_vardumper($mgr = null, $action = null, $info = null, $extra = null)
 			$data['extra'] = $extra;
 		}
 
-		dump_request_to_logfile($data, (0
-				| DUMP2LOG_SERVER_GLOBALS
-				| DUMP2LOG_ENV_GLOBALS
-				| DUMP2LOG_SESSION_GLOBALS
-				| DUMP2LOG_POST_GLOBALS
-				| DUMP2LOG_GET_GLOBALS
-				| DUMP2LOG_REQUEST_GLOBALS
-				| DUMP2LOG_FILES_GLOBALS
-				| DUMP2LOG_COOKIE_GLOBALS
-				| DUMP2LOG_STACKTRACE
-				| DUMP2LOG_SORT
-				//| DUMP2LOG_FORMAT_AS_HTML
-				| DUMP2LOG_WRITE_TO_FILE
-				//| DUMP2LOG_WRITE_TO_STDOUT
-			), array(
+		dump_request_to_logfile($data, $dump_options, array(
 				'origin-section' => basename($_SERVER['REQUEST_URI']) . '-' . $action
 			));
 	}
@@ -595,12 +605,14 @@ function FM_IsAuthorized($mgr, $action, &$info)
 	// when the session, started in the demo entry pages, doesn't exist or is not valid, we do not allow ANYTHING any more:
 	if (empty($_SESSION))
 	{
+		session_write_close();
 		throw new FileManagerException('authorized: The session is non-existent.');
 		return false;
 	}
 
 	if (empty($_SESSION['FileManager']) || $_SESSION['FileManager'] !== 'DemoMagick')
 	{
+		session_write_close();
 		throw new FileManagerException('authorized: The session is illegal, as it does not the mandatory magic value set up by the demo entry pages.');
 		return false;
 	}
@@ -615,25 +627,30 @@ function FM_IsAuthorized($mgr, $action, &$info)
 	 * illicit payloads requiring at least 'power/trusted user' permissions, ...)
 	 */
 
+	$rv = false;
 	switch ($action)
 	{
 	case 'upload':
 		/*
 		 * Note that the TinyMCE demo currently has this sestting set to 'NO' to simulate an UNauthorized user, for the sake of the demo.
 		 */
-		return ($_SESSION['UploadAuth'] == 'yes');
+		$rv = ($_SESSION['UploadAuth'] == 'yes');
+		break;
 
 	case 'download':
-		return true;
+		$rv = true;
+		break;
 
 	case 'create': // create directory
 	case 'destroy':
 	case 'move':  // move or copy!
 	case 'view':
-		return true;
+		$rv = true;
+		break;
 
 	case 'detail':
-		return true;
+		$rv = true;
+		break;
 
 	case 'thumbnail':
 		/*
@@ -653,13 +670,19 @@ function FM_IsAuthorized($mgr, $action, &$info)
 
 			// and act as if we authorized the action. Meanwhile, we just nuked it.
 		}
-		FM_vardumper($mgr, $action, $info);
-		return true;
+		$rv = true;
+		break;
 
 	default:
 		// unknown operation. Internal server error.
-		return false;
+		$rv = false;
+		break;
 	}
+	
+	// make sure the session is closed (and unlocked) before the bulk of the work is performed: better parallelism server-side.
+	session_write_close();
+	
+	return $rv;
 }
 
 
