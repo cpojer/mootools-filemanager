@@ -31,7 +31,7 @@ FileManager.implement({
 
 		cleanup: {
 			upload: function(){
-				if (!this.options.upload  || !this.upload) return;
+				if (!this.options.upload || !this.upload) return;
 
 				if (this.upload.uploader) this.upload.uploader.set('opacity', 0).dispose();
 			}
