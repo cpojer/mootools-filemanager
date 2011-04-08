@@ -3183,12 +3183,19 @@ class FileManager
 	{
 		$ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
+		if (array_key_exists($ext, $this->icon_cache[!$smallIcon]))
+		{
+			return $this->icon_cache[!$smallIcon][$ext];
+		}
+		
 		$largeDir = (!$smallIcon ? 'Large/' : '');
-		$url_path = $this->options['assetBasePath'] . 'Images/Icons/' .$largeDir.$ext.'.png';
+		$url_path = $this->options['assetBasePath'] . 'Images/Icons/' . $largeDir . $ext . '.png';
 		$path = (is_file($this->url_path2file_path($url_path)))
 			? $url_path
-			: $this->options['assetBasePath'] . 'Images/Icons/'.$largeDir.'default.png';
+			: $this->options['assetBasePath'] . 'Images/Icons/' . $largeDir . 'default.png';
 
+		$this->icon_cache[!$smallIcon][$ext] = $path;
+		
 		return $path;
 	}
 
