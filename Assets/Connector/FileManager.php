@@ -571,10 +571,18 @@ define('MTFM_THUMBNAIL_JPEG_QUALITY', 75);
 // a 48px small one and a 250px large one.
 define('MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE', 1);
 
+// minimum number of cached getID3 results; cache is automatically pruned
+define('MTFM_MIN_GETID3_CACHESIZE', 16);
+
+
 
 class FileManager
 {
 	protected $options;
+	protected $getid3;
+	protected $getid3_cache;
+	protected $getid3_cache_lru_ts;
+	protected $icon_cache;
 
 	public function __construct($options)
 	{
@@ -687,6 +695,17 @@ class FileManager
 		}
 		$this->options['mimeTypesPath'] = str_replace('\\', '/', $this->options['mimeTypesPath']);
 
+		// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
+		// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
+		$this->getid3 = new getID3();
+		$this->getid3->encoding = 'UTF-8';
+		
+		// getid3_cache stores the info arrays; gitid3_cache_lru_ts stores a 'timestamp' counter to track LRU: 'timestamps' older than threshold are discarded when cache is full
+		$this->getid3_cache = array();
+		$this->getid3_cache_lru_ts = 0;
+		
+		$this->icon_cache = array(array(), array());
+		
 		if (!headers_sent())
 		{
 			header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
