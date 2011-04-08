@@ -2102,7 +2102,8 @@ class FileManager
 			if (!$this->options['upload'])
 				throw new FileManagerException('disabled');
 
-			if (!isset($_FILES) || empty($_FILES['Filedata']) || empty($_FILES['Filedata']['name']) || empty($_FILES['Filedata']['size']))
+			// MAY upload zero length files!
+			if (!isset($_FILES) || empty($_FILES['Filedata']) || empty($_FILES['Filedata']['name']))
 				throw new FileManagerException('nofile');
 
 			$v_ex_code = 'nofile';
@@ -2438,6 +2439,8 @@ class FileManager
 				}
 			}
 
+			if (!function_exists($fn))
+				throw new FileManagerException((empty($fn) ? 'rename' : $fn) . '_failed:' . $legal_newurl . ':' . $newname);
 			if (!@$fn($path, $newpath))
 				throw new FileManagerException($fn . '_failed:' . $legal_newurl . ':' . $newname);
 
