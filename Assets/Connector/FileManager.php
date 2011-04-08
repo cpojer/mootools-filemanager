@@ -1701,22 +1701,24 @@ class FileManager
 				$fsize = filesize($file);
 				$path_parts = pathinfo($legal_url);
 				$ext = strtolower($path_parts["extension"]);
+				// see also: http://www.boutell.com/newfaq/creating/forcedownload.html
 				switch ($ext)
 				{
 				case "pdf":
 					header('Content-Type: application/pdf');
-					header('Content-Disposition: attachment; filename="' . $path_parts["basename"] . '"'); // use 'attachment' to force a download
 					break;
 
 				// add here more headers for diff. extensions
 
 				default:
 					header('Content-Type: application/octet-stream');
-					header('Content-Disposition: filename="' . $path_parts["basename"] . '"');
 					break;
 				}
+				header('Content-Disposition: attachment; filename="' . $path_parts["basename"] . '"'); // use 'attachment' to force a download
 				header("Content-length: $fsize");
-				header("Cache-control: private"); //use this to open files directly
+				header("Expires: 0");
+				header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+				header("Cache-Control: private", false); // use this to open files directly
 
 				fpassthru($fd);
 				fclose($fd);
