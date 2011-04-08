@@ -726,7 +726,7 @@ var FileManager = new Class({
 			onShow: function(){
 				//if (typeof console !== 'undefined' && console.log) console.log('add key up on create dialog:onshow');
 				input.addEvent('keyup', function(e){
-					if (e.key == 'enter') e.target.getParent('div.dialog').getElement('button.dialog-confirm').fireEvent('click');
+					if (e.key == 'enter') e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 				}).focus();
 			},
 			onConfirm: (function() {
@@ -944,7 +944,7 @@ var FileManager = new Class({
 			onShow: function(){
 				//if (typeof console !== 'undefined' && console.log) console.log('add key up on rename dialog:onshow');
 				input.addEvent('keyup', function(e){
-					if (e.key=='enter') e.target.getParent('div.dialog').getElement('button.dialog-confirm').fireEvent('click');
+					if (e.key=='enter') e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 				}).focus();
 			},
 			onConfirm: (function(){
