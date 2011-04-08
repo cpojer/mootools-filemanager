@@ -38,6 +38,8 @@ FileManager.implement({
 		}
 	},
 
+	_lastFileUploaded: null,  // name of the last successfully uploaded file; will be preselected in the list view
+
 	onDialogOpenWhenUpload: function(){
 		if (this.swf && this.swf.box) this.swf.box.setStyle('visibility', 'hidden');
 	},
@@ -213,12 +215,14 @@ FileManager.implement({
 					}).get('morph').chain(function(){
 						this.element.destroy();
 						if (!self.upload.list.getElements('li').length)
+						{
 							self.upload.uploader.fade(0).get('tween').chain(function(){
 								self.upload.uploader.setStyle('display', 'none');
 								self.onShow = true;
 								self.load(self.Directory, self._lastFileUploaded);
 								// self.fillInfo();
 							});
+						}
 					});
 				}).delay(response.status ? 1000 : 5000, this);
 			}
@@ -241,6 +245,7 @@ FileManager.implement({
 		};
 
 		//if (typeof console !== 'undefined' && console.log) console.log('Uploader: SWF init');
+		this._lastFileUploaded = null;
 		this.swf = new Swiff.Uploader({
 			id: 'SwiffFileManagerUpload',
 			path: this.assetBasePath + 'Swiff.Uploader.swf',
