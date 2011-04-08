@@ -554,13 +554,20 @@ div.filemanager h1 {
   background-color: transparent;
 }
 
-div.filemanager h2 {
+div.filemanager h2, div.filemanager h3 {
   margin: 0;
   border-top: 1px solid #bebebe;
-  font-size: 14px;
   font-weight: bold;
   padding: 2px 0 0 5px;
   clear: both;
+}
+
+div.filemanager h2 {
+  font-size: 14px;
+}
+
+div.filemanager h3 {
+  font-size: 12px;
 }
 
 div.filemanager dl {
