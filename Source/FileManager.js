@@ -517,31 +517,54 @@ var FileManager = new Class({
 		this.load(this.Directory);
 	},
 
-	hashHistory: function(vars) { // get called from the jsGET listener
-
+	/*
+	 * Gets called from the jsGET listener.
+	 *
+	 * Is fired for two reasons:
+	 *
+	 * 1) the user clicked on a file or directory to view and that change was also pushed to the history through one or more jsGET.set() calls.
+	 *    (In this case, we've already done what needed doing, so we should not redo that effort in here!)
+	 *
+	 * 2) the user went back in browser history or manually edited the URI hash section.
+	 *    (This is an 'change from the outside' and exactly what this listener is for. This time around, we should follow up on those changes!)
+	 */
+	hashHistory: function(vars)
+	{
 		this.storeHistory = false;
 		//if (typeof console !== 'undefined' && console.log) console.log(vars);
-		if (vars.changed['fmPath'] == '')
+		if (vars.changed['fmPath'] === '')
 			vars.changed['fmPath'] = '/';
 
-		Object.each(vars.changed,function(value,key) {
+		Object.each(vars.changed, function(value, key) {
 			//if (typeof console !== 'undefined' && console.log) console.log('on hashHistory key = ' + key + ', value = ' + value + ', source = ' + '---');
-			if (key == 'fmPath') {
-				this.load(value);
-			}
+			switch (key)
+			{
+			case 'fmPath':
+				if (this.Directory !== value)
+				{
+					this.load(value);
+				}
+				break;
 
-			if (key == 'fmFile') {
-				this.browser.getElements('span.fi span').each((function(current) {
-					current.getParent('span.fi').removeClass('hover');
-					if (current.get('title') == value) {
-						this.deselect();
-						this.Current = current.getParent('span.fi');
-						new Fx.Scroll(this.browserScroll,{duration: 250,offset:{x:0,y:-(this.browserScroll.getSize().y/4)}}).toElement(this.Current);
-						this.Current.addClass('selected');
-						//if (typeof console !== 'undefined' && console.log) console.log('on hashHistory @ fillInfo key = ' + key + ', value = ' + value + ', source = ' + ' - file = ' + current.getParent('span.fi').retrieve('file').name);
-						this.fillInfo(this.Current.retrieve('file'));
-					}
-				}).bind(this));
+			case 'fmFile':
+				var hot_item = (this.Current && this.Current.retrieve('file'));
+				if (hot_item == null || value !== hot_item.name)
+				{
+					this.browser.getElements('span.fi span').each((function(current)
+					{
+						current.getParent('span.fi').removeClass('hover');
+						if (current.get('title') == value)
+						{
+							this.deselect();
+							this.Current = current.getParent('span.fi');
+							new Fx.Scroll(this.browserScroll,{duration: 250, offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(this.Current);
+							this.Current.addClass('selected');
+							//if (typeof console !== 'undefined' && console.log) console.log('on hashHistory @ fillInfo key = ' + key + ', value = ' + value + ', source = ' + ' - file = ' + current.getParent('span.fi').retrieve('file').name);
+							this.fillInfo(this.Current.retrieve('file'));
+						}
+					}).bind(this));
+				}
+				break;
 			}
 		},this);
 	},
@@ -583,7 +606,7 @@ var FileManager = new Class({
 					this.browserMenu_list.store('set',true).set('opacity',1);
 			}
 			jsGET.set({'fmID': this.ID, 'fmPath': this.Directory});
-			this.hashListenerId = jsGET.addListener(this.hashHistory,false,this);
+			this.hashListenerId = jsGET.addListener(this.hashHistory, false, this);
 		}
 
 		this.load(this.Directory, preselect);
