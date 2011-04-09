@@ -198,15 +198,27 @@ class FileManager {
     } elseif (FileManagerUtility::startsWith($mime, 'audio/')){
       require_once(dirname(__FILE__) . '/Assets/getid3/getid3.php');
       $getid3 = new getID3();
+      $getid3->encoding = "UTF-8";
       $getid3->Analyze($file);
-      getid3_lib::CopyTagsToComments($getid3->info); 
       
+      $title = str_replace("\$","&#36;",(!empty($getid3->info['tags']['id3v2']['title'][0])
+                ? $getid3->info['tags']['id3v2']['title'][0]
+                : (!empty($getid3->info['tags']['id3v1']['title'][0]) ? $getid3->info['tags']['id3v1']['title'][0] : "-")));
+
+      $artist = str_replace("\$","&#36;",(!empty($getid3->info['tags']['id3v2']['artist'][0])
+                ? $getid3->info['tags']['id3v2']['artist'][0]
+                : (!empty($getid3->info['tags']['id3v1']['artist'][0]) ? $getid3->info['tags']['id3v1']['artist'][0] : "-")));
+
+      $album = str_replace("\$","&#36;",(!empty($getid3->info['tags']['id3v2']['album'][0])
+                ? $getid3->info['tags']['id3v2']['album'][0]
+                : (!empty($getid3->info['tags']['id3v1']['album'][0]) ? $getid3->info['tags']['id3v1']['album'][0] : "-")));
+
       $content = '<dl>
-          <dt>${title}</dt><dd>' . $getid3->info['comments']['title'][0] . '</dd>
-          <dt>${artist}</dt><dd>' . $getid3->info['comments']['artist'][0] . '</dd>
-          <dt>${album}</dt><dd>' . $getid3->info['comments']['album'][0] . '</dd>
-          <dt>${length}</dt><dd>' . $getid3->info['playtime_string'] . '</dd>
-          <dt>${bitrate}</dt><dd>' . round($getid3->info['bitrate']/1000) . 'kbps</dd>
+          <dt>${title}</dt><dd>' . $title . '</dd>
+          <dt>${artist}</dt><dd>' . $artist . '</dd>
+          <dt>${album}</dt><dd>' . $album . '</dd>
+          <dt>${length}</dt><dd>' . (!empty($getid3->info['playtime_string']) ? $getid3->info['playtime_string'] : "-") . '</dd>
+          <dt>${bitrate}</dt><dd>' . (!empty($getid3->info['bitrate']) ? (round($getid3->info['bitrate'] / 1000) . "kbps") : "-") . '</dd>
         </dl>
         <h2>${preview}</h2>
         <div class="object">
