@@ -2172,11 +2172,6 @@ var FileManager = new Class({
 			if (this.Request) this.Request.cancel();
 
 			var dir = this.Directory;
-			// fixup for *directory* detail requests:
-			if (file.mime == 'text/directory')
-			{
-				dir += '../';
-			}
 
 			this.Request = new FileManager.Request({
 				url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
@@ -2184,7 +2179,8 @@ var FileManager = new Class({
 				})),
 				data: {
 					directory: dir,
-					file: file.name,
+					// fixup for *directory* detail requests:
+					file: (file.mime == 'text/directory' ? '.' : file.name),
 					filter: this.options.filter
 				},
 				onRequest: (function() {
