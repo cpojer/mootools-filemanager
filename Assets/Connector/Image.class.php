@@ -74,8 +74,8 @@ class Image {
 				throw new Exception('cvt2truecolor_failed:' . $this->meta['width'] . ' x ' . $this->meta['height']);
 			imagedestroy($original);
 			unset($original);
-		} 
-		else 
+		}
+		else
 		{
 			$this->image = @imagecreatefromjpeg($file);
 			if (!$this->image) throw new Exception('imagecreate_failed:imagecreatefromjpeg');
@@ -236,7 +236,7 @@ class Image {
 		return $meta;
 	}
 
-	
+
 	/**
 	 * Returns the size of the image
 	 *

@@ -197,10 +197,10 @@ function dump_request_to_logfile($extra = null, $dump_options = __DUMP2LOG_DEFAU
 	{
 		$start = $_SERVER['REQUEST_TIME'];
 		$diff = $now - $start;
-		
+
 		$rv .= '<p>Time elapses since request start: ' . number_format($diff, 3) . ' seconds</p>' . "\n";
 	}
-	
+
 	if (!empty($extra))
 	{
 		$rv .= '<h1>EXTRA</h1>';
@@ -678,10 +678,10 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		$rv = false;
 		break;
 	}
-	
+
 	// make sure the session is closed (and unlocked) before the bulk of the work is performed: better parallelism server-side.
 	session_write_close();
-	
+
 	return $rv;
 }
 

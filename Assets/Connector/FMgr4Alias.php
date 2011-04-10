@@ -71,7 +71,7 @@ class FileManagerWithAliasSupport extends FileManager
 			foreach($alias_arr as $uri => $file)
 			{
 				$isdir = !is_file($file);
-				
+
 				$p_uri = parent::getParentDir($uri);
 				$a_name = pathinfo($uri, PATHINFO_BASENAME);
 
@@ -123,7 +123,7 @@ class FileManagerWithAliasSupport extends FileManager
 		$flags = GLOB_NODOTS | GLOB_NOHIDDEN | GLOB_NOSORT;
 		$flags &= $glob_flags_and;
 		$flags |= $glob_flags_or;
-		
+
 		// make sure we keep the guarantee that the '..' entry, when present, is the very last one, intact:
 		$doubledot = array_pop($coll['dirs']);
 		if ($doubledot !== null && $doubledot !== '..')
@@ -160,7 +160,7 @@ class FileManagerWithAliasSupport extends FileManager
 			$f = $coll['files'];
 			foreach($a_base[false] as $a_elem)
 			{
-				if (!in_array($a_elem, $d, true) && $tndir !== $a_elem 
+				if (!in_array($a_elem, $d, true) && $tndir !== $a_elem
 					&& (!($flags & GLOB_NOHIDDEN) || $a_elem[0] != '.') )
 				{
 					//$coll['special_indir_mappings'][1][] = array_push($coll['dirs'], $a_elem) - 1;

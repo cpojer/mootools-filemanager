@@ -90,7 +90,7 @@ var FileManager = new Class({
 		listPaginationSize: 100,          // add pagination per N items for huge directories (speed up interaction)
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
 		propagateData: {},                // extra query parameters sent with every request to the backend
-		propagateType: 'GET'             // either POST or GET
+		propagateType: 'GET'              // either POST or GET
 	},
 
 	/*
@@ -695,7 +695,7 @@ var FileManager = new Class({
 		this.container.setStyle('display', 'none');
 
 		// remove keyboard navigation
-	    if (typeof console !== 'undefined' && console.log) console.log('REMOVE keyboard nav on hide');
+		if (typeof console !== 'undefined' && console.log) console.log('REMOVE keyboard nav on hide');
 		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
 		document.removeEvent('keydown', this.bound.keydown);
 		document.removeEvent('keyup', this.bound.keyup);
@@ -1659,206 +1659,206 @@ var FileManager = new Class({
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
 			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 			var isdir = (file.mime == 'text/directory');
-			var el;
+				var el;
 
-			if (file.thumbnail.indexOf('.php?') == -1)
-			{
-				// This is just a raw image
-				el = this.list_row_maker(file.thumbnail, file);
-			}
-			else if (this.options.propagateType == 'POST')
-			{
-				// We must AJAX POST our propagateData, so we need to do the post and take the url to the
-				// thumbnail from the post results.
-				//
-				// The alternative here, taking only 1 round trip instead of 2, would have been to FORM POST
-				// to a tiny iframe, which is suitably sized to contain the generated thumbnail and the POST
-				// actually returning the binary image data, thus the iframe contents becoming the thumbnail image.
+				if (file.thumbnail.indexOf('.php?') == -1)
+				{
+					// This is just a raw image
+					el = this.list_row_maker(file.thumbnail, file);
+				}
+				else if (this.options.propagateType == 'POST')
+				{
+					// We must AJAX POST our propagateData, so we need to do the post and take the url to the
+					// thumbnail from the post results.
+					//
+					// The alternative here, taking only 1 round trip instead of 2, would have been to FORM POST
+					// to a tiny iframe, which is suitably sized to contain the generated thumbnail and the POST
+					// actually returning the binary image data, thus the iframe contents becoming the thumbnail image.
 
-				el = (function(file) {           // Closure
-					var list_row = this.list_row_maker(null, file);
+					el = (function(file) {           // Closure
+						var list_row = this.list_row_maker(null, file);
 
-					new FileManager.Request({
-						url: file.thumbnail,
-						data: {
-							asJSON: 1
-						},
-						onRequest: function(){},
-						onSuccess: (function(j) {
-							var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
-							if (!j || !j.status)
-							{
-								// Should we display the error here? No, we just display the general error icon instead
+						new FileManager.Request({
+							url: file.thumbnail,
+							data: {
+								asJSON: 1
+							},
+							onRequest: function(){},
+							onSuccess: (function(j) {
+								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
+								if (!j || !j.status)
+								{
+									// Should we display the error here? No, we just display the general error icon instead
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+								}
+								else if (j && j.thumbnail)
+								{
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + j.thumbnail + ')');
+								}
+								else
+								{
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+								}
+							}).bind(this),
+							onError: (function(text, error) {
+								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
-							}
-							else if (j && j.thumbnail)
-							{
-								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + j.thumbnail + ')');
-							}
-							else
-							{
+							}).bind(this),
+							onFailure: (function(xmlHttpRequest) {
+								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
-							}
-						}).bind(this),
-						onError: (function(text, error) {
-							var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
-							list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
-						}).bind(this),
-						onFailure: (function(xmlHttpRequest) {
-							var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
-							list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
-						}).bind(this)
-					}, this).send();
+							}).bind(this)
+						}, this).send();
 
-					return list_row;
-				}).bind(this)(file);
-			}
-			else
-			{
-				// If we are using GET, append the data to the url
-				el = this.list_row_maker(file.thumbnail + '&' + Object.toQueryString(this.options.propagateData), file);
-			}
+						return list_row;
+					}).bind(this)(file);
+				}
+				else
+				{
+					// If we are using GET, append the data to the url
+					el = this.list_row_maker(file.thumbnail + '&' + Object.toQueryString(this.options.propagateData), file);
+				}
 
-			/*
-			 * WARNING: for some (to me) incomprehensible reason the old code which bound the event handlers to 'this==self' and which used the 'el' variable
-			 *          available here, does NOT WORK ANY MORE - tested in FF3.6. Turns out 'el' is pointing anywhere but where you want it by the time
-			 *          the event handler is executed.
-			 *
-			 *          The 'solution' which I found was to rely on the 'self' reference instead and bind to 'el'. If the one wouldn't work, the other shouldn't,
-			 *          but there you have it: this way around it works. FF3.6.14 :-(
-			 *
-			 * EDIT 2011/03/16: the problem started as soon as the old Array.each(function(...){...}) by the chunked code which uses a for loop:
-			 *
-			 *              http://jibbering.com/faq/notes/closures/
-			 *
-			 *          as it says there:
-			 *
-			 *              A closure is formed when one of those inner functions is made accessible outside of the function in which it was
-			 *              contained, so that it may be executed after the outer function has returned. At which point it still has access to
-			 *              the local variables, parameters and inner function declarations of its outer function. Those local variables,
-			 *              parameter and function declarations (initially) >>>> have the values that they had when the outer function returned <<<<
-			 *              and may be interacted with by the inner function.
-			 *
-			 *          The >>>> <<<< emphasis is mine: in the .each() code, each el was a separate individual, while due to the for loop,
-			 *          the last 'el' to exist at all is the one created during the last round of the loop in that chunk. Which explains the
-			 *          observed behaviour before the fix: the file names associated with the 'el' element object were always pointing
-			 *          at some item further down the list, not necessarily the very last one, but always these references were 'grouped':
-			 *          multiple rows would produce the same filename.
-			 *
-			 * EXTRA: 2011/04/09: why you don't want to add this event for any draggable item!
-			 *
-			 *          It turns out that IE9 (IE6-8 untested as I write this) and Opera do NOT fire the 'click' event after the drag operation is
-			 *          'cancel'led, while other browsers fire both (Chrome/Safari/FF3).
-			 *          For the latter ones, the event handler sequence after a simple click on a draggable item is:
-			 *            - Drag::onBeforeStart
-			 *            - Drag::onCancel
-			 *            - 'click'
-			 *          while a tiny amount of dragging produces this sequence instead:
-			 *            - Drag::onBeforeStart
-			 *            - Drag::onStart
-			 *            - Drag::onDrop
-			 *            - 'click'
-			 *
-			 *          Meanwhile, Opera and IE9 do this:
-			 *            - Drag::onBeforeStart
-			 *            - Drag::onCancel
-			 *            - **NO** click event!
-			 *          while a tiny amount of dragging produces this sequence instead:
-			 *            - Drag::onBeforeStart
-			 *            - Drag::onStart
-			 *            - Drag::onDrop
-			 *            - **NO** click event!
-			 *
-			 *          which explains why the old implementation did not simply register this 'click' event handler and had 'revert' fake the 'click'
-			 *          event instead.
-			 *          HOWEVER, the old way, using revert() (now called revert_drag_n_drop()) was WAY too happy to hit the 'click' event handler. In
-			 *          fact, the only spot where such 'manually firing' was desirable is when the drag operation is CANCELLED. And only there!
-			 */
+				/*
+				 * WARNING: for some (to me) incomprehensible reason the old code which bound the event handlers to 'this==self' and which used the 'el' variable
+				 *          available here, does NOT WORK ANY MORE - tested in FF3.6. Turns out 'el' is pointing anywhere but where you want it by the time
+				 *          the event handler is executed.
+				 *
+				 *          The 'solution' which I found was to rely on the 'self' reference instead and bind to 'el'. If the one wouldn't work, the other shouldn't,
+				 *          but there you have it: this way around it works. FF3.6.14 :-(
+				 *
+				 * EDIT 2011/03/16: the problem started as soon as the old Array.each(function(...){...}) by the chunked code which uses a for loop:
+				 *
+				 *              http://jibbering.com/faq/notes/closures/
+				 *
+				 *          as it says there:
+				 *
+				 *              A closure is formed when one of those inner functions is made accessible outside of the function in which it was
+				 *              contained, so that it may be executed after the outer function has returned. At which point it still has access to
+				 *              the local variables, parameters and inner function declarations of its outer function. Those local variables,
+				 *              parameter and function declarations (initially) >>>> have the values that they had when the outer function returned <<<<
+				 *              and may be interacted with by the inner function.
+				 *
+				 *          The >>>> <<<< emphasis is mine: in the .each() code, each el was a separate individual, while due to the for loop,
+				 *          the last 'el' to exist at all is the one created during the last round of the loop in that chunk. Which explains the
+				 *          observed behaviour before the fix: the file names associated with the 'el' element object were always pointing
+				 *          at some item further down the list, not necessarily the very last one, but always these references were 'grouped':
+				 *          multiple rows would produce the same filename.
+				 *
+				 * EXTRA: 2011/04/09: why you don't want to add this event for any draggable item!
+				 *
+				 *          It turns out that IE9 (IE6-8 untested as I write this) and Opera do NOT fire the 'click' event after the drag operation is
+				 *          'cancel'led, while other browsers fire both (Chrome/Safari/FF3).
+				 *          For the latter ones, the event handler sequence after a simple click on a draggable item is:
+				 *            - Drag::onBeforeStart
+				 *            - Drag::onCancel
+				 *            - 'click'
+				 *          while a tiny amount of dragging produces this sequence instead:
+				 *            - Drag::onBeforeStart
+				 *            - Drag::onStart
+				 *            - Drag::onDrop
+				 *            - 'click'
+				 *
+				 *          Meanwhile, Opera and IE9 do this:
+				 *            - Drag::onBeforeStart
+				 *            - Drag::onCancel
+				 *            - **NO** click event!
+				 *          while a tiny amount of dragging produces this sequence instead:
+				 *            - Drag::onBeforeStart
+				 *            - Drag::onStart
+				 *            - Drag::onDrop
+				 *            - **NO** click event!
+				 *
+				 *          which explains why the old implementation did not simply register this 'click' event handler and had 'revert' fake the 'click'
+				 *          event instead.
+				 *          HOWEVER, the old way, using revert() (now called revert_drag_n_drop()) was WAY too happy to hit the 'click' event handler. In
+				 *          fact, the only spot where such 'manually firing' was desirable is when the drag operation is CANCELLED. And only there!
+				 */
 
-			// 2011/04/09: only register the 'click' event when the element is NOT a draggable:
-			if (!support_DnD_for_this_dir || isdir)
-			{
-				if (typeof console !== 'undefined' && console.log) console.log('add FILE click event to ' + file.name + ' : ' + file.mime);
-				el.addEvent('click', (function(e) {
-					if (typeof console !== 'undefined' && console.log) console.log('is_dir/is_file:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
-				//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
-				//var node = el;
-				var node = this;
-				self.relayClick.apply(self, [e, node]);
-			}).bind(el));
-			}
+				// 2011/04/09: only register the 'click' event when the element is NOT a draggable:
+				if (!support_DnD_for_this_dir || isdir)
+				{
+					if (typeof console !== 'undefined' && console.log) console.log('add FILE click event to ' + file.name + ' : ' + file.mime);
+					el.addEvent('click', (function(e) {
+						if (typeof console !== 'undefined' && console.log) console.log('is_dir/is_file:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
+						//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
+						//var node = el;
+						var node = this;
+						self.relayClick.apply(self, [e, node]);
+					}).bind(el));
+				}
 
-			// -> add icons
-			//var icons = [];
-			var editButtons = new Array();
-			// download icon
-			if (!isdir && this.options.download) {
-				if (this.options.download) editButtons.push('download');
-			}
+				// -> add icons
+				//var icons = [];
+				var editButtons = new Array();
+				// download icon
+				if (!isdir && this.options.download) {
+					if (this.options.download) editButtons.push('download');
+				}
 
-			// rename, delete icon
-			if (file.name != '..') {
+				// rename, delete icon
+				if (file.name != '..') {
 				if (this.options.rename) editButtons.push('rename');
 				if (this.options.destroy) editButtons.push('destroy');
-			}
+				}
 
-			editButtons.each(function(v){
-				//icons.push(
-				new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target){
-					// this = el, self = FM instance
-					e.preventDefault();
-					this.store('edit', true);
-					// can't use 'file' in here directly anymore either:
-					var file = this.retrieve('file');
-					self.tips.hide();
-					self[v](file);
-				}).bind(el)).inject(el,'top');
-				//);
-			}, this);
+				editButtons.each(function(v){
+					//icons.push(
+					new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target){
+						// this = el, self = FM instance
+						e.preventDefault();
+						this.store('edit', true);
+						// can't use 'file' in here directly anymore either:
+						var file = this.retrieve('file');
+						self.tips.hide();
+						self[v](file);
+					}).bind(el)).inject(el,'top');
+					//);
+				}, this);
 
-			els[isdir ? 1 : 0].push(el);
-			//if (file.name == '..') el.fade(0.7);
-			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
-			//icons = $$(icons.map((function(icon){
-			//  this.showFunctions(icon,icon,0.5,1);
-			//  this.showFunctions(icon,el.getParent('li'),1);
-			//}).bind(this)));
+				els[isdir ? 1 : 0].push(el);
+				//if (file.name == '..') el.fade(0.7);
+				el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
+				//icons = $$(icons.map((function(icon){
+				//  this.showFunctions(icon,icon,0.5,1);
+				//  this.showFunctions(icon,el.getParent('li'),1);
+				//}).bind(this)));
 
-			// ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
-			//if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: onShow = ' + this.onShow + ', file = ' + file.name + ', fmFile = ' + fmFile + ', preselect = ' + (preselect ? preselect : '???'));
-			if (this.onShow)
-			{
-				if (preselect)
+				// ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
+				//if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: onShow = ' + this.onShow + ', file = ' + file.name + ', fmFile = ' + fmFile + ', preselect = ' + (preselect ? preselect : '???'));
+				if (this.onShow)
 				{
-					if (preselect === file.name)
+					if (preselect)
 					{
-						this.deselect();
-						this.Current = file.element;
-						new Fx.Scroll(this.browserScroll,{duration: 250, offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
-						file.element.addClass('selected');
-						if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: fillInfo: file = ' + file.name);
-						this.fillInfo(file);
+						if (preselect === file.name)
+						{
+							this.deselect();
+							this.Current = file.element;
+							new Fx.Scroll(this.browserScroll,{duration: 250, offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
+							file.element.addClass('selected');
+							if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: fillInfo: file = ' + file.name);
+							this.fillInfo(file);
+						}
+					}
+					else if (fmFile)
+					{
+						if (fmFile === file.name)
+						{
+							this.deselect();
+							this.Current = file.element;
+							new Fx.Scroll(this.browserScroll,{duration: 250, offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
+							file.element.addClass('selected');
+							if (typeof console !== 'undefined' && console.log) console.log('fill: fillInfo: file = ' + file.name);
+							this.fillInfo(file);
+						}
+					}
+					else if (fmFile == null)
+					{
+						if (typeof console !== 'undefined' && console.log) console.log('fill: RESET onShow: file = ' + file.name);
+						this.onShow = false;
 					}
 				}
-				else if (fmFile)
-				{
-					if (fmFile === file.name)
-					{
-						this.deselect();
-						this.Current = file.element;
-						new Fx.Scroll(this.browserScroll,{duration: 250, offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
-						file.element.addClass('selected');
-						if (typeof console !== 'undefined' && console.log) console.log('fill: fillInfo: file = ' + file.name);
-						this.fillInfo(file);
-					}
-				}
-				else if (fmFile == null)
-				{
-					if (typeof console !== 'undefined' && console.log) console.log('fill: RESET onShow: file = ' + file.name);
-					this.onShow = false;
-				}
 			}
-		}
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
@@ -2490,6 +2490,9 @@ var FileManager = new Class({
 		return false;   // return TRUE when the drop action is unwanted
 	},
 });
+
+
+
 
 FileManager.Request = new Class({
 	Extends: Request.JSON,

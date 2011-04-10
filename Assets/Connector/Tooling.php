@@ -75,10 +75,10 @@ if (!function_exists('safe_glob'))
 					// Big, fat bummer!
 					continue;
 				}
-			
+
 				$filepath = $path . '/' . $file;
 				$isdir = is_dir($filepath);
-				
+
 				// Recurse subdirectories (GLOB_RECURSE); speedup: no need to sort the intermediate results
 				if (($flags & GLOB_RECURSE) && $isdir && !($file == '.' || $file == '..'))
 				{
@@ -94,7 +94,7 @@ if (!function_exists('safe_glob'))
 				{
 					if ( ( (!($flags & GLOB_ONLYDIR)) || $isdir )
 					  && ( (!($flags & GLOB_NODIR)) || !$isdir )
-					  && ( (!($flags & GLOB_NODOTS)) || !($file == '.' || $file == '..') ) 
+					  && ( (!($flags & GLOB_NODOTS)) || !($file == '.' || $file == '..') )
 					  && ( (!($flags & GLOB_NOHIDDEN)) || ($file[0] != '.' || $file == '..')) )
 					{
 						if ($isdir)
@@ -109,7 +109,7 @@ if (!function_exists('safe_glob'))
 				}
 			}
 			closedir($dir);
-			if (!($flags & GLOB_NOSORT)) 
+			if (!($flags & GLOB_NOSORT))
 			{
 				sort($dirs);
 				sort($files);
