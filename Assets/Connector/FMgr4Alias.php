@@ -81,11 +81,7 @@ class FileManagerWithAliasSupport extends FileManager
 
 				if (!isset($scandir_lookup_arr[$p_dir]))
 				{
-					$scandir_lookup_arr[$p_dir] = array();
-				}
-				if (!isset($scandir_lookup_arr[$p_dir][!$isdir]))
-				{
-					$scandir_lookup_arr[$p_dir][!$isdir] = array();
+					$scandir_lookup_arr[$p_dir] = array(array(), array());
 				}
 				$scandir_lookup_arr[$p_dir][!$isdir][] = /* 'alias' => */ $a_name;
 			}
@@ -110,7 +106,7 @@ class FileManagerWithAliasSupport extends FileManager
 	 * An augmented scandir() which will ensure any Aliases are included in the relevant
 	 * directory scans; this makes the Aliases behave very similarly to actual directories.
 	 */
-	protected function scandir($dir, $filemask, $see_thumbnail_dir, $glob_flags_or, $glob_flags_and)
+	public function scandir($dir, $filemask, $see_thumbnail_dir, $glob_flags_or, $glob_flags_and)
 	{
 		$dir = self::enforceTrailingSlash($dir);
 

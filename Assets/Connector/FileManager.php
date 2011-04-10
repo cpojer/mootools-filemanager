@@ -3066,7 +3066,7 @@ class FileManager
 	 *            entry is the very last entry in the array.
 	 *            This guarantee is important as onView() et al depend on it.
 	 */
-	protected function scandir($dir, $filemask, $see_thumbnail_dir, $glob_flags_or, $glob_flags_and)
+	public function scandir($dir, $filemask, $see_thumbnail_dir, $glob_flags_or, $glob_flags_and)
 	{
 		// list files, except the thumbnail folder itself or any file in it:
 		$dir = self::enforceTrailingSlash($dir);
