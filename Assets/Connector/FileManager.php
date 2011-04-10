@@ -1094,10 +1094,7 @@ class FileManager
 		//{
 		//  $thumb = $icon;
 		//}
-		return array(
-			'dirs' => $out[1],
-			'files' => $out[0],
-			'json' => array_merge((is_array($json) ? $json : array()), array(
+		return array_merge((is_array($json) ? $json : array()), array(
 				'root' => substr($this->options['directory'], 1),
 				'path' => $legal_url,                                  // is relative to options['directory']
 				'dir' => array(
@@ -1111,9 +1108,10 @@ class FileManager
 					'icon' => $icon_d
 				),
 				'preselect_index' => ($file_preselect_index >= 0 ? $file_preselect_index + count($out[1]) + 1 : 0),
-				'preselect_name' => ($file_preselect_index >= 0 ? $file_preselect_arg : null)
-			))
-		);
+				'preselect_name' => ($file_preselect_index >= 0 ? $file_preselect_arg : null),
+				'dirs' => $out[1],
+				'files' => $out[0]
+			));
 	}
 
 	/**
@@ -1244,7 +1242,7 @@ class FileManager
 
 				if (!headers_sent()) header('Content-Type: application/json');
 
-				echo json_encode(array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files']))));
+				echo json_encode($rv);
 				return;
 			}
 			catch(FileManagerException $e)
@@ -1866,7 +1864,7 @@ class FileManager
 
 			// success, now show the new directory as a list view:
 			$rv = $this->_onView($legal_url . $file . '/', $jserr, $mime_filter, $list_type);
-			echo json_encode(array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files']))));
+			echo json_encode($rv);
 			return;
 		}
 		catch(FileManagerException $e)
@@ -1878,8 +1876,7 @@ class FileManager
 			// and fall back to showing the PARENT directory
 			try
 			{
-				$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
-				$jserr = array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files'])));
+				$jserr = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
 			}
 			catch (Exception $e)
 			{
@@ -1887,8 +1884,7 @@ class FileManager
 				try
 				{
 					$legal_url = $this->options['directory'];
-					$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
-					$jserr = array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files'])));
+					$jserr = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
 				}
 				catch (Exception $e)
 				{
@@ -1907,8 +1903,7 @@ class FileManager
 			// and fall back to showing the PARENT directory
 			try
 			{
-				$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
-				$jserr = array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files'])));
+				$jserr = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
 			}
 			catch (Exception $e)
 			{
@@ -1916,8 +1911,7 @@ class FileManager
 				try
 				{
 					$legal_url = $this->options['directory'];
-					$rv = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
-					$jserr = array_merge($rv['json'], array('files' => array_merge(array(), $rv['dirs'], $rv['files'])));
+					$jserr = $this->_onView($legal_url, $jserr, $mime_filter, $list_type);
 				}
 				catch (Exception $e)
 				{

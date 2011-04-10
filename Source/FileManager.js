@@ -456,10 +456,10 @@ var FileManager = new Class({
 		if (!this.options.move_or_copy)
 			return false;
 
-		if (!j || !j.files || !pagesize)
+		if (!j || !j.dirs || !j.files || !pagesize)
 			return true;
 
-		return (j.files.length <= pagesize * 4);
+		return (j.dirs.length + j.files.length <= pagesize * 4);
 	},
 
 	fitSizes: function() {
@@ -928,6 +928,34 @@ var FileManager = new Class({
 		}, this).send();
 	},
 
+	delete_from_dircache: function(file)
+	{
+		var items;
+		var i;
+
+		if (this.view_fill_json)
+		{
+			if (file.mime === 'text/directory')
+			{
+				items = this.view_fill_json.dirs;
+			}
+			else
+			{
+				items = this.view_fill_json.files;
+			}
+
+			for (i = items.length - 1; i >= 0; i--)
+			{
+				var item = items[i];
+				if (item.name === file.name)
+				{
+					items.splice(i, 1);
+					break;
+				}
+			}
+		}
+	},
+
 	destroy_noQasked: function(file) {
 
 		if (this.Request) this.Request.cancel();
@@ -963,22 +991,12 @@ var FileManager = new Class({
 				var rerendering_list = false;
 				if (this.view_fill_json)
 				{
-					var elcount = this.view_fill_json.files.length;
-					var i;
-					for (i = 0; i < elcount; i++)
-					{
-						var item = this.view_fill_json.files[i];
-						if (item.name == file.name)   /* NOT: j.name, as that one can be 'cleaned up' as part of the 'move' operation! */
-						{
-							this.view_fill_json.files.splice(i, 1);
-							break;
-						}
-					}
+					this.delete_from_dircache(file);  /* do NOT use j.name, as that one can be 'cleaned up' as part of the 'move' operation! */
+
 					// minor caveat: when we paginate the directory list, then browsing to the next page will skip one item (which would
 					// have been the first on the next page). The brute-force fix for this is to force a re-render of the page when in
 					// pagination view mode:
-					var startindex = this.get_view_fill_startindex();
-					if (elcount > this.listPaginationLastSize)
+					if (this.view_fill_json.dirs.length + this.view_fill_json.files.length > this.listPaginationLastSize)
 					{
 						// similar activity as load(), but without the server communication...
 
@@ -990,7 +1008,7 @@ var FileManager = new Class({
 						this.view_fill_timer = null;
 
 						rerendering_list = true;
-						this.fill(null, startindex, this.listPaginationLastSize);
+						this.fill(null, this.get_view_fill_startindex(), this.listPaginationLastSize);
 					}
 				}
 				// make sure fade does not clash with parallel directory (re)load:
@@ -1353,7 +1371,7 @@ var FileManager = new Class({
 	{
 		if (e) e.stop();
 		var startindex = this.get_view_fill_startindex();
-		if (this.view_fill_json && startindex > this.view_fill_json.files.length - this.listPaginationLastSize)
+		if (this.view_fill_json && startindex > this.view_fill_json.dirs.length + this.view_fill_json.files.length - this.listPaginationLastSize)
 			return false;
 
 		return this.paging_goto_helper(startindex + this.listPaginationLastSize, this.listPaginationLastSize, kbd_dir);
@@ -1371,7 +1389,7 @@ var FileManager = new Class({
 	{
 		if (e) e.stop();
 		var startindex = this.get_view_fill_startindex();
-		if (this.view_fill_json && startindex > this.view_fill_json.files.length - this.options.listPaginationSize)
+		if (this.view_fill_json && startindex > this.view_fill_json.dirs.length + this.view_fill_json.files.length - this.options.listPaginationSize)
 			return false;
 
 		return this.paging_goto_helper(2E9 /* ~ maxint */, null, kbd_dir);
@@ -1395,6 +1413,8 @@ var FileManager = new Class({
 	// Xinha: add the ability to preselect a file in the dir
 	fill: function(j, startindex, pagesize, kbd_dir, preselect) {
 
+		var j_item_count;
+
 		if (typeof preselect == 'undefined') preselect = null;
 
 		if (!pagesize)
@@ -1409,15 +1429,17 @@ var FileManager = new Class({
 			j = this.view_fill_json;
 		}
 
+		j_item_count = j.dirs.length + j.files.length;
+
 		startindex = parseInt(startindex || 0);     // make sure it's an int number
 		if (!pagesize)
 		{
 			// no paging: always go to position 0 then!
 			startindex = 0;
 		}
-		else if (startindex > j.files.length)
+		else if (startindex > j_item_count)
 		{
-			startindex = j.files.length;
+			startindex = j_item_count;
 		}
 		else if (startindex < 0)
 		{
@@ -1492,7 +1514,7 @@ var FileManager = new Class({
 		this.selectablePath.set('value', '/'+this.CurrentPath);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
 
-		if (!j.files) {
+		if (!j.dirs || !j.files) {
 			return false;
 		}
 
@@ -1518,20 +1540,20 @@ var FileManager = new Class({
 		 */
 		var support_DnD_for_this_dir = this.allow_DnD(j, pagesize);
 		var starttime = new Date().getTime();
-		//if (typeof console !== 'undefined' && console.log) console.log('fill list size = ' + j.files.length);
+		//if (typeof console !== 'undefined' && console.log) console.log('fill list size = ' + j_item_count);
 
-		var endindex = j.files.length;
+		var endindex = j_item_count;
 		var paging_now = 0;
 		if (pagesize)
 		{
-			// endindex MAY point beyond j.files.length; that's okay; we check the boundary every time in the other fill chunks.
+			// endindex MAY point beyond j_item_count; that's okay; we check the boundary every time in the other fill chunks.
 			endindex = startindex + pagesize;
-			// however for reasons of statistics gathering, we keep it bound to j.files.length at the moment:
-			if (endindex > j.files.length) endindex = j.files.length;
+			// however for reasons of statistics gathering, we keep it bound to j_item_count at the moment:
+			if (endindex > j_item_count) endindex = j_item_count;
 
-			if (pagesize < j.files.length)
+			if (pagesize < j_item_count)
 			{
-				var pagecnt = Math.ceil(j.files.length / pagesize);
+				var pagecnt = Math.ceil(j_item_count / pagesize);
 				var curpagno = Math.floor(startindex / pagesize) + 1;
 
 				this.browser_paging_info.set('text', 'P:' + curpagno);
@@ -1599,7 +1621,7 @@ var FileManager = new Class({
 
 	/*
 	 * The old one-function-does-all fill() would take an awful long time when processing large directories. This function
-	 * contains the most costly code chunk of the old fill() and has adjusted the looping through the j.files[] list
+	 * contains the most costly code chunk of the old fill() and has adjusted the looping through the j.dirs[] and j.files[] lists
 	 * in such a way that we can 'chunk it up': we can measure the time consumed so far and when we have spent more than
 	 * X milliseconds in the loop, we stop and allow the loop to commence after a minimal delay.
 	 *
@@ -1618,16 +1640,19 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_1(' + startindex + ') @ ' + duration);
 
 		/*
-		 * Note that the < j.files.length check MUST be kept around: one of the fastest ways to abort/cancel
-		 * the render is emptying the files[] array, as that would abort the loop on the '< j.files.length'
+		 * Note that the '< j.dirs.length' / '< j.files.length' checks MUST be kept around: one of the fastest ways to abort/cancel
+		 * the render is emptying the dirs[] + files[] array, as that would abort the loop on the '< j.dirs.length' / '< j.files.length'
 		 * condition.
 		 *
 		 * This, together with killing our delay-timer, is done when anyone calls reset_view_fill_store() to
 		 * abort this render pronto.
 		 */
-		for (idx = startindex; idx < endindex && idx < j.files.length; idx++)
+
+		// first loop: only render directories, when the indexes fit the range: 0 .. j.dirs.length-1
+		// Assume several directory aspects, such as no thumbnail hassle (it's one of two icons anyway, really!)
+		for (idx = startindex; idx < endindex && idx < j.dirs.length; idx++)
 		{
-			var file = j.files[idx];
+			var file = j.dirs[idx];
 
 			if (idx % 10 == 0) {
 				// try not to spend more than 100 msecs per (UI blocking!) loop run!
@@ -1658,7 +1683,95 @@ var FileManager = new Class({
 
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
 			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
-			var isdir = (file.mime == 'text/directory');
+			var el;
+
+			// This is just a raw image
+			el = this.list_row_maker(file.thumbnail, file);
+
+			if (typeof console !== 'undefined' && console.log) console.log('add DIRECTORY click event to ' + file.name);
+			el.addEvent('click', (function(e) {
+				if (typeof console !== 'undefined' && console.log) console.log('is_dir:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
+				//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
+				//var node = el;
+				var node = this;
+				self.relayClick.apply(self, [e, node]);
+			}).bind(el));
+
+			// -> add icons
+			//var icons = [];
+			var editButtons = new Array();
+
+			// rename, delete icon
+			if (file.name != '..')
+			{
+				if (this.options.rename) editButtons.push('rename');
+				if (this.options.destroy) editButtons.push('destroy');
+			}
+
+			editButtons.each(function(v){
+				//icons.push(
+				new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target){
+					// this = el, self = FM instance
+					e.preventDefault();
+					this.store('edit', true);
+					// can't use 'file' in here directly anymore either:
+					var file = this.retrieve('file');
+					self.tips.hide();
+					self[v](file);
+				}).bind(el)).inject(el,'top');
+				//);
+			}, this);
+
+			els[1].push(el);
+			//if (file.name == '..') el.fade(0.7);
+			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
+			//icons = $$(icons.map((function(icon){
+			//  this.showFunctions(icon,icon,0.5,1);
+			//  this.showFunctions(icon,el.getParent('li'),1);
+			//}).bind(this)));
+
+			// you CANNOT 'preselect' a directory as if it were a file, so we don't need to check against the 'preselect' or 'fmFile' values here!
+		}
+
+		// and another, ALMOST identical, loop to render the files. Note that these buggers have their own peculiarities... and make sure the index is adjusted to point into files[]
+		var dir_count = j.dirs.length;
+
+		// skip files[] rendering, when the startindex still points inside dirs[]  ~  too many directories to fit any files on this page!
+		if (idx >= dir_count)
+		{
+			for ( ; idx < endindex && idx - dir_count < j.files.length; idx++)
+			{
+				var file = j.files[idx - dir_count];
+
+				if (idx % 10 == 0) {
+					// try not to spend more than 100 msecs per (UI blocking!) loop run!
+					var loop_duration = new Date().getTime() - loop_starttime;
+					duration = new Date().getTime() - starttime;
+					//if (typeof console !== 'undefined' && console.log) console.log('time taken so far = ' + duration + ' / ' + loop_duration + ' @ elcnt = ' + idx);
+
+					/*
+					 * Are we running in adaptive pagination mode? yes: calculate estimated new pagesize and adjust average (EMA) when needed.
+					 *
+					 * Do this here instead of at the very end so that pagesize will adapt, particularly when user does not want to wait for
+					 * this render to finish.
+					 */
+					this.adaptive_update_pagination_size(idx, endindex, render_count, pagesize, duration, 1.0 / 7.0, 1.1, 0.1 / 1000);
+
+					if (loop_duration >= 100)
+					{
+						this.view_fill_timer = this.fill_chunkwise_1.delay(1, this, [idx, endindex, render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir, preselect]);
+						return; // end call == break out of loop
+					}
+				}
+
+				file.dir = j.path;
+				var largeDir = '';
+				//// generate unique id
+				//var newDate = new Date;
+				//uniqueId = newDate.getTime();
+
+				//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
+				//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 				var el;
 
 				if (file.thumbnail.indexOf('.php?') == -1)
@@ -1776,11 +1889,11 @@ var FileManager = new Class({
 				 */
 
 				// 2011/04/09: only register the 'click' event when the element is NOT a draggable:
-				if (!support_DnD_for_this_dir || isdir)
+				if (!support_DnD_for_this_dir)
 				{
 					if (typeof console !== 'undefined' && console.log) console.log('add FILE click event to ' + file.name + ' : ' + file.mime);
 					el.addEvent('click', (function(e) {
-						if (typeof console !== 'undefined' && console.log) console.log('is_dir/is_file:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
+						if (typeof console !== 'undefined' && console.log) console.log('is_file:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
 						//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
 						//var node = el;
 						var node = this;
@@ -1792,15 +1905,13 @@ var FileManager = new Class({
 				//var icons = [];
 				var editButtons = new Array();
 				// download icon
-				if (!isdir && this.options.download) {
+				if (this.options.download) {
 					if (this.options.download) editButtons.push('download');
 				}
 
 				// rename, delete icon
-				if (file.name != '..') {
 				if (this.options.rename) editButtons.push('rename');
 				if (this.options.destroy) editButtons.push('destroy');
-				}
 
 				editButtons.each(function(v){
 					//icons.push(
@@ -1816,8 +1927,7 @@ var FileManager = new Class({
 					//);
 				}, this);
 
-				els[isdir ? 1 : 0].push(el);
-				//if (file.name == '..') el.fade(0.7);
+				els[0].push(el);
 				el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
 				//icons = $$(icons.map((function(icon){
 				//  this.showFunctions(icon,icon,0.5,1);
@@ -1859,6 +1969,7 @@ var FileManager = new Class({
 					}
 				}
 			}
+		}
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
@@ -2019,22 +2130,12 @@ var FileManager = new Class({
 
 								if (this.view_fill_json)
 								{
-									var elcount = this.view_fill_json.files.length;
-									var i;
-									for (i = 0; i < elcount; i++)
-									{
-										var item = this.view_fill_json.files[i];
-										if (item.name == file.name)   /* NOT: j.name, as that one can be 'cleaned up' as part of the 'move' operation! */
-										{
-											this.view_fill_json.files.splice(i, 1);
-											break;
-										}
-									}
+									this.delete_from_dircache(file);  /* do NOT use j.name, as that one can be 'cleaned up' as part of the 'move' operation! */
+
 									// minor caveat: when we paginate the directory list, then browsing to the next page will skip one item (which would
 									// have been the first on the next page). The brute-force fix for this is to force a re-render of the page when in
 									// pagination view mode:
-									var startindex = this.get_view_fill_startindex();
-									if (elcount > this.listPaginationLastSize)
+									if (this.view_fill_json.dirs.length + this.view_fill_json.files.length > this.listPaginationLastSize)
 									{
 										// similar activity as load(), but without the server communication...
 
@@ -2378,6 +2479,7 @@ var FileManager = new Class({
 			// make sure the old 'fill' run is aborted ASAP: clear the old files[] array to break
 			// the heaviest loop in fill:
 			this.view_fill_json.files = [];
+			this.view_fill_json.dirs = [];
 		}
 		this.view_fill_json = ((j && j.status) ? j : null);      // clear out the old JSON data and set up possibly new data.
 		// ^^^ the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly
@@ -2489,6 +2591,24 @@ var FileManager = new Class({
 	onDragComplete: function(){
 		return false;   // return TRUE when the drop action is unwanted
 	},
+
+	// dev/diag shortcuts:
+
+	// always return a string; dump object/array/... in 'arr' to human readable string:
+	diag:
+	{
+		dump: function(arr, level, max_depth, max_lines, no_show)
+		{
+			return '';
+		},
+		log: function(/* ... */)
+		{
+			if (typeof console !== 'undefined' && console.log)
+			{
+				console.log(arguments);
+			}
+		}
+	}
 });
 
 
@@ -2563,7 +2683,13 @@ Asset.javascript(__MFM_ASSETS_DIR__+'/js/milkbox/milkbox.js');
 Asset.css(__MFM_ASSETS_DIR__+'/js/milkbox/css/milkbox.css');
 Asset.css(__MFM_ASSETS_DIR__+'/Css/FileManager.css');
 Asset.css(__MFM_ASSETS_DIR__+'/Css/Additions.css');
-Asset.javascript(__MFM_ASSETS_DIR__+'/js/jsGET.js', { events: {load: (function(){ window.fireEvent('jsGETloaded'); }).bind(this)}});
+Asset.javascript(__MFM_ASSETS_DIR__+'/js/jsGET.js', {
+	events: {
+		load: (function(){
+			window.fireEvent('jsGETloaded');
+		}).bind(this)
+	}
+});
 
 Element.implement({
 
