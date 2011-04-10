@@ -2539,6 +2539,7 @@ class FileManager
 			//$mime = $this->getMimeType($file);
 			
 			$mime2 = $this->getMimeType($file, true);
+			$fi['mime_type from file extension'] = $mime2;
 			$bad_ext = ($mime2 != $mime);
 			if ($bad_ext)
 			{
@@ -2593,7 +2594,6 @@ class FileManager
 				'icon' => FileManagerUtility::rawurlencode_path($icon),
 				'size' => @filesize($file)
 			));
-
 
 
 		$content_classes = "margin" . ($bad_ext ? ' preview_bad_mime' : '');
@@ -2884,42 +2884,33 @@ class FileManager
 				
 			default:
 				// fall back to 'no preview available' (if getID3 didn't deliver instead...)
-				if (!empty($this->getid3->info))
+				break;
+			}
+		
+			if (!empty($fi))
+			{
+				if (empty($fi['error']))
 				{
-					if (empty($this->getid3->info['error']))
+					try
 					{
-						try
-						{
-							ob_start();
-								var_dump($this->getid3->info);
-							$dump = ob_get_clean();
-							// $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
+						self::clean_EXIF_results($fi);
+						ob_start();
+							var_dump($fi);
+						$dump = ob_get_clean();
 
-							// strip the NULs out:
-							$dump = str_replace('&#0;', '?', $dump);
-							//$dump = html_entity_decode(strip_tags($dump), ENT_QUOTES, 'UTF-8');
-							//@file_put_contents('getid3.raw.log', $dump);
-							// since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
-							$dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
-							// and reduce long sequences of unknown charcodes:
-							$dump = preg_replace('/\?{8,}/', '???????', $dump);
-							//$dump = html_entity_encode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
-
-							$postdiag_HTML = '<pre>' . "\n" . $dump . "\n" . '</pre>';
-							//@file_put_contents('getid3.log', $dump);
-						}
-						catch(Exception $e)
-						{
-							// ignore
-							$postdiag_HTML = '<p class="err_info">' . $e->getMessage() . '</p>';
-						}
+						$postdiag_HTML .= '<pre>' . "\n" . $dump . "\n" . '</pre>';
+						//@file_put_contents('getid3.log', $dump);
 					}
-					else
+					catch(Exception $e)
 					{
-						$postdiag_HTML = '<p class="err_info">' . implode(', ', $this->getid3->info['error']) . '</p>';
+						// ignore
+						$postdiag_HTML .= '<p class="err_info">' . $e->getMessage() . '</p>';
 					}
 				}
-				break;
+				else
+				{
+					$postdiag_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
+				}
 			}
 			break;
 		}
@@ -2982,6 +2973,17 @@ class FileManager
 	{
 		if (is_string($value))
 		{
+			//  // $dump may dump object IDs and other binary stuff, which will completely b0rk json_encode: make it palatable:
+			//  //$dump = html_entity_encode($value, ENT_NOQUOTES, 'UTF-8');
+			//  // strip the NULs out:
+			//  $dump = str_replace('&#0;', '?', $dump);
+			//  //$dump = html_entity_decode(strip_tags($dump), ENT_QUOTES, 'UTF-8');
+			//  // since the regex matcher leaves NUL bytes alone, we do those above in undecoded form; the rest is treated here
+			//  $dump = preg_replace("/[^ -~\n\r\t]/", '?', $dump); // remove everything outside ASCII range; some of the high byte values seem to crash json_encode()!
+			//  // and reduce long sequences of unknown charcodes:
+			//  $dump = preg_replace('/\?{8,}/', '???????', $dump);
+			//  //$dump = html_entity_encode(strip_tags($dump), ENT_NOQUOTES, 'UTF-8');
+			
 			if (FileManagerUtility::isBinary($value))
 			{
 				$value = '(binary data... length = ' . strlen($value) . ')';
@@ -4035,12 +4037,12 @@ class FileManagerUtility
 {
 	public static function endsWith($string, $look)
 	{
-		return strrpos($string, $look)===strlen($string)-strlen($look);
+		return strrpos($string, $look) === strlen($string) - strlen($look);
 	}
 
 	public static function startsWith($string, $look)
 	{
-		return strpos($string, $look)===0;
+		return strpos($string, $look) === 0;
 	}
 
 
