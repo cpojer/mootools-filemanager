@@ -27,13 +27,16 @@ FileManager.Gallery = new Class({
 		this.parent(options);
 
 		this.addEvents({
-			scroll: show,
-			show: (function() {
-				show.apply(this);
-				this.populate();
-			}),
+			scroll: function(e, self) {
+				self.show_gallery();
+			},
 
-			hide: function(){
+			show: function(self) {
+				self.show_gallery();
+				self.populate();
+			},
+
+			hide: function(self) {
 				if (!this.keepData) {
 					this.gallery.empty();
 					this.captions = {};
@@ -46,14 +49,20 @@ FileManager.Gallery = new Class({
 				this.wrapper.setStyle('display', 'none');
 			},
 
-			modify: function(file){
+			modify: function(file, json, mode, self) {
+				// mode is one of (destroy, rename, move, copy): only when mode=copy, does the file remain where it was before!
+				if (mode !== 'copy')
+				{
 					var name = this.normalize(file.path);
 					var el = (this.gallery.getElements('li').filter(function(el){
 						var f = el.retrieve('file');
 						return name == this.normalize(f.path);
 					}, this) || null)[0];
 
-				if (el) this.erasePicture(name, el);
+					if (el) {
+						this.erasePicture(name, el);
+					}
+				}
 			}
 		});
 
@@ -92,6 +101,7 @@ FileManager.Gallery = new Class({
 
 		this.droppables.push(this.gallery);
 
+		this.keepData = false;
 		this.captions = {};
 		this.files = [];
 		this.animation = {};
@@ -324,7 +334,7 @@ FileManager.Gallery = new Class({
 			serialized[v] = (this.captions[v] || '');
 		}, this);
 		this.keepData = true;
-		this.hide();
+		this.hide(this);
 		this.fireEvent('complete', [serialized]);
 	}
 });
