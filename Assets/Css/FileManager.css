@@ -179,7 +179,7 @@ div.filemanager ul {
   padding: 0;
   position: relative;
   line-height: 1.8em;
-  zoom: 1;
+  zoom: 1;					/*:: < IE 9.0    :: Microsoft Internet Explorer hack */
 }
 
 div.filemanager ul li {
@@ -686,7 +686,7 @@ div.filemanager-preview p.err_info {
 }
 
 div.filemanager-preview div.preview_bad_mime {
-  background-color: #f99;
+  background-color: #fcc;
 }
 
 div.filemanager-engine-trident4 div.filemanager-preview img.preview {
