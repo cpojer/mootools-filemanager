@@ -140,8 +140,9 @@ var FileManager = new Class({
 		this.clickablePath = new Element('span', {'class': 'filemanager-dir'});
 		this.selectablePath = new Element('input',{'type': 'text', 'class': 'filemanager-dir', 'readonly': 'readonly'});
 		this.pathTitle = new Element('a', {href:'#','class': 'filemanager-dir-title',text: this.language.dir}).addEvent('click',(function(e){
+			if (typeof console !== 'undefined' && console.log) console.log('pathTitle-click event: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
 			e.stop();
-			if (this.header.getElement('span.filemanager-dir')!= null) {
+			if (this.header.getElement('span.filemanager-dir') != null) {
 				this.selectablePath.setStyle('width',(this.header.getSize().x - this.pathTitle.getSize().x - 55));
 				this.selectablePath.replaces(this.clickablePath);
 			}
@@ -308,8 +309,8 @@ var FileManager = new Class({
 			self.fireEvent('preview', [this.get('src'), self, this]);
 		});
 
-		// We need to group the headers and lists together because we will
-		// use some CSS to reorganise a bit.  So we create "filemanager-preview-area" which
+		// We need to group the headers and lists together because we may
+		// use some CSS to reorganise it a bit in the custom event handler.  So we create "filemanager-preview-area" which
 		// will contain the h2 for the preview and also the preview content returned from
 		// Backend/FileManager.php
 		this.info.adopt((new Element('div', {'class': 'filemanager-preview-area'})).adopt([
@@ -1437,13 +1438,15 @@ var FileManager = new Class({
 		this.CurrentDir = j.dir;
 		if (!this.onShow) {
 			//if (typeof console !== 'undefined' && console.log) console.log('fill internal: fillInfo: file = ' + j.dir.name);
-			this.fillInfo(j.dir);
+			this.fillInfo(j.dir); // XXXX
 		}
 		this.browser.empty();
 
 		// set history
 		if (typeof jsGET != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')
+		{
 			jsGET.set({'fmPath':j.path});
+		}
 
 		this.CurrentPath = this.normalize(this.root + this.Directory);
 		var text = [], pre = [];
@@ -1473,6 +1476,7 @@ var FileManager = new Class({
 						href: '#',
 						text: folderName
 					}).addEvent('click', (function(e){
+						if (typeof console !== 'undefined' && console.log) console.log('path section - click event: ' + e.target + ' (' + path + ') : ' + e.type + ' @ ' + e.target.outerHTML);
 						e.stop();
 						this.load(path);
 					}).bind(this))
@@ -1485,7 +1489,7 @@ var FileManager = new Class({
 		text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e) {
 			e.stop();
 		});
-		this.selectablePath.set('value','/'+this.CurrentPath);
+		this.selectablePath.set('value', '/'+this.CurrentPath);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
 
 		if (!j.files) {
@@ -1740,15 +1744,49 @@ var FileManager = new Class({
 			 *          observed behaviour before the fix: the file names associated with the 'el' element object were always pointing
 			 *          at some item further down the list, not necessarily the very last one, but always these references were 'grouped':
 			 *          multiple rows would produce the same filename.
+			 *
+			 * EXTRA: 2011/04/09: why you don't want to add this event for any draggable item!
+			 *
+			 *          It turns out that IE9 (IE6-8 untested as I write this) and Opera do NOT fire the 'click' event after the drag operation is
+			 *          'cancel'led, while other browsers fire both (Chrome/Safari/FF3).
+			 *          For the latter ones, the event handler sequence after a simple click on a draggable item is:
+			 *            - Drag::onBeforeStart
+			 *            - Drag::onCancel
+			 *            - 'click'
+			 *          while a tiny amount of dragging produces this sequence instead:
+			 *            - Drag::onBeforeStart
+			 *            - Drag::onStart
+			 *            - Drag::onDrop
+			 *            - 'click'
+			 *
+			 *          Meanwhile, Opera and IE9 do this:
+			 *            - Drag::onBeforeStart
+			 *            - Drag::onCancel
+			 *            - **NO** click event!
+			 *          while a tiny amount of dragging produces this sequence instead:
+			 *            - Drag::onBeforeStart
+			 *            - Drag::onStart
+			 *            - Drag::onDrop
+			 *            - **NO** click event!
+			 *
+			 *          which explains why the old implementation did not simply register this 'click' event handler and had 'revert' fake the 'click'
+			 *          event instead.
+			 *          HOWEVER, the old way, using revert() (now called revert_drag_n_drop()) was WAY too happy to hit the 'click' event handler. In
+			 *          fact, the only spot where such 'manually firing' was desirable is when the drag operation is CANCELLED. And only there!
 			 */
 
-			el.addEvent('click', (function(e, target) {
-				//if (typeof console !== 'undefined' && console.log) console.log('is_dir:CLICK');
+			// 2011/04/09: only register the 'click' event when the element is NOT a draggable:
+			if (!support_DnD_for_this_dir || isdir)
+			{
+				if (typeof console !== 'undefined' && console.log) console.log('add FILE click event to ' + file.name + ' : ' + file.mime);
+				el.addEvent('click', (function(e) {
+					if (typeof console !== 'undefined' && console.log) console.log('is_dir/is_file:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
 				//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
 				//var node = el;
 				var node = this;
 				self.relayClick.apply(self, [e, node]);
 			}).bind(el));
+			}
 
 			// -> add icons
 			//var icons = [];
@@ -1860,7 +1898,7 @@ var FileManager = new Class({
 				}).bind(this),
 
 				onBeforeStart: (function(el){
-					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onBeforeStart');
+					if (typeof console !== 'undefined' && console.log) console.log('draggable:onBeforeStart');
 					this.deselect(el);
 					this.tips.hide();
 					var position = el.getPosition();
@@ -1879,12 +1917,22 @@ var FileManager = new Class({
 
 				// FIX: do not deselect item when aborting dragging _another_ item!
 				onCancel: (function(el) {
-					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onCancel');
+					if (typeof console !== 'undefined' && console.log) console.log('draggable:onCancel');
 					this.revert_drag_n_drop(el);
+					/*
+					 * Fixing the 'click' on FF+Opera (other browsers do get that event for any item which is made draggable):
+					 * a basic mouse'click' appears as the event sequence onBeforeStart + onCancel.
+					 *
+					 * NOTE that onStart is NOT invoked! When it is, it's a drag operation, no matter if it's successful as a drag&drop or not.
+					 *
+					 * So we then manually fire the 'click' event. See also the comment near the 'click' event handler registration in fill_chunkwise_1()
+					 * about the different behaviour in different browsers.
+					 */
+					this.relayClick(null, el);
 				}).bind(this),
 
 				onStart: (function(el) {
-					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onStart');
+					if (typeof console !== 'undefined' && console.log) console.log('draggable:onStart');
 					el.fade(0.7).addClass('move');
 					if (typeof console !== 'undefined' && console.log) console.log('ENABLE keyboard up/down on drag start');
 					//document.addEvents({
@@ -1902,7 +1950,7 @@ var FileManager = new Class({
 				},
 
 				onDrop: (function(el, droppable, e){
-					//if (typeof console !== 'undefined' && console.log) console.log('draggable:onDrop');
+					if (typeof console !== 'undefined' && console.log) console.log('draggable:onDrop');
 
 					var is_a_move = !(e.control || e.meta);
 					this.drop_pending = 1 + is_a_move;
@@ -2438,7 +2486,9 @@ var FileManager = new Class({
 	},
 	onDialogOpenWhenUpload: function(){},
 	onDialogCloseWhenUpload: function(){},
-	onDragComplete: Function.from(false)   // return TRUE when the drop action is unwanted
+	onDragComplete: function(){
+		return false;   // return TRUE when the drop action is unwanted
+	},
 });
 
 FileManager.Request = new Class({
