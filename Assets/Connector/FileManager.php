@@ -3771,13 +3771,17 @@ class FileManager
 		$mset = explode(',', $mime_filter);
 		for($i = count($mset) - 1; $i >= 0; $i--)
 		{
-			if (strpos($mset[$i], '/') === false) $mset[$i] .= '/';
+			if (strpos($mset[$i], '/') === false) 
+				$mset[$i] .= '/';
 		}
 
 		$mimes = $this->getMimeTypeDefinitions();
 
-		foreach ($mimes as $mime)
+		foreach ($mimes as $k => $mime)
 		{
+			if ($k === '.')
+				continue;
+				
 			foreach($mset as $filter)
 			{
 				if (FileManagerUtility::startsWith($mime, $filter))
