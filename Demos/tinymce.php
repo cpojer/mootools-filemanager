@@ -118,10 +118,12 @@ session_write_close();
 					destroy: true,
 					upload: true,
 					rename: true,
+					move_or_copy: true,
 					download: true,
 					createFolders: true,
 					hideClose: false,
 					hideOverlay: false,
+					// uploadAuthData is deprecated; use propagateData instead. The session cookie(s) are passed through Flash automatically, these days...
 					uploadAuthData: {
 						session: 'MySessionData'
 					},

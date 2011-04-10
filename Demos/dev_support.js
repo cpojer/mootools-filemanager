@@ -1,9 +1,12 @@
 
 // couple of development support functions:
 //
-// (c) Copyright 2011, Ger Hobbelt ( http://hebbut.net/ ) 
+// (c) Copyright 2011, Ger Hobbelt ( http://hebbut.net/ )
 
-
+if (typeof window.debug === 'undefined')
+{
+	window.debug = {};
+}
 
 /**
  * Function : dump()
@@ -20,7 +23,7 @@
  * Docs: http://www.openjs.com/scripts/others/dump_function_php_print_r.php
  * Patched by Ger Hobbelt (max_depth, max_lines, limited_text(), function dump v.s. array/object dump)
  */
-function dump(arr, level, max_depth, max_lines, no_show)
+debug.dump = function(arr, level, max_depth, max_lines, no_show)
 {
 	var limited_text = function(text, limit)
 	{
@@ -90,7 +93,7 @@ function dump(arr, level, max_depth, max_lines, no_show)
 					}
 
 					dumped_text += level_padding + "  '" + item + "' => ";
-					dumped_text += dump(value,level+1,max_depth,max_lines,no_show);
+					dumped_text += debug.dump(value,level+1,max_depth,max_lines,no_show);
 
 					shown_any = true;
 				}
@@ -142,10 +145,14 @@ function dump(arr, level, max_depth, max_lines, no_show)
 	}
 	var dumped_continued = (dumped_text.length > nl_index ? "(continued...)" : "");
 	return dumped_text.substring(0, nl_index) + dumped_continued;
-}
+};
 
+debug.log = function()
+{
 
-function makehtml(text)
+};
+
+debug.makehtml = function(text)
 {
 	var textneu = text.replace(/&/g,"&amp;");
 	textneu = textneu.replace(/</g,"&lt;");
@@ -154,7 +161,7 @@ function makehtml(text)
 	textneu = textneu.replace(/\n/g,"<br>");
 	textneu = textneu.replace(/\r/g,"<br>");
 	return(textneu);
-}
+};
 
 
 

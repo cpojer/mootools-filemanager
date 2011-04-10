@@ -203,7 +203,7 @@ $browser = new FileManagerWithAliasSupport(array(
 	'DestroyIsAuthorized_cb' => 'FM_IsAuthorized',
 	'MoveIsAuthorized_cb' => 'FM_IsAuthorized'
 	
-	// http://httpd.apache.org/docs/2.2/mod/mod_alias.html -- we only emulate the Alias statement.
+	// http://httpd.apache.org/docs/2.2/mod/mod_alias.html -- we only emulate the Alias statement. (Also useful for VhostAlias, BTW!)
 	// Implementing other path translation features is left as an exercise to the reader:
 	, 'Aliases' => array(
 		'/c/lib/includes/js/mootools-filemanager/Demos/Files/alias' => "D:/xxx",
@@ -410,7 +410,7 @@ foreach ($test as $tc)
 		$r1 = $browser->rel2abs_legal_url_path($t);
 		$r2 = $browser->legal_url_path2file_path($t);
 		
-		$c1 = $browser->scandir($r2);
+		$c1 = $browser->scandir($r2, '*', false, 0, ~0);
     }
     catch(FileManagerException $e)
     {

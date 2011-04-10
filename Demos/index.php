@@ -121,6 +121,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         language: 'en',
         hideOnClick: true,
         assetBasePath: '../Assets',
+		// uploadAuthData is deprecated; use propagateData instead. The session cookie(s) are passed through Flash automatically, these days...
         uploadAuthData: {
             session: 'MySessionData'
         },
@@ -128,31 +129,33 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         download: true,
         destroy: true,
         rename: true,
+		move_or_copy: true,
         createFolders: true,
+		// selectable: true,
         hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
         onComplete: function(path, file, mgr) {
-            if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ' + path + ', ' + dump(file) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+            if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ' + path + ', ' + debug.dump(file) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
         },
         onModify: function(file, json, mode, mgr) {
-            if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ' + mode + ', ' + dump(file) + ', ' + dump(json) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+            if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ' + mode + ', ' + debug.dump(file) + ', ' + debug.dump(json) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
         },
         onShow: function(mgr) {
-            if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+            if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
         },
         onHide: function(mgr) {
-            if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+            if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
         },
         onScroll: function(e, mgr) {
-            if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ' + dump(e) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+            if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ' + debug.dump(e) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
         },
         onPreview: function(src, mgr, el) {
-            if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ' + dump(src) + ', ' + dump(el) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+            if (typeof console !== 'undefined' && console.log) console.log('MFM.onPreview: ' + debug.dump(src) + ', ' + debug.dump(el) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
         },
         onDetails: function(json, mgr) {
-            if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ' + dump(json) + ', ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+            if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ' + debug.dump(json) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
         },
         onHidePreview: function(mgr) {
-            if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ' + dump(mgr, 0, 1, 60, 'function,string:empty'));
+            if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
         },
         // and a couple of extra user defined parameters sent with EVERY request:
         propagateData: {
@@ -223,6 +226,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         filter: 'image',
         hideOnClick: true,
         assetBasePath: '../Assets',
+		// uploadAuthData is deprecated; use propagateData instead. The session cookie(s) are passed through Flash automatically, these days...
         uploadAuthData: {
             session: 'MySessionData'
         },
@@ -230,6 +234,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         upload: true,
         destroy: true,
         rename: true,
+		move_or_copy: true,
         createFolders: true,
         onComplete: complete,
         // and a couple of extra user defined parameters sent with EVERY request:
@@ -255,12 +260,14 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         language: 'de',
         hideOnClick: true,
         assetBasePath: '../Assets',
+		// uploadAuthData is deprecated; use propagateData instead. The session cookie(s) are passed through Flash automatically, these days...
         uploadAuthData: {
             session: 'MySessionData'
         },
         upload: true,
         destroy: true,
         rename: true,
+		move_or_copy: true,
         createFolders: true,
         // and a couple of extra user defined parameters sent with EVERY request:
         propagateData: {
@@ -278,6 +285,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
         assetBasePath: '../Assets',
         filter: 'image',
         hideOnClick: true,
+		// uploadAuthData is deprecated; use propagateData instead. The session cookie(s) are passed through Flash automatically, these days...
         uploadAuthData: {
             session: 'MySessionData'
         },
