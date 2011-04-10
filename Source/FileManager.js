@@ -2075,14 +2075,6 @@ var FileManager = new Class({
 					if (!is_a_move || !droppable) {
 						el.setStyles({left: 0, top: 0});
 					}
-					if ((!this.options.move_or_copy) || (is_a_move && !droppable)) {
-						this.drop_pending = 0;
-
-						this.revert_drag_n_drop(el);   // go and request the details anew, then refresh them in the view
-						return;
-					}
-
-					this.revert_drag_n_drop(el);       // do not send the 'detail' request in here: this.drop_pending takes care of that!
 
 					var dir;
 					if (droppable) {
@@ -2092,12 +2084,24 @@ var FileManager = new Class({
 						}).delay(300);
 						if (this.onDragComplete(el, droppable)) {
 							this.drop_pending = 0;
+
+							this.revert_drag_n_drop(el);   // go and request the details anew, then refresh them in the view
 							return;
 						}
 
 						dir = droppable.retrieve('file');
-						//if (typeof console !== 'undefined' && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
+						if (typeof console !== 'undefined' && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
 					}
+
+					if ((!this.options.move_or_copy) || (is_a_move && !droppable)) {
+						this.drop_pending = 0;
+
+						this.revert_drag_n_drop(el);   // go and request the details anew, then refresh them in the view
+						return;
+					}
+
+					this.revert_drag_n_drop(el);       // do not send the 'detail' request in here: this.drop_pending takes care of that!
+
 					var file = el.retrieve('file');
 					//if (typeof console !== 'undefined' && console.log) console.log('on drop file = ' + file.name + ' : ' + this.Directory + ', source = ' + 'retrieve; droppable = "' + droppable + '"');
 
