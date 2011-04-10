@@ -116,7 +116,7 @@ var jsGET = {
 		}
 		else {
 			// do not damage the set passed in as a parameter
-			set = Object.clone(set);
+			set = this.helpers.cloneObject(set);
 		}
 
 		// var
@@ -187,9 +187,8 @@ var jsGET = {
 	setChangedVars: function() {
 		var change_count;
 		var key;
-		var oldVars = Object.clone(this.vars.old);
-
-		this.vars.changed = Object.clone(this.vars.current);
+		var oldVars = this.helpers.cloneObject(this.vars.old);
+		this.vars.changed = this.helpers.cloneObject(this.vars.current);
 
 		// check for changed vars
 		change_count = 0;
@@ -214,17 +213,20 @@ var jsGET = {
 		}
 		this.vars.change_count = change_count;
 	},
-	addListener: function(listener,callAlways,bind) { // use the returned interval ID for removeListener
+	addListener: function(listener, callAlways, bind, freq) { // use the returned interval ID for removeListener
 
 		this.load();
 		this.vars.hash_changed = false;
 		this.vars.foreign_hash_change = false;
-		this.vars.old = Object.clone(this.vars.current);
+		this.vars.old = this.helpers.cloneObject(this.vars.current);
 
 		this.pollHash = function() {
 			var key;
 
 			this.load();    // side effect: an immediate check (one more) to see whether the hash has changed by us or others
+
+			// and make sure listener always fires whn callAlways==FALSE and user is going back&forth in the browser history (one or more history entries may match   this.vars.last_hash_saved !)
+			this.vars.last_hash_saved = window.location.hash;
 
 			if (this.vars.hash_changed) {
 				this.setChangedVars();
@@ -263,11 +265,28 @@ var jsGET = {
 			}
 		};
 
-		return setInterval(this.pollHash.bind(this), 500);
+		var self = this;
+		return setInterval(function() {
+			self.pollHash();
+		}, (freq || 500));
 	},
 	removeListener: function(listenerID) { // use the interval ID returned by addListener
 		delete this.pollHash;
 		return clearInterval(listenerID);
+	},
+	helpers:
+	{
+		// eqv. of mootools Object.clone():
+		cloneObject: function(obj) {
+			var key;
+			var rv = new obj.constructor();
+			for (key in obj) {
+				if (obj.hasOwnProperty(key)) {
+					rv[key] = obj[key];
+				}
+			}
+			return rv;
+		}
 	}
 };
 

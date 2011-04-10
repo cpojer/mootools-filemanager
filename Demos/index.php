@@ -245,7 +245,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 
 			el.setStyle('display', 'none');
 			var val = el.get('value');
-			if(val) {
+			if (val) {
 				complete.apply(manager2, [val, {
 					name: val.split('/').getLast(),
 					icon: '../Assets/Images/Icons/'+val.split('.').getLast()+'.png'
@@ -292,14 +292,14 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 				propagateData: {
 					origin: 'demo-Gallery'
 				},
-				onShow: function(){
+				onShow: function(path, file, mgr) {
 					var obj;
 					Function.attempt(function(){
 						obj = JSON.decode(example4.get('value'));
 					});
 					this.populate(obj);
 				},
-				onComplete: function(serialized){
+				onComplete: function(serialized, files, mgr){
 					example4.set('value', JSON.encode(serialized));
 				}
 			});
@@ -333,7 +333,12 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 		<a href="test-backend.php">Run tests on the backend of the File-Manager</a>
 	</div>
 
+	<div class="example">
+		<a href="../Assets/js/demo.html">Run jsGET demo</a>
+	</div>
+
 	<div style="clear: both;"></div>
+	
 </div>
 </body>
 </html>
