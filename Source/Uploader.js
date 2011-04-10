@@ -101,7 +101,7 @@ FileManager.implement({
 					//data: Object.merge({}, base.options.data, self.options.uploadAuthData),
 					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (self.options.propagateType == 'GET' ? self.options.propagateData : {}), {
 						event: 'upload',
-						directory: self.normalize(self.Directory),
+						directory: self.Directory,
 						filter: self.options.filter,
 						resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0
 					}))
