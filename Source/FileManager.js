@@ -822,6 +822,9 @@ var FileManager = new Class({
 							return;
 						}
 
+						this.deselect();
+						this.info.fade(0);
+
 						// make sure we store the JSON list!
 						this.reset_view_fill_store(j);
 
@@ -2010,8 +2013,6 @@ var FileManager = new Class({
 
 				onBeforeStart: (function(el){
 					if (typeof console !== 'undefined' && console.log) console.log('draggable:onBeforeStart');
-					this.deselect(el);
-					this.tips.hide();
 					var position = el.getPosition();
 					el.addClass('drag').setStyles({
 						'z-index': this.dragZIndex,
@@ -2020,10 +2021,6 @@ var FileManager = new Class({
 						'left': position.x,
 						'top': position.y
 					}).inject(this.container);
-
-					// FIX wrong visual when CONTROL key is kept depressed between drag&drops: the old code discarded the relevant keyboard handler; we simply switch visuals but keep the keyboard handler active.
-					this.drag_is_active = true;
-					this.imageadd.fade(0 + this.ctrl_key_pressed);
 				}).bind(this),
 
 				// FIX: do not deselect item when aborting dragging _another_ item!
@@ -2044,12 +2041,21 @@ var FileManager = new Class({
 
 				onStart: (function(el) {
 					if (typeof console !== 'undefined' && console.log) console.log('draggable:onStart');
+					//this.deselect(el);
+					this.tips.hide();
+
 					el.fade(0.7).addClass('move');
+
 					if (typeof console !== 'undefined' && console.log) console.log('ENABLE keyboard up/down on drag start');
 					//document.addEvents({
-					//	keydown: this.bound.keydown,
-					//	keyup: this.bound.keyup
+					//  keydown: this.bound.keydown,
+					//  keyup: this.bound.keyup
 					//});
+
+					// FIX wrong visual when CONTROL key is kept depressed between drag&drops: the old code discarded the relevant keyboard handler; we simply switch visuals but keep the keyboard handler active.
+					// This state change will be reverted in revert_drag_n_drop().
+					this.drag_is_active = true;
+					this.imageadd.fade(0 + this.ctrl_key_pressed);
 				}).bind(this),
 
 				onEnter: function(el, droppable){

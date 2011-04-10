@@ -218,13 +218,15 @@ FileManager.implement({
 						{
 							self.upload.uploader.fade(0).get('tween').chain(function(){
 								self.upload.uploader.setStyle('display', 'none');
-								self.onShow = true;
-								self.load(self.Directory, self._lastFileUploaded);
-								// self.fillInfo();
 							});
 						}
 					});
 				}).delay(response.status ? 1000 : 5000, this);
+
+				// don't wait for the cute delays to start updating the directory view!
+				self.onShow = true;
+				self.load(self.Directory, self._lastFileUploaded);
+				// self.fillInfo();
 			}
 		});
 
@@ -265,7 +267,7 @@ FileManager.implement({
 			zIndex: this.SwiffZIndex || 9999,
 			onSelectSuccess: function(){
 				self.fillInfo();
-				self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
+				//self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
 				self.info.adopt(self.upload.uploader.setStyle('display', 'block'));
 				self.upload.uploader.fade(1);
 			},
