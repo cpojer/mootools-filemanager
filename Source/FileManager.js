@@ -1176,7 +1176,7 @@ var FileManager = new Class({
 			span.removeClass('hover');
 		});
 
-		var stepsize = 1;
+		var stepsize = 1, next, currentFile;
 
 		switch (direction) {
 		// go down
@@ -1200,7 +1200,7 @@ var FileManager = new Class({
 			//if (typeof console !== 'undefined' && console.log) console.log('key DOWN: stepsize = ' + stepsize);
 
 			// when we're at the bottom of the view and there are more pages, go to the next page:
-			var next = current.getNext('li');
+			next = current.getNext('li');
 			if (next == null)
 			{
 				if (this.paging_goto_next(null, 'go-bottom'))
@@ -1272,7 +1272,7 @@ var FileManager = new Class({
 				csel.removeClass('selected');
 
 			current.addClass('selected');
-			var currentFile = current.retrieve('file');
+			currentFile = current.retrieve('file');
 			//if (typeof console !== 'undefined' && console.log) console.log('on key ENTER file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
 			if (currentFile.mime == 'text/directory') {
 				this.load(currentFile.dir + currentFile.name /*.replace(this.root,'')*/);
@@ -1292,7 +1292,7 @@ var FileManager = new Class({
 
 			// and before we go and delete the entry, see if we pick the next one down or up as our next cursor position:
 			var parent = current.getParent('li');
-			var next = parent.getNext('li');
+			next = parent.getNext('li');
 			if (next == null) {
 				next = parent.getPrevious('li');
 			}
@@ -1301,7 +1301,7 @@ var FileManager = new Class({
 				next.addClass('hover');
 			}
 
-			var currentFile = current.retrieve('file');
+			currentFile = current.retrieve('file');
 			//if (typeof console !== 'undefined' && console.log) console.log('on key DELETE file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
 			this.destroy(currentFile);
 
@@ -1314,13 +1314,14 @@ var FileManager = new Class({
 
 		//if (typeof console !== 'undefined' && console.log) console.log('key DOWN: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y);
 		//if (typeof console !== 'undefined' && console.log) console.log('key UP: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y + ', SCROLL = ' + this.browserScroll.getScroll().y + ', SIZE = ' + this.browserScroll.getSize().y);
+		var dy, browserScrollFx;
 		if (direction != 'up' && current.getPosition(this.browserScroll).y + current.getSize().y * 2 >= this.browserScroll.getSize().y)
 		{
 			// make scroll duration slightly dependent on the distance to travel:
-			var dy = (current.getPosition(this.browserScroll).y + current.getSize().y * 2 - this.browserScroll.getSize().y);
+			dy = (current.getPosition(this.browserScroll).y + current.getSize().y * 2 - this.browserScroll.getSize().y);
 			dy = 50 * dy / this.browserScroll.getSize().y;
 			//if (typeof console !== 'undefined' && console.log) console.log('key UP: DUR: ' + dy);
-			var browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy)) });
+			browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy, 10)) });
 			browserScrollFx.toElement(current);
 		}
 		else if (direction != 'down' && current.getPosition(this.browserScroll).y <= current.getSize().y)
@@ -1328,10 +1329,10 @@ var FileManager = new Class({
 			var sy = this.browserScroll.getScroll().y + current.getPosition(this.browserScroll).y - this.browserScroll.getSize().y + current.getSize().y * 2;
 
 			// make scroll duration slightly dependent on the distance to travel:
-			var dy = this.browserScroll.getScroll().y - sy;
+			dy = this.browserScroll.getScroll().y - sy;
 			dy = 50 * dy / this.browserScroll.getSize().y;
 			//if (typeof console !== 'undefined' && console.log) console.log('key UP: SY = ' + sy + ', DUR: ' + dy);
-			var browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy)) });
+			browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy, 10)) });
 			browserScrollFx.start(current.getPosition(this.browserScroll).x, (sy >= 0 ? sy : 0));
 		}
 	},
@@ -1435,7 +1436,7 @@ var FileManager = new Class({
 
 		j_item_count = j.dirs.length + j.files.length;
 
-		startindex = parseInt(startindex || 0);     // make sure it's an int number
+		startindex = parseInt(startindex || 0, 10);     // make sure it's an int number
 		if (!pagesize)
 		{
 			// no paging: always go to position 0 then!
@@ -1634,7 +1635,7 @@ var FileManager = new Class({
 	 */
 	fill_chunkwise_1: function(startindex, endindex, render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir, preselect) {
 
-		var idx;
+		var idx, file, loop_duration;
 		var self = this;
 		var j = this.view_fill_json;
 		var loop_starttime = new Date().getTime();
@@ -1654,13 +1655,14 @@ var FileManager = new Class({
 
 		// first loop: only render directories, when the indexes fit the range: 0 .. j.dirs.length-1
 		// Assume several directory aspects, such as no thumbnail hassle (it's one of two icons anyway, really!)
+		var el, editButtons;
 		for (idx = startindex; idx < endindex && idx < j.dirs.length; idx++)
 		{
-			var file = j.dirs[idx];
+			file = j.dirs[idx];
 
 			if (idx % 10 == 0) {
 				// try not to spend more than 100 msecs per (UI blocking!) loop run!
-				var loop_duration = new Date().getTime() - loop_starttime;
+				loop_duration = new Date().getTime() - loop_starttime;
 				duration = new Date().getTime() - starttime;
 				//if (typeof console !== 'undefined' && console.log) console.log('time taken so far = ' + duration + ' / ' + loop_duration + ' @ elcnt = ' + idx);
 
@@ -1680,15 +1682,13 @@ var FileManager = new Class({
 			}
 
 			file.dir = j.path;
-			var largeDir = '';
 			//// generate unique id
 			//var newDate = new Date;
 			//uniqueId = newDate.getTime();
 
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
 			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
-			var el;
-
+			
 			// This is just a raw image
 			el = this.list_row_maker(file.thumbnail, file);
 
@@ -1703,7 +1703,7 @@ var FileManager = new Class({
 
 			// -> add icons
 			//var icons = [];
-			var editButtons = new Array();
+			editButtons = [];
 
 			// rename, delete icon
 			if (file.name != '..')
@@ -1745,11 +1745,11 @@ var FileManager = new Class({
 		{
 			for ( ; idx < endindex && idx - dir_count < j.files.length; idx++)
 			{
-				var file = j.files[idx - dir_count];
+				file = j.files[idx - dir_count];
 
 				if (idx % 10 == 0) {
 					// try not to spend more than 100 msecs per (UI blocking!) loop run!
-					var loop_duration = new Date().getTime() - loop_starttime;
+					loop_duration = new Date().getTime() - loop_starttime;
 					duration = new Date().getTime() - starttime;
 					//if (typeof console !== 'undefined' && console.log) console.log('time taken so far = ' + duration + ' / ' + loop_duration + ' @ elcnt = ' + idx);
 
@@ -1769,15 +1769,13 @@ var FileManager = new Class({
 				}
 
 				file.dir = j.path;
-				var largeDir = '';
 				//// generate unique id
 				//var newDate = new Date;
 				//uniqueId = newDate.getTime();
 
 				//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
 				//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
-				var el;
-
+				
 				if (file.thumbnail.indexOf('.php?') == -1)
 				{
 					// This is just a raw image
@@ -1907,7 +1905,7 @@ var FileManager = new Class({
 
 				// -> add icons
 				//var icons = [];
-				var editButtons = new Array();
+				editButtons = [];
 				// download icon
 				if (this.options.download) {
 					if (this.options.download) editButtons.push('download');
@@ -2289,7 +2287,7 @@ var FileManager = new Class({
 					newpsize = 0.5 * pagesize;
 				else if (delta > 1.2)
 					newpsize = 1.2 * pagesize;
-				newpsize = parseInt(newpsize);
+				newpsize = parseInt(newpsize, 10);
 
 				// and never let it drop below rediculous values:
 				if (newpsize < 20)
@@ -2448,7 +2446,7 @@ var FileManager = new Class({
 
 	switchButton4Current: function() {
 		var chk = !!this.Current;
-		var els = new Array();
+		var els = [];
 		els.push(this.menu.getElement('button.filemanager-open'));
 		els.push(this.menu.getElement('button.filemanager-download'));
 		els.each(function(el){
@@ -2516,7 +2514,7 @@ var FileManager = new Class({
 		{
 			idx = jsGET.get('fmPageIdx');
 		}
-		return parseInt(idx ? idx : 0);
+		return parseInt(idx ? idx : 0, 10);
 	},
 
 	fireHooks: function(hook){

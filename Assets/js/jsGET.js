@@ -155,7 +155,7 @@ var jsGET = {
 		this.load();
 
 		if (typeof remove !== 'object') {
-			removes = [remove]; // new Array(); is discouraged (Crockford / jsLint)
+			removes = [remove];
 			//removes[0] = remove;
 		} else {
 			removes = remove;
