@@ -2498,7 +2498,7 @@ class FileManager
 		// next, construct the query part of the URI:
 		$qstr = http_build_query_ex($spec, null, '&', null, PHP_QUERY_RFC3986);
 
-		return $our_handler_url . '?' . $qstr;
+		return $our_handler_url . (strpos($our_handler_url, '?') === false ? '?' : '&') . $qstr;
 	}
 
 
