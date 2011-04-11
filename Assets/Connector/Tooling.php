@@ -345,7 +345,7 @@ if (!function_exists('get_response_code_string'))
  *
  * See also:
  *
- * http://nl2.php.net/manual/en/function.header.php
+ *   http://nl2.php.net/manual/en/function.header.php
  */
 if (!function_exists('send_response_status_header'))
 {

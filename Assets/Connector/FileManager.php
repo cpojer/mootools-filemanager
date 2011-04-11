@@ -971,11 +971,11 @@ class FileManager
 					 * requests.
 					 *
 					 * Besides, there's another issue with large lists: the server is bombarded with thumbnail
-					 * requests, lamost like a DoS attack. So the client should really queue the thumbnail requests
+					 * requests, almost like a DoS attack. So the client should really queue the thumbnail requests
 					 * for the thumb view, irrespective of the propagateType being POST or GET.
 					 *
 					 * Last, and minor, quible with this: when the thumbnail cache is purged while a directory is
-					 * browsed, the user must hit [F5] to refresh the entire filemanger too receive an up-to-date
+					 * browsed, the user must hit [F5] to refresh the entire filemanger to receive an up-to-date
 					 * scandir, i.e. one with PHP-based thumbnail requests. (For onDetail, on the other hand, such a
 					 * short-cut is fine as a mishap there can simply be recovered by clicking on the entry in the
 					 * thumb/list directory view again: that's minimal fuss. The same recovery for a dirview is
@@ -1452,7 +1452,9 @@ class FileManager
 					{
 						$mime = $this->getMimeType($file);
 						if ($this->IsAllowedMimeType($mime, $mime_filters))
+						{
 							$v_ex_code = null;
+						}
 					}
 					else
 					{
@@ -2619,6 +2621,7 @@ class FileManager
 					}
 
 					// get the size of the thumbnail/icon: the <img> is styled with width and height to ensure the background 'loader' image is shown correctly:
+
 					//$tnpath = $this->url_path2file_path($thumbfile);
 					//$tninf = @getimagesize($tnpath);
 
@@ -3896,29 +3899,29 @@ class FileManager
 			$this->getid3_cache[$hash] = $rv;
 
 			/*
-			Cleanup/cache size restriction algorithm:
-
-			Randomly probe the cache and check whether the probe has a 'timestamp' older than the configured
-			minimum required lifetime. When the probe is older, it is discarded from the cache.
-
-			As the probe is assumed to be perfectly random, further assuming we've got a cache size of N,
-			then the chance we pick a probe older then age A is (N - A) / N  -- picking any age X has a
-			chance of 1/N as random implies flat distribution. Hitting any of the most recent A entries
-			is A * 1/N, hence picking any older item is 1 - A/N == (N - A) / N
-
-			This means the growth of the cache beyond the given age limit A is a logarithmic curve, but
-			we like to have a guaranteed upper limit significantly below N = +Inf, so we probe the cache
-			TWICE for each addition: given a cache size of 2N, one of these probes should, on average,
-			be successful, thus removing one cache entry on average for a cache size of 2N. As we only
-			add 1 item at the same time, the statistically expected bound of the cache will be 2N.
-			As chances increase for both probes to be successful when cache size increases, the risk
-			of a (very) large cache size at any point in time is dwindingly small, while cost is constant
-			per cache transaction (insert + dual probe).
-
-			This scheme is expected to be faster (thanks to log growth curve and linear insert/prune costs)
-			than the usual where one keeps meticulous track of the entries and their age and entries are
-			discarded in order, oldest first.
-			*/
+			 * Cleanup/cache size restriction algorithm:
+			 *
+			 * Randomly probe the cache and check whether the probe has a 'timestamp' older than the configured
+			 * minimum required lifetime. When the probe is older, it is discarded from the cache.
+			 *
+			 * As the probe is assumed to be perfectly random, further assuming we've got a cache size of N,
+			 * then the chance we pick a probe older then age A is (N - A) / N  -- picking any age X has a
+			 * chance of 1/N as random implies flat distribution. Hitting any of the most recent A entries
+			 * is A * 1/N, hence picking any older item is 1 - A/N == (N - A) / N
+			 *
+			 * This means the growth of the cache beyond the given age limit A is a logarithmic curve, but
+			 * we like to have a guaranteed upper limit significantly below N = +Inf, so we probe the cache
+			 * TWICE for each addition: given a cache size of 2N, one of these probes should, on average,
+			 * be successful, thus removing one cache entry on average for a cache size of 2N. As we only
+			 * add 1 item at the same time, the statistically expected bound of the cache will be 2N.
+			 * As chances increase for both probes to be successful when cache size increases, the risk
+			 * of a (very) large cache size at any point in time is dwindingly small, while cost is constant
+			 * per cache transaction (insert + dual probe).
+			 *
+			 * This scheme is expected to be faster (thanks to log growth curve and linear insert/prune costs)
+			 * than the usual where one keeps meticulous track of the entries and their age and entries are
+			 * discarded in order, oldest first.
+			 */
 			$probe_index = array_rand($this->getid3_cache);
 			$probe = &$this->getid3_cache[$probe_index];
 			if ($probe['cache_timestamp'] < $age_limit)

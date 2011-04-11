@@ -69,10 +69,10 @@ define('DUMP2LOG_WRITE_TO_STDOUT',                 0x1000000);
 
 
 /*
-Derived from code by phella.net:
-
-  http://nl3.php.net/manual/en/function.var-dump.php
-*/
+ * Derived from code by phella.net:
+ *
+ *   http://nl3.php.net/manual/en/function.var-dump.php
+ */
 function var_dump_ex($value, $level = 0, $sort_before_dump = 0, $show_whitespace = true, $max_subitems = 0x7FFFFFFF)
 {
 	if ($level == -1)
@@ -661,11 +661,11 @@ function FM_IsAuthorized($mgr, $action, &$info)
 
 	case 'thumbnail':
 		/*
-		For the demo, we deny generation of thumbnails for images in a certain size range: 500KB - 2MB, jpeg only.
-
-		To showcase the nasty/cool (depending on your disposition) things you can do in this callback, we
-		force the thumbnail to become a thumbnail of the 'nuke':
-		*/
+		 * For the demo, we deny generation of thumbnails for images in a certain size range: 500KB - 2MB, jpeg only.
+		 *
+		 * To showcase the nasty/cool (depending on your disposition) things you can do in this callback, we
+		 * force the thumbnail to become a thumbnail of the 'nuke':
+		 */
 		$fsize = filesize($info['file']);
 		if (DEVELOPMENT && $info['mime'] == 'image/jpeg' && $fsize >= 500 * 1024 && $fsize <= 2 * 1024 * 1024)
 		{

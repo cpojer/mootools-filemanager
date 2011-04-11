@@ -97,9 +97,9 @@ var FileManager = new Class({
 	 * key item is called when the hook is invoked.
 	 */
 	hooks: {
-		show: {},						  // invoked after the 'show' event
-		cleanup: {},					  // invoked before the 'hide' event
-		cleanupPreview: {}				  // invoked before the 'hidePreview' event
+		show: {},                         // invoked after the 'show' event
+		cleanup: {},                      // invoked before the 'hide' event
+		cleanupPreview: {}                // invoked before the 'hidePreview' event
 	},
 
 	initialize: function(options) {
@@ -1681,13 +1681,14 @@ var FileManager = new Class({
 			}
 
 			file.dir = j.path;
+
 			//// generate unique id
 			//var newDate = new Date;
 			//uniqueId = newDate.getTime();
 
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
 			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
-			
+
 			// This is just a raw image
 			el = this.list_row_maker(file.thumbnail, file);
 
@@ -1768,13 +1769,14 @@ var FileManager = new Class({
 				}
 
 				file.dir = j.path;
+
 				//// generate unique id
 				//var newDate = new Date;
 				//uniqueId = newDate.getTime();
 
 				//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
 				//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
-				
+
 				if (file.thumbnail.indexOf('.php?') == -1)
 				{
 					// This is just a raw image

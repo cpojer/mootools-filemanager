@@ -57,7 +57,7 @@ class FileManagerWithAliasSupport extends FileManager
 		{
 			$this->options['RequestScriptURI'] = parent::getRequestScriptURI();
 		}
-		
+
 		/*
 		 * Now process the Aliases array:
 		 * it works as-is for transforming URI to FILE path, but we need

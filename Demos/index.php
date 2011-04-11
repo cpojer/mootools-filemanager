@@ -343,7 +343,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 	</div>
 
 	<div style="clear: both;"></div>
-	
+
 </div>
 </body>
 </html>

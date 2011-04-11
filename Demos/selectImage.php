@@ -14,27 +14,27 @@ require_once('FM-common.php');  // this one loads the appropriate FileManager AN
 
 
 /*
-when you want to pass absolute paths into FileManager, be reminded that ALL paths
-(except for the [mimeTypesPath] one!) are paths in URI space, i.e. the 'root'
-is assumed to be DocumentRoot.
-
-Below is a quick example how a physical filesystem path /could/ be transformed
-to a URI path -- assumed you don't get buggered by having Aliases apply to this
-particular path, in which case you are between a rock and a hard place: then you
-MUST specify URI paths instead, this 'trick' being defective.
-*/
+ * when you want to pass absolute paths into FileManager, be reminded that ALL paths
+ * (except for the [mimeTypesPath] one!) are paths in URI space, i.e. the 'root'
+ * is assumed to be DocumentRoot.
+ *
+ * Below is a quick example how a physical filesystem path /could/ be transformed
+ * to a URI path -- assumed you don't get buggered by having Aliases apply to this
+ * particular path, in which case you are between a rock and a hard place: then you
+ * MUST specify URI paths instead, this 'trick' being defective.
+ */
 
 $fm_basedir = str_replace(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '', dirname(str_replace('\\', '/', __FILE__))) . '/';
 
 
 
 /*
-Go to FM-common.php to edit the Alias array there to mirror your local situation.
-
-See also the 'SITE_USES_ALIASES' define and the mkNewFileManager() function in there.
-
-mkNewFileManager() is just a wrapper used to keep the demo code lean...
-*/
+ * Go to FM-common.php to edit the Alias array there to mirror your local situation.
+ * 
+ * See also the 'SITE_USES_ALIASES' define and the mkNewFileManager() function in there.
+ * 
+ * mkNewFileManager() is just a wrapper used to keep the demo code lean...
+ */
 $browser = mkNewFileManager(array(
 	//'directory' => $fm_basedir . 'Files/',   // absolute paths: as the relative ones, they sit in URI space, i.e. assume DocumentRoot is root '/'
 
