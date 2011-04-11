@@ -73,7 +73,7 @@ Derived from code by phella.net:
 
   http://nl3.php.net/manual/en/function.var-dump.php
 */
-function var_dump_ex($value, $level = 0, $sort_before_dump = 0, $show_whitespace = true)
+function var_dump_ex($value, $level = 0, $sort_before_dump = 0, $show_whitespace = true, $max_subitems = 0x7FFFFFFF)
 {
 	if ($level == -1)
 	{
@@ -101,7 +101,7 @@ function var_dump_ex($value, $level = 0, $sort_before_dump = 0, $show_whitespace
 	{
 	case 'string':
 		$rv .= '(' . strlen($value) . ')';
-		$value = var_dump_ex($value, -1, $show_whitespace);
+		$value = var_dump_ex($value, -1, $show_whitespace, $max_subitems);
 		break;
 
 	case 'boolean':
@@ -117,8 +117,8 @@ function var_dump_ex($value, $level = 0, $sort_before_dump = 0, $show_whitespace
 		$rv .= '(' . count($props) . ') <u>' . get_class($value) . '</u>';
 		foreach($props as $key => $val)
 		{
-			$rv .= "\n" . str_repeat("\t", $level + 1) . var_dump_ex($key, -1, 0, $show_whitespace) . ' => ';
-			$rv .= var_dump_ex($value->{$key}, $level + 1, $sort_before_dump, $show_whitespace);
+			$rv .= "\n" . str_repeat("\t", $level + 1) . var_dump_ex($key, -1, 0, $show_whitespace, $max_subitems) . ' => ';
+			$rv .= var_dump_ex($value->{$key}, $level + 1, $sort_before_dump, $show_whitespace, $max_subitems);
 		}
 		$value = '';
 		break;
@@ -130,10 +130,17 @@ function var_dump_ex($value, $level = 0, $sort_before_dump = 0, $show_whitespace
 			ksort($value);
 		}
 		$rv .= '(' . count($value) . ')';
+		$count = 0;
 		foreach($value as $key => $val)
 		{
-			$rv .= "\n" . str_repeat("\t", $level + 1) . var_dump_ex($key, -1, 0, $show_whitespace) . ' => ';
-			$rv .= var_dump_ex($val, $level + 1, $sort_before_dump, $show_whitespace);
+			$rv .= "\n" . str_repeat("\t", $level + 1) . var_dump_ex($key, -1, 0, $show_whitespace, $max_subitems) . ' => ';
+			$rv .= var_dump_ex($val, $level + 1, $sort_before_dump, $show_whitespace, $max_subitems);
+			$count++;
+			if ($count >= $max_subitems)
+			{
+				$rv .= "\n" . str_repeat("\t", $level + 1) . '<i>(' . (count($value) - $count) . ' more entries ...)</i>';
+				break;
+			}
 		}
 		$value = '';
 		break;
@@ -205,7 +212,7 @@ function dump_request_to_logfile($extra = null, $dump_options = __DUMP2LOG_DEFAU
 	{
 		$rv .= '<h1>EXTRA</h1>';
 		$rv .= "<pre>";
-		$rv .= var_dump_ex($extra, 0, $sorting, $show_WS);
+		$rv .= var_dump_ex($extra, 0, $sorting, $show_WS, 500);
 		$rv .= "</pre>";
 	}
 
