@@ -160,21 +160,37 @@ FileManager.Gallery = new Class({
 			return false;
 
 		var file;
-		if (typeOf(el) == 'string'){
+		if (typeOf(el) == 'string')
+		{
 			var part = el.split('/');
 			file = {
 				name: part.pop(),
 				dir: part.join('/')
 			};
 		}
-		else {
+		else
+		{
 			el.setStyles({left: '', top: ''});
 			file = el.retrieve('file');
 		}
 
-		var self = this, name = this.normalize(file.dir + '/' + file.name);
+		var self = this;
+		var name = this.normalize(file.dir + '/' + file.name);
 
-		if (this.files.contains(name)) return true;
+		// when the item already exists in the gallery, do not add it again:
+		if (this.files.contains(name))
+			return true;
+
+		// When the file info is lacking thumbnail info, fetch it by firing a 'detail' request and taking it from there.
+		// Also send our flavour of the 'detail' request when the thumbnail is yet to be generated.
+		if (file.thumbnail250 == null || file.thumbnail250.indexOf('.php?') != -1)
+		{
+			// request full file info for this one!
+
+			return true;
+		}
+
+		// store & display item in gallery:
 		this.files.push(name);
 
 		var destroyIcon = new Asset.image(this.assetBasePath + 'Images/destroy.png').set({
@@ -228,7 +244,7 @@ FileManager.Gallery = new Class({
 							},
 							events: {
 								click: function(e){
-									self.fireEvent('preview', [file.path, self.captions[name], li]);
+									self.fireEvent('galleryPreview', [file.path, self.captions[name], li, self]);
 								}
 							}
 						}).inject(document.body).morph(self.animation.to).get('morph').chain(function(){
@@ -334,8 +350,8 @@ FileManager.Gallery = new Class({
 			serialized[v] = (this.captions[v] || '');
 		}, this);
 		this.keepData = true;
-		this.hide(this);
-		this.fireEvent('complete', [serialized]);
+		this.hide(e);
+		this.fireEvent('galleryComplete', [serialized, this.files, this]);
 	}
 });
 
