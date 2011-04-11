@@ -296,7 +296,9 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onShow: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
 					var obj;
 					Function.attempt(function(){
-						obj = JSON.decode(example4.get('value'));
+						var gallist = example4.get('value');
+						if (typeof console !== 'undefined' && console.log) console.log('GALLERY list: ' + debug.dump(gallist, 0, 1, 60, 'function'));
+						obj = JSON.decode(gallist);
 					});
 					this.populate(obj);
 				},

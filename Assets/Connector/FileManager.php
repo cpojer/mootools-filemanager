@@ -653,7 +653,7 @@ class FileManager
 			// we throw an Exception here because when these do not apply, the user should have specified all three these entries!
 			if (empty($assumed_root) || empty($my_path) || !FileManagerUtility::startsWith($my_path, $assumed_root))
 			{
-				FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
+				//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 				throw new FileManagerException('nofile');
 			}
 
@@ -690,7 +690,7 @@ class FileManager
 		$this->options['mimeTypesPath'] = @realpath($this->options['mimeTypesPath']);
 		if (empty($this->options['mimeTypesPath']))
 		{
-			FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
+			//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 			throw new FileManagerException('nofile');
 		}
 		$this->options['mimeTypesPath'] = str_replace('\\', '/', $this->options['mimeTypesPath']);
@@ -776,7 +776,7 @@ class FileManager
 				$v_ex_code = null;
 			}
 		}
-		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
+		//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 
 		$mime_filters = $this->getAllowedMimeTypes($mime_filter);
 
@@ -802,7 +802,7 @@ class FileManager
 			$v_ex_code = $fileinfo['validation_failure'];
 			if (empty($v_ex_code)) $v_ex_code = 'authorized';
 		}
-		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__, $fileinfo);
+		//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__, $fileinfo);
 		if (!empty($v_ex_code))
 			throw new FileManagerException($v_ex_code);
 
@@ -823,7 +823,6 @@ class FileManager
 		$iconspec = false;
 		$thumb = null;
 		$thumb48 = null;
-		//$thumb250 = null;
 		$icon = null;
 
 		if ($doubledot !== null)
@@ -837,18 +836,19 @@ class FileManager
 
 			$iconspec = 'is.dir_up';
 
-			$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, false));
-			//$thumb250 = $thumb48;
+			$thumb48 = $this->getIcon($iconspec, false);
+			$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 
-			$icon = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, true));
+			$icon = $this->getIcon($iconspec, true);
+			$icon_e = FileManagerUtility::rawurlencode_path($icon);
 
 			if ($list_type == 'thumb')
 			{
-				$thumb = $thumb48;
+				$thumb_e = $thumb48_e;
 			}
 			else
 			{
-				$thumb = $icon;
+				$thumb_e = $icon_e;
 			}
 
 			$url_p = FileManagerUtility::rawurlencode_path($url);
@@ -858,29 +858,29 @@ class FileManager
 					'name' => $filename,
 					//'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
-					'thumbnail' => $thumb,
-					'thumbnail48' => $thumb48,
-					//'thumbnail250' => $thumb250,
+					'thumbnail' => $thumb_e,
+					'thumbnail48' => $thumb48_e,
 					//'size' => @filesize($file),
-					'icon' => $icon
+					'icon' => $icon_e
 				);
 		}
 
 		// now precalc the directory-common items (a.k.a. invariant computation / common subexpression hoisting)
 		$iconspec_d = 'is.dir';
 
-		$thumb48_d = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec_d, false));
-		//$thumb250_d = $thumb48_d;
+		$thumb48_d = $this->getIcon($iconspec_d, false);
+		$thumb48_de = FileManagerUtility::rawurlencode_path($thumb48_d);
 
-		$icon_d = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec_d, true));
+		$icon_d = $this->getIcon($iconspec_d, true);
+		$icon_de = FileManagerUtility::rawurlencode_path($icon_d);
 
 		if ($list_type == 'thumb')
 		{
-			$thumb_d = $thumb48_d;
+			$thumb_de = $thumb48_de;
 		}
 		else
 		{
-			$thumb_d = $icon_d;
+			$thumb_de = $icon_de;
 		}
 
 		foreach ($coll['dirs'] as $filename)
@@ -894,15 +894,14 @@ class FileManager
 					'name' => $filename,
 					//'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
-					'thumbnail' => $thumb_d,
-					'thumbnail48' => $thumb48_d,
-					//'thumbnail250' => $thumb250,
+					'thumbnail' => $thumb_de,
+					'thumbnail48' => $thumb48_de,
 					//'size' => @filesize($file),
-					'icon' => $icon_d
+					'icon' => $icon_de
 				);
 		}
 
-		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
+		//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 
 		/*
 		 * ... and another bit of invariant computation: this time it's a bit more complex, but the mkEventHandlerURL() call is rather costly,
@@ -917,7 +916,6 @@ class FileManager
 				'filter' => $mime_filter
 			));
 		$thumb_tpl48 = str_replace('..S..', '48', $thumb_tpl);
-		//$thumb_tpl250 = str_replace('..S..', '250', $thumb_tpl);
 
 		$idx = 0;
 		//$next_reqd_mapping_idx = array_pop($coll['special_indir_mappings'][1]);
@@ -960,7 +958,6 @@ class FileManager
 				 */
 
 				$thumb48 = false;
-				//$thumb250 = false;
 
 				if (0)
 				{
@@ -998,43 +995,34 @@ class FileManager
 					 */
 					if (!$this->options['thumbnailsMustGoThroughBackend'])
 					{
-						$thumb48  = $this->getThumb($url, $file, 48, 48, true);
-						//$thumb250 = $this->getThumb($url, $file, 250, 250, true);
+						$thumb48 = $this->getThumb($url, $file, 48, 48, true);
 					}
 				}
 
 				if ($thumb48 === false)
 				{
-					$thumb48 = str_replace('..F..', FileManagerUtility::rawurlencode_path($filename), $thumb_tpl48);
+					$thumb48_e = str_replace('..F..', FileManagerUtility::rawurlencode_path($filename), $thumb_tpl48);
 				}
 				else
 				{
-					$thumb48 = FileManagerUtility::rawurlencode_path($thumb48);
+					$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 				}
-
-				//if ($thumb250 === false)
-				//{
-				//  $thumb250 = str_replace('..F..', FileManagerUtility::rawurlencode_path($filename), $thumb_tpl250);
-				//}
-				//else
-				//{
-				//  $thumb250 = FileManagerUtility::rawurlencode_path($thumb250);
-				//}
 			}
 			else
 			{
-				$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, false));
-				//$thumb250 = $thumb48;
+				$thumb48 = $this->getIcon($iconspec, false);
+				$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 			}
-			$icon = FileManagerUtility::rawurlencode_path($this->getIcon($iconspec, true));
+			$icon = $this->getIcon($iconspec, true);
+			$icon_e = FileManagerUtility::rawurlencode_path($icon);
 
 			if ($list_type == 'thumb')
 			{
-				$thumb = $thumb48;
+				$thumb_e = $thumb48_e;
 			}
 			else
 			{
-				$thumb = $icon;
+				$thumb_e = $icon_e;
 			}
 
 			$url_p = FileManagerUtility::rawurlencode_path($url);
@@ -1044,11 +1032,10 @@ class FileManager
 					'name' => $filename,
 					//'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
-					'thumbnail' => $thumb,
-					'thumbnail48' => $thumb48,
-					//'thumbnail250' => $thumb250,
+					'thumbnail' => $thumb_e,
+					'thumbnail48' => $thumb48_e,
 					//'size' => @filesize($file),
-					'icon' => $icon
+					'icon' => $icon_e
 				);
 			$idx++;
 
@@ -1060,19 +1047,8 @@ class FileManager
 			}
 		}
 
-		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__, $idx);
-		//die(json_encode(array('coll' => $out)));
+		//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__, $idx);
 
-		//$thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon('is.dir', false));
-		//$icon = FileManagerUtility::rawurlencode_path($this->getIcon('is.dir', true));
-		//if ($list_type == 'thumb')
-		//{
-		//  $thumb = $thumb48;
-		//}
-		//else
-		//{
-		//  $thumb = $icon;
-		//}
 		return array_merge((is_array($json) ? $json : array()), array(
 				'root' => substr($this->options['directory'], 1),
 				'path' => $legal_url,                                  // is relative to options['directory']
@@ -1081,10 +1057,9 @@ class FileManager
 					'name' => pathinfo($legal_url, PATHINFO_BASENAME),
 					'date' => date($this->options['dateFormat'], @filemtime($dir)),
 					'mime' => 'text/directory',
-					'thumbnail' => $thumb_d,
-					'thumbnail48' => $thumb48_d,
-					//'thumbnail250' => $thumb48_d,
-					'icon' => $icon_d
+					'thumbnail' => $thumb_de,
+					'thumbnail48' => $thumb48_de,
+					'icon' => $icon_de
 				),
 				'preselect_index' => ($file_preselect_index >= 0 ? $file_preselect_index + count($out[1]) + 1 : 0),
 				'preselect_name' => ($file_preselect_index >= 0 ? $file_preselect_arg : null),
@@ -2544,9 +2519,10 @@ class FileManager
 		}
 
 		$thumbnail = $this->getIcon($iconspec, false);
-		$thumb48 = FileManagerUtility::rawurlencode_path($thumbnail);
-		$thumb250 = $thumb48;
+		$thumb48_e = FileManagerUtility::rawurlencode_path($thumbnail);
+		$thumb250_e = $thumb48_e;
 		$icon = $this->getIcon($iconspec, true);
+		$icon_e = FileManagerUtility::rawurlencode_path($icon);
 
 		$json = array_merge(array(
 				//'status' => 1,
@@ -2561,10 +2537,9 @@ class FileManager
 				'name' => $filename,
 				'date' => date($this->options['dateFormat'], @filemtime($file)),
 				'mime' => $mime,
-				//'thumbnail' => $thumbnail,
-				'thumbnail48' => $thumb48,
-				'thumbnail250' => $thumb250,
-				'icon' => FileManagerUtility::rawurlencode_path($icon),
+				'thumbnail48' => $thumb48_e,
+				'thumbnail250' => $thumb250_e,
+				'icon' => $icon_e,
 				'size' => @filesize($file)
 			));
 
@@ -2605,7 +2580,9 @@ class FileManager
 					if (!$this->options['thumbnailsMustGoThroughBackend'])
 					{
 						$thumb48  = $this->getThumb($url, $file, 48, 48, true);
+						$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 						$thumb250 = $this->getThumb($url, $file, 250, 250, true);
+						$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
 					}
 
 					if ($thumb48 === false || $thumb250 === false)
@@ -2618,7 +2595,8 @@ class FileManager
 					}
 					if ($thumb48 === false)
 					{
-						$thumb48 = $this->mkEventHandlerURL(array(
+						$thumb48 = null;
+						$thumb48_e = $this->mkEventHandlerURL(array(
 								'event' => 'thumbnail',
 								// directory and filename of the ORIGINAL image should follow next:
 								'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
@@ -2627,13 +2605,10 @@ class FileManager
 								'filter' => $mime_filter
 							));
 					}
-					else
-					{
-						$thumb48 = FileManagerUtility::rawurlencode_path($thumb48);
-					}
 					if ($thumb250 === false)
 					{
-						$thumb250 = $this->mkEventHandlerURL(array(
+						$thumb250 = null;
+						$thumb250_e = $this->mkEventHandlerURL(array(
 								'event' => 'thumbnail',
 								// directory and filename of the ORIGINAL image should follow next:
 								'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
@@ -2641,10 +2616,6 @@ class FileManager
 								'size' => 250,         // thumbnail suitable for 'view/type=thumb' list views
 								'filter' => $mime_filter
 							));
-					}
-					else
-					{
-						$thumb250 = FileManagerUtility::rawurlencode_path($thumb250);
 					}
 
 					// get the size of the thumbnail/icon: the <img> is styled with width and height to ensure the background 'loader' image is shown correctly:
@@ -2658,12 +2629,13 @@ class FileManager
 				catch (Exception $e)
 				{
 					$emsg = $e->getMessage();
-					$thumb48 = FileManagerUtility::rawurlencode_path($this->getIconForError($emsg, $legal_url, false));
+					$thumb48 = $this->getIconForError($emsg, $legal_url, false);
+					$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 					$thumb250 = $thumb48;
 				}
 
-				$json['thumbnail48'] = $thumb48;
-				$json['thumbnail250'] = $thumb250;
+				$json['thumbnail48'] = $thumb48_e;
+				$json['thumbnail250'] = $thumb250_e;
 
 				$sw_make = $this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'Software');
 				$time_make = $this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'DateTime');
@@ -2690,7 +2662,7 @@ class FileManager
 				if (!empty($emsg))
 				{
 					// use the abilities of modify_json4exception() to munge/format the exception message:
-					$jsa = array();
+					$jsa = array('error' => '');
 					$this->modify_json4exception($jsa, $emsg);
 					$postdiag_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
 				}
@@ -3070,7 +3042,7 @@ class FileManager
 		$flags |= $glob_flags_or;
 		$coll = safe_glob($dir . $filemask, $flags);
 
-		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
+		//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 
 		if ($coll !== false)
 		{
@@ -3094,7 +3066,7 @@ class FileManager
 			//$coll['special_indir_mappings'] = array(array(), array());
 		}
 
-		FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
+		//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 
 		return $coll;
 	}
@@ -3262,7 +3234,7 @@ class FileManager
 					'memory suggested' => number_format(@$meta['fileinfo']['usage_min_advised'] / 1E6, 1) . ' MB'
 				);
 
-				FM_vardumper($this, 'getThumb', $meta);
+				//FM_vardumper($this, 'getThumb', $meta);
 			}
 
 			unset($img);
