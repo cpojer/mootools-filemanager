@@ -292,14 +292,17 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 				propagateData: {
 					origin: 'demo-Gallery'
 				},
-				onShow: function(path, file, mgr) {
+				onShow: function(mgr) {
+					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onShow: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
 					var obj;
 					Function.attempt(function(){
 						obj = JSON.decode(example4.get('value'));
 					});
 					this.populate(obj);
 				},
-				onComplete: function(serialized, files, mgr){
+				onGalleryComplete: function(serialized, files, mgr){
+					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onGalleryComplete: ' + debug.dump(serialized) + ', ' + debug.dump(files) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					
 					example4.set('value', JSON.encode(serialized));
 				}
 			});
