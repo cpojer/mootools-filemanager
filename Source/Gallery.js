@@ -240,7 +240,7 @@ FileManager.Gallery = new Class({
 							morph: {link: 'chain'},
 							styles: {
 								position: 'absolute',
-								zIndex: 1100
+								zIndex: self.dragZIndex - 200
 							},
 							events: {
 								click: function(e){
