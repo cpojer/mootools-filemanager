@@ -513,8 +513,8 @@
  *
  *               'requested_size'        (integer) the size (maximum width and height) in pixels of the thumbnail to be produced.
  *
- *               'output_JSON'           (boolean) TRUE: return a JSON reponse listing the URL to the actual thumbnail image, FALSE: return
- *                                       the binary data of the thumbnail image itself.
+ *               'mode'                  (string) 'image' (default): produce the thumbnail binary image data itself. 'json': return a JSON 
+ *                                       response listing the URL to the actual thumbnail image.
  *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
  *                                       "nofile": the string passed as message parameter of the FileManagerException, which will be thrown
@@ -1519,7 +1519,7 @@ class FileManager
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
 					'requested_size' => $reqd_size,
-					'output_JSON' => $as_JSON,
+					'mode' => ($as_JSON ? 'json' : 'image'),
 					'validation_failure' => $v_ex_code
 				);
 
@@ -1538,7 +1538,7 @@ class FileManager
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
 			$reqd_size = $fileinfo['requested_size'];
-			$as_JSON = $fileinfo['output_JSON'];
+			$as_JSON = ($fileinfo['mode'] == 'json');
 
 			/*
 			 * each image we inspect may throw an exception due to an out of memory warning
