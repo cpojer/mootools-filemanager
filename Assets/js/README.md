@@ -48,8 +48,8 @@ See the demo.html for examples.
 - set(set):                               (string,object) sets the given parameters to the hash variables. If it's a string it should have the following format: "key=value". Return the updated set of key/value pairs.
 - remove(remove):                         (string,array) the variable name(s) which should be removed from the hash variables. Return the old set of key/value pairs.
 - addListener(listener,callAlways,bind):  (listener: function, callAlways: boolean, bind: object instance) creates a listener which calls the given function when a hash change occurs. The called function will get the vars property (vars.current,vars.old,vars.changed) and use the "bind" parameter as "this", when specified.
-                                          The return of the addListener() method is a setInterval ID and must be passed to the removeListener() method to stop the listening.
-                                          When callAlways is FALSE, it only calls when the browser history buttons are pressed and not when get(), set(), remove() or clear() is called.
+  The return of the addListener() method is a setInterval ID and must be passed to the removeListener() method to stop the listening.
+  When callAlways is FALSE, it only calls when the browser history buttons are pressed and not when get(), set(), remove() or clear() is called.
 - removeListener(listenerID):             (the setInterval Id received from a addListener() method) removes a listener set with the addListener() method.
 - setChangedVars():                       (internal use) updates the vars.changed collection and vars.change_count value.
 
