@@ -2350,7 +2350,6 @@ var FileManager = new Class({
 				onSuccess: (function(j) {
 
 					if (!j || !j.status) {
-						// TODO: include j.error in the message, iff j.error exists
 						new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 						this.previewLoader.dispose();
 						return;
@@ -2398,10 +2397,16 @@ var FileManager = new Class({
 					// as returned by Backend/FileManager.php
 					this.fireEvent('details', [j, this]);
 
-					// Xinha: We also want to hold onto the data so we can access it
-					// when selecting the image.
-					if (this.Current) {
-						this.Current.file_data = j;
+					// We also want to hold onto the data so we can access it later on,
+					// e.g. when selecting the image.
+
+					// remove unwanted JSON elements first:
+					delete j.status;
+					delete j.content;
+					// now mix with the previously existing 'file' info (as produced by a 'view' run):
+					file = Object.merge(file, j);
+					if (file.element) {
+						file.element.store('file', file);
 					}
 
 					if (typeof milkbox != 'undefined')
