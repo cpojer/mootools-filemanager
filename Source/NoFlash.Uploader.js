@@ -1,23 +1,18 @@
 /*
- * ---
- *
- * description: Implements Upload functionality into the FileManager without using Flash
- *              While the flash uploader is preferable, sometimes it is not possible to use it due to
- *              server restrictions (eg, mod_security), or perhaps users refuse to use flash.
- *
- *              This Upload handler will allow the MFM to continue to function, without multiple-upload-at-once
- *              function and without progress bars.  But otherwise, it should work.
- *
- * authors: James Sleeman (@sleemanj)
- *
- * license: MIT-style license.
- *
- * requires: [Core/*]
- *
- * provides: Filemanager.Uploader
- *
- * ...
- */
+---
+
+description: Implements Upload functionality into the FileManager without using Flash
+
+authors: James Sleeman (@sleemanj)
+
+license: MIT-style license.
+
+requires: [Core/*]
+
+provides: Filemanager.NoFlashUploader
+
+...
+*/
 
 FileManager.implement({
 

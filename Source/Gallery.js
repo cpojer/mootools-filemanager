@@ -1,18 +1,18 @@
 /*
- * ---
- *
- * description: Adds functionality to create a gallery out of a list of images
- *
- * authors: Christoph Pojer (@cpojer)
- *
- * license: MIT-style license.
- *
- * requires: [Core/*]
- *
- * provides: FileManager.Gallery
- *
- * ...
- */
+---
+
+description: Adds functionality to create a gallery out of a list of images
+
+authors: Christoph Pojer (@cpojer)
+
+license: MIT-style license.
+
+requires: [Core/*]
+
+provides: FileManager.Gallery
+
+...
+*/
 
 (function(){
 
