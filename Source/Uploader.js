@@ -1,18 +1,18 @@
 /*
- * ---
- *
- * description: Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
- *
- * authors: Christoph Pojer (@cpojer)
- *
- * license: MIT-style license.
- *
- * requires: [Core/*]
- *
- * provides: Filemanager.Uploader
- *
- * ...
- */
+---
+
+description: Implements Upload functionality into the FileManager based on [FancyUpload](http://digitarald.de)
+
+authors: Christoph Pojer (@cpojer)
+
+license: MIT-style license.
+
+requires: [Core/*]
+
+provides: Filemanager.Uploader
+
+...
+*/
 
 FileManager.implement({
 
