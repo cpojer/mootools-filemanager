@@ -46,11 +46,18 @@ class FileManagerWithAliasSupport extends FileManager
 		$this->scandir_alias_lu_arr = null;
 
 		$options = array_merge(array(
-			'Aliases' => null    // default is an empty Alias list.
+			'Aliases' => null,             // default is an empty Alias list.
+			'RequestScriptURI' => null     // default is $_SERVER['SCRIPT_NAME']
 		), (is_array($options) ? $options : array()));
 
 		parent::__construct($options);
 
+		// apply default to RequestScriptURI:
+		if (empty($this->options['RequestScriptURI']))
+		{
+			$this->options['RequestScriptURI'] = parent::getRequestScriptURI();
+		}
+		
 		/*
 		 * Now process the Aliases array:
 		 * it works as-is for transforming URI to FILE path, but we need
@@ -100,6 +107,10 @@ class FileManagerWithAliasSupport extends FileManager
 		), parent::getSettings());
 	}
 
+	public /* static */ function getRequestScriptURI()
+	{
+		return $this->options['RequestScriptURI'];
+	}
 
 
 	/**

@@ -1541,7 +1541,7 @@ class FileManager
 			$as_JSON = $fileinfo['output_JSON'];
 
 			/*
-			 * each image we inspect may throw an exception due to a out of memory warning
+			 * each image we inspect may throw an exception due to an out of memory warning
 			 * (which is far better than without those: a silent fatal abort!)
 			 *
 			 * However, now that we do have a way to check most memory failures occurring in here (due to large images
@@ -2487,7 +2487,7 @@ class FileManager
 	public function mkEventHandlerURL($spec)
 	{
 		// first determine how the client can reach us; assume that's the same URI as he went to right now.
-		$our_handler_url = $_SERVER['SCRIPT_NAME'];
+		$our_handler_url = $this->getRequestScriptURI();
 
 		if (is_array($this->options['URIpropagateData']))
 		{
@@ -3460,6 +3460,21 @@ class FileManager
 	}
 
 	/**
+	 * Return the URI absolute path to the script pointed at by the current URI request.
+	 * For example, if the request was 'http://site.org/dir1/dir2/script.php', then this method will
+	 * return '/dir1/dir2/script.php'.
+	 *
+	 * This is equivalent to $_SERVER['SCRIPT_NAME']
+	 */
+	public /* static */ function getRequestScriptURI()
+	{
+		// see also: http://php.about.com/od/learnphp/qt/_SERVER_PHP.htm
+		$path = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
+
+		return $path;
+	}
+
+	/**
 	 * Return the URI absolute path to the directory pointed at by the current URI request.
 	 * For example, if the request was 'http://site.org/dir1/dir2/script', then this method will
 	 * return '/dir1/dir2/'.
@@ -3469,7 +3484,7 @@ class FileManager
 	public /* static */ function getRequestPath()
 	{
 		// see also: http://php.about.com/od/learnphp/qt/_SERVER_PHP.htm
-		$path = self::getParentDir(str_replace('\\', '/', $_SERVER['SCRIPT_NAME']));
+		$path = self::getParentDir($this->getRequestScriptURI());
 		$path = self::enforceTrailingSlash($path);
 
 		return $path;
