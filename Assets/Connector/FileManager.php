@@ -819,20 +819,6 @@ class FileManager
 		$file_preselect_index = -1;
 		$out = array(array(), array());
 
-		$_iconspec = 'is.dir';
-		$_icon = FileManagerUtility::rawurlencode_path($this->getIcon($_iconspec, true));
-		$_thumb48 = FileManagerUtility::rawurlencode_path($this->getIcon($_iconspec, false));
-		$_thumb250 = $_thumb48;
-		if ($list_type == 'thumb')
-		{
-			$_thumb = $_thumb48;
-		}
-		else
-		{
-			$_thumb = $_icon;
-		}
-
-
 		$mime = 'text/directory';
 		$iconspec = false;
 		$thumb = null;
@@ -938,13 +924,6 @@ class FileManager
 
 		foreach ($coll['files'] as $filename)
 		{
-			$mime = 'bogus/bogus';
-			$thumb = $_thumb;
-			$thumb48 = $_thumb48;
-			$thumb250 = $_thumb250;
-			$icon = $_icon;
-			$iconspec = $_iconspec;
-
 			$url = $legal_url . $filename;
 
 			// no need to transform URL to FILE path as the filename will remain intact (unless we've got some really contrived aliasing in FileManagerWithAliasSupport: we don't care too much here about such wicked mappings, as speed is paramount)
@@ -3732,7 +3711,7 @@ class FileManager
 	}
 
 
-	protected /* static */ function modify_json4exception(&$jserr, $emsg, $mode = 0)
+	protected /* static */ function modify_json4exception(&$jserr, $emsg)
 	{
 		if (empty($emsg))
 			return;
@@ -3752,18 +3731,6 @@ class FileManager
 				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : '');
 			}
 			$jserr['status'] = 0;
-
-			if ($mode == 1)
-			{
-				$jserr['content'] = self::compressHTML('<div class="margin">
-						${nopreview}
-						<div class="failure_notice">
-							<h3>${error}</h3>
-							<p>mem usage: ' . number_format(memory_get_usage() / 1E6, 2) . ' MB : ' . number_format(memory_get_peak_usage() / 1E6, 2) . ' MB</p>
-							<p>' . $emsg . '</p>
-						</div>
-					</div>');       // <br/><button value="' . $url . '">${download}</button>
-			}
 		}
 	}
 
