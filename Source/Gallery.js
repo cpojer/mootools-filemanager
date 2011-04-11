@@ -337,7 +337,9 @@ FileManager.Gallery = new Class({
 
 	populate: function(data)
 	{
-		Array.each(data || {}, function(v, i){
+		if (typeof console !== 'undefined' && console.log) console.log('GALLERY.populate: ' + debug.dump(data));
+		Object.each(data || {}, function(v, i){
+			if (typeof console !== 'undefined' && console.log) console.log('GALLERY.populate: index = ' + i + ', value = ' + v);
 			this.captions[i] = v;
 			this.onDragComplete(i, this.gallery);
 		}, this);
