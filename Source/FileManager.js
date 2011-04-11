@@ -16,7 +16,6 @@ provides: Filemanager
 ...
 */
 
-var MooFileManagerUniqueID = 1;
 var FileManager = new Class({
 
 	Implements: [Options, Events],
@@ -105,7 +104,7 @@ var FileManager = new Class({
 
 	initialize: function(options) {
 		this.setOptions(options);
-		this.ID = MooFileManagerUniqueID++;
+		this.ID = String.uniqueID();
 		this.dragZIndex = 1300;
 		this.droppables = [];
 		this.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
@@ -2620,9 +2619,6 @@ var FileManager = new Class({
 	}
 });
 
-
-
-
 FileManager.Request = new Class({
 	Extends: Request.JSON,
 
@@ -2893,4 +2889,3 @@ this.Overlay = new Class({
 });
 
 })();
-
