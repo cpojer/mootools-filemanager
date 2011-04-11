@@ -98,8 +98,9 @@ var FileManager = new Class({
 	 * key item is called when the hook is invoked.
 	 */
 	hooks: {
-		show: {},
-		cleanup: {}
+		show: {},						  // invoked after the 'show' event
+		cleanup: {},					  // invoked before the 'hide' event
+		cleanupPreview: {}				  // invoked before the 'hidePreview' event
 	},
 
 	initialize: function(options) {
@@ -2318,7 +2319,7 @@ var FileManager = new Class({
 
 		this.switchButton4Current();
 
-		this.fireHooks('cleanup_preview');
+		this.fireHooks('cleanupPreview');
 		// We need to remove our custom attributes form when the preview is hidden
 		this.fireEvent('hidePreview', [this]);
 
