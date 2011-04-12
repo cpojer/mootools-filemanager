@@ -50,9 +50,6 @@ FileManager.Language.es = {
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
-  
-  popup_blocked:  'Popup Blocked',
-  popup_blocked_download: 'To download the file, use this URL: {link} ',
 
 	'backend.disabled': 'La carga de archivos ha sido deshabilitada.',
 	'backend.authorized': 'Necesitas autorización para subir ficheros.',
@@ -110,7 +107,7 @@ FileManager.Language.es = {
 		flash: 'Para poder subir ficheros necesitas instalar <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
 	},
 
-	resizeImages: 'Redimensionar las imágenes grandes al subirlas'
+	resizeImages: 'Redimensionar las imágenes grandes al subirlas',
 
 	serialize: 'Save gallery',
 	gallery: {

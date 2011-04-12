@@ -50,9 +50,6 @@ FileManager.Language.da = {
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
-  
-  popup_blocked:  'Popup Blocked',  
-  popup_blocked_download: 'To download the file, use this URL: {link} ',
 
 	'backend.disabled': 'Det er ikke muligt at uploade filer på serveren.',
 	'backend.authorized': 'Du har ikke rettigheder til at uploade filer.',
@@ -92,7 +89,7 @@ FileManager.Language.da = {
 	'backend.imagecreate_failed': 'The image processing unit failed: GD imagecreate() failed.',
 	'backend.cvt2truecolor_failed': 'conversion to True Color failed. Image resolution: ', /* x * y */
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
-	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
+	'backend.img_will_not_fit': 'Server error: image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
 
 	/* FU */
@@ -109,7 +106,7 @@ FileManager.Language.da = {
 		flash: 'For at uploade filer skal du installere <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
 	},
 
-	resizeImages: 'Scaler store billeder ved upload'
+	resizeImages: 'Scaler store billeder ved upload',
 
 	serialize: 'Save gallery',
 	gallery: {

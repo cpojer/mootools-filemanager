@@ -50,9 +50,6 @@ FileManager.Language.fi = {
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
-  
-  popup_blocked:  'Popup Blocked',
-  popup_blocked_download: 'To download the file, use this URL: {link} ',
 
 	'backend.disabled': 'Tiedostojen lähetys otettu käytöstä.',
 	'backend.authorized': 'Sinulla ei ole oikeuksia tiedostojen lähettämiseen.',
@@ -92,7 +89,7 @@ FileManager.Language.fi = {
 	'backend.imagecreate_failed': 'The image processing unit failed: GD imagecreate() failed.',
 	'backend.cvt2truecolor_failed': 'conversion to True Color failed. Image resolution: ', /* x * y */
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
-	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
+	'backend.img_will_not_fit': 'Server error: image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
 
 	/* FU */
@@ -110,7 +107,7 @@ FileManager.Language.fi = {
 		flash: 'Käyttääksesi FileManageria, tarvitset Adobe Flash Playerin. <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Lataa tästä</a>.'
 	},
 
-	resizeImages: 'Pienennä liian suuret kuvat automaattisesti siirron yhteydessä'
+	resizeImages: 'Pienennä liian suuret kuvat automaattisesti siirron yhteydessä',
 
 	serialize: 'Save gallery',
 	gallery: {

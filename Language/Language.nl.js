@@ -89,7 +89,7 @@ FileManager.Language.nl = {
 	'backend.imagecreate_failed': 'The image processing unit failed: GD imagecreate() failed.',
 	'backend.cvt2truecolor_failed': 'conversion to True Color failed. Image resolution: ', /* x * y */
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
-	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
+	'backend.img_will_not_fit': 'Server error: image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
 
 	/* FU */
@@ -106,7 +106,7 @@ FileManager.Language.nl = {
 		flash: 'Om bestanden te kunnen uploaden dien je <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a> te installeren.'
 	},
 
-	resizeImages: 'Pas de dimensies van grote afbeeldingen aan'
+	resizeImages: 'Pas de dimensies van grote afbeeldingen aan',
 
 	serialize: 'Save gallery',
 	gallery: {
