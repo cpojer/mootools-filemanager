@@ -1421,7 +1421,7 @@ class FileManager
 			if (!empty($reqd_size))
 			{
 				// and when not requesting one of our 'authorized' thumbnail sizes, you're gonna burn as well!
-				if (in_array($reqd_size, array(16, 48, 250)))
+				if (in_array($reqd_size, array(48, 250)))
 					$v_ex_code = null;
 			}
 
