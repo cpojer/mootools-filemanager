@@ -101,9 +101,9 @@ FileManager.implement({
 						event: 'upload',
 						directory: self.normalize(mfm.Directory),
 						filter: mfm.options.filter,
-						resize: (this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0,
-            reportContentType: 'text/plain' // Safer for iframes
-					  }));
+						resize: ((this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0),
+						reportContentType: 'text/plain'        // Safer for iframes: the default 'application/json' mime type would cause FF3.X to pop up a save/view dialog!
+					}));
           f.getElement('input[name=directory]').value = mfm.Directory;
 				f.submit();
 			},
