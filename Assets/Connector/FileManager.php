@@ -513,7 +513,7 @@
  *
  *               'requested_size'        (integer) the size (maximum width and height) in pixels of the thumbnail to be produced.
  *
- *               'mode'                  (string) 'image' (default): produce the thumbnail binary image data itself. 'json': return a JSON 
+ *               'mode'                  (string) 'image' (default): produce the thumbnail binary image data itself. 'json': return a JSON
  *                                       response listing the URL to the actual thumbnail image.
  *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
@@ -2781,10 +2781,25 @@ class FileManager
 			case 'audio':
 				$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
 
+
+				$title = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'title', 0), 'tags', 'id3v2', 'title', 0);
+				$artist = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'artist', 0), 'tags', 'id3v2', 'artist', 0);
+				$album = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'album', 0), 'tags', 'id3v2', 'album', 0);
+
+				/*
+				<h2>${preview}</h2>
+				<div class="object">
+				  <object type="application/x-shockwave-flash" data="' . $this->options['assetBasePath'] . '/dewplayer.swf" width="200" height="20" id="dewplayer" name="dewplayer">
+					<param name="wmode" value="transparent" />
+					<param name="movie" value="' . $this->options['assetBasePath'] . '/dewplayer.swf" />
+					<param name="flashvars" value="mp3=' . rawurlencode($url) . '&amp;volume=50&amp;showtime=1" />
+				  </object>
+				</div>';
+				*/
 				$content = '<dl>
-						<dt>${title}</dt><dd>' . $this->getID3infoItem($fi, '???', 'comments', 'title', 0) . '</dd>
-						<dt>${artist}</dt><dd>' . $this->getID3infoItem($fi, '???', 'comments', 'artist', 0) . '</dd>
-						<dt>${album}</dt><dd>' . $this->getID3infoItem($fi, '???', 'comments', 'album', 0) . '</dd>
+						<dt>${title}</dt><dd>' . $title . '</dd>
+						<dt>${artist}</dt><dd>' . $artist . '</dd>
+						<dt>${album}</dt><dd>' . $album . '</dd>
 						<dt>${length}</dt><dd>' . $this->getID3infoItem($fi, '???', 'playtime_string') . '</dd>
 						<dt>${bitrate}</dt><dd>' . round($this->getID3infoItem($fi, 0, 'bitrate') / 1000) . 'kbps</dd>
 					</dl>';
@@ -2913,7 +2928,8 @@ class FileManager
 				return $default_value;
 			}
 		}
-		return $getid3_info_obj;
+		// WARNING: convert '$' to the HTML entity to prevent the JS/client side from 'seeing' the $ and start ${xyz} template variable replacement erroneously
+		return str_replace('$', '&#36;', $getid3_info_obj);
 	}
 
 	// helper function for clean_EXIF_results() as PHP < 5.3 lacks lambda functions
@@ -3867,7 +3883,7 @@ class FileManager
 	 *
 	 * @param string $file    physical filesystem path to the file we want to know all about
 	 *
-	 * @return the info array as produced by getID3::analyze() + getID3::CopyTagsToComments()
+	 * @return the info array as produced by getID3::analyze()
 	 */
 	public function getFileInfo($file)
 	{
@@ -3890,7 +3906,6 @@ class FileManager
 		else
 		{
 			$this->getid3->analyze($file);
-			getid3_lib::CopyTagsToComments($this->getid3->info);
 
 			$rv = $this->getid3->info;
 
@@ -4075,10 +4090,10 @@ class FileManagerUtility
 		$data = trim($data, '_. ' . $trim_chars);
 
 		//$data = trim(substr(preg_replace('/(?:[^A-z0-9]|_|\^)+/i', '_', str_replace($regex[0], $regex[1], $data)), 0, 64), '_');
-		return !empty($options) ? $this->checkTitle($data, $options) : $data;
+		return !empty($options) ? self::checkTitle($data, $options) : $data;
 	}
 
-	protected /* static */ function checkTitle($data, $options = array(), $i = 0)
+	protected static function checkTitle($data, $options = array(), $i = 0)
 	{
 		if (!is_array($options)) return $data;
 
@@ -4086,7 +4101,7 @@ class FileManagerUtility
 
 		foreach ($options as $content)
 			if ($content && strtolower($content) == $lwr_data . ($i ? '_' . $i : ''))
-				return $this->checkTitle($data, $options, ++$i);
+				return self::checkTitle($data, $options, ++$i);
 
 		return $data.($i ? '_' . $i : '');
 	}

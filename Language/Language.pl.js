@@ -4,6 +4,7 @@ Script: Language.pl.js
 
 Translation:
 	[Marek Kalucki](http://www.webdeco.pl)
+    [Grzegorz Nakonieczny](http://naki.info/)
 */
 
 FileManager.Language.pl = {
@@ -14,8 +15,8 @@ FileManager.Language.pl = {
 	ok: 'Ok',
 	open: 'Wybierz plik',
 	upload: 'Wyślij',
-	create: 'Stwórz folder',
-	createdir: 'Podaj nazwe folderu:',
+	create: 'Utwórz folder',
+	createdir: 'Podaj nazwę folderu:',
 	cancel: 'Anuluj',
 	error: 'Błąd',
 
@@ -27,19 +28,19 @@ FileManager.Language.pl = {
 	preview: 'Podgląd',
 	close: 'Zamknij',
 	destroy: 'Usuń',
-	destroyfile: 'Na pewno chcesz usunąć ten plik?',
+	destroyfile: 'Czy na pewno chcesz usunąć ten plik?',
 
-	rename: 'Zmień nazwe',
+	rename: 'Zmień nazwę',
 	renamefile: 'Podaj nową nazwę pliku:',
 
-	download: 'Ściągnij',
+	download: 'Pobierz',
 	nopreview: '<i>Podgląd niedostępny</i>',
 
 	title: 'Tytuł:',
 	artist: 'Wykonawca:',
 	album: 'Płyta:',
 	length: 'Długość:',
-	bitrate: 'Bitrate:',
+	bitrate: 'Przepływność:',
 
 	deselect: 'Odznacz',
 
@@ -50,7 +51,7 @@ FileManager.Language.pl = {
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
-  
+
   popup_blocked:  'Popup Blocked',
   popup_blocked_download: 'To download the file, use this URL: {link} ',
 
@@ -92,7 +93,7 @@ FileManager.Language.pl = {
 	'backend.imagecreate_failed': 'The image processing unit failed: GD imagecreate() failed.',
 	'backend.cvt2truecolor_failed': 'conversion to True Color failed. Image resolution: ', /* x * y */
 	'backend.no_imageinfo': 'Corrupt image or not an image file at all.',
-	'backend.img_will_not_fit': 'image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
+	'backend.img_will_not_fit': 'Server error: image does not fit in available RAM; minimum required (estimate): ', /* XXX MBytes */
 	'backend.unsupported_imgfmt': 'unsupported image format: ',    /* jpeg/png/gif/... */
 
 	/* FU */
@@ -105,17 +106,17 @@ FileManager.Language.pl = {
 
 	flash: {
 		hidden: 'Aby włączyć wysyłanie plików, odblokuj go w swojej przeglądarce i odśwież stronę (prawdopodobnie wysyłanie plików jest blokowane przez wtyczkę Adblock).',
-		disabled: 'Aby włączyć wysyłanie plików, odblokuj obiekt flash i odśwież stronę (prawdopodobnie wysyłanie plików blokowane jest przez wtyczkę Flashblock).',
+		disabled: 'Aby włączyć wysyłanie plików, odblokuj obiekt Flash i odśwież stronę (prawdopodobnie wysyłanie plików blokowane jest przez wtyczkę Flashblock).',
 		flash: 'Aby wysyłać pliki na serwer, należy zainstalować w przeglądarce wtyczkę <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe Flash</a>.'
 	},
 
-	resizeImages: 'Zmniejsz duże obrazy w trakcie wysyłania'
+	resizeImages: 'Zmniejsz duże obrazy w trakcie wysyłania',
 
-	serialize: 'Save gallery',
-	gallery: {
-		text: 'Image caption',
-		save: 'Save',
-		remove: 'Remove from gallery',
-		drag: 'Drag items here to create a gallery...'
-	}
+    serialize: 'Zapisz galerię',
+    gallery: {
+        text: 'Podpis',
+        save: 'Zapisz',
+        remove: 'Usuń element z galerii',
+        drag: 'Przeciągnij tutaj elementy aby utworzyć galerię...'
+    }
 };
