@@ -1570,6 +1570,10 @@ class FileManager
 				echo 'Cannot produce thumbnail: ' . $emsg . ' :: ' . $img_filepath;
 			}
 			$emsg = $e->getMessage();
+
+			$thumb = $this->getIconForError($emsg, $filename, $reqd_size <= 16);
+			$thumb_e = FileManagerUtility::rawurlencode_path($thumb);
+			$jserr['thumbnail'] = $thumb_e;
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
