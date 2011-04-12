@@ -2635,6 +2635,7 @@ class FileManager
 					$thumb48 = $this->getIconForError($emsg, $legal_url, false);
 					$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 					$thumb250 = $thumb48;
+					$thumb250_e = $thumb48_e;
 				}
 
 				$json['thumbnail48'] = $thumb48_e;
@@ -2657,10 +2658,8 @@ class FileManager
 					$content .= '<p>Made with ' . (empty($sw_make) ? '???' : $sw_make) . ' @ ' . (empty($time_make) ? '???' : $time_make) . '</p>';
 				}
 
-				$enc_thumbfile = $thumb250;
-
 				$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-							   <img src="' . $enc_thumbfile . '" class="preview" alt="preview" />
+							   <img src="' . $thumb250_e . '" class="preview" alt="preview" />
 							 </a>';
 				if (!empty($emsg))
 				{
