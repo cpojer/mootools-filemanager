@@ -14,6 +14,13 @@ provides: Filemanager.NoFlashUploader
 ...
 */
 
+/*
+ * While the flash uploader is preferable, sometimes it is not possible to use it due to
+ * server restrictions (eg, mod_security), or perhaps users refuse to use flash.
+ *
+ * This Upload handler will allow the MFM to continue to function, without multiple-upload-at-once
+ * function and without progress bars.  But otherwise, it should work.
+ */
 FileManager.implement({
 
 	options: {
