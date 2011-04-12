@@ -1255,6 +1255,7 @@ class FileManager
 	protected function onDetail()
 	{
 		$emsg = null;
+		$legal_url = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -1343,6 +1344,22 @@ class FileManager
 		}
 
 		$this->modify_json4exception($jserr, $emsg);
+
+		$thumb48 = $this->getIconForError($emsg, 'is.default-error', false);
+		$icon = $this->getIconForError($emsg, 'is.default-error', true);
+		$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+		$icon_e = FileManagerUtility::rawurlencode_path($icon);
+		$jserr['thumb250'] = $jserr['thumb48'] = $thumb48_e;
+		$jserr['icon'] = $icon_e;
+
+		$content_classes = "margin preview_err_report";
+		$postdiag_HTML = '<p class="err_info">' . $emsg . '</p>';
+		$preview_HTML = '${nopreview}';
+		$content = '<h3>${preview}</h3>' . $preview_HTML;
+		$content .= '<h3>Diagnostics</h3>' . $postdiag_HTML;
+
+		$json['content'] = self::compressHTML('<div class="' . $content_classes . '">' . $content . '</div>');
+
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
