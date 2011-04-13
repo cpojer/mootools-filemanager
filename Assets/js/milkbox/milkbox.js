@@ -79,7 +79,10 @@ this.Milkbox = new Class({
 	open:function(gallery,index){
 		if(!this.activated){ this.prepare(true); }
 
-		var i = (index != undefined) ? index : 0;
+		var i = parseInt(index, 10);
+		if (isNaN(i)) {
+			i = 0;
+		}
 		var g = (instanceOf(gallery,MilkboxGallery)) ? gallery : this.getGallery(gallery);
 		if(!g) return;
 
@@ -149,7 +152,7 @@ this.Milkbox = new Class({
 	//list:Array of objects or an object > [ { gallery:'gall1', autoplay:true, delay:6 } ]
 	//to permanently define autoplay options for any gallery
 	setAutoPlay:function(list){
-		var l = (typeOf(list) == 'object') ? [list] : list;
+		var l = (typeOf(list) !== 'array' ? [list] : list);
 		l.each(function(item){
 			var g = this.getGallery(item.gallery);
 			if(!g){ return; }
@@ -288,7 +291,8 @@ this.Milkbox = new Class({
 		this.stopLoadingCheck();
 		this.currentFile = file;
 
-		var timer = (function(){
+		var timer; // split due to jsLint: Problem at line 338 character 31: 'timer' has not been fully defined yet.
+		timer = (function(){
 			if(this.display.ready){
 				this.display.show_file(file,caption,this.currentIndex+1,this.currentGallery.items.length);
 				clearInterval(timer);
@@ -300,7 +304,7 @@ this.Milkbox = new Class({
 
 	checkFileType:function(file,type){
 		var href = (typeOf(file) != 'string') ? file.href : file;
-		var regexp = new RegExp("\.("+type+")$","i");
+		var regexp = new RegExp('\\.('+type+')$','i');
 		return href.split('?')[0].test(regexp);
 	},
 
@@ -1068,7 +1072,7 @@ var MilkboxGallery = new Class({
 	},
 
 	get_index_of:function(item){
-		var index = (typeOf(item) == 'string') ? this.items.indexOf(this.items.filter(function(i){ i.href == item })[0]) : this.items.indexOf(item);
+		var index = (typeOf(item) == 'string') ? this.items.indexOf(this.items.filter(function(i){ return i.href === item; })[0]) : this.items.indexOf(item);
 		return this.items.indexOf(item);
 	},
 
