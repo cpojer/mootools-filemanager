@@ -564,7 +564,7 @@ this.Milkbox = new Class({
 		this.formElements.each(function(elem){
 			elem.setStyle('visibility',elem.retrieve('visibility'));
 			elem.setStyle('display',elem.retrieve('display'));
-		})
+		});
 	},
 
 	//EVENTS
@@ -1263,3 +1263,12 @@ window.addEvent('domready', function(){
 		centered:false
 	});
 });
+
+
+/*
+jsLint settings:
+disallow undefined variables, assume browser
+predefined variables: alert, Class, Options, Events, instanceOf, typeOf, Request, Fx, Asset, Swiff, $, $$, Element
+                      include these to shut up jsLint about further undefined/too early errors:     Milkbox, MilkboxGallery, MilkboxDisplay
+expect ~ 15 errors reported
+*/
