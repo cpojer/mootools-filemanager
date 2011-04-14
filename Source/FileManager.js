@@ -1437,7 +1437,12 @@ var FileManager = new Class({
 
 		j_item_count = j.dirs.length + j.files.length;
 
-		startindex = parseInt(startindex || 0, 10);     // make sure it's an int number
+		startindex = parseInt(startindex, 10);     // make sure it's an int number
+		if (isNaN(startindex))
+		{
+			startindex = 0;
+		}
+
 		if (!pagesize)
 		{
 			// no paging: always go to position 0 then!
