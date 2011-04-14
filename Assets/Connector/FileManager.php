@@ -1541,7 +1541,15 @@ class FileManager
 			if (FileManagerUtility::startsWith($mime, 'image/'))
 			{
 				// access the image and create a thumbnail image; this can fail dramatically
-				$thumb_path = $this->getThumb($legal_url, $file, $reqd_size, $reqd_size);
+				//
+				// Use the 250px thumbnail as a source when it already exists AND we are looking for a smaller thumbnail right now.
+				// Otherwise, use the original file.
+				$thumb250 = false;
+				if ($reqd_size < 250)
+				{
+					$thumb250 = $this->getThumb($legal_url, $file, 250, 250, true);
+				}
+				$thumb_path = $this->getThumb($legal_url, ($thumb250 !== false ? $this->url_path2file_path($thumb250) : $file), $reqd_size, $reqd_size);
 			}
 
 			$img_filepath = (!empty($thumb_path) ? $thumb_path : $this->getIcon($filename, $reqd_size <= 16));
@@ -2643,7 +2651,7 @@ class FileManager
 				{
 					$thumb250 = $this->getThumb($url, $file, 250, 250, $auto_thumb_gen_mode);
 					$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
-					$thumb48  = $this->getThumb($url, $this->url_path2file_path($thumb250), 48, 48, $auto_thumb_gen_mode);
+					$thumb48  = $this->getThumb($url, (($auto_thumb_gen_mode && $thumb250 !== false) ? $this->url_path2file_path($thumb250) : $file), 48, 48, $auto_thumb_gen_mode);
 					$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 
 					if ($thumb48 === false || $thumb250 === false)
