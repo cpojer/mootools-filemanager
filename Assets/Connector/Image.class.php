@@ -67,7 +67,11 @@ class Image {
 			$this->image = $this->create();
 
 			$fn = 'imagecreatefrom'.$this->meta['ext'];
-			$original = @$fn($file);
+			$original = false;
+			if (function_exists($fn))
+			{
+				$original = @$fn($file);
+			}
 			if (!$original) throw new Exception('imagecreate_failed:' . $fn);
 
 			if (!@imagecopyresampled($this->image, $original, 0, 0, 0, 0, $this->meta['width'], $this->meta['height'], $this->meta['width'], $this->meta['height']))
@@ -85,6 +89,36 @@ class Image {
 	public function __destruct(){
 		if(!empty($this->image)) imagedestroy($this->image);
 		unset($this->image);
+	}
+	
+	/**
+	 * Return an array of supported extensions (rather: the second parts of the mime types!) 
+	 *
+	 * A type is listed as 'supported' when it can be READ.
+	 */
+	public static function getSupportedTypes()
+	{
+		static $supported_types;
+		
+		if (empty($supported_types))
+		{
+			$gdi = gd_info();
+			
+			$supported_types = array();
+			if (!empty($gdi['GIF Read Support']))
+				$supported_types[] = 'gif';
+			if (!empty($gdi['PNG Support']))
+				$supported_types[] = 'png';
+			if (!empty($gdi['JPEG Support']) || !empty($gdi['JPG Support']) /* pre 5.3.0 */ )
+				$supported_types[] = 'jpeg';
+			if (!empty($gdi['WBMP Support']))
+				$supported_types[] = 'wbmp';
+			if (!empty($gdi['XPM Support']))
+				$supported_types[] = 'xpm';
+			if (!empty($gdi['XBM Support']))
+				$supported_types[] = 'xbm';
+		}
+		return $supported_types;
 	}
 
 	/**
@@ -230,7 +264,11 @@ class Image {
 
 		if($meta['ext'] == 'jpg')
 			$meta['ext'] = 'jpeg';
-		if(!in_array($meta['ext'], array('gif', 'png', 'jpeg')))
+		else if($meta['ext'] == 'bmp')
+			$meta['ext'] = 'wbmp';
+		else if($meta['ext'] == 'x-ms-bmp')
+			$meta['ext'] = 'wbmp';
+		if(!in_array($meta['ext'], self::getSupportedTypes()))
 			throw new Exception('unsupported_imgfmt:' . $meta['ext']);
 
 		return $meta;
@@ -285,7 +323,7 @@ class Image {
 		$image = @imagecreatetruecolor($x, $y);
 		if (!$image) throw new Exception('imagecreatetruecolor_failed');
 		if(!$ext) $ext = $this->meta['ext'];
-		if($ext=='png'){
+		if($ext == 'png'){
 			if (!@imagealphablending($image, false))
 				throw new Exception('imagealphablending_failed');
 			$alpha = @imagecolorallocatealpha($image, 0, 0, 0, 127);
@@ -520,8 +558,11 @@ class Image {
 		if(empty($this->image)) return $this;
 
 		if(!$ext) $ext = $this->meta['ext'];
+		$ext = strtolower($ext);
+		
 		if($ext=='jpg') $ext = 'jpeg';
-		if($ext=='png') imagesavealpha($this->image, true);
+		else if($ext=='bmp') $ext = 'wbmp';
+		else if($ext=='png') imagesavealpha($this->image, true);
 
 		if($file == null)
 			$file = $this->file;
@@ -538,13 +579,17 @@ class Image {
 		}
 		else
 		{
+			$rv = false;
 			$fn = 'image'.$ext;
-			if($ext == 'jpeg')
-				$rv = @$fn($this->image, $file, $quality);
-			elseif($ext == 'png')
-				$rv = @$fn($this->image, $file, 9); // PNG is lossless: always maximum compression!
-			else
-				$rv = @$fn($this->image, $file);
+			if (function_exists($fn))
+			{
+				if($ext == 'jpeg')
+					$rv = @$fn($this->image, $file, $quality);
+				elseif($ext == 'png')
+					$rv = @$fn($this->image, $file, 9); // PNG is lossless: always maximum compression!
+				else
+					$rv = @$fn($this->image, $file);
+			}
 		}
 		if (!$rv)
 			throw new Exception($fn . '_failed');

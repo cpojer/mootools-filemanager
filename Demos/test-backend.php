@@ -105,6 +105,8 @@ require_once('FM-common.php');
 <?php
 
 
+var_dump(gd_info());
+
 
 // log request data:
 FM_vardumper(null, 'testFM' . (!empty($_GET['event']) ? '-' . $_GET['event'] : null));
