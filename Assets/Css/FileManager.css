@@ -427,7 +427,11 @@ div.filemanager-container span.list span.list {
 }
 
 
-div.filemanager-container span.drag span, div.filemanager-engine-trident4 ul li span.fi span, div.filemanager-engine-trident5 ul li span.fi span, div.filemanager-engine-presto ul li span.fi span, div.filemanager ul li:hover span.fi span {
+div.filemanager-container span.drag span, 
+div.filemanager-engine-trident4 ul li span.fi span, 
+div.filemanager-engine-trident5 ul li span.fi span, 
+div.filemanager-engine-presto   ul li span.fi span, 
+div.filemanager                 ul li:hover span.fi span {
   overflow: hidden;
 }
 
@@ -685,13 +689,15 @@ div.filemanager-preview p.err_info {
   font-weight: bold;
 }
 
-div.filemanager-preview div.preview_bad_mime {
+div.filemanager-preview div.preview_err_report {
   background-color: #fcc;
 }
 
+/*
 div.filemanager-engine-trident4 div.filemanager-preview img.preview {
   height: 100px;
 }
+*/
 
 div.filemanager-preview ul, div.filemanager-uploader ul, div.filemanager-preview div.textpreview {
   border: 1px solid #bebebe;
