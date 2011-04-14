@@ -312,10 +312,10 @@ this.Milkbox = new Class({
 
 	loadHtml:function(fileObj){
 
-		var query = (fileObj.vars ? Object.toQueryString(fileObj.vars) : '');
+		var query = (fileObj.vars ? '?' + Object.toQueryString(fileObj.vars) : '');
 
 		var iFrame = new Element('iframe',{
-			src:fileObj.href+'?'+query,
+			src:fileObj.href+query,
 			styles:{
 				'border-style':'solid',
 				'border-width':'0px'
