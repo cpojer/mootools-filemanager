@@ -371,5 +371,108 @@ if (!function_exists('send_response_status_header'))
 
 
 
+/*
+ * Derived from getID3 demo_browse.php sample code.
+ *
+ * Attempts some 'intelligent' conversions for better readability and information compacting.
+ */
+function table_var_dump($variable, $wrap_in_td = false) 
+{
+	$returnstring = '';
+	switch (gettype($variable)) 
+	{
+	case 'array':
+		unset($variable['GETID3_VERSION']);
+		unset($variable['filepath']);
+		unset($variable['filenamepath']);
+		
+		$returnstring .= ($wrap_in_td ? '<td>' : '');
+		$returnstring .= '<table class="dump" cellspacing="0" cellpadding="2">';
+		foreach ($variable as $key => $value) 
+		{
+			$returnstring .= '<tr><td valign="top"><b>'.str_replace("\x00", ' ', $key).'</b></td>';
+			$returnstring .= '<td valign="top">'.gettype($value);
+			if (is_array($value)) 
+			{
+				$returnstring .= '&nbsp;('.count($value).')';
+			} 
+			elseif (is_string($value)) 
+			{
+				$returnstring .= '&nbsp;('.strlen($value).')';
+			}
+			//if (($key == 'data') && isset($variable['image_mime']) && isset($variable['dataoffset'])) {
+			if (($key == 'data') && isset($variable['image_mime'])) 
+			{
+				$imageinfo = array();
+				$imagechunkcheck = getid3_lib::GetDataImageSize($value, $imageinfo);
+				if (is_array($imagechunkcheck))
+				{
+					$returnstring .= '</td><td><img src="data:'.$imagechunkcheck['mime'].';base64,'.base64_encode($value).'" width="'.$imagechunkcheck[0].'" height="'.$imagechunkcheck[1].'"></td></tr>';
+				}
+				else
+				{
+					$returnstring .= '</td><td><i>(unidentified image data ... ' . (is_string($value) ? 'length = ' . strlen($value) : '') . ')</i></td></tr>';
+				}
+			} 
+			else 
+			{
+				$returnstring .= '</td>'.table_var_dump($value, true).'</tr>';
+			}
+		}
+		$returnstring .= '</table>';
+		$returnstring .= ($wrap_in_td ? '</td>' : '');
+		break;
+
+	case 'boolean':
+		$returnstring .= ($wrap_in_td ? '<td class="dump_boolean">' : '').($variable ? 'TRUE' : 'FALSE').($wrap_in_td ? '</td>' : '');
+		break;
+
+	case 'integer':
+		$returnstring .= ($wrap_in_td ? '<td class="dump_integer">' : '').$variable.($wrap_in_td ? '</td>' : '');
+		break;
+
+	case 'double':
+	case 'float':
+		$returnstring .= ($wrap_in_td ? '<td class="dump_double">' : '').$variable.($wrap_in_td ? '</td>' : '');
+		break;
+
+	case 'object':
+	case 'null':
+		$returnstring .= ($wrap_in_td ? '<td>' : '').print_r($variable, true).($wrap_in_td ? '</td>' : '');
+		break;
+
+	case 'string':
+		$variable = str_replace("\x00", ' ', $variable);
+		$varlen = strlen($variable);
+		for ($i = 0; $i < $varlen; $i++) 
+		{
+			$returnstring .= htmlentities($variable{$i}, ENT_QUOTES, 'UTF-8');
+		}
+		$returnstring = ($wrap_in_td ? '<td class="dump_string">' : '').nl2br($returnstring).($wrap_in_td ? '</td>' : '');
+		break;
+
+	default:
+		$imageinfo = array();
+		$imagechunkcheck = getid3_lib::GetDataImageSize($variable, $imageinfo);
+		if (is_array($imagechunkcheck))
+		{
+			$returnstring .= ($wrap_in_td ? '<td>' : '');
+			$returnstring .= '<table class="dump" cellspacing="0" cellpadding="2">';
+			$returnstring .= '<tr><td><b>type</b></td><td>'.getid3_lib::ImageTypesLookup($imagechunkcheck[2]).'</td></tr>';
+			$returnstring .= '<tr><td><b>width</b></td><td>'.number_format($imagechunkcheck[0]).' px</td></tr>';
+			$returnstring .= '<tr><td><b>height</b></td><td>'.number_format($imagechunkcheck[1]).' px</td></tr>';
+			$returnstring .= '<tr><td><b>size</b></td><td>'.number_format(strlen($variable)).' bytes</td></tr></table>';
+			$returnstring .= ($wrap_in_td ? '</td>' : '');
+		} 
+		else 
+		{
+			$returnstring .= ($wrap_in_td ? '<td>' : '').nl2br(htmlspecialchars(str_replace("\x00", ' ', $variable))).($wrap_in_td ? '</td>' : '');
+		}
+		break;
+	}
+	return $returnstring;
+}
+
+
 
 

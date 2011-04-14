@@ -2696,28 +2696,31 @@ class FileManager
 					$postdiag_HTML .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
 				}
 
-				$exif_data = $this->getID3infoItem($fi, null, 'jpg', 'exif');
-				try
+				if (0)
 				{
-					if (!empty($exif_data))
+					$exif_data = $this->getID3infoItem($fi, null, 'jpg', 'exif');
+					try
 					{
-						/*
-						 * before dumping the EXIF data array (which may carry binary content and MAY CRASH the json_encode()r >:-((
-						 * we filter it to prevent such crashes and oddly looking (diagnostic) presentation of values.
-						 */
-						self::clean_EXIF_results($exif_data);
-						ob_start();
-							var_dump($exif_data);
-						$dump = ob_get_clean();
-						$postdiag_HTML .= $dump;
+						if (!empty($exif_data))
+						{
+							/*
+							 * before dumping the EXIF data array (which may carry binary content and MAY CRASH the json_encode()r >:-((
+							 * we filter it to prevent such crashes and oddly looking (diagnostic) presentation of values.
+							 */
+							$dump = table_var_dump($exif_data, false);
+
+							self::clean_EXIF_results($exif_data);
+							$dump .= var_dump_ex($exif_data, 0, 0, false);
+							$postdiag_HTML .= $dump;
+						}
 					}
-				}
-				catch (Exception $e)
-				{
-					// use the abilities of modify_json4exception() to munge/format the exception message:
-					$jsa = array('error' => '');
-					$this->modify_json4exception($jsa, $e->getMessage());
-					$postdiag_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
+					catch (Exception $e)
+					{
+						// use the abilities of modify_json4exception() to munge/format the exception message:
+						$jsa = array('error' => '');
+						$this->modify_json4exception($jsa, $e->getMessage());
+						$postdiag_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
+					}
 				}
 				break;
 
@@ -2873,27 +2876,26 @@ class FileManager
 
 			if (!empty($fi))
 			{
-				if (empty($fi['error']))
-				{
-					try
-					{
-						self::clean_EXIF_results($fi);
-						ob_start();
-							var_dump($fi);
-						$dump = ob_get_clean();
-
-						$postdiag_HTML .= '<pre>' . "\n" . $dump . "\n" . '</pre>';
-						//@file_put_contents('getid3.log', $dump);
-					}
-					catch(Exception $e)
-					{
-						// ignore
-						$postdiag_HTML .= '<p class="err_info">' . $e->getMessage() . '</p>';
-					}
-				}
-				else
+				if (!empty($fi['error']))
 				{
 					$postdiag_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
+				}
+				try
+				{
+					$dump = table_var_dump($fi, false);
+					
+					if (0)
+					{
+						self::clean_EXIF_results($fi);
+						$dump .= var_dump_ex($fi, 0, 0, false);
+					}
+
+					$postdiag_HTML .= "\n" . $dump . "\n";
+					//@file_put_contents('getid3.log', $dump);
+				}
+				catch(Exception $e)
+				{
+					$postdiag_HTML .= '<p class="err_info">' . $e->getMessage() . '</p>';
 				}
 			}
 			break;
