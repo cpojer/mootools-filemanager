@@ -127,7 +127,9 @@ var FileManager = new Class({
 		this.ctrl_key_pressed = false;
 
 		this.language = Object.clone(FileManager.Language.en);
-		if (this.options.language != 'en') this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
+		if (this.options.language !== 'en') {
+			this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
+		}
 
 		this.container = new Element('div', {'class': 'filemanager-container' + (Browser.opera ? ' filemanager-engine-presto' : '') + (Browser.ie ? ' filemanager-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : '')});
 		this.filemanager = new Element('div', {'class': 'filemanager'}).inject(this.container);

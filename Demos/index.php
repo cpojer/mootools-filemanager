@@ -200,7 +200,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 									'title': file.name,
 									'href': encodeURI(path)              // see also:  http://www.javascripter.net/faq/escape.htm
 								}).adopt(new Element('img', {
-									'src': (file.thumbnail250 ? file.thumbnail250 : file.icon),
+									'src': (file.thumb250 ? file.thumb250 : file.icon),
 									'class': 'preview',
 									'alt': 'preview (picked)'
 								}))

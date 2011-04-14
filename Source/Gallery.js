@@ -183,7 +183,7 @@ FileManager.Gallery = new Class({
 
 		// When the file info is lacking thumbnail info, fetch it by firing a 'detail' request and taking it from there.
 		// Also send our flavour of the 'detail' request when the thumbnail is yet to be generated.
-		if (file.thumbnail250 == null || file.thumbnail250.indexOf('.php?') != -1)
+		if (file.thumb250 == null || file.thumb250.indexOf('.php?') != -1)
 		{
 			// request full file info for this one!
 

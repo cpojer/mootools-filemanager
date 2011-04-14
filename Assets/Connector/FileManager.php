@@ -39,7 +39,6 @@
  *   - safe: (boolean, defaults to *true*) If true, disallows 'exe', 'dll', 'php', 'php3', 'php4', 'php5', 'phps' and saves them as 'txt' instead.
  *   - chmod: (integer, default is 0777) the permissions set to the uploaded files and created thumbnails (must have a leading "0", e.g. 0777)
  *   - filter: (string, defaults to *null*) If not empty, this is a list of allowed mimetypes (overruled by the GET request 'filter' parameter: single requests can thus overrule the common setup in the constructor for this option)
- *   - thumbnailsMustGoThroughBackend: (boolean, defaults to *true*) When set to TRUE (default) all thumbnail requests go through the backend (onThumbnail). When set to FALSE, thumbnails will "shortcircuit" if they exist in the cache, saving roundtrips when using POST type propagateData
  *   - showHiddenFoldersAndFiles: (boolean, defaults to *false*) whether or not to show 'dotted' directories and files -- such files are considered 'hidden' on UNIX file systems
  *   - ViewIsAuthorized_cb (function/reference, default is *null*) authentication + authorization callback which can be used to determine whether the given directory may be viewed.
  *     The parameter $action = 'view'.
@@ -623,7 +622,6 @@ class FileManager
 			'CreateIsAuthorized_cb' => null,
 			'DestroyIsAuthorized_cb' => null,
 			'MoveIsAuthorized_cb' => null,
-			'thumbnailsMustGoThroughBackend' => false, // If set true (default) all thumbnail requests go through the backend (onThumbnail), if false, thumbnails will "shortcircuit" if they exist, saving roundtrips when using POST type propagateData
 			'showHiddenFoldersAndFiles' => false,      // Hide dot dirs/files ?
 			'URIpropagateData' => null
 		), (is_array($options) ? $options : array()));
@@ -860,7 +858,7 @@ class FileManager
 					//'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
 					'thumbnail' => $thumb_e,
-					'thumbnail48' => $thumb48_e,
+					'thumb48' => $thumb48_e,
 					//'size' => @filesize($file),
 					'icon' => $icon_e
 				);
@@ -896,7 +894,7 @@ class FileManager
 					//'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
 					'thumbnail' => $thumb_de,
-					'thumbnail48' => $thumb48_de,
+					'thumb48' => $thumb48_de,
 					//'size' => @filesize($file),
 					'icon' => $icon_de
 				);
@@ -994,10 +992,7 @@ class FileManager
 					 * could do very well without it, particularly for large directories where every bit of file access
 					 * is slowing this bugger down, while the user is twiddling his thumbs.
 					 */
-					if (!$this->options['thumbnailsMustGoThroughBackend'])
-					{
-						$thumb48 = $this->getThumb($url, $file, 48, 48, true);
-					}
+					$thumb48 = $this->getThumb($url, $file, 48, 48, true);
 				}
 
 				if ($thumb48 === false)
@@ -1034,7 +1029,7 @@ class FileManager
 					//'date' => date($this->options['dateFormat'], @filemtime($file)),
 					'mime' => $mime,
 					'thumbnail' => $thumb_e,
-					'thumbnail48' => $thumb48_e,
+					'thumb48' => $thumb48_e,
 					//'size' => @filesize($file),
 					'icon' => $icon_e
 				);
@@ -1059,7 +1054,7 @@ class FileManager
 					'date' => date($this->options['dateFormat'], @filemtime($dir)),
 					'mime' => 'text/directory',
 					'thumbnail' => $thumb_de,
-					'thumbnail48' => $thumb48_de,
+					'thumb48' => $thumb48_de,
 					'icon' => $icon_de
 				),
 				'preselect_index' => ($file_preselect_index >= 0 ? $file_preselect_index + count($out[1]) + 1 : 0),
@@ -2483,7 +2478,7 @@ class FileManager
 
 	/**
 	 * Produce a HTML snippet detailing the given file in the JSON 'content' element; place additional info
-	 * in the JSON elements 'thumbnail', 'thumbnail48', 'thumbnail250', 'width', 'height', ...
+	 * in the JSON elements 'thumbnail', 'thumb48', 'thumb250', 'width', 'height', ...
 	 *
 	 * Return an augmented JSON array.
 	 *
@@ -2561,14 +2556,14 @@ class FileManager
 				'name' => $filename,
 				'date' => date($this->options['dateFormat'], @filemtime($file)),
 				'mime' => $mime,
-				'thumbnail48' => $thumb48_e,
-				'thumbnail250' => $thumb250_e,
+				'thumb48' => $thumb48_e,
+				'thumb250' => $thumb250_e,
 				'icon' => $icon_e,
 				'size' => @filesize($file)
 			));
 
 
-		$content_classes = "margin" . ($bad_ext ? ' preview_bad_mime' : '');
+		$content_classes = "margin" . ($bad_ext ? ' preview_err_report' : '');
 		$content = '';
 		$preview_HTML = null;
 		$postdiag_HTML = '';
@@ -2588,26 +2583,29 @@ class FileManager
 				//  throw new FileManagerException('corrupt_img:' . $url);
 
 				/*
+				 * thumbnail_gen_mode == 'auto':
+				 *
 				 * offload the thumbnailing process to another event ('event=thumbnail') to be fired by the client
-				 * when it's time to render the thumbnail: the offloading helps us tremendously in coping with large
-				 * directories:
-				 * WE simply assume the thumbnail will be there, so we don't even need to check for its existence
-				 * (which saves us one more file_exists() per item at the very least). And when it doesn't, that's
+				 * when it's time to render the thumbnail:
+				 * WE simply assume the thumbnail will be there, and when it doesn't, that's
 				 * for the event=thumbnail handler to worry about (creating the thumbnail on demand or serving
-				 * a generic icon image instead).
+				 * a generic icon image instead). Meanwhile, we are able to speed up the response process here quite
+				 * a bit (rendering thumbnails from very large images can take a lot of time!)
+				 *
+				 * To further improve matters, we first generate the 250px thumbnail and then generate the 48px
+				 * thumbnail from that one (if it doesn't already exist). That saves us one more time processing
+				 * the (possibly huge) original image; downscaling the 250px file is quite fast, relatively speaking.
+				 *
+				 * That bit of code ASSUMES that the thumbnail will be generated from the file argument, while
+				 * the url argument is used to determine the thumbnail name/path.
 				 */
-				$thumb48 = false;
-				$thumb250 = false;
 				$meta = null;
 				try
 				{
-					if (!$this->options['thumbnailsMustGoThroughBackend'])
-					{
-						$thumb48  = $this->getThumb($url, $file, 48, 48, true);
-						$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
-						$thumb250 = $this->getThumb($url, $file, 250, 250, true);
-						$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
-					}
+					$thumb250 = $this->getThumb($url, $file, 250, 250, $auto_thumb_gen_mode);
+					$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
+					$thumb48  = $this->getThumb($url, $this->url_path2file_path($thumb250), 48, 48, $auto_thumb_gen_mode);
+					$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 
 					if ($thumb48 === false || $thumb250 === false)
 					{
@@ -2646,6 +2644,10 @@ class FileManager
 
 					//$tnpath = $this->url_path2file_path($thumbfile);
 					//$tninf = @getimagesize($tnpath);
+				//$size = @getimagesize($file);
+				//// check for badly formatted image files (corruption); we'll handle the overly large ones next
+				//if (!$size)
+				//  throw new FileManagerException('corrupt_img:' . $url);
 
 					//$json['tn_width'] = $tninf[0];
 					//$json['tn_height'] = $tninf[1];
@@ -2660,8 +2662,8 @@ class FileManager
 					$thumb250_e = $thumb48_e;
 				}
 
-				$json['thumbnail48'] = $thumb48_e;
-				$json['thumbnail250'] = $thumb250_e;
+				$json['thumb48'] = $thumb48_e;
+				$json['thumb250'] = $thumb250_e;
 
 				$sw_make = $this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'Software');
 				$time_make = $this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'DateTime');
