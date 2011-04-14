@@ -698,7 +698,8 @@ class FileManager
 		// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
 		// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
 		$this->getid3 = new getID3();
-		$this->getid3->encoding = 'UTF-8';
+		$this->getid3->setOption(array('encoding' => 'UTF-8'));
+		//$this->getid3->encoding = 'UTF-8';
 
 		// getid3_cache stores the info arrays; gitid3_cache_lru_ts stores a 'timestamp' counter to track LRU: 'timestamps' older than threshold are discarded when cache is full
 		$this->getid3_cache = array();
@@ -3850,7 +3851,7 @@ class FileManager
 		if ($just_guess && function_exists('finfo_open') && $f = finfo_open(FILEINFO_MIME, getenv('MAGIC')))
 		{
 			$mime = finfo_file($f, $file);
-			// some systems also produce the cracter encoding with the mime type; strip if off:
+			// some systems also produce the character encoding with the mime type; strip if off:
 			$ma = explode(';', $mime);
 			$mime = $ma[0];
 			finfo_close($f);
