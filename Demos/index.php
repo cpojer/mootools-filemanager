@@ -302,9 +302,9 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 					});
 					this.populate(obj);
 				},
-				onGalleryComplete: function(serialized, files, mgr){
-					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onGalleryComplete: ' + debug.dump(serialized) + ', ' + debug.dump(files) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
-					
+				onComplete: function(serialized, files, mgr){
+					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ' + debug.dump(serialized) + ', ' + debug.dump(files) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+
 					example4.set('value', JSON.encode(serialized));
 				}
 			});

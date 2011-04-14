@@ -23,7 +23,11 @@ FileManager.Gallery = new Class({
 	initialize: function(options)
 	{
 		this.offsets = {y: -72};
-		//this.galleryPlugin = true; // prevent that this.show() is called in the base class again
+
+		// make sure our 'complete' event does NOT clash with the base class event by simply never allowing it: you CANNOT have options.selectable and gallery mode at the same time!
+		// (If you do, the caller will have a hard time detecting /who/ sent the 'complete' event; the only way would be to inspect the argument list and deduce the 'origin' from there.)
+		options.selectable = false;
+
 		this.parent(options);
 
 		this.addEvents({
@@ -353,7 +357,7 @@ FileManager.Gallery = new Class({
 		}, this);
 		this.keepData = true;
 		this.hide(e);
-		this.fireEvent('galleryComplete', [serialized, this.files, this]);
+		this.fireEvent('complete', [serialized, this.files, this]);
 	}
 });
 
