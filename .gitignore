@@ -1,3 +1,5 @@
+.gitignore
+push_milkbox.sh
 *.bak
 *~
 Demos/Files/*
