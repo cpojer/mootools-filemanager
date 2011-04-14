@@ -722,6 +722,7 @@ var MilkboxDisplay= new Class({
 		auto_size:false,
 		autosize_max_height:0,
 		image_of_text:'of',
+		zIndex: 410000,  // required to be a high number > 400000 as the 'filemanager as tinyMCE plugin' sits at z-index 400K+
 		onNextClick:function(){},
 		onPrevClick:function(){},
 		onPlayPause:function(){},
@@ -770,7 +771,7 @@ var MilkboxDisplay= new Class({
 				'visibility':'visible',
 				'position':'fixed',
 				'display':'none',
-				'z-index':410000,  // required to be a high number > 400000 as the 'filemanager as tinyMCE plugin' sits at z-index 400K+
+				'z-index': this.options.zIndex,
 				'left':0,
 				'width':'100%',
 				'opacity':0,
@@ -787,7 +788,7 @@ var MilkboxDisplay= new Class({
 				'position':(this.options.centered ? 'fixed' : 'absolute'),
 				'overflow':'hidden',
 				'display':'none',
-				'z-index':410001,   // required to be > overlay.z-index
+				'z-index': this.options.zIndex + 1,   // required to be > overlay.z-index
 				'width':this.options.init_width,
 				'height':this.options.init_height,
 				'opacity':0,
