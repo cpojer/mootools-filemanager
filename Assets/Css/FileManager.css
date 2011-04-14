@@ -838,11 +838,17 @@ div.filemanager-gallery ul li {
   background: url("../Images/loader.gif") center center no-repeat;
 }
 
-div.filemanager-gallery ul li img {
+div.filemanager-gallery ul li span.gallery-image {
   padding: 2px;
   width: 75px;
   height: 56px;
   cursor: pointer;
+}
+
+div.filemanager-gallery ul li span.gallery-image img {
+  padding: 0;
+  margin: 0;
+  border: 0;
 }
 
 div.filemanager-gallery ul li img.filemanager-remove {

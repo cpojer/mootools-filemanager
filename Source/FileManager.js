@@ -2342,7 +2342,8 @@ var FileManager = new Class({
 					directory: dir,
 					// fixup for *directory* detail requests:
 					file: (file.mime == 'text/directory' ? '.' : file.name),
-					filter: this.options.filter
+					filter: this.options.filter,
+					mode: 'auto'                    // provide either direct links to the thumbnails (when available in cache) or PHP event trigger URLs for delayed thumbnail image creation (performance optimization: faster page render)
 				},
 				onRequest: (function() {
 					this.previewLoader.inject(this.preview);
