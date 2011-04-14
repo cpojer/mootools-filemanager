@@ -109,7 +109,11 @@ class FileManagerWithAliasSupport extends FileManager
 
 	public /* static */ function getRequestScriptURI()
 	{
-		return $this->options['RequestScriptURI'];
+		if (!empty($this->options['RequestScriptURI']))
+		{
+			return $this->options['RequestScriptURI'];
+		}
+		return parent::getRequestScriptURI();
 	}
 
 
