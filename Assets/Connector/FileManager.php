@@ -1319,6 +1319,7 @@ class FileManager
 					'mime' => $mime,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
+					'preliminary_json' => $jserr,
 					'validation_failure' => $v_ex_code
 				);
 
@@ -1337,6 +1338,7 @@ class FileManager
 			//$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
+			$jserr = $fileinfo['preliminary_json'];
 
 			$jserr = $this->extractDetailInfo($jserr, $legal_url, $mime_filter, $mime_filters, $mode);
 
@@ -1505,6 +1507,7 @@ class FileManager
 					'mime_filters' => $mime_filters,
 					'requested_size' => $reqd_size,
 					'mode' => ($as_JSON ? 'json' : 'image'),
+					'preliminary_json' => $jserr,
 					'validation_failure' => $v_ex_code
 				);
 
@@ -1524,6 +1527,7 @@ class FileManager
 			$mime_filters = $fileinfo['mime_filters'];
 			$reqd_size = $fileinfo['requested_size'];
 			$as_JSON = ($fileinfo['mode'] == 'json');
+			$jserr = $fileinfo['preliminary_json'];
 
 			/*
 			 * each image we inspect may throw an exception due to an out of memory warning
@@ -1696,6 +1700,7 @@ class FileManager
 					'mime' => $mime,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
+					'preliminary_json' => $jserr,
 					'validation_failure' => $v_ex_code
 				);
 
@@ -1712,6 +1717,7 @@ class FileManager
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
+			$jserr = $fileinfo['preliminary_json'];
 
 			if (!$this->unlink($legal_url, $mime_filters))
 				throw new FileManagerException('unlink_failed:' . $legal_url);
@@ -1830,6 +1836,7 @@ class FileManager
 					'uniq_name' => $file,
 					'newdir' => $newdir,
 					'chmod' => $this->options['chmod'],
+					'preliminary_json' => $jserr,
 					'validation_failure' => $v_ex_code
 				);
 			if (!empty($this->options['CreateIsAuthorized_cb']) && function_exists($this->options['CreateIsAuthorized_cb']) && !$this->options['CreateIsAuthorized_cb']($this, 'create', $fileinfo))
@@ -1845,6 +1852,7 @@ class FileManager
 			$filename = $fileinfo['raw_name'];
 			$file = $fileinfo['uniq_name'];
 			$newdir = $fileinfo['newdir'];
+			$jserr = $fileinfo['preliminary_json'];
 
 			if (!@mkdir($newdir, $fileinfo['chmod'], true))
 				throw new FileManagerException('mkdir_failed:' . $this->legal2abs_url_path($legal_url) . $file);
@@ -1983,6 +1991,7 @@ class FileManager
 					'mime' => $mime,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
+					'preliminary_json' => $jserr,
 					'validation_failure' => $v_ex_code
 				);
 			if (!empty($this->options['DownloadIsAuthorized_cb']) && function_exists($this->options['DownloadIsAuthorized_cb']) && !$this->options['DownloadIsAuthorized_cb']($this, 'download', $fileinfo))
@@ -1998,6 +2007,7 @@ class FileManager
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
+			$jserr = $fileinfo['preliminary_json'];
 
 			if ($fd = fopen($file, 'rb'))
 			{
@@ -2168,6 +2178,7 @@ class FileManager
 				'maxsize' => $this->options['maxUploadSize'],
 				'overwrite' => false,
 				'chmod' => $this->options['chmod'] & 0666,   // security: never make those files 'executable'!
+				'preliminary_json' => $jserr,
 				'validation_failure' => $v_ex_code
 			);
 			if (!empty($this->options['UploadIsAuthorized_cb']) && function_exists($this->options['UploadIsAuthorized_cb']) && !$this->options['UploadIsAuthorized_cb']($this, 'upload', $fileinfo))
@@ -2186,6 +2197,7 @@ class FileManager
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
 			//$tmppath = $fileinfo['tmp_filepath'];
+			$jserr = $fileinfo['preliminary_json'];
 
 			if($fileinfo['maxsize'] && $fileinfo['size'] > $fileinfo['maxsize'])
 				throw new FileManagerException('size');
@@ -2397,6 +2409,7 @@ class FileManager
 					'rename' => $rename,
 					'is_dir' => $is_dir,
 					'function' => $fn,
+					'preliminary_json' => $jserr,
 					'validation_failure' => $v_ex_code
 				);
 
@@ -2419,6 +2432,7 @@ class FileManager
 			$rename = $fileinfo['rename'];
 			$is_dir = $fileinfo['is_dir'];
 			$fn = $fileinfo['function'];
+			$jserr = $fileinfo['preliminary_json'];
 
 			if($rename)
 			{
@@ -2437,10 +2451,9 @@ class FileManager
 
 			if (!headers_sent()) header('Content-Type: application/json');
 
-			echo json_encode(array(
-				'status' => 1,
-				'name' => $newname
-			));
+			// jserr['status'] == 1
+			$jserr['name'] = $newname;
+			echo json_encode($jserr);
 			return;
 		}
 		catch(FileManagerException $e)
