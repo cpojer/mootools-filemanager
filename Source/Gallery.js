@@ -43,7 +43,7 @@ FileManager.Gallery = new Class({
 			hide: function(self) {
 				if (!this.keepData) {
 					this.gallery.empty();
-					this.captions = {};
+					this.metadata = {};
 					this.files = [];
 				}
 				else {
@@ -57,15 +57,8 @@ FileManager.Gallery = new Class({
 				// mode is one of (destroy, rename, move, copy): only when mode=copy, does the file remain where it was before!
 				if (mode !== 'copy')
 				{
-					var name = this.normalize(file.path);
-					var el = (this.gallery.getElements('li').filter(function(el){
-						var f = el.retrieve('file');
-						return name == this.normalize(f.path);
-					}, this) || null)[0];
-
-					if (el) {
-						this.erasePicture(name, el);
-					}
+					var name = this.normalize(file.dir + '/' + file.name);
+					this.erasePicture(name);
 				}
 			}
 		});
@@ -106,7 +99,7 @@ FileManager.Gallery = new Class({
 		this.droppables.push(this.gallery);
 
 		this.keepData = false;
-		this.captions = {};
+		this.metadata = {};
 		this.files = [];
 		this.animation = {};
 
@@ -164,12 +157,13 @@ FileManager.Gallery = new Class({
 			return false;
 
 		var file;
-		if (typeOf(el) == 'string')
+		if (typeof el === 'string')
 		{
 			var part = el.split('/');
 			file = {
 				name: part.pop(),
-				dir: part.join('/')
+				dir: part.join('/'),
+				mime: 'unknown/unknown'
 			};
 		}
 		else
@@ -185,17 +179,8 @@ FileManager.Gallery = new Class({
 		if (this.files.contains(name))
 			return true;
 
-		// When the file info is lacking thumbnail info, fetch it by firing a 'detail' request and taking it from there.
-		// Also send our flavour of the 'detail' request when the thumbnail is yet to be generated.
-		if (file.thumb250 == null || file.thumb250.indexOf('.php?') != -1)
-		{
-			// request full file info for this one!
-
-			return true;
-		}
-
 		// store & display item in gallery:
-		this.files.push(name);
+		var index = this.files.push(name)  - 1;
 
 		var destroyIcon = new Asset.image(this.assetBasePath + 'Images/destroy.png').set({
 			'class': 'filemanager-remove',
@@ -205,10 +190,27 @@ FileManager.Gallery = new Class({
 			}
 		}).store('gallery', this);
 
+		var imgpath = this.normalize('/' + this.root + file.dir + '/' + file.name);
+		var imgcontainer = new Element('span', {'class': 'gallery-image'});
 		var li = new Element('li').store('file', file).adopt(
 			destroyIcon,
-			new Asset.image(this.normalize('/' + this.root + file.dir + '/' + file.name), {
-				onload: function(){
+			imgcontainer
+		).inject(this.gallery);
+
+		this.metadata[name] = {
+			caption: '',
+			file: file,
+			element: li
+		};
+
+		this.showFunctions(destroyIcon,li,1);
+		this.tips.attach(destroyIcon);
+		this.switchButton();
+
+		var img_injector = function(file, imgcontainer, self)
+		{
+			var img = new Asset.image(file.thumb250, {
+				onLoad: function(){
 					var el = this;
 					li.setStyle('background', 'none').addEvent('click', function(e){
 						if (e) e.stop();
@@ -235,7 +237,7 @@ FileManager.Gallery = new Class({
 
 						self.hideClone();
 						self.input.removeEvents('blur').addEvent('blur', function(){
-							self.captions[name] = (this.get('value') || '');
+							self.metadata[name].caption = (this.get('value') || '');
 						});
 
 						li.set('opacity', 0);
@@ -248,11 +250,11 @@ FileManager.Gallery = new Class({
 							},
 							events: {
 								click: function(e){
-									self.fireEvent('galleryPreview', [file.path, self.captions[name], li, self]);
+									self.fireEvent('galleryPreview', [file.path, self.metadata[name], li, self]);
 								}
 							}
 						}).inject(document.body).morph(self.animation.to).get('morph').chain(function(){
-							self.input.set('value', self.captions[name] || '');
+							self.input.set('value', self.metadata[name].caption || '');
 							self.wrapper.setStyles({
 								opacity: 0,
 								display: 'block',
@@ -263,17 +265,101 @@ FileManager.Gallery = new Class({
 							});
 						});
 					});
+				},
+				onError: function() {
+					if (typeof console !== 'undefined' && console.log) console.log('image asset: error!');
+					var iconpath = self.assetBasePath + 'Images/Icons/Large/default-error.png';
+					img.src = iconpath;
+				},
+				onAbort: function() {
+					if (typeof console !== 'undefined' && console.log) console.log('image asset: ABORT!');
+					var iconpath = self.assetBasePath + 'Images/Icons/Large/default-error.png';
+					img.src = iconpath;
 				}
-			})
-		).inject(this.gallery);
-		this.showFunctions(destroyIcon,li,1);
-		this.tips.attach(destroyIcon);
-		this.switchButton();
+			});
+
+			img.inject(imgcontainer);
+		};
+
+		// When the file info is lacking thumbnail info, fetch it by firing a 'detail' request and taking it from there.
+		// Also send our flavour of the 'detail' request when the thumbnail is yet to be generated.
+		if (file.thumb250 == null || file.thumb250.indexOf('.php?') != -1)
+		{
+			// request full file info for this one! PLUS direct-access thumbnails!
+
+			// do NOT set this.Request as this is a parallel request; mutiple ones may be fired when onDragComplete is, for instance, invoked from the array-loop inside populate()
+
+			new FileManager.Request({
+				url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
+					event: 'detail'
+				})),
+				data: {
+					directory: file.dir,
+					// fixup for *directory* detail requests
+					file: (file.mime == 'text/directory' ? '.' : file.name),
+					filter: this.options.filter,
+					mode: 'direct'                          // provide direct links to the thumbnail files
+				},
+				onRequest: function() {},
+				onSuccess: (function(j) {
+
+					if (!j || !j.status) {
+						//new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+						var msg = ('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g);
+
+						this.metadata[name].caption = msg;
+						return;
+					}
+
+					// the desired behaviour anywhere is NOT identical to that when handling the FileManager 'details' request/event!
+					this.fireEvent('galleryDetails', [j, this]);
+
+					// We also want to hold onto the data so we can access it later on,
+					// e.g. when returning the gallery collection to the user.
+
+					// remove unwanted JSON elements first:
+					delete j.status;
+					delete j.error;
+					delete j.content;
+					// now mix with the previously existing 'file' info:
+					file = Object.merge(file, j);
+
+					if (file.element) {
+						file.element.store('file', file);
+					}
+
+					// and update the gallery pane:
+					li.store('file', file);
+
+					//this.onDragComplete(li, droppable);
+					this.metadata[name].file = file;
+
+					img_injector(file, imgcontainer, self);
+
+				}).bind(this),
+				onError: (function(text, error) {
+					this.showError(text);
+				}).bind(this),
+				onFailure: (function(xmlHttpRequest) {
+					var text = this.cvtXHRerror2msg(xmlHttpRequest);
+					this.showError(text);
+				}).bind(this)
+			}, this).send();
+
+			// while the 'details' request is sent off, keep a 'loader' animation in the spot where the thumbnail/image should end up once we've got that info from the 'details' request
+		}
+		else
+		{
+			// we already have all required information. Go show the image in the gallery pane!
+			img_injector(file, imgcontainer, self);
+		}
 
 		return true;
 	},
 
 	removeClone: function(e){
+		if (e) e.stop();
+
 		if (!this.clone || (e.relatedTarget && ([this.clone, this.wrapper].contains(e.relatedTarget) || (this.wrapper.contains(e.relatedTarget) && e.relatedTarget != this.wrapper))))
 			return;
 		if (this.clone.get('morph').timer)
@@ -283,7 +369,8 @@ FileManager.Gallery = new Class({
 		if (!file)
 			return;
 
-		this.captions[this.normalize(file.dir + '/' + file.name)] = (this.input.get('value') || '');
+		var name = this.normalize(file.dir + '/' + file.name);
+		this.metadata[name].caption = (this.input.get('value') || '');
 
 		this.clone.morph(this.animation.from).get('morph').clearChain().chain((function(){
 			this.clone.retrieve('parent').set('opacity', 1);
@@ -317,19 +404,26 @@ FileManager.Gallery = new Class({
 			file = parent.retrieve('file'),
 			name = self.normalize(file.dir + '/' + file.name);
 
-		self.erasePicture(name, parent);
+		self.erasePicture(name);
 	},
 
-	erasePicture: function(name, element){
-		this.captions[name] = '';
-		this.files.erase(name);
-		this.tips.hide();
+	erasePicture: function(name) {
+		var index = this.files.indexOf(name);
+		if (index >= 0)
+		{
+			var meta = this.metadata[index];
 
-		var self = this;
-		element.set('tween', {duration: 250}).removeEvents('click').fade(0).get('tween').chain(function(){
-			this.element.destroy();
-			self.switchButton();
-		});
+			this.metadata = this.metadata.splice(index, 1);
+			this.files = this.files.splice(index, 1);
+
+			this.tips.hide();
+
+			var self = this;
+			meta.element.set('tween', {duration: 250}).removeEvents('click').fade(0).get('tween').chain(function(){
+				this.element.destroy();
+				self.switchButton();
+			});
+		}
 	},
 
 	switchButton: function(){
@@ -344,8 +438,8 @@ FileManager.Gallery = new Class({
 		if (typeof console !== 'undefined' && console.log) console.log('GALLERY.populate: ' + debug.dump(data));
 		Object.each(data || {}, function(v, i){
 			if (typeof console !== 'undefined' && console.log) console.log('GALLERY.populate: index = ' + i + ', value = ' + v);
-			this.captions[i] = v;
 			this.onDragComplete(i, this.gallery);
+			this.metadata[i].caption = v;
 		}, this);
 	},
 
@@ -353,11 +447,11 @@ FileManager.Gallery = new Class({
 		if (e) e.stop();
 		var serialized = {};
 		this.files.each(function(v){
-			serialized[v] = (this.captions[v] || '');
+			serialized[v] = (this.metadata[v].caption || '');
 		}, this);
 		this.keepData = true;
 		this.hide(e);
-		this.fireEvent('complete', [serialized, this.files, this]);
+		this.fireEvent('complete', [serialized, this.metadata, this]);
 	}
 });
 
