@@ -511,7 +511,7 @@ class getid3_lib
 
 
 	// Allan Hansen <ahØartemis*dk>
-	// getid3_lib::md5_data() - returns md5sum for a file from startuing position to absolute end position
+	// getid3_lib::md5_data() - returns md5sum for a file from starting position to absolute end position
 	static function hash_data($file, $offset, $end, $algorithm) {
 		if (!getid3_lib::intValueSupported($end)) {
 			return false;
