@@ -101,7 +101,7 @@ function var_dump_ex($value, $level = 0, $sort_before_dump = 0, $show_whitespace
 	{
 	case 'string':
 		$rv .= '(' . strlen($value) . ')';
-		$value = var_dump_ex($value, -1, $show_whitespace, $max_subitems);
+		$value = var_dump_ex($value, -1, 0, $show_whitespace, $max_subitems);
 		break;
 
 	case 'boolean':
