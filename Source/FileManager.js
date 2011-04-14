@@ -483,7 +483,7 @@ var FileManager = new Class({
 	// WARNING: given the above, we ASSUME this function will ONLY be used to encode the
 	//          a single URI 'path', 'query' or 'fragment' component at a time!
 	escapeRFC3986: function(s) {
-		return encodeURI(s.toString()).replace(/\+/g, '%2B');
+		return encodeURI(s.toString()).replace(/\+/g, '%2B').replace(/#/g, '%23');
 	},
 	unescapeRFC3986: function(s) {
 		return decodeURI(s.toString());
@@ -715,7 +715,7 @@ var FileManager = new Class({
 		if (!this.Current) return;
 		var file = this.Current.retrieve('file');
 		this.fireEvent('complete', [
-			this.escapeRFC3986(this.normalize('/' + this.root + file.dir + file.name)), // the absolute URL for the selected file, rawURLencoded
+			file.path, //this.escapeRFC3986(this.normalize('/' + this.root + file.dir + file.name)), // the absolute URL for the selected file, rawURLencoded
 			file,                 // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
 			this
 		]);
