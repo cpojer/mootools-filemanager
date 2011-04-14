@@ -1234,7 +1234,7 @@ var MilkboxGallery = new Class({
 	},
 
 	check_extension:function(string){
-		return string.split('?')[0].test(/\.(gif|jpg|jpeg|png|swf|html)$/i);
+		return string.split('?')[0].test(/\.(gif|jpg|jpeg|png|bmp|tif|tiff|swf|html)$/i);
 	},
 
 	get_index_of:function(item){
