@@ -64,7 +64,10 @@ if (!function_exists('safe_glob'))
 			{
 				// HACK/TWEAK: PHP5 and below are completely b0rked when it comes to international filenames   :-(
 				//             --> do not show such files/directories in the list as they won't be accessible anyway!
-				if (preg_match('/[^ -~]/', $file))
+				//
+				// The regex charset is limited even within the ASCII range, due to    http://en.wikipedia.org/wiki/Filename#Comparison%5Fof%5Ffile%5Fname%5Flimitations
+				// Although the filtered characters here are _possible_ on UNIX file systems, they're severely frowned upon.
+				if (preg_match('/[^ -)+-.0-;=@-\[\]-{}~]/', $file))  // filesystem-illegal characters are not part of the set:   * > < ? / \ |
 				{
 					// simply do NOT list anything that we cannot cope with.
 					// That includes clearly inaccessible files (and paths) with non-ASCII characters:
@@ -75,6 +78,8 @@ if (!function_exists('safe_glob'))
 					// Big, fat bummer!
 					continue;
 				}
+				//$temp = unpack("H*",$file);
+				//echo 'hexdump of filename = ' . $temp[1] . ' for filename = ' . $file . "<br>\n";
 
 				$filepath = $path . '/' . $file;
 				$isdir = is_dir($filepath);

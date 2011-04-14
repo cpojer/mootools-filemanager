@@ -666,7 +666,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		 * To showcase the nasty/cool (depending on your disposition) things you can do in this callback, we
 		 * force the thumbnail to become a thumbnail of the 'nuke':
 		 */
-		$fsize = filesize($info['file']);
+		$fsize = @filesize($info['file']);
 		if (DEVELOPMENT && $info['mime'] == 'image/jpeg' && $fsize >= 500 * 1024 && $fsize <= 2 * 1024 * 1024)
 		{
 			// force the manager to fetch the 'nuke' icon:
