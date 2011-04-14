@@ -64,9 +64,9 @@ FileManager.TinyMCE = function(options){
 
 FileManager.implement('SwiffZIndex', 400003);
 
-var Dialog = new Class({
+FileManager.Dialog = new Class({
 
-  Extends: Dialog,
+  Extends: FileManager.Dialog,
 
   initialize: function(text, options){
     this.parent(text, options);
