@@ -86,23 +86,34 @@ this.Milkbox = new Class({
 
 	//utility
 	open:function(gallery,index){
+		var i;
+
 		if(!this.activated){
 			this.prepare(true);
 		}
 
-		var i = parseInt(index, 10);
-		if (isNaN(i)) {
-			i = 0;
-		}
 		var g = (instanceOf(gallery,MilkboxGallery) ? gallery : this.getGallery(gallery));
 		if(!g) {
-			return;
+			return false;
+		}
+
+		// [i_a] when 'index' is not an number, it may be a element reference or string: resolve such indexes too
+		if (typeOf(index) !== 'number') {
+			i = g.get_index_of(index);
+			if (i !== -1) {
+				index = i;
+			}
+			// on failure, try to parse index as an integer value. (e.g. when index is a string representing a index number)
+		}
+		i = parseInt(index, 10);
+		if (isNaN(i)) {
+			i = 0;
 		}
 
 		this.closed = false;
 		var item = g.get_item(i);   // [i_a] index is undefined
 		if(!item) {
-			return;
+			return false;
 		}
 
 		this.currentGallery = g;
@@ -119,6 +130,7 @@ this.Milkbox = new Class({
 		}
 
 		this.loadFile(item,this.getPreloads());
+		return true;
 	},
 
 
@@ -300,7 +312,7 @@ this.Milkbox = new Class({
 
 	loadHtml:function(fileObj){
 
-		var query = (fileObj.vars) ? Object.toQueryString(fileObj.vars) : '';
+		var query = (fileObj.vars ? Object.toQueryString(fileObj.vars) : '');
 
 		var iFrame = new Element('iframe',{
 			src:fileObj.href+'?'+query,
