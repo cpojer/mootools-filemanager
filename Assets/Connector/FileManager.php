@@ -229,6 +229,8 @@
  *
  *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
  *
+ *               'image_info'            (array) the content sniffed infor as produced by getID3
+ *
  *               'size'                  (integer) number of bytes of the uploaded file
  *
  *               'maxsize'               (integer) the configured maximum number of bytes for any single upload
@@ -2114,7 +2116,16 @@ class FileManager
 				{
 					$fi = pathinfo($filename);
 
-					$mime = $this->getMimeType($tmppath);
+					// UPLOAD delivers files in temporary storage with extensions NOT matching the mime type, so we don't
+					// filter on extension; we just let getID3 go ahead and content-sniff the mime type.
+					// Since getID3::analyze() is a quite costly operation, we like to do it only ONCE per file,
+					// so we cache the last entries.
+					$meta = $this->getFileInfo($tmppath);
+					if (!empty($meta['mime_type']))
+					{
+						$mime = $meta['mime_type'];
+					}
+
 					if (!$this->IsAllowedMimeType($mime, $mime_filters))
 					{
 						$v_ex_code = 'extension';
@@ -2151,14 +2162,13 @@ class FileManager
 				'mime' => $mime,
 				'mime_filter' => $mime_filter,
 				'mime_filters' => $mime_filters,
+				'image_info' => $meta,
 				'tmp_filepath' => $tmppath,
 				'size' => $file_size,
 				'maxsize' => $this->options['maxUploadSize'],
 				'overwrite' => false,
 				'chmod' => $this->options['chmod'] & 0666,   // security: never make those files 'executable'!
-				'validation_failure' => $v_ex_code,
-				'mime_valid_check' => $this->IsAllowedMimeType($mime, $mime_filters),
-				'image_info' => @getimagesize($tmppath)
+				'validation_failure' => $v_ex_code
 			);
 			if (!empty($this->options['UploadIsAuthorized_cb']) && function_exists($this->options['UploadIsAuthorized_cb']) && !$this->options['UploadIsAuthorized_cb']($this, 'upload', $fileinfo))
 			{
