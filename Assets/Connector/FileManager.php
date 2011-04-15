@@ -1476,6 +1476,7 @@ class FileManager
 			$filename = null;
 			$file = null;
 			$mime = null;
+			$meta = null;
 			if (!empty($file_arg) && empty($v_ex_code))
 			{
 				$v_ex_code = 'nofile';
@@ -1489,7 +1490,12 @@ class FileManager
 				{
 					if (is_file($file))
 					{
-						$mime = $this->getMimeType($file);
+						$meta = $this->getFileInfo($file);
+						if (!empty($meta['mime_type']))
+							$mime = $meta['mime_type'];
+						if (empty($mime))
+							$mime = 'application/octet-stream';
+						//$mime = $this->getMimeType($file);
 						if ($this->IsAllowedMimeType($mime, $mime_filters))
 						{
 							$v_ex_code = null;
@@ -1513,6 +1519,7 @@ class FileManager
 					'mime' => $mime,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
+					'image_info' => $meta,
 					'requested_size' => $reqd_size,
 					'mode' => ($as_JSON ? 'json' : 'image'),
 					'preliminary_json' => $jserr,
@@ -1533,6 +1540,7 @@ class FileManager
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
+			$meta = $fileinfo['image_info'];
 			$reqd_size = $fileinfo['requested_size'];
 			$as_JSON = ($fileinfo['mode'] == 'json');
 			$jserr = $fileinfo['preliminary_json'];
@@ -1563,6 +1571,14 @@ class FileManager
 			if (FileManagerUtility::startsWith($mime, 'image/') || $thumb250 !== false)
 			{
 				$thumb_path = $this->getThumb($legal_url, ($thumb250 !== false ? $this->url_path2file_path($thumb250) : $file), $reqd_size, $reqd_size);
+			}
+			else 
+			{
+				$jserr = $this->extractDetailInfo($jserr, $legal_url, $mime_filter, $mime_filters, 'direct');
+				if (!empty($jserr['thumb' . $reqd_size]))
+				{
+					$thumb_path = $jserr['thumb' . $reqd_size];
+				}
 			}
 
 			$img_filepath = (!empty($thumb_path) ? $thumb_path : $this->getIcon($filename, $reqd_size <= 16));
@@ -3170,13 +3186,67 @@ class FileManager
 		return false;
 	}
 
+	protected function fold_quicktime_subatoms(&$arr, &$inject, $key_prefix)
+	{
+		$satms = false;
+		if (!empty($arr['subatoms']) && is_array($arr['subatoms']) && !empty($arr['hierarchy']) && !empty($arr['name']) && $arr['hierarchy'] == $arr['name'])
+		{
+			// fold these up all the way to the root:
+			$key_prefix .= '.' . $arr['hierarchy'];
+			
+			$satms = $arr['subatoms'];
+			unset($arr['subatoms']);
+			$inject[$key_prefix] = $satms;
+		}
+
+		foreach ($arr as $key => &$value)
+		{
+			if (is_array($value))
+			{
+				$this->fold_quicktime_subatoms($value, $inject, $key_prefix);
+			}
+		}
+
+		if ($satms !== false)
+		{
+			$this->fold_quicktime_subatoms($inject[$key_prefix], $inject, $key_prefix);
+		}
+	}
+	
 	protected function clean_ID3info_results(&$arr, $flags = 0)
 	{
 		if (is_array($arr)) 
 		{
-			// heuristic #1: when the number of items in the array which are themselves arrays is 80%, contract the set
-			for(;;)
+			// heuristic #1: fold all the quickatoms subatoms using their hierarchy and name fields; this is a tree rewrite
+			if (array_key_exists('quicktime', $arr) && is_array($arr['quicktime']))
 			{
+				$inject = array();
+				$this->fold_quicktime_subatoms($arr['quicktime'], $inject, 'quicktime');
+				
+				// can't use array_splice on associative arrays, so we rewrite $arr now:
+				$newarr = array();
+				foreach ($arr as $key => &$value)
+				{
+					$newarr[$key] = $value;
+					if ($key == 'quicktime')
+					{
+						foreach ($inject as $ik => &$iv)
+						{
+							$newarr[$ik] = $iv;
+						}
+					}
+				}
+				$arr = $newarr;
+				unset($inject);
+				unset($newarr);
+			}
+			
+			$activity = true; 
+			while ($activity)
+			{
+				$activity = false; // assume there's nothing to do anymore. Prove us wrong now...
+				
+				// heuristic #2: when the number of items in the array which are themselves arrays is 80%, contract the set
 				$todo = array();
 				foreach ($arr as $key => &$value)
 				{
@@ -3232,17 +3302,13 @@ class FileManager
 						}
 					}
 					$arr = $inject;
-				}
-				else
-				{
-					// stop the folding process
-					break;
+					$activity = true;
 				}
 			}
 			
 			foreach ($arr as $key => &$value)
 			{
-				// heuristic #2: when the value is an array of integers, implode them to a comma-separated list (string) instead:
+				// heuristic #3: when the value is an array of integers, implode them to a comma-separated list (string) instead:
 				if (is_array($value))
 				{
 					$is_all_ints = true;
@@ -4538,6 +4604,8 @@ class FileManagerUtility
 					}
 					$returnstring .= '</td>';
 				}
+				// TODO: munch AVI offset/size/data items: data = binary
+				// TODO: munch RM 'type specific data': binary   ('type specific len' will occur alongside)
 				switch($key)
 				{
 				case 'filesize':
@@ -4553,8 +4621,18 @@ class FileManagerUtility
 					continue 2;
 					
 				case 'bitrate':
+				case 'bit rate':
+				case 'avg bit rate':
+				case 'max bit rate':
 				case 'sample rate':
+				case 'sample rate2':
+				case 'nSamplesPerSec':
+				case 'nAvgBytesPerSec':
 					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/s</td>';
+					continue 2;
+					
+				case 'bytes per minute':
+					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/min</td>';
 					continue 2;
 					
 				case 'data':
