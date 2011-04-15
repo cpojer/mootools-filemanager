@@ -3676,7 +3676,15 @@ class FileManager
 		case 'jpeg':
 			break;
 
+		case 'mp3':
+		case 'mp3':
+			// default to JPG, as embedded images don't contain transparency info:
+			$ext = 'jpg';
+			break;
+
 		default:
+			//$ext = preg_replace('/[^A-Za-z0-9]+/', '_', $ext);
+			
 			// default to PNG, as it'll handle transparancy and full color both:
 			$ext = 'png';
 			break;
@@ -3698,7 +3706,6 @@ class FileManager
 		$fn = '_' . $fi['filename'];
 		$fn = substr($dircode, 0, 4) . preg_replace('/[^A-Za-z0-9]+/', '_', $fn);
 		$fn = substr($fn . $dircode, 0, 38);
-		$ext = preg_replace('/[^A-Za-z0-9]+/', '_', $ext);
 
 		$rv .= $fn . '-' . $width . '.' . $ext;
 		return $rv;
