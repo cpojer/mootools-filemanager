@@ -2811,7 +2811,7 @@ class FileManager
 					{
 						// else: fall back to 'no preview available' (if getID3 didn't deliver instead...)
 						$mime_els[0] = 'unknown'; // remap!
-						continue;
+						continue 3;
 					}
 					break;
 				}
@@ -2822,7 +2822,7 @@ class FileManager
 				{
 				case 'x-javascript':
 					$mime_els[0] = 'text'; // remap!
-					continue;
+					continue 3;
 
 				case 'zip':
 					$out = array(array(), array());
@@ -2863,7 +2863,7 @@ class FileManager
 				default:
 					// else: fall back to 'no preview available' (if getID3 didn't deliver instead...)
 					$mime_els[0] = 'unknown'; // remap!
-					continue;
+					continue 3;
 				}
 				break;
 
