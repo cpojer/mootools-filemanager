@@ -595,7 +595,7 @@ div.filemanager dt {
 }
 
 div.filemanager dd {
-  width: 60%;
+  /* width: 60%;    -- Safari4 renders H scrollbar for items which are a little too wide for this, yet still fit on the line :-( */
   white-space: nowrap;
   overflow: auto;
 }
