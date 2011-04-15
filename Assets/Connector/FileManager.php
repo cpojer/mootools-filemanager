@@ -1999,7 +1999,6 @@ class FileManager
 					'mime' => $mime,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
-					'preliminary_json' => $jserr,
 					'validation_failure' => $v_ex_code
 				);
 			if (!empty($this->options['DownloadIsAuthorized_cb']) && function_exists($this->options['DownloadIsAuthorized_cb']) && !$this->options['DownloadIsAuthorized_cb']($this, 'download', $fileinfo))
@@ -2015,7 +2014,6 @@ class FileManager
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
-			$jserr = $fileinfo['preliminary_json'];
 
 			if ($fd = fopen($file, 'rb'))
 			{
