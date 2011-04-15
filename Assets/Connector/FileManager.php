@@ -577,6 +577,14 @@ define('MTFM_MIN_GETID3_CACHESIZE', 16);
 
 
 
+
+
+// flags for clean_ID3info_results()
+define('MTFM_CLEAN_ID3_STRIP_EMBEDDED_IMAGES', 0x0001);
+	
+
+
+
 class FileManager
 {
 	protected $options;
@@ -1537,18 +1545,23 @@ class FileManager
 			 * and too little available RAM) we /still/ want to see that happen: for broken and overlarge images, we
 			 * produce some alternative graphics instead!
 			 */
-			$thumb_path = null;
-			if (FileManagerUtility::startsWith($mime, 'image/'))
+			 
+			// access the image and create a thumbnail image; this can fail dramatically. 
+			//
+			// Note that 'onThumbnail' ASSUMES 'onDetail' has been called before, for this same file. (Otherwise, thumbnails for
+			// non-images won't work!)
+			//
+			// Use the 250px thumbnail as a source when it already exists AND we are looking for a smaller thumbnail right now.
+			// Otherwise, use the original file.
+			$thumb250 = false;
+			if ($reqd_size < 250)
 			{
-				// access the image and create a thumbnail image; this can fail dramatically
-				//
-				// Use the 250px thumbnail as a source when it already exists AND we are looking for a smaller thumbnail right now.
-				// Otherwise, use the original file.
-				$thumb250 = false;
-				if ($reqd_size < 250)
-				{
-					$thumb250 = $this->getThumb($legal_url, $file, 250, 250, true);
-				}
+				$thumb250 = $this->getThumb($legal_url, $file, 250, 250, true);
+			}
+			$thumb_path = null;
+			// only try to /generate/ a thumbnail when we are looking at a image SOURCE, be it the original file or the 250px thumbnail file:
+			if (FileManagerUtility::startsWith($mime, 'image/') || $thumb250 !== false)
+			{
 				$thumb_path = $this->getThumb($legal_url, ($thumb250 !== false ? $this->url_path2file_path($thumb250) : $file), $reqd_size, $reqd_size);
 			}
 
@@ -2616,6 +2629,11 @@ class FileManager
 		$mime_els = explode('/', $mime);
 		for(;;) // bogus loop; only meant to assist the [mime remapping] state machine in here
 		{
+			$thumb250   = false;
+			$thumb250_e = false;
+			$thumb48    = false;
+			$thumb48_e  = false;
+
 			switch ($mime_els[0])
 			{
 			case 'image':
@@ -2754,7 +2772,7 @@ class FileManager
 							 * before dumping the EXIF data array (which may carry binary content and MAY CRASH the json_encode()r >:-((
 							 * we filter it to prevent such crashes and oddly looking (diagnostic) presentation of values.
 							 */
-							$dump = table_var_dump($exif_data, false);
+							$dump = FileManagerUtility::table_var_dump($exif_data, false);
 
 							self::clean_EXIF_results($exif_data);
 							$dump .= var_dump_ex($exif_data, 0, 0, false);
@@ -2927,9 +2945,93 @@ class FileManager
 				{
 					$postdiag_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
 				}
+				
 				try
 				{
-					$dump = table_var_dump($fi, false);
+					unset($fi['GETID3_VERSION']);
+					unset($fi['filepath']);
+					unset($fi['filename']);
+					unset($fi['filenamepath']);
+					unset($fi['cache_timestamp']);
+					
+					if ($thumb250_e === false)
+					{
+						// when the ID3 info scanner can dig up an EMBEDDED thumbnail, when we don't have anything else, we're happy with that one!
+						$thumb250 = $this->getThumb($url, $file, 250, 250, true);
+						if ($thumb250 === false)
+						{
+							/*
+							 * No thumbnail available yet, so find me one! 
+							 *
+							 * When we find a thumbnail during the 'cleanup' scan, we don't know up front if it's suitable to be used directly,
+							 * so we treat it as an alternative 'original' file and generate a 250px/48px thumbnail set from it.
+							 *
+							 * When the embedded thumbnail is small enough, the thumbnail creation process will be simply a copy action, so relatively
+							 * low cost.
+							 */
+							$embed = $this->extract_ID3info_embedded_image($fi);
+							if ($embed !== false)
+							{
+								$thumbX = $this->options['thumbnailPath'] . $this->generateThumbName($url, 'embed');
+								$thumbX_f = $this->url_path2file_path($thumbX);
+								$tfi = pathinfo($thumbX_f);
+								$tfi['extension'] = image_type_to_extension($embed['meta'][2]);
+								$thumbX_f = $tfi['dirname'] . '/' . $tfi['filename'] . '.' . $tfi['extension'];
+								// as we've spent some effort to dig out the embedded thumbnail, and 'knowing' (assuming) that generally
+								// embedded thumbnails are not too large, we don't concern ourselves with delaying the thumbnail generation (the
+								// source file mapping is not bidirectional, either!) and go straight ahead and produce the 250px thumbnail at least.
+								$thumb250 = false;
+								$thumb48  = false;
+								$emsgX = null;
+								if (false === file_put_contents($thumbX_f, $embed['data']))
+								{
+									@unlink($thumbX_f);
+									$emsgX = 'Cannot save embedded image data to cache.';
+									$thumb48 = $this->getIcon('is.default-error', false);
+									$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+									$thumb250 = $thumb48;
+									$thumb250_e = $thumb48_e;
+								}
+								else
+								{
+									try
+									{
+										$thumb250 = $this->getThumb($url, $thumbX_f, 250, 250, false);
+										$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
+										$thumb48  = $this->getThumb($url, ($thumb250 !== false ? $this->url_path2file_path($thumb250) : $thumbX_f), 48, 48, false);
+										$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+									}
+									catch (Exception $e)
+									{
+										$emsgX = $e->getMessage();
+										$thumb48 = $this->getIconForError($emsgX, $url, false);
+										$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+										$thumb250 = $thumb48;
+										$thumb250_e = $thumb48_e;
+									}
+								}
+
+								if ($thumb250 !== false)
+								{
+									if (empty($preview_HTML))
+									{
+										$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+													   <img src="' . $thumb250_e . '" class="preview" alt="' . $emsgX . '" />
+													 </a>';
+									}
+									$json['thumb250'] = $thumb250_e;
+								}
+								if ($thumb48 !== false)
+								{
+									$json['thumb48'] = $thumb48_e;
+								}
+							}
+						}
+					}
+
+					$this->clean_ID3info_results($fi);
+					
+					$dump = FileManagerUtility::table_var_dump($fi, false);
 					
 					if (0)
 					{
@@ -3032,6 +3134,187 @@ class FileManager
 		// Indeed, that does assume we (as in 'we' being this particular function!) know about how the
 		// data we process will be used. Risky, but fine with me. Hence the 'protected'.
 		array_walk_recursive($arr, 'self::__clean_EXIF_results');
+	}
+
+	
+	/**
+	 * Extract an embedded image from the getID3 info data.
+	 *
+	 * Return FALSE when no embedded image was found, otherwise return an array of the metadata and the binary image data itself.
+	 */
+	protected function extract_ID3info_embedded_image(&$arr)
+	{
+		if (is_array($arr)) 
+		{
+			foreach ($arr as $key => &$value)
+			{
+				if ($key == 'data' && isset($arr['image_mime'])) 
+				{
+					// first make sure this is a valid image
+					$imageinfo = array();
+					$imagechunkcheck = getid3_lib::GetDataImageSize($value, $imageinfo);
+					if (is_array($imagechunkcheck) && isset($imagechunkcheck[2]) && in_array($imagechunkcheck[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG)))
+					{
+						return array('meta' => $imagechunkcheck,
+									 'data' => $value);
+					}
+				} 
+				else if (is_array($value))
+				{
+					$rv = $this->extract_ID3info_embedded_image($value);
+					if ($rv !== false)
+						return $rv;
+				}
+			}
+		}
+		return false;
+	}
+
+	protected function clean_ID3info_results(&$arr, $flags = 0)
+	{
+		if (is_array($arr)) 
+		{
+			// heuristic #1: when the number of items in the array which are themselves arrays is 80%, contract the set
+			for(;;)
+			{
+				$todo = array();
+				foreach ($arr as $key => &$value)
+				{
+					if (is_array($value))
+					{
+						$acnt = 0;
+						foreach ($value as $sk => &$sv)
+						{
+							if (is_array($sv))
+							{
+								$acnt++;
+							}
+						}
+						
+						// the floor() here helps to fold single-element arrays alongside! :-)
+						if (floor(0.5 * count($value)) <= $acnt)
+						{
+							$todo[] = $key;
+						}
+					}
+				}
+				if (count($todo) > 0)
+				{
+					$inject = array();
+					foreach ($arr as $key => &$value)
+					{
+						if (is_array($value) && in_array($key, $todo))
+						{
+							unset($todo[$key]);
+							
+							foreach ($value as $sk => &$sv)
+							{
+								$nk = $key . '.' . $sk;
+
+								// pull up single entry subsubarrays at the same time!
+								if (is_array($sv) && count($sv) == 1)
+								{
+									foreach ($sv as $sk2 => &$sv2)
+									{
+										$nk .= '.' . $sk2;
+										$inject[$nk] = $sv2;
+									}
+								}
+								else
+								{
+									$inject[$nk] = $sv;
+								}
+							}
+						}
+						else
+						{
+							$inject[$key] = $value;
+						}
+					}
+					$arr = $inject;
+				}
+				else
+				{
+					// stop the folding process
+					break;
+				}
+			}
+			
+			foreach ($arr as $key => &$value)
+			{
+				// heuristic #2: when the value is an array of integers, implode them to a comma-separated list (string) instead:
+				if (is_array($value))
+				{
+					$is_all_ints = true;
+					for ($sk = count($value) - 1; $sk >= 0; $sk--)
+					{
+						if (!array_key_exists($sk, $value) || !is_int($value[$sk]))
+						{
+							$is_all_ints = false;
+							break;
+						}
+					}
+					if ($is_all_ints)
+					{
+						$s = implode(', ', $value);
+						$value = $s;
+					}
+				}
+			
+				if ($key == 'data' && isset($arr['image_mime'])) 
+				{
+					// when this is a valid image, it's already available as a thumbnail, most probably
+					$imageinfo = array();
+					$imagechunkcheck = getid3_lib::GetDataImageSize($value, $imageinfo);
+					if (is_array($imagechunkcheck) && isset($imagechunkcheck[2]))
+					{
+						if ($flags & MTFM_CLEAN_ID3_STRIP_EMBEDDED_IMAGES)
+						{
+							$value = '(embedded image ' . image_type_to_extension($imagechunkcheck[2]) . ' data...)';
+						}
+					}
+					else
+					{
+						if ($flags & MTFM_CLEAN_ID3_STRIP_EMBEDDED_IMAGES)
+						{
+							$value = '(unidentified image data ... ' . (is_string($value) ? 'length = ' . strlen($value) : '') . ' -- ' . print_r($imagechunkcheck) . ')';
+						}
+					}
+				} 
+				else if (isset($arr[$key . '_guid']))
+				{
+					// convert guid raw binary data to hex:
+					$temp = unpack("H*", $value);
+					$value = $temp[1];
+				}
+				else 
+				{
+					$this->clean_ID3info_results($value);
+				}
+			}
+		}
+		else if (is_string($arr))
+		{
+			$arr = str_replace("\x00", ' ', $arr);
+		}
+		else if (is_bool($arr) ||
+				 is_int($arr) ||
+				 is_float($arr) ||
+				 is_null($arr))
+		{
+		}
+		else if (is_object($arr))
+		{
+			$arr = '(object)';
+		}
+		else if (is_resource($arr))
+		{
+			$arr = '(resource)';
+		}
+		else
+		{
+			$arr = '(unidentified type: ' . gettype($arr) . ')';
+		}
 	}
 
 	/**
@@ -4214,6 +4497,134 @@ class FileManagerUtility
 		}
 		$val = round($val, ($x > 0 ? $precision : 0));
 		return $val . '&#160;' . $unit[$x];
+	}
+
+	
+
+
+	/*
+	 * Derived from getID3 demo_browse.php sample code.
+	 *
+	 * Attempts some 'intelligent' conversions for better readability and information compacting.
+	 */
+	public static function table_var_dump(&$variable, $wrap_in_td = false, $show_types = false) 
+	{
+		$returnstring = '';
+		if (is_array($variable)) 
+		{
+			$returnstring .= ($wrap_in_td ? '<td>' : '');
+			$returnstring .= '<table class="dump_array" cellspacing="0" cellpadding="2">';
+			foreach ($variable as $key => &$value) 
+			{
+				$key = str_replace('_', ' ', str_replace("\x00", ' ', $key));
+				$returnstring .= '<tr><td valign="top"><b>'.$key.'</b></td>';
+				if ($show_types)
+				{
+					$returnstring .= '<td valign="top">'.gettype($value);
+					if (is_array($value)) 
+					{
+						$returnstring .= '&nbsp;('.count($value).')';
+					} 
+					elseif (is_string($value)) 
+					{
+						$returnstring .= '&nbsp;('.strlen($value).')';
+					}
+					$returnstring .= '</td>';
+				}
+				switch($key)
+				{
+				case 'filesize':
+					$returnstring .= '<td class="dump_seconds">' . self::fmt_bytecount($value) . ($value >= 1024 ? ' (' . $value . ' bytes)' : '') . '</td>';
+					continue 2;
+					
+				case 'playtime seconds':
+					$returnstring .= '<td class="dump_seconds">' . number_format($value, 1) . ' s</td>';
+					continue 2;
+					
+				case 'compression ratio':
+					$returnstring .= '<td class="dump_compression_ratio">' . number_format($value * 100, 1) . '%</td>';
+					continue 2;
+					
+				case 'bitrate':
+				case 'sample rate':
+					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/s</td>';
+					continue 2;
+					
+				case 'data':
+					if (is_string($value) && strlen($value) > 0)
+					{
+						// is this a cleaned up item? Yes, then there's a full-ASCII string here, sans newlines, etc.
+						if ($value[0] == '(' && strlen($value) < 256 && !preg_match('/[^ -~]/', $value))
+						{
+							$returnstring .= '<td><i>' . $value . '</i></td></tr>';
+							continue 2;
+						}
+
+						//if (($key == 'data') && isset($variable['image_mime']) && isset($variable['dataoffset'])) {
+						if (isset($variable['image_mime'])) 
+						{
+							$imageinfo = array();
+							$imagechunkcheck = getid3_lib::GetDataImageSize($value, $imageinfo);
+							if (is_array($imagechunkcheck) && isset($imagechunkcheck[2]))
+							{
+								$returnstring .= '<td>';
+								$returnstring .= '<table class="dump_image" cellspacing="0" cellpadding="2">';
+								$returnstring .= '<tr><td><b>type</b></td><td>'.getid3_lib::ImageTypesLookup($imagechunkcheck[2]).'</td></tr>';
+								$returnstring .= '<tr><td><b>width</b></td><td>'.number_format($imagechunkcheck[0]).' px</td></tr>';
+								$returnstring .= '<tr><td><b>height</b></td><td>'.number_format($imagechunkcheck[1]).' px</td></tr>';
+								$returnstring .= '<tr><td><b>size</b></td><td>'.number_format(strlen($value)).' bytes</td></tr></table>';
+								$returnstring .= '<img src="data:'.$imagechunkcheck['mime'].';base64,'.base64_encode($value).'" width="'.$imagechunkcheck[0].'" height="'.$imagechunkcheck[1].'"></td></tr>';
+								continue 2;
+							}
+							else
+							{
+								$returnstring .= '<td><i>(unidentified image data ... ' . (is_string($value) ? 'length = ' . strlen($value) : '') . ')</i></td></tr>';
+								continue 2;
+							}
+						} 
+					}
+					break;
+				}
+				$returnstring .= FileManagerUtility::table_var_dump($value, true, $show_types) . '</tr>';
+			}
+			$returnstring .= '</table>';
+			$returnstring .= ($wrap_in_td ? '</td>' : '');
+		}
+		else if (is_bool($variable)) 
+		{
+			$returnstring .= ($wrap_in_td ? '<td class="dump_boolean">' : '').($variable ? 'TRUE' : 'FALSE').($wrap_in_td ? '</td>' : '');
+		}
+		else if (is_int($variable)) 
+		{
+			$returnstring .= ($wrap_in_td ? '<td class="dump_integer">' : '').$variable.($wrap_in_td ? '</td>' : '');
+		}
+		else if (is_float($variable)) 
+		{
+			$returnstring .= ($wrap_in_td ? '<td class="dump_double">' : '').$variable.($wrap_in_td ? '</td>' : '');
+		}
+		else if (is_object($variable)) 
+		{
+			$returnstring .= ($wrap_in_td ? '<td class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</td>' : '');
+		}
+		else if (is_null($variable)) 
+		{
+			$returnstring .= ($wrap_in_td ? '<td class="dump_null">' : '').'(null)'.($wrap_in_td ? '</td>' : '');
+		}
+		else if (is_string($variable)) 
+		{
+			$variable = str_replace("\x00", ' ', $variable);
+			$varlen = strlen($variable);
+			for ($i = 0; $i < $varlen; $i++) 
+			{
+				$returnstring .= htmlentities($variable{$i}, ENT_QUOTES, 'UTF-8');
+			}
+			$returnstring = ($wrap_in_td ? '<td class="dump_string">' : '').nl2br($returnstring).($wrap_in_td ? '</td>' : '');
+		}
+		else 
+		{
+			$returnstring .= ($wrap_in_td ? '<td>' : '').nl2br(htmlspecialchars(str_replace("\x00", ' ', $variable))).($wrap_in_td ? '</td>' : '');
+		}
+		return $returnstring;
 	}
 }
 
