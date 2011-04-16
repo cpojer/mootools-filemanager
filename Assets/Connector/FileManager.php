@@ -1408,10 +1408,15 @@ class FileManager
 		$jserr['icon'] = $icon_e;
 
 		$content_classes = "margin preview_err_report";
-		$postdiag_HTML = '<p class="err_info">' . $emsg . '</p>';
+		$postdiag_err_HTML = '<p class="err_info">' . $emsg . '</p>';
+		$postdiag_dump_HTML = '';
 		$preview_HTML = '${nopreview}';
-		$content = '<h3>${preview}</h3>' . $preview_HTML;
-		$content .= '<h3>Diagnostics</h3>' . $postdiag_HTML;
+		$content = '<h3>${preview}</h3>
+						<div class="filemanager-preview-content">' . $preview_HTML . '</div>';
+		$content .= '<h3>Diagnostics</h3>
+					 <div class="filemanager-detail-diag">
+						<div class="filemanager-errors">' . $postdiag_err_HTML . '</div>
+					 </div>';
 
 		$json['content'] = self::compressHTML('<div class="' . $content_classes . '">' . $content . '</div>');
 
@@ -2697,7 +2702,8 @@ class FileManager
 		$content_classes = "margin" . ($bad_ext ? ' preview_err_report' : '');
 		$content = '';
 		$preview_HTML = null;
-		$postdiag_HTML = '';
+		$postdiag_err_HTML = '';
+		$postdiag_dump_HTML = '';
 
 		$mime_els = explode('/', $mime);
 		for(;;) // bogus loop; only meant to assist the [mime remapping] state machine in here
@@ -2826,12 +2832,12 @@ class FileManager
 					// use the abilities of modify_json4exception() to munge/format the exception message:
 					$jsa = array('error' => '');
 					$this->modify_json4exception($jsa, $emsg);
-					$postdiag_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
+					$postdiag_err_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
 				}
 				if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
 				{
 					$earr = explode(':', $e->getMessage(), 2);
-					$postdiag_HTML .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
+					$postdiag_err_HTML .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
 				}
 
 				if (0)
@@ -2849,7 +2855,7 @@ class FileManager
 
 							self::clean_EXIF_results($exif_data);
 							$dump .= var_dump_ex($exif_data, 0, 0, false);
-							$postdiag_HTML .= $dump;
+							$postdiag_dump_HTML .= $dump;
 						}
 					}
 					catch (Exception $e)
@@ -2857,7 +2863,7 @@ class FileManager
 						// use the abilities of modify_json4exception() to munge/format the exception message:
 						$jsa = array('error' => '');
 						$this->modify_json4exception($jsa, $e->getMessage());
-						$postdiag_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
+						$postdiag_err_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
 					}
 				}
 				break;
@@ -3016,7 +3022,7 @@ class FileManager
 			{
 				if (!empty($fi['error']))
 				{
-					$postdiag_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
+					$postdiag_err_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
 				}
 				
 				try
@@ -3112,12 +3118,12 @@ class FileManager
 						$dump .= var_dump_ex($fi, 0, 0, false);
 					}
 
-					$postdiag_HTML .= "\n" . $dump . "\n";
+					$postdiag_dump_HTML .= "\n" . $dump . "\n";
 					//@file_put_contents('getid3.log', $dump);
 				}
 				catch(Exception $e)
 				{
-					$postdiag_HTML .= '<p class="err_info">' . $e->getMessage() . '</p>';
+					$postdiag_err_HTML .= '<p class="err_info">' . $e->getMessage() . '</p>';
 				}
 			}
 			break;
@@ -3130,11 +3136,20 @@ class FileManager
 
 		if (!empty($preview_HTML))
 		{
-			$content .= '<h3>${preview}</h3>' . $preview_HTML;
+			$content .= '<h3>${preview}</h3><div class="filemanager-preview-content">' . $preview_HTML . '</div>';
 		}
-		if (!empty($postdiag_HTML))
+		if (!empty($postdiag_err_HTML) || !empty($postdiag_dump_HTML))
 		{
-			$content .= '<h3>Diagnostics</h3>' . $postdiag_HTML;
+			$content .= '<h3>Diagnostics</h3><div class="filemanager-detail-diag">';
+			if (!empty($postdiag_err_HTML))
+			{
+				$content .= '<div class="filemanager-errors">' . $postdiag_err_HTML . '</div>';
+			}
+			if (!empty($postdiag_dump_HTML))
+			{
+				$content .= '<div class="filemanager-diag-dump">' . $postdiag_dump_HTML . '</div>';
+			}
+			$content .= '</div>';
 		}
 
 		$json['content'] = self::compressHTML('<div class="' . $content_classes . '">' . $content . '</div>');
