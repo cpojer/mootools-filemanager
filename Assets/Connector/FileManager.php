@@ -221,6 +221,8 @@
  *               'tmp_filepath'          (string) filesystem path pointing at the temporary storage location of the uploaded file: you can
  *                                       access the file data available here to optionally validate the uploaded content.
  *
+ *               'meta_data'             (array) the content sniffed infor as produced by getID3
+ *
  *               'mime'                  (string) the mime type as sniffed from the file
  *
  *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
@@ -228,8 +230,6 @@
  *                                       and including the slash, e.g. 'image/'
  *
  *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
- *
- *               'image_info'            (array) the content sniffed infor as produced by getID3
  *
  *               'size'                  (integer) number of bytes of the uploaded file
  *
@@ -243,6 +243,9 @@
  *               'chmod'                 (integer) UNIX access rights (default: 0666) for the file-to-be-created (RW for user,group,world).
  *
  *                                       Note that the eXecutable bits have already been stripped before the callback was invoked.
+ *
+ *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular upload
+ *                                       operation, when the ['status']==0, we are performing a defective upload operation.
  *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
  *                                       "nofile": the string passed as message parameter of the FileManagerException, which will be thrown
@@ -272,6 +275,8 @@
  *                                       to obtain the absolute URI path for the given file.
  *
  *               'file'                  (string) physical filesystem path to the file being downloaded.
+ *
+ *               'meta_data'             (array) the content sniffed infor as produced by getID3
  *
  *               'mime'                  (string) the mime type as sniffed from the file
  *
@@ -315,6 +320,9 @@
  *
  *               'chmod'                 (integer) UNIX access rights (default: 0777) for the directory-to-be-created (RWX for user,group,world)
  *
+ *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular 'create'
+ *                                       operation, when the ['status']==0, we are performing a defective 'create' operation.
+ *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
  *                                       "nofile": the string passed as message parameter of the FileManagerException, which will be thrown
  *                                       after the callback has returned. (You may alter the 'validation_failure' string value to change the
@@ -337,6 +345,8 @@
  *
  *               'file'                  (string) physical filesystem path to the file/directory being deleted.
  *
+ *               'meta_data'             (array) the content sniffed infor as produced by getID3
+ *
  *               'mime'                  (string) the mime type as sniffed from the file / directory (directories are mime type: 'text/directory')
  *
  *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
@@ -351,6 +361,9 @@
  *
  *                                       The design idea behind this approach is that you are only allowed what you can see ('view'), so
  *                                       all 'view' restrictions should equally to the 'delete' operation.
+ *
+ *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular 'destroy'
+ *                                       operation, when the ['status']==0, we are performing a defective 'destroy' operation.
  *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
  *                                       "nofile": the string passed as message parameter of the FileManagerException, which will be thrown
@@ -401,6 +414,9 @@
  *
  *               'function'              (string) PHP call which will perform the operation. ('rename' or 'copy')
  *
+ *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular 'move'
+ *                                       operation, when the ['status']==0, we are performing a defective 'move' operation.
+ *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
  *                                       "nofile": the string passed as message parameter of the FileManagerException, which will be thrown
  *                                       after the callback has returned. (You may alter the 'validation_failure' string value to change the
@@ -426,6 +442,8 @@
  *               'collection'            (dual array of strings) arrays of files and directories (including '..' entry at the top when this is a
  *                                       subdirectory of the FM-managed tree): only names, not full paths. The files array is located at the
  *                                       ['files'] index, while the directories are available at the ['dirs'] index.
+ *
+ *               'meta_data'             (array) the content sniffed infor as produced by getID3
  *
  *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
  *                                       full or partial mime types, where a 'partial' mime types is the part of a mime type before
@@ -472,6 +490,8 @@
  *
  *               'filename'              (string) the filename of the file being inspected. (Identical to 'basename($legal_url)')
  *
+ *               'meta_data'             (array) the content sniffed infor as produced by getID3
+ *
  *               'mime'                  (string) the mime type as sniffed from the file
  *
  *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
@@ -479,6 +499,9 @@
  *                                       and including the slash, e.g. 'image/'
  *
  *               'mime_filters'          (optional, array of strings) the set of allowed mime types, derived from the 'mime_filter' setting.
+ *
+ *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular 'detail'
+ *                                       operation, when the ['status']==0, we are performing a defective 'detail' operation.
  *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
  *                                       "nofile": the string passed as message parameter of the FileManagerException, which will be thrown
@@ -504,6 +527,8 @@
  *
  *               'filename'              (string) the filename of the file being inspected. (Identical to 'basename($legal_url)')
  *
+ *               'meta_data'             (array) the content sniffed infor as produced by getID3
+ *
  *               'mime'                  (string) the mime type as sniffed from the file
  *
  *               'mime_filter'           (optional, string) mime filter as specified by the client: a comma-separated string containing
@@ -516,6 +541,11 @@
  *
  *               'mode'                  (string) 'image' (default): produce the thumbnail binary image data itself. 'json': return a JSON
  *                                       response listing the URL to the actual thumbnail image.
+ *
+ *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular 'thumbnail'
+ *                                       operation, when the ['status']==0, we are performing a defective 'thumbnail' operation.
+ *                                       Note that it is pretty useless to edit this entry when $info['mode'] != 'json', i.e. when this call 
+ *                                       is required to produce a binary image.
  *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
  *                                       "nofile": the string passed as message parameter of the FileManagerException, which will be thrown
@@ -1294,6 +1324,7 @@ class FileManager
 			$filename = null;
 			$file = null;
 			$mime = null;
+			$meta = null;
 			if (!empty($file_arg))
 			{
 				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
@@ -1305,7 +1336,12 @@ class FileManager
 				{
 					if (is_file($file))
 					{
-						$mime = $this->getMimeType($file);
+						$meta = $this->getFileInfo($file);
+						if (!empty($meta['mime_type']))
+							$mime = $meta['mime_type'];
+						if (empty($mime))
+							$mime = 'application/octet-stream';
+						//$mime = $this->getMimeType($file);
 						if (!$this->IsAllowedMimeType($mime, $mime_filters))
 							$v_ex_code = 'extension';
 						else
@@ -1324,6 +1360,7 @@ class FileManager
 					'file' => $file,
 					'filename' => $filename,
 					'mode' => $mode,
+					'meta_data' => $meta,
 					'mime' => $mime,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
@@ -1343,12 +1380,13 @@ class FileManager
 			//$file = $fileinfo['file'];
 			$filename = $fileinfo['filename'];
 			$mode = $fileinfo['mode'];
+			$meta = $fileinfo['meta_data'];
 			//$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
 			$jserr = $fileinfo['preliminary_json'];
 
-			$jserr = $this->extractDetailInfo($jserr, $legal_url, $mime_filter, $mime_filters, $mode);
+			$jserr = $this->extractDetailInfo($jserr, $legal_url, $meta, $mime_filter, $mime_filters, $mode);
 
 			if (!headers_sent()) header('Content-Type: application/json');
 
@@ -1516,10 +1554,10 @@ class FileManager
 					'legal_url' => $legal_url,
 					'file' => $file,
 					'filename' => $filename,
+					'meta_data' => $meta,
 					'mime' => $mime,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
-					'image_info' => $meta,
 					'requested_size' => $reqd_size,
 					'mode' => ($as_JSON ? 'json' : 'image'),
 					'preliminary_json' => $jserr,
@@ -1537,10 +1575,10 @@ class FileManager
 			$legal_url = $fileinfo['legal_url'];
 			$file = $fileinfo['file'];
 			$filename = $fileinfo['filename'];
+			$meta = $fileinfo['meta_data'];
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
-			$meta = $fileinfo['image_info'];
 			$reqd_size = $fileinfo['requested_size'];
 			$as_JSON = ($fileinfo['mode'] == 'json');
 			$jserr = $fileinfo['preliminary_json'];
@@ -1574,7 +1612,9 @@ class FileManager
 			}
 			else 
 			{
-				$jserr = $this->extractDetailInfo($jserr, $legal_url, $mime_filter, $mime_filters, 'direct');
+				// 'abuse' the info extraction to produce any embedded images, which can be used for thumbnail production.
+				// This is really using a side effect of this call...
+				$jserr = $this->extractDetailInfo($jserr, $legal_url, $meta, $mime_filter, $mime_filters, 'direct');
 				if (!empty($jserr['thumb' . $reqd_size]))
 				{
 					$thumb_path = $jserr['thumb' . $reqd_size];
@@ -1708,6 +1748,7 @@ class FileManager
 			$filename = null;
 			$file = null;
 			$mime = null;
+			$meta = null;
 			if (!empty($file_arg))
 			{
 				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
@@ -1719,7 +1760,12 @@ class FileManager
 				{
 					if (is_file($file))
 					{
-						$mime = $this->getMimeType($file);
+						$meta = $this->getFileInfo($file);
+						if (!empty($meta['mime_type']))
+							$mime = $meta['mime_type'];
+						if (empty($mime))
+							$mime = 'application/octet-stream';
+						//$mime = $this->getMimeType($file);
 						if ($this->IsAllowedMimeType($mime, $mime_filters))
 							$v_ex_code = null;
 					}
@@ -1735,6 +1781,7 @@ class FileManager
 					'legal_url' => $legal_url,
 					'file' => $file,
 					'mime' => $mime,
+					'meta_data' => $meta,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
 					'preliminary_json' => $jserr,
@@ -1751,6 +1798,7 @@ class FileManager
 
 			$legal_url = $fileinfo['legal_url'];
 			$file = $fileinfo['file'];
+			$meta = $fileinfo['meta_data'];
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
@@ -1999,6 +2047,7 @@ class FileManager
 			$legal_url = null;
 			$file = null;
 			$mime = null;
+			$meta = null;
 			if (!empty($file_arg))
 			{
 				$legal_url = $this->rel2abs_legal_url_path($file_arg);
@@ -2011,7 +2060,12 @@ class FileManager
 				{
 					if (is_file($file))
 					{
-						$mime = $this->getMimeType($file);
+						$meta = $this->getFileInfo($file);
+						if (!empty($meta['mime_type']))
+							$mime = $meta['mime_type'];
+						if (empty($mime))
+							$mime = 'application/octet-stream';
+						//$mime = $this->getMimeType($file);
 						if ($this->IsAllowedMimeType($mime, $mime_filters))
 							$v_ex_code = null;
 					}
@@ -2026,6 +2080,7 @@ class FileManager
 					'legal_url' => $legal_url,
 					'file' => $file,
 					'mime' => $mime,
+					'meta_data' => $meta,
 					'mime_filter' => $mime_filter,
 					'mime_filters' => $mime_filters,
 					'validation_failure' => $v_ex_code
@@ -2040,6 +2095,7 @@ class FileManager
 
 			$legal_url = $fileinfo['legal_url'];
 			$file = $fileinfo['file'];
+			$meta = $fileinfo['meta_data'];
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
@@ -2204,10 +2260,11 @@ class FileManager
 				'raw_filename' => $file_arg,
 				'name' => $fi['filename'],
 				'extension' => $fi['extension'],
+				'meta_data' => $meta,
 				'mime' => $mime,
 				'mime_filter' => $mime_filter,
 				'mime_filters' => $mime_filters,
-				'image_info' => $meta,
+				'meta_data' => $meta,
 				'tmp_filepath' => $tmppath,
 				'size' => $file_size,
 				'maxsize' => $this->options['maxUploadSize'],
@@ -2228,6 +2285,7 @@ class FileManager
 			$dir = $fileinfo['dir'];
 			$file_arg = $fileinfo['raw_filename'];
 			$filename = $fileinfo['name'] . (!empty($fileinfo['extension']) ? '.' . $fileinfo['extension'] : '');
+			$meta = $fileinfo['meta_data'];
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
 			$mime_filters = $fileinfo['mime_filters'];
@@ -2556,7 +2614,7 @@ class FileManager
 	 *
 	 * Throw an exception on error.
 	 */
-	public function extractDetailInfo($json, $legal_url, $mime_filter, $mime_filters, $thumbnail_gen_mode)
+	public function extractDetailInfo($json, $legal_url, $fi, $mime_filter, $mime_filters, $thumbnail_gen_mode)
 	{
 		$auto_thumb_gen_mode = ($thumbnail_gen_mode != 'direct');
 
@@ -2569,10 +2627,14 @@ class FileManager
 		$isdir = !is_file($file);
 		$bad_ext = false;
 		$mime = null;
-		$fi = null;
+		//$fi = null;
 		if (!$isdir)
 		{
-			$fi = $this->getFileInfo($file);
+			// only perform the (costly) getID3 scan when it hasn't been done before, i.e. can we re-use previously obtained data or not?
+			if (!is_array($fi))
+			{
+				$fi = $this->getFileInfo($file);
+			}
 			if (!empty($fi['mime_type']))
 				$mime = $fi['mime_type'];
 			if (empty($mime))
