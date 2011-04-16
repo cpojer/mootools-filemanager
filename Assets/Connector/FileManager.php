@@ -1653,7 +1653,7 @@ class FileManager
 					if (!$fd)
 						throw new Exception('panic');
 				}
-				$mime = $this->getMimeType($file);
+				$mime = $this->getMimeType($file, true);  // take the fast track for determining the image mime type; we can be certain our thumbnails have correct file extensions!
 				$fsize = filesize($file);
 				if (!empty($mime))
 				{
@@ -3501,7 +3501,7 @@ class FileManager
 		{
 			if (is_file($file))
 			{
-				$mime = $this->getMimeType($file);
+				$mime = $this->getMimeType($file, true);   // take the fast track to mime type sniffing; we'll live with the (rather low) risk of being inacurate due to accidental/intentional misnaming of the files
 				if (!$this->IsAllowedMimeType($mime, $mime_filters))
 					return false;
 			}
