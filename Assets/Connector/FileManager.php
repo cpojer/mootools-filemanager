@@ -3284,6 +3284,44 @@ class FileManager
 			$this->fold_quicktime_subatoms($inject[$key_prefix], $inject, $key_prefix);
 		}
 	}
+
+	// assumes an input array with the keys in CamelCase semi-Hungarian Notation. Convert those keys to something humanly grokkable after it is processed by table_var_dump().
+	protected function clean_AVI_Hungarian(&$arr)
+	{
+		$dst = array();
+		foreach($arr as $key => &$value)
+		{
+			$nk = explode('_', preg_replace('/([A-Z])/', '_\\1', $key));
+			switch ($nk[0])
+			{
+			case 'dw':
+			case 'n':
+			case 'w':
+			case 'bi':
+				unset($nk[0]);
+				break;
+			}
+			$dst[strtolower(implode('_', $nk))] = $value;
+		}
+		$arr = $dst;
+	}
+	
+	// another round of scanning to rewrite the keys to human ligibility: as this changes the keys, we'll need to rewrite all entries to keep order intact
+	protected function clean_ID3info_keys(&$arr)
+	{
+		$dst = array();
+		foreach($arr as $key => &$value)
+		{
+			$key = strtr($key, "_\x00", '  ');
+			
+			$dst[$key] = $value;
+			if (is_array($value))
+			{
+				$this->clean_ID3info_keys($dst[$key]);
+			}
+		}
+		$arr = $dst;
+	}
 	
 	protected function clean_ID3info_results(&$arr, $flags = 0)
 	{
@@ -3425,11 +3463,41 @@ class FileManager
 					$temp = unpack("H*", $value);
 					$value = $temp[1];
 				}
+				else if (  ($key == 'data' && is_string($value) && isset($arr['offset']) && isset($arr['size']))      // AVI offset/size/data items: data = binary
+						|| ($key == 'type_specific_data' && is_string($value) /* && isset($arr['type_specific_len']) */ ))   // munch WMV/RM 'type specific data': binary   ('type specific len' will occur alongside, but not in WMV)
+				{
+					// a bit like UNIX strings tool: strip out anything which isn't at least possibly legible
+					$str = ' ' . preg_replace('/[^ !#-~]/', ' ', strtr($value, "\x00", ' ')) . ' ';		// convert non-ASCII and double quote " to space
+					do
+					{
+						$repl_count = 0;
+						$str = preg_replace(array('/ [^ ] /', 
+												  '/ [^A-Za-z0-9\\(.]/',
+												  '/ [A-Za-z0-9][^A-Za-z0-9\\(. ] /'
+												 ), ' ', $str, -1, $repl_count);
+					} while ($repl_count > 0);
+					$str = trim($str);
+					
+					$temp = unpack("H*", $value);
+					$temp = str_split($temp[1], 8);
+					$value = implode(" ", $temp) . (strlen($str) > 0 ? ' (' . $str . ')' : '');
+				}
+				else if (is_scalar($value) && preg_match('/^(dw[A-Z]|n[A-Z]|w[A-Z]|bi[A-Z])[a-zA-Z]+$/', $key))
+				{
+					// AVI sections which use Hungarian notation, at least partially
+					$this->clean_AVI_Hungarian($arr);
+					// and rescan the transformed key set...
+					$this->clean_ID3info_results($arr);
+					break; // exit this loop
+				}
 				else 
 				{
 					$this->clean_ID3info_results($value);
 				}
 			}
+			
+			// heuristic #4: convert keys to something legible:
+			$this->clean_ID3info_keys($arr);
 		}
 		else if (is_string($arr))
 		{
@@ -4661,7 +4729,6 @@ class FileManagerUtility
 			$returnstring .= '<table class="dump_array" cellspacing="0" cellpadding="2">';
 			foreach ($variable as $key => &$value) 
 			{
-				$key = str_replace('_', ' ', str_replace("\x00", ' ', $key));
 				$returnstring .= '<tr><td valign="top"><b>'.$key.'</b></td>';
 				if ($show_types)
 				{
@@ -4676,8 +4743,7 @@ class FileManagerUtility
 					}
 					$returnstring .= '</td>';
 				}
-				// TODO: munch AVI offset/size/data items: data = binary
-				// TODO: munch RM 'type specific data': binary   ('type specific len' will occur alongside)
+				
 				switch($key)
 				{
 				case 'filesize':
@@ -4696,10 +4762,11 @@ class FileManagerUtility
 				case 'bit rate':
 				case 'avg bit rate':
 				case 'max bit rate':
+				case 'max bitrate':
 				case 'sample rate':
 				case 'sample rate2':
-				case 'nSamplesPerSec':
-				case 'nAvgBytesPerSec':
+				case 'samples per sec':
+				case 'avg bytes per sec':
 					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/s</td>';
 					continue 2;
 					
@@ -4711,13 +4778,13 @@ class FileManagerUtility
 					if (is_string($value) && strlen($value) > 0)
 					{
 						// is this a cleaned up item? Yes, then there's a full-ASCII string here, sans newlines, etc.
-						if ($value[0] == '(' && strlen($value) < 256 && !preg_match('/[^ -~]/', $value))
+						if (strlen($value) < 256 && !preg_match('/[^ -~]/', $value))
 						{
 							$returnstring .= '<td><i>' . $value . '</i></td></tr>';
 							continue 2;
 						}
 
-						//if (($key == 'data') && isset($variable['image_mime']) && isset($variable['dataoffset'])) {
+						// an embedded image (MP3 et al)
 						if (isset($variable['image_mime'])) 
 						{
 							$imageinfo = array();
