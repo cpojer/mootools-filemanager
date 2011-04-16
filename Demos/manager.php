@@ -9,7 +9,7 @@ define("FILEMANAGER_CODE", true);
 define('DEVELOPMENT', 0);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
 
 
-require_once('FM-common.php');  // this one loads the appropriate FileManager AND the support functions used in this demo
+require('FM-common.php');  // this one loads the appropriate FileManager AND the support functions used in this demo
 
 
 
@@ -18,14 +18,14 @@ require_once('FM-common.php');  // this one loads the appropriate FileManager AN
  * when you want to pass absolute paths into FileManager, be reminded that ALL paths
  * (except for the [mimeTypesPath] one!) are paths in URI space, i.e. the 'root'
  * is assumed to be DocumentRoot.
- * 
+ *
  * Below is a quick example how a physical filesystem path /could/ be transformed
  * to a URI path -- assumed you don't get buggered by having Aliases apply to this
  * particular path, in which case you are between a rock and a hard place: then you
  * MUST specify URI paths instead, this 'trick' being defective.
  */
 
-$fm_basedir = str_replace(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '', dirname(str_replace('\\', '/', __FILE__))) . '/';
+$fm_basedir = str_replace(strtr($_SERVER['DOCUMENT_ROOT'], '\\', '/'), '', dirname(strtr(__FILE__, '\\', '/'))) . '/';
 
 
 

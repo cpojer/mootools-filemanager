@@ -8,7 +8,7 @@ define("FILEMANAGER_CODE", true);
 define('DEVELOPMENT', 0);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
 
 
-require_once('FM-common.php');  // this one loads the appropriate FileManager AND the support functions used in this demo
+require('FM-common.php');  // this one loads the appropriate FileManager AND the support functions used in this demo
 
 
 
@@ -24,7 +24,7 @@ require_once('FM-common.php');  // this one loads the appropriate FileManager AN
  * MUST specify URI paths instead, this 'trick' being defective.
  */
 
-$fm_basedir = str_replace(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '', dirname(str_replace('\\', '/', __FILE__))) . '/';
+$fm_basedir = str_replace(strtr($_SERVER['DOCUMENT_ROOT'], '\\', '/'), '', dirname(strtr(__FILE__, '\\', '/'))) . '/';
 
 
 
@@ -60,7 +60,6 @@ FM_vardumper($browser, 'init' . $event_cmd);
 
 // and process the request:
 $browser->fireEvent($event_cmd);
-
 
 
 

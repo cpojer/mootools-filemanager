@@ -23,7 +23,7 @@
  *   - FileManager.php
  */
 
-require_once(str_replace('\\', '/', dirname(__FILE__)) . '/FileManager.php');
+require(strtr(dirname(__FILE__), '\\', '/') . '/FileManager.php');
 
 
 /**

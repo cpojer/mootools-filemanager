@@ -586,9 +586,9 @@ if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 0);   // make sure this #defi
 
 
 
-require_once(str_replace('\\', '/', dirname(__FILE__)) . '/Tooling.php');
-require_once(str_replace('\\', '/', dirname(__FILE__)) . '/Image.class.php');
-require_once(str_replace('\\', '/', dirname(__FILE__)) . '/Assets/getid3/getid3.php');
+require(strtr(dirname(__FILE__), '\\', '/') . '/Tooling.php');
+require(strtr(dirname(__FILE__), '\\', '/') . '/Image.class.php');
+require(strtr(dirname(__FILE__), '\\', '/') . '/Assets/getid3/getid3.php');
 
 
 
@@ -633,7 +633,7 @@ class FileManager
 			'directory' => null,                                       // MUST be in the DocumentRoot tree
 			'assetBasePath' => null,                                   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
 			'thumbnailPath' => null,                                   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
-			'mimeTypesPath' => str_replace('\\', '/', dirname(__FILE__)) . '/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
+			'mimeTypesPath' => strtr(dirname(__FILE__), '\\', '/') . '/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 2600 * 2600 * 3,
 			// 'maxImageSize' => 99999,                                 // obsoleted, replaced by 'suggestedMaxImageDimension'
@@ -673,7 +673,7 @@ class FileManager
 		}
 
 		$assumed_root = @realpath($_SERVER['DOCUMENT_ROOT']);
-		$assumed_root = str_replace('\\', '/', $assumed_root);
+		$assumed_root = strtr($assumed_root, '\\', '/');
 		$assumed_root = rtrim($assumed_root, '/');
 		$this->options['assumed_root_filepath'] = $assumed_root;
 
@@ -681,7 +681,7 @@ class FileManager
 		if ($this->options['directory'] == null || $this->options['assetBasePath'] == null || $this->options['thumbnailPath'] == null)
 		{
 			$my_path = @realpath(dirname(__FILE__));
-			$my_path = str_replace('\\', '/', $my_path);
+			$my_path = strtr($my_path, '\\', '/');
 			if (!FileManagerUtility::endsWith($my_path, '/'))
 			{
 				$my_path .= '/';
@@ -731,7 +731,7 @@ class FileManager
 			//FM_vardumper($this, __FUNCTION__ . ' @ ' . __LINE__);
 			throw new FileManagerException('nofile');
 		}
-		$this->options['mimeTypesPath'] = str_replace('\\', '/', $this->options['mimeTypesPath']);
+		$this->options['mimeTypesPath'] = strtr($this->options['mimeTypesPath'], '\\', '/');
 
 		// getID3 is slower as it *copies* the image to the temp dir before processing: see GetDataImageSize().
 		// This is done as getID3 can also analyze *embedded* images, for which this approach is required.
@@ -996,8 +996,6 @@ class FileManager
 				 * a generic icon image instead).
 				 */
 
-				$thumb48 = false;
-
 				if (0)
 				{
 					/*
@@ -1033,16 +1031,13 @@ class FileManager
 					 * is slowing this bugger down, while the user is twiddling his thumbs.
 					 */
 					$thumb48 = $this->getThumb($url, $file, 48, 48, true);
+					if ($thumb48 !== false)
+					{
+						$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+					}
 				}
 
-				if ($thumb48 === false)
-				{
-					$thumb48_e = str_replace('..F..', FileManagerUtility::rawurlencode_path($filename), $thumb_tpl48);
-				}
-				else
-				{
-					$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
-				}
+				$thumb48_e = str_replace('..F..', FileManagerUtility::rawurlencode_path($filename), $thumb_tpl48);
 			}
 			else
 			{
@@ -3423,7 +3418,7 @@ class FileManager
 		}
 		else if (is_string($arr))
 		{
-			$arr = str_replace("\x00", ' ', $arr);
+			$arr = strtr($arr, "\x00", ' ');
 		}
 		else if (is_bool($arr) ||
 				 is_int($arr) ||
@@ -3927,7 +3922,7 @@ class FileManager
 	public /* static */ function getRequestScriptURI()
 	{
 		// see also: http://php.about.com/od/learnphp/qt/_SERVER_PHP.htm
-		$path = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
+		$path = strtr($_SERVER['SCRIPT_NAME'], '\\', '/');
 
 		return $path;
 	}
@@ -4026,7 +4021,7 @@ class FileManager
 	 */
 	public function rel2abs_url_path($path)
 	{
-		$path = str_replace('\\', '/', $path);
+		$path = strtr($path, '\\', '/');
 		if (!FileManagerUtility::startsWith($path, '/'))
 		{
 			$based = $this->getRequestPath();
@@ -4079,7 +4074,7 @@ class FileManager
 	{
 		$root = $this->options['directory'];
 
-		$path = str_replace('\\', '/', $path);
+		$path = strtr($path, '\\', '/');
 		if (FileManagerUtility::startsWith($path, '/'))
 		{
 			// clip the trailing '/' off the $root path as $path has a leading '/' already:
@@ -4124,7 +4119,7 @@ class FileManager
 		}
 		else
 		{
-			$path = str_replace('\\', '/', $path);
+			$path = strtr($path, '\\', '/');
 			if (!FileManagerUtility::startsWith($path, '/'))
 			{
 				$path = '/' . $path;
@@ -4759,7 +4754,7 @@ class FileManagerUtility
 		}
 		else if (is_string($variable)) 
 		{
-			$variable = str_replace("\x00", ' ', $variable);
+			$variable = strtr($variable, "\x00", ' ');
 			$varlen = strlen($variable);
 			for ($i = 0; $i < $varlen; $i++) 
 			{
@@ -4769,7 +4764,7 @@ class FileManagerUtility
 		}
 		else 
 		{
-			$returnstring .= ($wrap_in_td ? '<td>' : '').nl2br(htmlspecialchars(str_replace("\x00", ' ', $variable))).($wrap_in_td ? '</td>' : '');
+			$returnstring .= ($wrap_in_td ? '<td>' : '').nl2br(htmlspecialchars(strtr($variable, "\x00", ' '))).($wrap_in_td ? '</td>' : '');
 		}
 		return $returnstring;
 	}

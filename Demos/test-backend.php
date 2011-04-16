@@ -10,7 +10,7 @@ define('SITE_USES_ALIASES', 01);
 define('DEVELOPMENT', 01);   // set to 01 / 1 to enable logging of each incoming event request.
 
 
-require_once('FM-common.php');
+require('FM-common.php');
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"

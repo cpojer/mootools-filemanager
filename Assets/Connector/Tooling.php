@@ -53,7 +53,7 @@ if (!function_exists('safe_glob'))
 	 */
 	function safe_glob($pattern, $flags = 0)
 	{
-		$split = explode('/', str_replace('\\', '/', $pattern));
+		$split = explode('/', strtr($pattern, '\\', '/'));
 		$mask = array_pop($split);
 		$path = implode('/', $split);
 		if (($dir = @opendir($path)) !== false)
