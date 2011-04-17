@@ -3487,7 +3487,7 @@ class FileManager
 					{
 						if ($flags & MTFM_CLEAN_ID3_STRIP_EMBEDDED_IMAGES)
 						{
-							$value = '(embedded image ' . image_type_to_extension($imagechunkcheck[2]) . ' data...)';
+							$value = new BinaryDataContainer('(embedded image ' . image_type_to_extension($imagechunkcheck[2]) . ' data...)');
 						}
 						else
 						{
@@ -3498,7 +3498,7 @@ class FileManager
 					{
 						if ($flags & MTFM_CLEAN_ID3_STRIP_EMBEDDED_IMAGES)
 						{
-							$value = '(unidentified image data ... ' . (is_string($value) ? 'length = ' . strlen($value) : '') . ' -- ' . print_r($imagechunkcheck) . ')';
+							$value = new BinaryDataContainer('(unidentified image data ... ' . (is_string($value) ? 'length = ' . strlen($value) : '') . ' -- ' . print_r($imagechunkcheck) . ')');
 						}
 					}
 				} 
@@ -3506,24 +3506,27 @@ class FileManager
 				{
 					// convert guid raw binary data to hex:
 					$temp = unpack('H*', $value);
-					$value = $temp[1];
+					$value = new BinaryDataContainer($temp[1]);
 				}
-				else if ($key === 'non_intra_quant')  																		// MPEG quantization matrix
+				else if (  $key === 'non_intra_quant'  																		// MPEG quantization matrix
+						|| $key === 'error_correct_type'
+						)
 				{
 					// convert raw binary data to hex in 32 bit chunks:
 					$temp = unpack('H*', $value);
 					$temp = str_split($temp[1], 8);
-					$value = implode(' ', $temp);
+					$value = new BinaryDataContainer(implode(' ', $temp));
 				}
 				else if ($key === 'data' && is_string($value) && isset($arr['frame_name']) && isset($arr['encoding']) && isset($arr['datalength']))	// MP3 tag chunk
 				{
 					$str = trim(strtr(getid3_lib::iconv_fallback($arr['encoding'], 'UTF-8', $value), "\x00", ' '));
 					$temp = unpack('H*', $value);
 					$temp = str_split($temp[1], 8);
-					$value = implode(' ', $temp) . (!empty($str) ? ' (' . $str . ')' : '');
+					$value = new BinaryDataContainer(implode(' ', $temp) . (!empty($str) ? ' (' . $str . ')' : ''));
 				}
 				else if (  ($key === 'data' && is_string($value) && isset($arr['offset']) && isset($arr['size']))      		// AVI offset/size/data items: data = binary
-						|| ($key === 'type_specific_data' && is_string($value) /* && isset($arr['type_specific_len']) */ )) // munch WMV/RM 'type specific data': binary   ('type specific len' will occur alongside, but not in WMV)
+						|| ($key === 'type_specific_data' && is_string($value) /* && isset($arr['type_specific_len']) */ )  // munch WMV/RM 'type specific data': binary   ('type specific len' will occur alongside, but not in WMV)
+						)
 				{
 					// a bit like UNIX strings tool: strip out anything which isn't at least possibly legible
 					$str = ' ' . preg_replace('/[^ !#-~]/', ' ', strtr($value, "\x00", ' ')) . ' ';		// convert non-ASCII and double quote " to space
@@ -3536,17 +3539,25 @@ class FileManager
 												 ), ' ', $str, -1, $repl_count);
 					} while ($repl_count > 0);
 					$str = trim($str);
-					
-					$temp = unpack('H*', $value);
-					$temp = str_split($temp[1], 8);
-					$value = implode(' ', $temp) . (!empty($str) > 0 ? ' (' . $str . ')' : '');
+
+					if (strlen($value) <= 256)
+					{
+						$temp = unpack('H*', $value);
+						$temp = str_split($temp[1], 8);
+						$temp = implode(' ', $temp);
+						$value = new BinaryDataContainer($temp . (!empty($str) > 0 ? ' (' . $str . ')' : ''));
+					}
+					else
+					{
+						$value = new BinaryDataContainer('binary data... (length = ' . strlen($value) . ' bytes)');
+					}
 				}
 				else if (is_scalar($value) && preg_match('/^(dw[A-Z]|n[A-Z]|w[A-Z]|bi[A-Z])[a-zA-Z]+$/', $key))
 				{
 					// AVI sections which use Hungarian notation, at least partially
 					$this->clean_AVI_Hungarian($arr);
 					// and rescan the transformed key set...
-					$this->clean_ID3info_results_r($arr);
+					$this->clean_ID3info_results($arr);
 					break; // exit this loop
 				}
 				else if (is_array($value))
@@ -3579,7 +3590,28 @@ class FileManager
 		}
 		else if (is_string($arr))
 		{
-			$arr = strtr($arr, "\x00", ' ');
+			// is this a cleaned up item? Yes, then there's a full-ASCII string here, sans newlines, etc.
+			$len = strlen($arr);
+			$value = rtrim($arr, "\x00");
+			$value = strtr($value, "\x00", ' ');    // because preg_match() doesn't 'see' NUL bytes...
+			if (preg_match("/[^ -~\n\r\t]/", $value))
+			{
+				if ($len > 0 && $len < 256)
+				{
+					// convert raw binary data to hex in 32 bit chunks:
+					$temp = unpack('H*', $arr);
+					$temp = str_split($temp[1], 8);
+					$arr = new BinaryDataContainer(implode(' ', $temp));
+				}
+				else
+				{
+					$arr = new BinaryDataContainer('(unidentified binary data ... length = ' . strlen($arr) . ')');
+				}
+			}
+			else
+			{
+				$arr = $value;   // don't store as a 'processed' item (shortcut)
+			}
 		}
 		else if (is_bool($arr) ||
 				 is_int($arr) ||
@@ -3587,17 +3619,17 @@ class FileManager
 				 is_null($arr))
 		{
 		}
-		else if (is_object($arr))
+		else if (is_object($arr) && !isset($arr->id3_procsupport_obj))
 		{
-			$arr = '(object)';
+			$arr = new BinaryDataContainer('(object) ' . print_r($arr, true));
 		}
 		else if (is_resource($arr))
 		{
-			$arr = '(resource)';
+			$arr = new BinaryDataContainer('(resource) ' . print_r($arr, true));
 		}
 		else
 		{
-			$arr = '(unidentified type: ' . gettype($arr) . ')';
+			$arr = new BinaryDataContainer('(unidentified type: ' . gettype($arr) . ') ' . print_r($arr, true));
 		}
 	}
 
@@ -4866,47 +4898,6 @@ class FileManagerUtility
 				case 'bytes per minute':
 					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/min</td>';
 					continue 2;
-					
-				case 'data':
-					if (is_object($value))
-					{
-						// an embedded image (MP3 et al)
-						$returnstring .= '<td>';
-						$returnstring .= '<table class="dump_image" cellspacing="0" cellpadding="2">';
-						$returnstring .= '<tr><td><b>type</b></td><td>'.getid3_lib::ImageTypesLookup($value->metadata[2]).'</td></tr>';
-						$returnstring .= '<tr><td><b>width</b></td><td>'.number_format($value->metadata[0]).' px</td></tr>';
-						$returnstring .= '<tr><td><b>height</b></td><td>'.number_format($value->metadata[1]).' px</td></tr>';
-						$returnstring .= '<tr><td><b>size</b></td><td>'.number_format(strlen($value->imagedata)).' bytes</td></tr></table>';
-						$returnstring .= '<img src="data:'.$value->metadata['mime'].';base64,'.base64_encode($value->imagedata).'" width="'.$value->metadata[0].'" height="'.$value->metadata[1].'"></td></tr>';
-						continue 2;
-					}
-					else if (is_string($value) && strlen($value) > 0)
-					{
-						// is this a cleaned up item? Yes, then there's a full-ASCII string here, sans newlines, etc.
-						if (strlen($value) < 256)
-						{
-							$value = rtrim($value, "\x00");
-							if (preg_match('/[^ -~]/', $value))
-							{
-								// convert raw binary data to hex in 32 bit chunks:
-								$temp = unpack('H*', $value);
-								$temp = str_split($temp[1], 8);
-								$value = implode(' ', $temp);
-								$returnstring .= '<td><i>' . $value . '</i></td></tr>';
-							}
-							else
-							{
-								$returnstring .= '<td>' . $value . '</td></tr>';
-							}
-							continue 2;
-						}
-						else
-						{
-							$returnstring .= '<td><i>(unidentified (image?) data ... ' . (is_string($value) ? 'length = ' . strlen($value) : '') . ')</i></td></tr>';
-							continue 2;
-						}
-					}
-					break;
 				}
 				$returnstring .= FileManagerUtility::table_var_dump($value, true, $show_types) . '</tr>';
 			}
@@ -4924,6 +4915,40 @@ class FileManagerUtility
 		else if (is_float($variable)) 
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_double">' : '').$variable.($wrap_in_td ? '</td>' : '');
+		}
+		else if (is_object($variable) && isset($variable->id3_procsupport_obj))
+		{
+			if (isset($variable->metadata) && isset($variable->imagedata))
+			{
+				// an embedded image (MP3 et al)
+				$returnstring .= ($wrap_in_td ? '<td class="dump_embedded_image">' : '');
+				$returnstring .= '<table class="dump_image" cellspacing="0" cellpadding="2">';
+				$returnstring .= '<tr><td><b>type</b></td><td>'.getid3_lib::ImageTypesLookup($variable->metadata[2]).'</td></tr>';
+				$returnstring .= '<tr><td><b>width</b></td><td>'.number_format($variable->metadata[0]).' px</td></tr>';
+				$returnstring .= '<tr><td><b>height</b></td><td>'.number_format($variable->metadata[1]).' px</td></tr>';
+				$returnstring .= '<tr><td><b>size</b></td><td>'.number_format(strlen($variable->imagedata)).' bytes</td></tr></table>';
+				$returnstring .= '<img src="data:'.$variable->metadata['mime'].';base64,'.base64_encode($variable->imagedata).'" width="'.$variable->metadata[0].'" height="'.$variable->metadata[1].'">';
+				$returnstring .= ($wrap_in_td ? '</td>' : '');
+			}
+			else if (isset($variable->binarydata_mode))
+			{
+				$returnstring .= ($wrap_in_td ? '<td class="dump_binary_data">' : '');
+				if ($variable->binarydata_mode == 'procd')
+				{
+					$returnstring .= '<i>' . self::table_var_dump($variable->binarydata, false, false) . '</i>';
+				}
+				else
+				{
+					$temp = unpack('H*', $variable->binarydata);
+					$temp = str_split($temp[1], 8);
+					$returnstring .= '<i>' . self::table_var_dump(implode(' ', $temp), false, false) . '</i>';
+				}
+				$returnstring .= ($wrap_in_td ? '</td>' : '');
+			}
+			else
+			{
+				$returnstring .= ($wrap_in_td ? '<td class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</td>' : '');
+			}
 		}
 		else if (is_object($variable)) 
 		{
@@ -4958,11 +4983,27 @@ class EmbeddedImageContainer
 {
 	public $metadata;
 	public $imagedata;
+	public $id3_procsupport_obj;
 	
 	public function __construct($meta, $img)
 	{
 		$this->metadata = $meta;
 		$this->imagedata = $img;
+		$this->id3_procsupport_obj = true;
+	}
+}
+
+class BinaryDataContainer
+{
+	public $binarydata;
+	public $binarydata_mode;
+	public $id3_procsupport_obj;
+	
+	public function __construct($data, $mode = 'procd')
+	{
+		$this->binarydata_mode = $mode;
+		$this->binarydata = $data;
+		$this->id3_procsupport_obj = true;
 	}
 }
 
