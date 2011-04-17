@@ -135,9 +135,9 @@ var FileManager = new Class({
 		this.filemanager = new Element('div', {'class': 'filemanager'}).inject(this.container);
 		this.header = new Element('div', {'class': 'filemanager-header'}).inject(this.filemanager);
 		this.menu = new Element('div', {'class': 'filemanager-menu'}).inject(this.filemanager);
-		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 300}}).inject(this.header);
-		this.previewLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 300}});
-		this.browserLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 300}});
+		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 'short'}}).inject(this.header);
+		this.previewLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 'short'}});
+		this.browserLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 'short'}});
 		// switch the path, from clickable to input text
 		this.clickablePath = new Element('span', {'class': 'filemanager-dir'});
 		this.selectablePath = new Element('input',{'type': 'text', 'class': 'filemanager-dir', 'readonly': 'readonly'});
@@ -340,7 +340,7 @@ var FileManager = new Class({
 			showDelay: 50,
 			hideDelay: 50,
 			onShow: function(){
-				this.tip.set('tween', {duration: 250}).setStyle('display', 'block').fade(1);
+				this.tip.set('tween', {duration: 'short'}).setStyle('display', 'block').fade(1);
 			},
 			onHide: function(){
 				this.tip.fade(0).get('tween').chain(function(){
@@ -353,7 +353,7 @@ var FileManager = new Class({
 
 		this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
 			'class': 'browser-add'
-		}).set('opacity', 0).set('tween', {duration: 200}).inject(this.container);
+		}).set('opacity', 0).set('tween', {duration: 'short'}).inject(this.container);
 
 		this.container.inject(document.body);
 		if (!this.options.hideOverlay) {
@@ -596,7 +596,7 @@ var FileManager = new Class({
 						{
 							this.deselect();
 							this.Current = current.getParent('span.fi');
-							new Fx.Scroll(this.browserScroll,{duration: 250, offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(this.Current);
+							new Fx.Scroll(this.browserScroll,{duration: 'short', offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(this.Current);
 							this.Current.addClass('selected');
 							//if (typeof console !== 'undefined' && console.log) console.log('on hashHistory @ fillInfo key = ' + key + ', value = ' + value + ', source = ' + ' - file = ' + current.getParent('span.fi').retrieve('file').name);
 							this.fillInfo(this.Current.retrieve('file'));
@@ -1322,7 +1322,7 @@ var FileManager = new Class({
 			dy = (current.getPosition(this.browserScroll).y + current.getSize().y * 2 - this.browserScroll.getSize().y);
 			dy = 50 * dy / this.browserScroll.getSize().y;
 			//if (typeof console !== 'undefined' && console.log) console.log('key UP: DUR: ' + dy);
-			browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy, 10)) });
+			browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : dy.toInt()) });
 			browserScrollFx.toElement(current);
 		}
 		else if (direction != 'down' && current.getPosition(this.browserScroll).y <= current.getSize().y)
@@ -1333,7 +1333,7 @@ var FileManager = new Class({
 			dy = this.browserScroll.getScroll().y - sy;
 			dy = 50 * dy / this.browserScroll.getSize().y;
 			//if (typeof console !== 'undefined' && console.log) console.log('key UP: SY = ' + sy + ', DUR: ' + dy);
-			browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : parseInt(dy, 10)) });
+			browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : dy.toInt()) });
 			browserScrollFx.start(current.getPosition(this.browserScroll).x, (sy >= 0 ? sy : 0));
 		}
 	},
@@ -1954,7 +1954,7 @@ var FileManager = new Class({
 						{
 							this.deselect();
 							this.Current = file.element;
-							new Fx.Scroll(this.browserScroll,{duration: 250, offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
+							new Fx.Scroll(this.browserScroll,{duration: 'short', offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
 							file.element.addClass('selected');
 							if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: fillInfo: file = ' + file.name);
 							this.fillInfo(file);
@@ -1966,7 +1966,7 @@ var FileManager = new Class({
 						{
 							this.deselect();
 							this.Current = file.element;
-							new Fx.Scroll(this.browserScroll,{duration: 250, offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
+							new Fx.Scroll(this.browserScroll,{duration: 'short', offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
 							file.element.addClass('selected');
 							if (typeof console !== 'undefined' && console.log) console.log('fill: fillInfo: file = ' + file.name);
 							this.fillInfo(file);
@@ -2295,7 +2295,7 @@ var FileManager = new Class({
 					newpsize = 0.5 * pagesize;
 				else if (delta > 1.2)
 					newpsize = 1.2 * pagesize;
-				newpsize = parseInt(newpsize, 10);
+				newpsize = newpsize.toInt();
 
 				// and never let it drop below rediculous values:
 				if (newpsize < 20)
@@ -2754,7 +2754,7 @@ FileManager.Dialog = new Class({
 		this.el = new Element('div', {
 			'class': 'filemanager-dialog' + (Browser.ie ? ' filemanager-dialog-engine-trident' : '') + (Browser.ie ? ' filemanager-dialog-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
 			opacity: 0,
-			tween: {duration: 250}
+			tween: {duration: 'short'}
 		}).adopt([
 			typeOf(text) == 'string' ? new Element('div', {text: text}) : text
 		]);
@@ -2783,7 +2783,7 @@ FileManager.Dialog = new Class({
 		this.overlay = new Overlay({
 			'class': 'filemanager-overlay filemanager-overlay-dialog',
 			events: {click: this.fireEvent.pass('close',this)},
-			tween: {duration: 250}
+			tween: {duration: 'short'}
 		});
 
 		this.bound = {

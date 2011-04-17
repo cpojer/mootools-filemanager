@@ -77,7 +77,7 @@ FileManager.Gallery = new Class({
 		});
 		this.wrapper = new Element('div', {
 			'class': 'filemanager-wrapper',
-			tween: {duration: 200},
+			tween: {duration: 'short'},
 			opacity: 0,
 			events: {
 				mouseenter: function(){
@@ -419,7 +419,7 @@ FileManager.Gallery = new Class({
 			this.tips.hide();
 
 			var self = this;
-			meta.element.set('tween', {duration: 250}).removeEvents('click').fade(0).get('tween').chain(function(){
+			meta.element.set('tween', {duration: 'short'}).removeEvents('click').fade(0).get('tween').chain(function(){
 				this.element.destroy();
 				self.switchButton();
 			});
