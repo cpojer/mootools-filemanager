@@ -2234,20 +2234,15 @@ class FileManager
 					else
 					{
 						/*
-						Security:
-
-						Upload::move() processes the unfiltered version of $_FILES[]['name'], at least to get the extension,
-						unless we ALWAYS override the filename and extension in the options array below. That's why we
-						calculate the extension at all times here.
-						*/
-						if (!is_string($fi['extension']) || strlen($fi['extension']) == 0) // can't use 'empty()' as "0" is a valid extension itself.
+						 * Security:
+						 *
+						 * Upload::move() processes the unfiltered version of $_FILES[]['name'], at least to get the extension,
+						 * unless we ALWAYS override the filename and extension in the options array below. That's why we
+						 * calculate the extension at all times here.
+						 */
+						if ($this->options['safe'])
 						{
-							//enforce a mandatory extension, even when there isn't one (due to filtering or original input producing none)
-							$fi['extension'] = 'txt';
-						}
-						else if ($this->options['safe'] && in_array(strtolower($fi['extension']), array('exe', 'dll', 'com', 'php', 'php3', 'php4', 'php5', 'phps')))
-						{
-							$fi['extension'] = 'txt';
+							$fi['extension'] = $this->getSafeExtension($fi['extension']);
 						}
 						$v_ex_code = null;
 					}
@@ -3774,6 +3769,38 @@ class FileManager
 		return $coll;
 	}
 
+	
+	
+	/**
+	 * Check the $extension argument and replace it with a suitable 'safe' extension.
+	 */
+	public function getSafeExtension($extension, $safe_extension = 'txt', $mandatory_extension = 'txt')
+	{
+		if (!is_string($extension) || $extension === '') // can't use 'empty($extension)' as "0" is a valid extension itself.
+		{
+			//enforce a mandatory extension, even when there isn't one (due to filtering or original input producing none)
+			return (!empty($mandatory_extension) ? $mandatory_extension : (!empty($safe_extension) ? $safe_extension : $extension));
+		}
+		$extension = strtolower($extension);
+		switch ($extension)
+		{
+		case 'exe':
+		case 'dll':
+		case 'com':
+		case 'php':
+		case 'php3':
+		case 'php4':
+		case 'php5':
+		case 'phps':
+			return (!empty($safe_extension) ? $safe_extension : $extension);
+		
+		default:
+			return $extension;
+		}
+	}
+	
+	
+	
 	/**
 	 * Make a cleaned-up, unique filename
 	 *
@@ -3793,7 +3820,7 @@ class FileManager
 	 * @return a filepath consisting of $dir and the cleaned up and possibly sequenced filename and file extension
 	 *         as provided by $fileinfo.
 	 */
-	protected function getUniqueName($fileinfo, $dir)
+	public function getUniqueName($fileinfo, $dir)
 	{
 		$dir = self::enforceTrailingSlash($dir);
 
