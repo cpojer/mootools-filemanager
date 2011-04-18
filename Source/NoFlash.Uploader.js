@@ -40,7 +40,9 @@ FileManager.implement({
 
 		cleanup: {
 			upload: function(){
-				if (!this.options.upload  || !this.upload) return;
+				if (!this.options.upload  || !this.upload) {
+					return;
+				}
 
 				try {
 					if (this.upload.uploader) {
@@ -80,12 +82,14 @@ FileManager.implement({
 
 	startUpload: function()
 	{
-		if (!this.options.upload) return;
+		if (!this.options.upload) {
+			return;
+		}
 
 		// discard old iframe, if it exists:
 		if (this._dummyframe)
 		{
-			// remove fro the menu (dispose) and trash it (destroy)
+			// remove from the menu (dispose) and trash it (destroy)
 			this._dummyframe.dispose().destroy();
 			this._dummyframe = null;
 		}
