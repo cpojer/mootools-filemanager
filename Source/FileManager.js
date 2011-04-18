@@ -2872,7 +2872,7 @@ this.Overlay = new Class({
 		this.el.setStyles({
 			opacity: 0,
 			display: 'block'
-		}).get('tween').pause().start('opacity', 0.5);
+		}).get('tween'). /* pause(). */ start('opacity', 0.5);
 
 		window.addEvent('resize', this.resize.bind(this));
 
