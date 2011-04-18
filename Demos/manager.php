@@ -1,5 +1,4 @@
 <?php
-die(json_encode(array('status'=> 0, 'error' => "\nSecurity precaution... to enable the demo, edit\nDemos/".basename(__FILE__)."\nand comment out line 2.")));
 
 error_reporting(E_ALL | E_STRICT);
 
