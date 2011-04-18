@@ -2797,7 +2797,7 @@ FileManager.Dialog = new Class({
 				//if (typeof console !== 'undefined' && console.log) console.log('keyEsc: key press: ' + e.key);
 				if (e.key === 'esc') {
 					e.stopPropagation();
-					this.fireEvent('close').destroy();
+					this.destroy();
 				}
 			}).bind(this)
 		};
@@ -2812,10 +2812,12 @@ FileManager.Dialog = new Class({
 		var self = this;
 		this.fireEvent('open');
 		this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
-			var button = this.element.getElement('button.filemanager-dialog-confirm') || this.element.getElement('button');
-			if (button) button.focus();
-			self.fireEvent('show');
 		});
+		var button = (this.el.getElement('button.filemanager-dialog-confirm') || this.el.getElement('button'));
+		if (button) {
+			button.focus();
+		}
+		self.fireEvent('show');
 
 		//if (typeof console !== 'undefined' && console.log) console.log('add key up(ESC)/resize/scroll on show 1500');
 		document.addEvents({
@@ -2842,6 +2844,7 @@ FileManager.Dialog = new Class({
 		}
 		//if (typeof console !== 'undefined' && console.log) console.log('remove key up(ESC) on destroy');
 		document.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll).removeEvent('keyup', this.bound.keyesc);
+		this.fireEvent('close');
 	}
 });
 
@@ -2855,16 +2858,14 @@ this.Overlay = new Class({
 
 	show: function(){
 		this.objects = $$('object, select, embed').filter(function(el){
-			return el.id == 'SwiffFileManagerUpload' || el.style.visibility == 'hidden' ? false : !!(el.style.visibility = 'hidden');
+			if (el.id === 'SwiffFileManagerUpload' || el.style.visibility === 'hidden') {
+				return false;
+			}
+			else {
+				el.style.visibility = 'hidden';
+				return true;
+			}
 		});
-
-		this.resize = (function(){
-			if (!this.el) this.destroy();
-			else this.el.setStyles({
-				width: document.getScrollWidth(),
-				height: document.getScrollHeight()
-			});
-		}).bind(this);
 
 		this.resize();
 
@@ -2873,7 +2874,7 @@ this.Overlay = new Class({
 			display: 'block'
 		}).get('tween').pause().start('opacity', 0.5);
 
-		window.addEvent('resize', this.resize);
+		window.addEvent('resize', this.resize.bind(this));
 
 		return this;
 	},
@@ -2892,6 +2893,18 @@ this.Overlay = new Class({
 		window.removeEvent('resize', this.resize);
 
 		return this;
+	},
+
+	resize: function(){
+		if (!this.el) {
+			this.destroy();
+		}
+		else {
+			this.el.setStyles({
+				width: document.getScrollWidth(),
+				height: document.getScrollHeight()
+			});
+		}
 	},
 
 	destroy: function(){
