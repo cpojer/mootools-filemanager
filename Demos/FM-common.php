@@ -494,7 +494,7 @@ function mkNewFileManager($options = null)
 /**
 Start the session, whether the session ID is passed through the URL query section or as a cookie.
 */
-function start_session_ex()
+function start_session_ex($override = false)
 {
 	/*
 	 * Load session if not already done by CCMS!
@@ -553,6 +553,8 @@ function start_session_ex()
 						die('session_start_ex() failed');
 					}
 				}
+				session_write_close();
+				session_regenerate_id();
 				session_id($sesid);
 			}
 		}
@@ -562,6 +564,81 @@ function start_session_ex()
 			{
 				header('HTTP/1.0 403 Forbidden', true, 403);
 				die('session_start_ex(ALT) failed');
+			}
+		}
+	}
+	else if ($override)
+	{
+		$sesid = session_id();
+		$sesname = session_name();
+		// the SWF.Upload / FancyUpload FLASH components do pass along the cookies, but as extra URL query entities:
+		if (!empty($_POST[$sesname]))
+		{
+			// legalize the sessionID; just a precaution for malicious intent
+			$alt_sesid = preg_replace('/[^A-Za-z0-9]/', 'X', $_POST[$sesname]);
+
+			// did we already activate this session?
+			if ($sesid === $alt_sesid)
+			{
+				// yep. We're done!
+				return;
+			}
+			else
+			{
+				// close running session:
+				session_regenerate_id();
+				//session_destroy();
+				session_write_close();
+				unset($_SESSION);
+				
+				/*
+				 * Before we set the sessionID, we'd better make darn sure it's a legitimate request instead of a hacker trying to get in:
+				 *
+				 * however, before we can access any $_SESSION[] variables do we have to load the session for the given ID.
+				 */
+				session_id($alt_sesid);
+				if (!session_start())
+				{
+					header('HTTP/1.0 403 Forbidden', true, 403);
+					die('session_start_ex() failed');
+				}
+
+				/*
+				check the 'secret' value to doublecheck the legality of the session: did it originate from one of the demo entry pages?
+				*/
+				if (empty($_SESSION['FileManager']) || $_SESSION['FileManager'] !== 'DemoMagick')
+				{
+					//echo " :: illegal session override! IGNORED! \n";
+
+					// do not nuke the first session; this might have been a interloper trying a attack... let it all run its natural course.
+					if (0)
+					{
+						if (ini_get('session.use_cookies'))
+						{
+							$params = session_get_cookie_params();
+							if (!empty($params['ccms_userID']))
+							{
+								setcookie(session_name(), '', time() - 42000,
+									$params['path'], $params['domain'],
+									$params['secure'], $params['httponly']
+								);
+							}
+						}
+
+						// Generate a new session_id
+						session_regenerate_id();
+
+						// Finally, destroy the session.
+						if(session_destroy())
+						{
+							header('HTTP/1.0 403 Forbidden', true, 403);
+							die('session_start_ex() failed');
+						}
+					}
+					session_write_close();
+					session_regenerate_id();
+					session_id($sesid);
+				}
 			}
 		}
 	}
