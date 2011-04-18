@@ -3031,143 +3031,169 @@ class FileManager
 				break;
 			}
 
-			if (!empty($fi))
+			if (!empty($fi['error']))
 			{
-				if (!empty($fi['error']))
-				{
-					$postdiag_err_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
-				}
+				$postdiag_err_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
+			}
+			
+			try
+			{
+				unset($fi['GETID3_VERSION']);
+				unset($fi['filepath']);
+				unset($fi['filename']);
+				unset($fi['filenamepath']);
+				unset($fi['cache_timestamp']);
 				
-				try
+				if ($thumb250_e === false)
 				{
-					unset($fi['GETID3_VERSION']);
-					unset($fi['filepath']);
-					unset($fi['filename']);
-					unset($fi['filenamepath']);
-					unset($fi['cache_timestamp']);
-					
-					if ($thumb250_e === false)
+					// when the ID3 info scanner can dig up an EMBEDDED thumbnail, when we don't have anything else, we're happy with that one!
+					$thumb250 = $this->getThumb($url, $file, 250, 250, true);
+					if ($thumb250 === false)
 					{
-						// when the ID3 info scanner can dig up an EMBEDDED thumbnail, when we don't have anything else, we're happy with that one!
-						$thumb250 = $this->getThumb($url, $file, 250, 250, true);
-						if ($thumb250 === false)
+						/*
+						 * No thumbnail available yet, so find me one! 
+						 *
+						 * When we find a thumbnail during the 'cleanup' scan, we don't know up front if it's suitable to be used directly,
+						 * so we treat it as an alternative 'original' file and generate a 250px/48px thumbnail set from it.
+						 *
+						 * When the embedded thumbnail is small enough, the thumbnail creation process will be simply a copy action, so relatively
+						 * low cost.
+						 */
+						$embed = $this->extract_ID3info_embedded_image($fi);
+						//@file_put_contents(dirname(__FILE__) . '/extract_embedded_img.log', print_r(array('html' => $preview_HTML, 'json' => $json, 'thumb250_e' => $thumb250_e, 'thumb250' => $thumb250, 'embed' => $embed, 'fileinfo' => $fi), true));
+						if (is_object($embed))
 						{
-							/*
-							 * No thumbnail available yet, so find me one! 
-							 *
-							 * When we find a thumbnail during the 'cleanup' scan, we don't know up front if it's suitable to be used directly,
-							 * so we treat it as an alternative 'original' file and generate a 250px/48px thumbnail set from it.
-							 *
-							 * When the embedded thumbnail is small enough, the thumbnail creation process will be simply a copy action, so relatively
-							 * low cost.
-							 */
-							$embed = $this->extract_ID3info_embedded_image($fi);
-							//@file_put_contents(dirname(__FILE__) . '/extract_embedded_img.log', print_r(array('html' => $preview_HTML, 'json' => $json, 'thumb250_e' => $thumb250_e, 'thumb250' => $thumb250, 'embed' => $embed, 'fileinfo' => $fi), true));
-							if (is_object($embed))
+							$thumbX = $this->options['thumbnailPath'] . $this->generateThumbName($url, 'embed');
+							$tfi = pathinfo($thumbX);
+							$tfi['extension'] = image_type_to_extension($embed->metadata[2]);
+							$thumbX = $tfi['dirname'] . '/' . $tfi['filename'] . '.' . $tfi['extension'];
+							$thumbX = $this->normalize($thumbX);
+							$thumbX_f = $this->url_path2file_path($thumbX);
+							// as we've spent some effort to dig out the embedded thumbnail, and 'knowing' (assuming) that generally
+							// embedded thumbnails are not too large, we don't concern ourselves with delaying the thumbnail generation (the
+							// source file mapping is not bidirectional, either!) and go straight ahead and produce the 250px thumbnail at least.
+							$thumb250 = false;
+							$thumb48  = false;
+							$emsgX = null;
+							if (false === file_put_contents($thumbX_f, $embed->imagedata))
 							{
-								$thumbX = $this->options['thumbnailPath'] . $this->generateThumbName($url, 'embed');
-								$tfi = pathinfo($thumbX);
-								$tfi['extension'] = image_type_to_extension($embed->metadata[2]);
-								$thumbX = $tfi['dirname'] . '/' . $tfi['filename'] . '.' . $tfi['extension'];
-								$thumbX = $this->normalize($thumbX);
-								$thumbX_f = $this->url_path2file_path($thumbX);
-								// as we've spent some effort to dig out the embedded thumbnail, and 'knowing' (assuming) that generally
-								// embedded thumbnails are not too large, we don't concern ourselves with delaying the thumbnail generation (the
-								// source file mapping is not bidirectional, either!) and go straight ahead and produce the 250px thumbnail at least.
-								$thumb250 = false;
-								$thumb48  = false;
-								$emsgX = null;
-								if (false === file_put_contents($thumbX_f, $embed->imagedata))
+								@unlink($thumbX_f);
+								$emsgX = 'Cannot save embedded image data to cache.';
+								$thumb48 = $this->getIcon('is.default-error', false);
+								$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+								$thumb250 = $thumb48;
+								$thumb250_e = $thumb48_e;
+							}
+							else
+							{
+								try
 								{
-									@unlink($thumbX_f);
-									$emsgX = 'Cannot save embedded image data to cache.';
-									$thumb48 = $this->getIcon('is.default-error', false);
+									$thumb250 = $this->getThumb($url, $thumbX_f, 250, 250, false);
+									$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
+									$thumb48  = $this->getThumb($url, ($thumb250 !== false ? $this->url_path2file_path($thumb250) : $thumbX_f), 48, 48, false);
+									$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+								}
+								catch (Exception $e)
+								{
+									$emsgX = $e->getMessage();
+									$thumb48 = $this->getIconForError($emsgX, $url, false);
 									$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 									$thumb250 = $thumb48;
 									$thumb250_e = $thumb48_e;
 								}
-								else
-								{
-									try
-									{
-										$thumb250 = $this->getThumb($url, $thumbX_f, 250, 250, false);
-										$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
-										$thumb48  = $this->getThumb($url, ($thumb250 !== false ? $this->url_path2file_path($thumb250) : $thumbX_f), 48, 48, false);
-										$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
-									}
-									catch (Exception $e)
-									{
-										$emsgX = $e->getMessage();
-										$thumb48 = $this->getIconForError($emsgX, $url, false);
-										$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
-										$thumb250 = $thumb48;
-										$thumb250_e = $thumb48_e;
-									}
-								}
-
-								if ($thumb250 !== false)
-								{
-									if (empty($preview_HTML))
-									{
-										$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-													   <img src="' . $thumb250_e . '" class="preview"' . (!empty($emsgX) ? ' alt="' . $emsgX . '"' : '') . '/>
-													 </a>';
-									}
-									$json['thumb250'] = $thumb250_e;
-								}
-								if ($thumb48 !== false)
-								{
-									$json['thumb48'] = $thumb48_e;
-								}
-							}
-						}
-						else 
-						{
-							// $thumb250 !== false
-							$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
-							try
-							{
-								$thumb48  = $this->getThumb($url, $this->url_path2file_path($thumb250), 48, 48, false);
-								$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
-							}
-							catch (Exception $e)
-							{
-								$emsgX = $e->getMessage();
-								$thumb48 = $this->getIconForError($emsgX, $url, false);
-								$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 							}
 
-							if (empty($preview_HTML))
+							if ($thumb250 !== false)
 							{
-								$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-											   <img src="' . $thumb250_e . '" class="preview"' . (!empty($emsgX) ? ' alt="' . $emsgX . '"' : '') . '/>
-											 </a>';
+								if (empty($preview_HTML))
+								{
+									$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+												   <img src="' . $thumb250_e . '" class="preview"' . (!empty($emsgX) ? ' alt="' . $emsgX . '"' : '') . '/>
+												 </a>';
+								}
+								$json['thumb250'] = $thumb250_e;
 							}
-							$json['thumb250'] = $thumb250_e;
 							if ($thumb48 !== false)
 							{
 								$json['thumb48'] = $thumb48_e;
 							}
 						}
 					}
-
-					$this->clean_ID3info_results($fi);
-					
-					$dump = FileManagerUtility::table_var_dump($fi, false);
-					
-					if (0)
+					else 
 					{
-						self::clean_EXIF_results($fi);
-						$dump .= var_dump_ex($fi, 0, 0, false);
-					}
+						// $thumb250 !== false
+						$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
+						try
+						{
+							$thumb48  = $this->getThumb($url, $this->url_path2file_path($thumb250), 48, 48, false);
+							$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+						}
+						catch (Exception $e)
+						{
+							$emsgX = $e->getMessage();
+							$thumb48 = $this->getIconForError($emsgX, $url, false);
+							$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
+						}
 
-					$postdiag_dump_HTML .= "\n" . $dump . "\n";
-					//@file_put_contents(dirname(__FILE__) . '/getid3.log', print_r(array('html' => $preview_HTML, 'json' => $json, 'thumb250_e' => $thumb250_e, 'thumb250' => $thumb250, 'embed' => $embed, 'fileinfo' => $fi), true));
+						if (empty($preview_HTML))
+						{
+							$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+										   <img src="' . $thumb250_e . '" class="preview"' . (!empty($emsgX) ? ' alt="' . $emsgX . '"' : '') . '/>
+										 </a>';
+						}
+						$json['thumb250'] = $thumb250_e;
+						if ($thumb48 !== false)
+						{
+							$json['thumb48'] = $thumb48_e;
+						}
+					}
 				}
-				catch(Exception $e)
+
+				// also provide X/Y size info with each direct-access thumbnail file:
+				if (!empty($thumb48) || !empty($thumb250))
 				{
-					$postdiag_err_HTML .= '<p class="err_info">' . $e->getMessage() . '</p>';
+					if (!empty($thumb250))
+					{
+						$tnsize = getimagesize($this->url_path2file_path($thumb250));
+						if (is_array($tnsize))
+						{
+							$json['thumb250-width'] = $tnsize[0];
+							$json['thumb250-height'] = $tnsize[1];
+						}
+						
+						if ($thumb48 === $thumb250)
+						{
+							$json['thumb48-width'] = $tnsize[0];
+							$json['thumb48-height'] = $tnsize[1];
+						}
+					}
+					if (!empty($thumb48) && $thumb48 !== $thumb250)
+					{
+						$tnsize = getimagesize($this->url_path2file_path($thumb48));
+						if (is_array($tnsize))
+						{
+							$json['thumb48-width'] = $tnsize[0];
+							$json['thumb48-height'] = $tnsize[1];
+						}
+					}
 				}
+				
+				$this->clean_ID3info_results($fi);
+				
+				$dump = FileManagerUtility::table_var_dump($fi, false);
+				
+				if (0)
+				{
+					self::clean_EXIF_results($fi);
+					$dump .= var_dump_ex($fi, 0, 0, false);
+				}
+
+				$postdiag_dump_HTML .= "\n" . $dump . "\n";
+				//@file_put_contents(dirname(__FILE__) . '/getid3.log', print_r(array('html' => $preview_HTML, 'json' => $json, 'thumb250_e' => $thumb250_e, 'thumb250' => $thumb250, 'embed' => $embed, 'fileinfo' => $fi), true));
+			}
+			catch(Exception $e)
+			{
+				$postdiag_err_HTML .= '<p class="err_info">' . $e->getMessage() . '</p>';
 			}
 			break;
 		}
