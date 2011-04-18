@@ -125,6 +125,7 @@ var FileManager = new Class({
 		this._downloadForm = null;
 		this.drag_is_active = false;
 		this.ctrl_key_pressed = false;
+		this.pending_error_dialog = null;
 
 		this.language = Object.clone(FileManager.Language.en);
 		if (this.options.language !== 'en') {
@@ -822,8 +823,6 @@ var FileManager = new Class({
 					onRequest: function(){},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
-							// TODO: include j.error in the message, iff j.error exists
-							new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 							this.browserLoader.fade(0);
 							return;
 						}
@@ -840,12 +839,9 @@ var FileManager = new Class({
 					}).bind(this),
 					onComplete: function(){},
 					onError: (function(text, error) {
-						this.showError(text);
 						this.browserLoader.fade(0);
 					}).bind(this),
 					onFailure: (function(xmlHttpRequest) {
-						var text = this.cvtXHRerror2msg(xmlHttpRequest);
-						this.showError(text);
 						this.browserLoader.fade(0);
 					}).bind(this)
 				}, this).send();
@@ -896,8 +892,6 @@ var FileManager = new Class({
 			onSuccess: (function(j) {
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onSuccess invoked");
 				if (!j || !j.status) {
-					// TODO: include j.error in the message, iff j.error exists
-					new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 					this.browserLoader.fade(0);
 					return;
 				}
@@ -924,14 +918,11 @@ var FileManager = new Class({
 			onError: (function(text, error) {
 				// a JSON error
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onError invoked");
-				this.showError(text);
 				this.browserLoader.fade(0);
 			}).bind(this),
 			onFailure: (function(xmlHttpRequest) {
 				// a generic (non-JSON) communication failure
 				//if (typeof console !== 'undefined' && console.log) console.log("### 'view' request: onFailure invoked");
-				var text = this.cvtXHRerror2msg(xmlHttpRequest);
-				this.showError(text);
 				this.browserLoader.fade(0);
 			}).bind(this)
 		}, this).send();
@@ -980,12 +971,10 @@ var FileManager = new Class({
 				directory: this.Directory,
 				filter: this.options.filter
 			},
+			fmErrDefaultMsg: this.language.nodestroy,
 			onRequest: function(){},
 			onSuccess: (function(j) {
 				if (!j || !j.status) {
-					// TODO: include j.error in the message, iff j.error exists
-					var emsg = ('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g);
-					new FileManager.Dialog(this.language.nodestroy + ' (' + emsg + ')', {language: {confirm: this.language.ok}, buttons: ['confirm']});
 					this.browserLoader.fade(0);
 					return;
 				}
@@ -1034,12 +1023,9 @@ var FileManager = new Class({
 			}).bind(this),
 			onComplete: function(){},
 			onError: (function(text, error) {
-				this.showError(text);
 				this.browserLoader.fade(0);
 			}).bind(this),
 			onFailure: (function(xmlHttpRequest) {
-				var text = this.cvtXHRerror2msg(xmlHttpRequest);
-				this.showError(text);
 				this.browserLoader.fade(0);
 			}).bind(this)
 		}, this).send();
@@ -1106,8 +1092,6 @@ var FileManager = new Class({
 					onRequest: function(){},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
-							// TODO: include j.error in the message, iff j.error exists
-							new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 							this.browserLoader.fade(0);
 							return;
 						}
@@ -1121,12 +1105,9 @@ var FileManager = new Class({
 					}).bind(this),
 					onComplete: function(){},
 					onError: (function(text, error) {
-						this.showError(text);
 						this.browserLoader.fade(0);
 					}).bind(this),
 					onFailure: (function(xmlHttpRequest) {
-						var text = this.cvtXHRerror2msg(xmlHttpRequest);
-						this.showError(text);
 						this.browserLoader.fade(0);
 					}).bind(this)
 				}, this).send();
@@ -1492,7 +1473,7 @@ var FileManager = new Class({
 		// TODO: how to handle that error condition correctly?
 		if (!j.root)
 		{
-			new FileManager.Dialog(('${error}: ' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
+			this.showError('' + j.error);
 			return false;
 		}
 		var rootPath = j.root.slice(0,-1).split('/');
@@ -1810,12 +1791,12 @@ var FileManager = new Class({
 							data: {
 								asJSON: 1
 							},
+							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
 							onRequest: function(){},
 							onSuccess: (function(j) {
-								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
+								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
 								if (!j || !j.status)
 								{
-									// Should we display the error here? No, we just display the general error icon instead
 									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 								}
 								else if (j && j.thumbnail)
@@ -1828,11 +1809,11 @@ var FileManager = new Class({
 								}
 							}).bind(this),
 							onError: (function(text, error) {
-								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
+								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this),
 							onFailure: (function(xmlHttpRequest) {
-								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType == 'list' ? '' : 'Large/') + 'default-error.png';
+								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this)
 						}, this).send();
@@ -2131,8 +2112,6 @@ var FileManager = new Class({
 						},
 						onSuccess: (function(j) {
 							if (!j || !j.status) {
-								// TODO: include j.error in the message, iff j.error exists
-								new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 								this.drop_pending = 0;
 								this.browserLoader.fade(0);
 								return;
@@ -2197,13 +2176,10 @@ var FileManager = new Class({
 							this.browserLoader.fade(0);
 						}).bind(this),
 						onError: (function(text, error) {
-							this.showError(text);
 							this.drop_pending = 0;
 							this.browserLoader.fade(0);
 						}).bind(this),
 						onFailure: (function(xmlHttpRequest) {
-							var text = this.cvtXHRerror2msg(xmlHttpRequest);
-							this.showError(text);
 							this.drop_pending = 0;
 							this.browserLoader.fade(0);
 						}).bind(this)
@@ -2361,7 +2337,6 @@ var FileManager = new Class({
 				onSuccess: (function(j) {
 
 					if (!j || !j.status) {
-						new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 						this.previewLoader.dispose();
 						return;
 					}
@@ -2380,8 +2355,8 @@ var FileManager = new Class({
 
 					this.info.getElement('dd.filemanager-modified').set('text', j.date);
 					this.info.getElement('dd.filemanager-type').set('text', j.mime);
-					this.info.getElement('dd.filemanager-size').set('text', !size[0] && size[1] == 'Bytes' ? '-' : (size.join(' ') + (size[1] != 'Bytes' ? ' (' + j.size + ' Bytes)' : '')));
-					//this.info.getElement('h2.filemanager-headline').setStyle('display', j.mime == 'text/directory' ? 'none' : 'block');
+					this.info.getElement('dd.filemanager-size').set('text', !size[0] && size[1] === 'Bytes' ? '-' : (size.join(' ') + (size[1] !== 'Bytes' ? ' (' + j.size + ' Bytes)' : '')));
+					//this.info.getElement('h2.filemanager-headline').setStyle('display', j.mime === 'text/directory' ? 'none' : 'block');
 
 					this.previewLoader.fade(0).get('tween').chain((function() {
 						this.previewLoader.dispose();
@@ -2426,12 +2401,9 @@ var FileManager = new Class({
 				}).bind(this),
 				onError: (function(text, error) {
 					this.previewLoader.dispose();
-					this.showError(text);
 				}).bind(this),
 				onFailure: (function(xmlHttpRequest) {
 					this.previewLoader.dispose();
-					var text = this.cvtXHRerror2msg(xmlHttpRequest);
-					this.showError(text);
 				}).bind(this)
 			}, this).send();
 		}
@@ -2553,26 +2525,35 @@ var FileManager = new Class({
 	},
 
 	showError: function(text) {
-		var errorText = text;
+		var errorText = '' + text;
 
 		if (!errorText) {
 			errorText = this.language['backend.unidentified_error'];
 		}
-		else if (errorText.indexOf('{') != -1) {
-			errorText = errorText.substring(0,errorText.indexOf('{'));
-		}
+		errorText = errorText.substitute(this.language, /\\?\$\{([^{}]+)\}/g);
 
-		new FileManager.Dialog(this.language.error, {
-			buttons: ['confirm'],
-			language: {
-				confirm: this.language.ok
-			},
-			content: [
-				errorText
-			],
-			onOpen: this.onDialogOpen.bind(this),
-			onClose: this.onDialogClose.bind(this)
-		});
+		if (this.pending_error_dialog)
+		{
+			this.pending_error_dialog.appendMessage(errorText);
+		}
+		else
+		{
+			this.pending_error_dialog = new FileManager.Dialog(this.language.error, {
+				buttons: ['confirm'],
+				language: {
+					confirm: this.language.ok
+				},
+				content: [
+					errorText
+				],
+				onOpen: this.onDialogOpen.bind(this),
+				onClose: function()
+				{
+					this.pending_error_dialog = null;
+					this.onDialogClose();
+				}.bind(this)
+			});
+		}
 	},
 
 	showMessage: function(textOrElement, title) {
@@ -2644,7 +2625,8 @@ FileManager.Request = new Class({
 	options:
 	{
 		secure:          true, // Isn't this true by default anyway in REQUEST.JSON?
-		fmDisplayErrors: false // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
+		fmDisplayErrors: true, // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
+		fmErrDefaultMsg: ''
 	},
 
 	initialize: function(options, filebrowser){
@@ -2662,9 +2644,17 @@ FileManager.Request = new Class({
 		if (this.options.fmDisplayErrors)
 		{
 			this.addEvents({
-				success: function(j) {
-					if (!j)        return filebrowser.showError();
-					if (!j.status) return filebrowser.showError(j.error);
+				success: function(j)
+				{
+					var emsg = ('' + this.options.fmErrDefaultMsg).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g);
+					if (!j)
+					{
+						filebrowser.showError(emsg);
+					}
+					else if (!j.status)
+					{
+						filebrowser.showError((emsg ? emsg + ' ' : '') + ('' + j.error).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g));
+					}
 				},
 
 				error: function(text, error)
@@ -2832,6 +2822,12 @@ FileManager.Dialog = new Class({
 			'resize': this.bound.scroll,
 			'keyup': this.bound.keyesc
 		});
+	},
+
+	appendMessage: function(text) {
+		this.el.adopt([
+			typeOf(text) === 'string' ? new Element('div', {text: text}) : text
+		]);
 	},
 
 	destroy: function() {
