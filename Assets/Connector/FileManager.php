@@ -2695,7 +2695,7 @@ class FileManager
 			if (array_key_exists($hash, $this->getid3_cache) && !empty($this->getid3_cache[$hash][$cache_json_entry]))
 			{
 				$json = $this->getid3_cache[$hash][$cache_json_entry];
-				$json['content'] .= '<p>full info retrieved from RAM/file</p>';
+				//$json['content'] .= '<p>full info retrieved from RAM/file</p>';
 			}
 		}
 		
@@ -3060,11 +3060,6 @@ class FileManager
 				
 				try
 				{
-					unset($fi['GETID3_VERSION']);
-					unset($fi['filepath']);
-					unset($fi['filename']);
-					unset($fi['filenamepath']);
-					
 					if ($thumb250_e === false)
 					{
 						// when the ID3 info scanner can dig up an EMBEDDED thumbnail, when we don't have anything else, we're happy with that one!
@@ -3199,14 +3194,15 @@ class FileManager
 						}
 					}
 					
-					$this->clean_ID3info_results($fi);
+					$fi4dump = array_merge(array(), $fi); // clone $fi
+					$this->clean_ID3info_results($fi4dump);
 					
-					$dump = FileManagerUtility::table_var_dump($fi, false);
+					$dump = FileManagerUtility::table_var_dump($fi4dump, false);
 					
 					if (0)
 					{
-						self::clean_EXIF_results($fi);
-						$dump .= var_dump_ex($fi, 0, 0, false);
+						self::clean_EXIF_results($fi4dump);
+						$dump .= var_dump_ex($fi4dump, 0, 0, false);
 					}
 
 					$postdiag_dump_HTML .= "\n" . $dump . "\n";
@@ -3263,10 +3259,10 @@ class FileManager
 						// destroy failed cache attempt
 						@unlink($cachefile);
 					}
-					$json['content'] .= '<p>full info</p>';
+					//$json['content'] .= '<p>full info</p>';
 				}
 			}
-			$json['content'] .= '<p>generated</p>';
+			//$json['content'] .= '<p>generated</p>';
 		}
 
 		return array_merge((is_array($json_in) ? $json_in : array()), $json);
@@ -3720,6 +3716,14 @@ class FileManager
 
 	protected function clean_ID3info_results(&$arr, $flags = 0)
 	{
+		unset($arr['GETID3_VERSION']);
+		unset($arr['filepath']);
+		unset($arr['filename']);
+		unset($arr['filenamepath']);
+		unset($arr['cache_hash']);
+		unset($arr['cache_file']);
+		unset($arr['cache_dir']);
+		
 		$this->clean_ID3info_results_r($arr, $flags);
 		
 		// heuristic #4: convert keys to something legible:
@@ -4772,7 +4776,7 @@ class FileManager
 				$this->getid3_cache[$hash]['cache_timestamp'] = $this->getid3_cache_lru_ts++;
 			}
 			
-			$rv['cache_from'] = 'RAM';
+			//$rv['cache_from'] = 'RAM';
 		}
 		else
 		{
@@ -4805,7 +4809,7 @@ class FileManager
 						// we're good to go: use the cached data!
 						$this->getid3_cache[$hash] = array_merge($data, array('cache_timestamp' => $this->getid3_cache_lru_ts++));
 						$rv = $data['fileinfo'];
-						$rv['cache_from'] = 'file';
+						//$rv['cache_from'] = 'file';
 					}
 					else
 					{
@@ -4817,13 +4821,22 @@ class FileManager
 			
 			if ($rv === false)
 			{
-				$this->getid3->analyze($file);
-
-				$rv = $this->getid3->info;
-				if (empty($rv['mime_type']))
+				if (is_dir($file))
 				{
-					// guarantee to produce a mime type, at least!
-					$rv['mime_type'] = $this->getMimeType($file, true);		// guestimate mimetype when content sniffing didn't work
+					$rv = array(
+							'mime_type' => 'text/directory'
+						);
+				}
+				else
+				{
+					$this->getid3->analyze($file);
+
+					$rv = $this->getid3->info;
+					if (empty($rv['mime_type']))
+					{
+						// guarantee to produce a mime type, at least!
+						$rv['mime_type'] = $this->getMimeType($file, true);		// guestimate mimetype when content sniffing didn't work
+					}
 				}
 
 				// store it in the cache; mark as LRU entry
