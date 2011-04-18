@@ -1897,6 +1897,12 @@ class FileManager
 			{
 				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 
+				if (!$this->IsHiddenNameAllowed($file_arg))
+				{
+					$v_ex_code = 'authorized';
+				}
+				else
+				{
 					if (is_dir($dir))
 					{
 						$file = $this->getUniqueName(array('filename' => $filename), $dir);  // a directory has no 'extension'!
@@ -1906,6 +1912,7 @@ class FileManager
 							$v_ex_code = null;
 						}
 					}
+				}
 			}
 
 			$fileinfo = array(
@@ -2205,6 +2212,12 @@ class FileManager
 			$meta = null;
 			if (!empty($file_arg))
 			{
+				if (!$this->IsHiddenNameAllowed($file_arg))
+				{
+					$v_ex_code = 'authorized';
+				}
+				else
+				{
 					$filename = $this->getUniqueName($file_arg, $dir);
 					if (!empty($filename))
 					{
@@ -2233,11 +2246,12 @@ class FileManager
 							 */
 							if ($this->options['safe'])
 							{
-								$fi['extension'] = $this->getSafeExtension($fi['extension']);
+								$fi['extension'] = $this->getSafeExtension((isset($fi['extension']) ? $fi['extension'] : ''));
 							}
 							$v_ex_code = null;
 						}
 					}
+				}
 			}
 
 			$fileinfo = array(
@@ -2245,7 +2259,7 @@ class FileManager
 				'dir' => $dir,
 				'raw_filename' => $file_arg,
 				'name' => $fi['filename'],
-				'extension' => $fi['extension'],
+				'extension' => (isset($fi['extension']) ? $fi['extension'] : ''),
 				'meta_data' => $meta,
 				'mime' => $mime,
 				'mime_filter' => $mime_filter,
@@ -2269,7 +2283,7 @@ class FileManager
 			$legal_url = $fileinfo['legal_url'];
 			$dir = $fileinfo['dir'];
 			$file_arg = $fileinfo['raw_filename'];
-			$filename = $fileinfo['name'] . (!empty($fileinfo['extension']) ? '.' . $fileinfo['extension'] : '');
+			$filename = $fileinfo['name'] . ((isset($fileinfo['extension']) && strlen($fileinfo['extension']) > 0) ? '.' . $fileinfo['extension'] : '');
 			$meta = $fileinfo['meta_data'];
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
@@ -2280,8 +2294,8 @@ class FileManager
 			if($fileinfo['maxsize'] && $fileinfo['size'] > $fileinfo['maxsize'])
 				throw new FileManagerException('size');
 
-			if(!$fileinfo['extension'])
-				throw new FileManagerException('extension');
+			//if(!isset($fileinfo['extension']))
+			//	throw new FileManagerException('extension');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url . $filename);
@@ -2406,6 +2420,12 @@ class FileManager
 			$newname = null;
 			$newpath = null;
 			$is_dir = false;
+			if (!$this->IsHiddenPathAllowed($newdir_arg) || !$this->IsHiddenNameAllowed($newname_arg))
+			{
+				$v_ex_code = 'authorized';
+			}
+			else
+			{
 				if (!empty($file_arg))
 				{
 					$filename = pathinfo($file_arg, PATHINFO_BASENAME);
@@ -2474,6 +2494,7 @@ class FileManager
 						}
 					}
 				}
+			}
 
 			$fileinfo = array(
 					'legal_url' => $legal_url,
@@ -3792,6 +3813,37 @@ class FileManager
 		}
 	}
 	
+	/**
+	 * Only allow a 'dotted', i.e. UNIX hidden filename when options['safe'] == FALSE
+	 */
+	public function IsHiddenNameAllowed($file)
+	{
+		if ($this->options['safe'] && !empty($file))
+		{
+			if ($file !== '.' && $file !== '..' && $file[0] === '.')
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public function IsHiddenPathAllowed($path)
+	{
+		if ($this->options['safe'] && !empty($path))
+		{
+			$path = strtr($path, '\\', '/');
+			$segs = explode('/', $path);
+			foreach($segs as $file)
+			{
+				if (!$this->IsHiddenNameAllowed($file))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	
 	
 	/**
@@ -3822,8 +3874,11 @@ class FileManager
 			$fileinfo = pathinfo($fileinfo);
 		}
 
-		if (!is_array($fileinfo) || !$fileinfo['filename']) return null;
-
+		if (!is_array($fileinfo)) 
+		{
+			return null;
+		}
+		$dotfile = (strlen($fileinfo['filename']) == 0);
 
 		/*
 		 * since 'pagetitle()' is used to produce a unique, non-existing filename, we can forego the dirscan
@@ -3834,17 +3889,23 @@ class FileManager
 		 * an option array to pagetitle(), particularly for large directories.
 		 */
 		$filename = FileManagerUtility::pagetitle($fileinfo['filename'], null, '-_., []()~!@+' /* . '#&' */, '-_,~@+#&');
-		if (!$filename)
+		if (!$filename && !$dotfile)
 			return null;
 
 		// also clean up the extension: only allow alphanumerics in there!
-		$ext = FileManagerUtility::pagetitle(!empty($fileinfo['extension']) ? $fileinfo['extension'] : null);
-		$ext = (!empty($ext) ? '.' . $ext : null);
+		$ext = FileManagerUtility::pagetitle(isset($fileinfo['extension']) ? $fileinfo['extension'] : null);
+		$ext = (strlen($ext) > 0 ? '.' . $ext : null);
 		// make sure the generated filename is SAFE:
 		$fname = $filename . $ext;
 		$file = $dir . $fname;
 		if (file_exists($file))
 		{
+			if ($dotfile)
+			{
+				$filename = $fname;
+				$ext = '';
+			}
+			
 			/*
 			 * make a unique name. Do this by postfixing the filename with '_X' where X is a sequential number.
 			 *
@@ -4018,7 +4079,7 @@ class FileManager
 	protected function generateThumbName($legal_url, $width = 250, $number_of_dir_levels = MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE)
 	{
 		$fi = pathinfo($legal_url);
-		$ext = strtolower(!empty($fi['extension']) ? $fi['extension'] : '');
+		$ext = strtolower((isset($fi['extension']) && strlen($fi['extension']) > 0) ? $fi['extension'] : '');
 		switch ($ext)
 		{
 		case 'gif':
@@ -4783,7 +4844,9 @@ class FileManagerUtility
 		}
 
 		if (empty($data))
-				return $data;
+		{
+			return (string)$data;
+		}
 
 		// fixup $extra_allowed_chars to ensure it's suitable as a character sequence for a set in a regex:
 		//
