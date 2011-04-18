@@ -283,7 +283,7 @@ FileManager.Gallery = new Class({
 
 		// When the file info is lacking thumbnail info, fetch it by firing a 'detail' request and taking it from there.
 		// Also send our flavour of the 'detail' request when the thumbnail is yet to be generated.
-		if (file.thumb250 == null || file.thumb250.indexOf('.php?') != -1)
+		if (file.thumb250_width == null)
 		{
 			// request full file info for this one! PLUS direct-access thumbnails!
 
@@ -316,12 +316,12 @@ FileManager.Gallery = new Class({
 					// We also want to hold onto the data so we can access it later on,
 					// e.g. when returning the gallery collection to the user.
 
-					// remove unwanted JSON elements first:
-					delete j.status;
-					delete j.error;
-					delete j.content;
 					// now mix with the previously existing 'file' info:
 					file = Object.merge(file, j);
+					// remove unwanted JSON elements:
+					delete file.status;
+					delete file.error;
+					delete file.content;
 
 					if (file.element) {
 						file.element.store('file', file);

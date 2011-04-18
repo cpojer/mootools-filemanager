@@ -2391,6 +2391,7 @@ var FileManager = new Class({
 					file = Object.merge(file, j);
 					// remove unwanted JSON elements:
 					delete file.status;
+					delete file.error;
 					delete file.content;
 
 					if (file.element) {
