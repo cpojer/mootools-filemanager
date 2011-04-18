@@ -2344,6 +2344,9 @@ var FileManager = new Class({
 
 					var size = this.size(j.size);
 
+					// speed up DOM tree manipulation: detach .info from document temporarily:
+					this.info.dispose();
+
 					this.info.getElement('img').set({
 							src: icon,
 							alt: file.mime
@@ -2357,14 +2360,16 @@ var FileManager = new Class({
 					this.info.getElement('dd.filemanager-size').set('text', !size[0] && size[1] === 'Bytes' ? '-' : (size.join(' ') + (size[1] !== 'Bytes' ? ' (' + j.size + ' Bytes)' : '')));
 					//this.info.getElement('h2.filemanager-headline').setStyle('display', j.mime === 'text/directory' ? 'none' : 'block');
 
-					this.info.fade(1);
+					// don't wait for the fade to finish to set up the new content
+					var prev = this.preview.removeClass('filemanager-loading').set('html', (j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '')).getElement('img.preview');
+
+					// and plug in the manipulated DOM subtree again:
+					this.info.inject(this.filemanager).fade(1);
 
 					this.previewLoader.fade(0).get('tween').chain((function() {
 						this.previewLoader.dispose();
 					}).bind(this));
 
-					// don't wait for the fade to finish to set up the new content
-					var prev = this.preview.removeClass('filemanager-loading').set('html', (j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '')).getElement('img.preview');
 					if (prev) {
 						prev.addEvent('load', function(){
 							this.setStyle('background', 'none');
