@@ -3776,6 +3776,10 @@ class FileManager
 		case 'exe':
 		case 'dll':
 		case 'com':
+		case 'sys':
+		case 'bat':
+		case 'pl':
+		case 'sh':
 		case 'php':
 		case 'php3':
 		case 'php4':
