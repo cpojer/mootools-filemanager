@@ -3054,7 +3054,7 @@ class FileManager
 							 * low cost.
 							 */
 							$embed = $this->extract_ID3info_embedded_image($fi);
-							@file_put_contents(dirname(__FILE__) . '/extract_embedded_img.log', print_r(array('html' => $preview_HTML, 'json' => $json, 'thumb250_e' => $thumb250_e, 'thumb250' => $thumb250, 'embed' => $embed, 'fileinfo' => $fi), true));
+							//@file_put_contents(dirname(__FILE__) . '/extract_embedded_img.log', print_r(array('html' => $preview_HTML, 'json' => $json, 'thumb250_e' => $thumb250_e, 'thumb250' => $thumb250, 'embed' => $embed, 'fileinfo' => $fi), true));
 							if (is_object($embed))
 							{
 								$thumbX = $this->options['thumbnailPath'] . $this->generateThumbName($url, 'embed');
@@ -3154,7 +3154,7 @@ class FileManager
 					}
 
 					$postdiag_dump_HTML .= "\n" . $dump . "\n";
-					@file_put_contents(dirname(__FILE__) . '/getid3.log', print_r(array('html' => $preview_HTML, 'json' => $json, 'thumb250_e' => $thumb250_e, 'thumb250' => $thumb250, 'embed' => $embed, 'fileinfo' => $fi), true));
+					//@file_put_contents(dirname(__FILE__) . '/getid3.log', print_r(array('html' => $preview_HTML, 'json' => $json, 'thumb250_e' => $thumb250_e, 'thumb250' => $thumb250, 'embed' => $embed, 'fileinfo' => $fi), true));
 				}
 				catch(Exception $e)
 				{
