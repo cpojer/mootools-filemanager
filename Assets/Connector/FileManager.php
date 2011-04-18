@@ -3003,11 +3003,19 @@ class FileManager
 				$g_playtime_str = $this->getID3infoItem($fi, '???', 'playtime_string');
 
 				$content = '<dl>
-						<dt>Audio</dt><dd>' . $a_fmt . (!empty($a_codec) ? ' (' . $a_codec . ')' : '') .
-											(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : $a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)') : '') .
-											': ' . $a_samplerate . ' kHz @ ' . $a_bitrate . ' kbps (' . strtoupper($a_bitrate_mode) . ')' .
-											($a_streamcount > 1 ? ' (' . $a_streamcount . ' streams)' : '') .
-									'</dd>
+						<dt>Audio</dt><dd>';
+				if ($a_fmt === '???' && $a_samplerate == 0 && $a_bitrate == 0 && $a_bitrate_mode === '???' && $a_channels == 0 && empty($a_codec) && $a_streams === '???' && $a_streamcount == 0)
+				{
+					$content .= '-';
+				}
+				else
+				{
+					$content .= $a_fmt . (!empty($a_codec) ? ' (' . $a_codec . ')' : '') .
+								(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : $a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)') : '') .
+								': ' . $a_samplerate . ' kHz @ ' . $a_bitrate . ' kbps (' . strtoupper($a_bitrate_mode) . ')' .
+								($a_streamcount > 1 ? ' (' . $a_streamcount . ' streams)' : '');
+				}
+				$content .= '</dd>
 						<dt>Video</dt><dd>' . $v_fmt . (!empty($v_codec) ? ' (' . $v_codec . ')' : '') .  ': ' . $v_framerate . ' fps @ ' . $v_bitrate . ' kbps (' . strtoupper($v_bitrate_mode) . ')' .
 											($v_par != 1.0 ? ', PAR: ' . $v_par : '') .
 									'</dd>
@@ -3643,7 +3651,10 @@ class FileManager
 		$this->clean_ID3info_results_r($arr, $flags);
 		
 		// heuristic #4: convert keys to something legible:
-		$this->clean_ID3info_keys($arr);
+		if (is_array($arr))
+		{
+			$this->clean_ID3info_keys($arr);
+		}
 	}
 	
 	
