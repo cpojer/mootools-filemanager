@@ -2333,6 +2333,7 @@ var FileManager = new Class({
 				onRequest: (function() {
 					this.previewLoader.inject(this.preview);
 					this.previewLoader.fade(1);
+					this.info.fade(0);
 				}).bind(this),
 				onSuccess: (function(j) {
 
@@ -2342,8 +2343,6 @@ var FileManager = new Class({
 					}
 
 					var size = this.size(j.size);
-
-					this.info.fade(1);
 
 					this.info.getElement('img').set({
 							src: icon,
@@ -2357,6 +2356,8 @@ var FileManager = new Class({
 					this.info.getElement('dd.filemanager-type').set('text', j.mime);
 					this.info.getElement('dd.filemanager-size').set('text', !size[0] && size[1] === 'Bytes' ? '-' : (size.join(' ') + (size[1] !== 'Bytes' ? ' (' + j.size + ' Bytes)' : '')));
 					//this.info.getElement('h2.filemanager-headline').setStyle('display', j.mime === 'text/directory' ? 'none' : 'block');
+
+					this.info.fade(1);
 
 					this.previewLoader.fade(0).get('tween').chain((function() {
 						this.previewLoader.dispose();
