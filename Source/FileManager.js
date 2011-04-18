@@ -2386,11 +2386,12 @@ var FileManager = new Class({
 					// We also want to hold onto the data so we can access it later on,
 					// e.g. when selecting the image.
 
-					// remove unwanted JSON elements first:
-					delete j.status;
-					delete j.content;
 					// now mix with the previously existing 'file' info (as produced by a 'view' run):
 					file = Object.merge(file, j);
+					// remove unwanted JSON elements:
+					delete file.status;
+					delete file.content;
+
 					if (file.element) {
 						file.element.store('file', file);
 					}
