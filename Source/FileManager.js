@@ -358,7 +358,9 @@ var FileManager = new Class({
 		this.container.inject(document.body);
 		if (!this.options.hideOverlay) {
 			this.overlay = new Overlay(this.options.hideOnClick ? {
-				events: {click: this.hide.bind(this)}
+				events: {
+					click: this.hide.bind(this)
+				}
 			} : null);
 		}
 
@@ -437,12 +439,12 @@ var FileManager = new Class({
 	},
 
 	initialShowBase: function() {
-		if (typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID) {
+		if (typeof jsGET !== 'undefined' && jsGET.get('fmID') == this.ID) {
 			this.show();
 		}
 		else {
 			window.addEvent('jsGETloaded',(function(){
-				if (typeof jsGET != 'undefined' && jsGET.get('fmID') == this.ID)
+				if (typeof jsGET !== 'undefined' && jsGET.get('fmID') == this.ID)
 					this.show();
 			}).bind(this));
 		}
@@ -511,7 +513,7 @@ var FileManager = new Class({
 				el.eliminate('edit');
 				return;
 			}
-			if (file.mime == 'text/directory') {
+			if (file.mime === 'text/directory') {
 				el.addClass('selected');
 				// reset the paging to page #0 as we clicked to change directory
 				this.store_view_fill_startindex(0);
@@ -545,12 +547,12 @@ var FileManager = new Class({
 			this.browserMenu_list.store('set',false);
 			this.browserMenu_thumb.store('set',true).set('opacity',1);
 			this.listType = 'thumb';
-			if (typeof jsGET != 'undefined') jsGET.set('fmListType=thumb');
+			if (typeof jsGET !== 'undefined') jsGET.set('fmListType=thumb');
 		} else {
 			this.browserMenu_thumb.store('set',false);
 			this.browserMenu_list.store('set',true).set('opacity',1);
 			this.listType = 'list';
-			if (typeof jsGET != 'undefined') jsGET.set('fmListType=list');
+			if (typeof jsGET !== 'undefined') jsGET.set('fmListType=list');
 		}
 		//if (typeof console !== 'undefined' && console.log) console.log('on toggleList dir = ' + this.Directory + ', source = ' + '---');
 		this.load(this.Directory);
@@ -616,14 +618,14 @@ var FileManager = new Class({
 		this.fmShown = true;
 		this.onShow = false;
 
-		if (typeof preselect == 'undefined') preselect = null;
+		if (typeof preselect === 'undefined') preselect = null;
 
 		//if (typeof console !== 'undefined' && console.log) console.log('on show file = ' + this.Directory + ', source = ' + '---');
-		if (typeof loaddir != 'undefined' && loaddir != null)
+		if (typeof loaddir !== 'undefined' && loaddir != null)
 		{
 			this.Directory = loaddir;
 		}
-		else if (typeof jsGET != 'undefined')
+		else if (typeof jsGET !== 'undefined')
 		{
 			if (jsGET.get('fmPath') != null)
 			{
@@ -636,12 +638,12 @@ var FileManager = new Class({
 		}
 
 		// get and set history
-		if (typeof jsGET != 'undefined') {
+		if (typeof jsGET !== 'undefined') {
 			if (jsGET.get('fmFile') != null) this.onShow = true;
 			if (jsGET.get('fmListType') != null) {
 				$$('.filemanager-browserheader a.listType').set('opacity',0.5);
 				this.listType = jsGET.get('fmListType');
-				if (this.listType == 'thumb')
+				if (this.listType === 'thumb')
 					this.browserMenu_thumb.store('set',true).set('opacity',1);
 				else
 					this.browserMenu_list.store('set',true).set('opacity',1);
@@ -651,8 +653,9 @@ var FileManager = new Class({
 		}
 
 		this.load(this.Directory, preselect);
-		if (!this.options.hideOverlay)
+		if (!this.options.hideOverlay) {
 			this.overlay.show();
+		}
 
 		this.info.fade(0);
 		this.container.fade(0).setStyles({
@@ -685,13 +688,14 @@ var FileManager = new Class({
 		this.fmShown = false;
 
 		// stop hashListener
-		if (typeof jsGET != 'undefined') {
+		if (typeof jsGET !== 'undefined') {
 			jsGET.removeListener(this.hashListenerId);
 			jsGET.remove(['fmID','fmPath','fmFile','fmListType','fmPageIdx']);
 		}
 
-		if (!this.options.hideOverlay)
+		if (!this.options.hideOverlay) {
 			this.overlay.hide();
+		}
 		this.tips.hide();
 		this.browser.empty();
 		this.container.setStyle('display', 'none');
@@ -756,7 +760,7 @@ var FileManager = new Class({
 		this._downloadForm = new Element('form', {target: '_downloadIframe', method: 'post'});
 		this.menu.adopt(this._downloadForm);
 
-		if (this.options.propagateType == 'POST')
+		if (this.options.propagateType === 'POST')
 		{
 			var self = this;
 			Object.each(this.options.propagateData, function(v, k) {
@@ -764,7 +768,7 @@ var FileManager = new Class({
 			});
 		}
 
-		this._downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (this.options.propagateType == 'GET' ? this.options.propagateData : {}), {
+		this._downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (this.options.propagateType === 'GET' ? this.options.propagateData : {}), {
 			event: 'download',
 			file: this.normalize(file.dir + file.name),
 			filter: this.options.filter
@@ -777,7 +781,7 @@ var FileManager = new Class({
 		e.stop();
 		var input = new Element('input', {'class': 'createDirectory', 'autofocus': 'autofocus'});
 		var click_ok_f = function(e) {
-			if (e.key == 'enter') {
+			if (e.key === 'enter') {
 				e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 			}
 		};
@@ -865,7 +869,7 @@ var FileManager = new Class({
 	// add the ability to preselect a file in the dir
 	load: function(dir, preselect) {
 
-		if (typeof preselect == 'undefined') preselect = null;
+		if (typeof preselect === 'undefined') preselect = null;
 
 		this.deselect();
 		this.info.fade(0);
@@ -1064,7 +1068,7 @@ var FileManager = new Class({
 		var name = file.name;
 		var input = new Element('input', {'class': 'rename', value: name, 'autofocus': 'autofocus'});
 
-		// if (file.mime != 'text/directory') name = name.replace(/\..*$/, '');     -- unused
+		// if (file.mime !== 'text/directory') name = name.replace(/\..*$/, '');     -- unused
 
 		new FileManager.Dialog(this.language.renamefile, {
 			language: {
@@ -1079,7 +1083,7 @@ var FileManager = new Class({
 			onShow: function(){
 				//if (typeof console !== 'undefined' && console.log) console.log('add key up on rename dialog:onshow');
 				input.addEvent('keyup', function(e) {
-					if (e.key == 'enter') {
+					if (e.key === 'enter') {
 						e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 					}
 				}).focus();
@@ -1136,7 +1140,7 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log('browserSelection : direction = ' + direction);
 		if (this.browser.getElement('li') == null) return;
 
-		if (direction == 'go-bottom')
+		if (direction === 'go-bottom')
 		{
 			// select first item of next page
 			current = this.browser.getFirst('li').getElement('span.fi');
@@ -1146,7 +1150,7 @@ var FileManager = new Class({
 			if (csel != null)
 				csel.removeClass('selected');
 		}
-		else if (direction == 'go-top')
+		else if (direction === 'go-top')
 		{
 			// select last item of previous page
 			current = this.browser.getLast('li').getElement('span.fi');
@@ -1275,7 +1279,7 @@ var FileManager = new Class({
 			current.addClass('selected');
 			currentFile = current.retrieve('file');
 			//if (typeof console !== 'undefined' && console.log) console.log('on key ENTER file = ' + currentFile.mime + ': ' + currentFile.path + ', source = ' + 'retrieve');
-			if (currentFile.mime == 'text/directory') {
+			if (currentFile.mime === 'text/directory') {
 				this.load(currentFile.dir + currentFile.name /*.replace(this.root,'')*/);
 			}
 			else {
@@ -1316,7 +1320,7 @@ var FileManager = new Class({
 		//if (typeof console !== 'undefined' && console.log) console.log('key DOWN: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y);
 		//if (typeof console !== 'undefined' && console.log) console.log('key UP: current Y = ' + current.getPosition(this.browserScroll).y + ', H = ' + this.browserScroll.getSize().y + ', 1U = ' + current.getSize().y + ', SCROLL = ' + this.browserScroll.getScroll().y + ', SIZE = ' + this.browserScroll.getSize().y);
 		var dy, browserScrollFx;
-		if (direction != 'up' && current.getPosition(this.browserScroll).y + current.getSize().y * 2 >= this.browserScroll.getSize().y)
+		if (direction !== 'up' && current.getPosition(this.browserScroll).y + current.getSize().y * 2 >= this.browserScroll.getSize().y)
 		{
 			// make scroll duration slightly dependent on the distance to travel:
 			dy = (current.getPosition(this.browserScroll).y + current.getSize().y * 2 - this.browserScroll.getSize().y);
@@ -1325,7 +1329,7 @@ var FileManager = new Class({
 			browserScrollFx = new Fx.Scroll(this.browserScroll, { duration: (dy < 150 ? 150 : dy > 1000 ? 1000 : dy.toInt()) });
 			browserScrollFx.toElement(current);
 		}
-		else if (direction != 'down' && current.getPosition(this.browserScroll).y <= current.getSize().y)
+		else if (direction !== 'down' && current.getPosition(this.browserScroll).y <= current.getSize().y)
 		{
 			var sy = this.browserScroll.getScroll().y + current.getPosition(this.browserScroll).y - this.browserScroll.getSize().y + current.getSize().y * 2;
 
@@ -1421,7 +1425,7 @@ var FileManager = new Class({
 
 		var j_item_count;
 
-		if (typeof preselect == 'undefined') preselect = null;
+		if (typeof preselect === 'undefined') preselect = null;
 
 		if (!pagesize)
 		{
@@ -1476,7 +1480,7 @@ var FileManager = new Class({
 		this.browser.empty();
 
 		// set history
-		if (typeof jsGET != 'undefined' && this.storeHistory && j.dir.mime == 'text/directory')
+		if (typeof jsGET !== 'undefined' && this.storeHistory && j.dir.mime === 'text/directory')
 		{
 			jsGET.set({'fmPath':j.path});
 		}
@@ -1645,7 +1649,7 @@ var FileManager = new Class({
 		var self = this;
 		var j = this.view_fill_json;
 		var loop_starttime = new Date().getTime();
-		var fmFile = (typeof jsGET != 'undefined' ? jsGET.get('fmFile') : null);
+		var fmFile = (typeof jsGET !== 'undefined' ? jsGET.get('fmFile') : null);
 
 		var duration = new Date().getTime() - starttime;
 		//if (typeof console !== 'undefined' && console.log) console.log(' + fill_chunkwise_1(' + startindex + ') @ ' + duration);
@@ -1694,7 +1698,7 @@ var FileManager = new Class({
 			//uniqueId = newDate.getTime();
 
 			//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
-			//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
+			//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 
 			// This is just a raw image
 			el = this.list_row_maker(file.thumbnail, file);
@@ -1713,7 +1717,7 @@ var FileManager = new Class({
 			editButtons = [];
 
 			// rename, delete icon
-			if (file.name != '..')
+			if (file.name !== '..')
 			{
 				if (this.options.rename) editButtons.push('rename');
 				if (this.options.destroy) editButtons.push('destroy');
@@ -1734,7 +1738,7 @@ var FileManager = new Class({
 			}, this);
 
 			els[1].push(el);
-			//if (file.name == '..') el.fade(0.7);
+			//if (file.name === '..') el.fade(0.7);
 			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
 			//icons = $$(icons.map((function(icon){
 			//  this.showFunctions(icon,icon,0.5,1);
@@ -1782,14 +1786,14 @@ var FileManager = new Class({
 				//uniqueId = newDate.getTime();
 
 				//if (typeof console !== 'undefined' && console.log) console.log('thumbnail: "' + file.thumbnail + '"');
-				//var icon = (this.listType == 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
+				//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 
 				if (file.thumbnail.indexOf('.php?') == -1)
 				{
 					// This is just a raw image
 					el = this.list_row_maker(file.thumbnail, file);
 				}
-				else if (this.options.propagateType == 'POST')
+				else if (this.options.propagateType === 'POST')
 				{
 					// We must AJAX POST our propagateData, so we need to do the post and take the url to the
 					// thumbnail from the post results.
@@ -2314,8 +2318,8 @@ var FileManager = new Class({
 
 		// set file history
 		//if (typeof console !== 'undefined' && console.log) console.log(this.storeHistory);
-		if (typeof jsGET != 'undefined' && this.storeHistory) {
-			if (file.mime != 'text/directory')
+		if (typeof jsGET !== 'undefined' && this.storeHistory) {
+			if (file.mime !== 'text/directory')
 				jsGET.set({'fmFile': file.name});
 			else
 				jsGET.set({'fmFile': ''});
@@ -2331,7 +2335,7 @@ var FileManager = new Class({
 
 		this.preview.empty();
 
-		//if (file.mime == 'text/directory') return;
+		//if (file.mime === 'text/directory') return;
 
 		if (this.drop_pending == 0)
 		{
@@ -2346,7 +2350,7 @@ var FileManager = new Class({
 				data: {
 					directory: dir,
 					// fixup for *directory* detail requests:
-					file: (file.mime == 'text/directory' ? '.' : file.name),
+					file: (file.mime === 'text/directory' ? '.' : file.name),
 					filter: this.options.filter,
 					mode: 'auto'                    // provide either direct links to the thumbnails (when available in cache) or PHP event trigger URLs for delayed thumbnail image creation (performance optimization: faster page render)
 				},
@@ -2416,9 +2420,9 @@ var FileManager = new Class({
 						file.element.store('file', file);
 					}
 
-					if (typeof milkbox != 'undefined')
+					if (typeof milkbox !== 'undefined') {
 						milkbox.reloadPageGalleries();
-
+					}
 				}).bind(this),
 				onError: (function(text, error) {
 					this.previewLoader.dispose();
@@ -2512,7 +2516,7 @@ var FileManager = new Class({
 	store_view_fill_startindex: function(idx)
 	{
 		this.view_fill_startindex = idx;
-		if (typeof jsGET != 'undefined' /* && this.storeHistory */) {
+		if (typeof jsGET !== 'undefined' /* && this.storeHistory */) {
 			jsGET.set({'fmPageIdx': idx});
 		}
 	},
@@ -2524,7 +2528,7 @@ var FileManager = new Class({
 		{
 			idx = this.view_fill_startindex;
 		}
-		if (typeof jsGET != 'undefined' && !idx)
+		if (typeof jsGET !== 'undefined' && !idx)
 		{
 			idx = jsGET.get('fmPageIdx');
 		}
@@ -2646,7 +2650,7 @@ FileManager.Request = new Class({
 	initialize: function(options, filebrowser){
 		this.parent(options);
 
-		if (filebrowser.options.propagateType == 'GET')
+		if (filebrowser.options.propagateType === 'GET')
 		{
 			this.options.url += (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(filebrowser.options.propagateData);
 		}
@@ -2663,11 +2667,13 @@ FileManager.Request = new Class({
 					if (!j.status) return filebrowser.showError(j.error);
 				},
 
-				error: function(text, error) {
+				error: function(text, error)
+				{
 					filebrowser.showError(text);
 				},
 
-				failure: function(xmlHttpRequest) {
+				failure: function(xmlHttpRequest)
+				{
 					var text = filebrowser.cvtXHRerror2msg(xmlHttpRequest);
 					filebrowser.showError(text);
 				}
@@ -2689,7 +2695,7 @@ FileManager.Language = {};
 (function(){
 
 // ->> load DEPENDENCIES
-if (typeof __MFM_ASSETS_DIR__ == 'undefined')
+if (typeof __MFM_ASSETS_DIR__ === 'undefined')
 {
 	var __DIR__ = (function() {
 			var scripts = document.getElementsByTagName('script');
@@ -2723,7 +2729,7 @@ Element.implement({
 
 		for (var z in values){
 			var style = scroll[z] + (offset[z] - size[z]) / 2 + (offsets[z] || 0);
-			this.setStyle(values[z], (z == 'y' && style < 30) ? 30 : style);
+			this.setStyle(values[z], (z === 'y' && style < 30) ? 30 : style);
 		}
 		return this;
 	}
@@ -2756,12 +2762,12 @@ FileManager.Dialog = new Class({
 			opacity: 0,
 			tween: {duration: 'short'}
 		}).adopt([
-			typeOf(text) == 'string' ? new Element('div', {text: text}) : text
+			typeOf(text) === 'string' ? new Element('div', {text: text}) : text
 		]);
 
-		if (typeof this.options.content != 'undefined') {
+		if (typeof this.options.content !== 'undefined') {
 			this.options.content.each((function(content){
-				if (content && typeOf(content) == 'element') {
+				if (content && typeOf(content) === 'element') {
 					this.el.getElement('div').adopt(content);
 				}
 				else if (content) {
@@ -2782,7 +2788,9 @@ FileManager.Dialog = new Class({
 
 		this.overlay = new Overlay({
 			'class': 'filemanager-overlay filemanager-overlay-dialog',
-			events: {click: this.fireEvent.pass('close',this)},
+			events: {
+				click: this.fireEvent.pass('close',this)
+			},
 			tween: {duration: 'short'}
 		});
 
@@ -2796,7 +2804,7 @@ FileManager.Dialog = new Class({
 
 			keyesc: (function(e){
 				//if (typeof console !== 'undefined' && console.log) console.log('keyEsc: key press: ' + e.key);
-				if (e.key == 'esc') {
+				if (e.key === 'esc') {
 					e.stopPropagation();
 					this.fireEvent('close').destroy();
 				}
@@ -2807,8 +2815,9 @@ FileManager.Dialog = new Class({
 	},
 
 	show: function(){
-		if (!this.options.hideOverlay)
+		if (!this.options.hideOverlay) {
 			this.overlay.show();
+		}
 		var self = this;
 		this.fireEvent('open');
 		this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
@@ -2828,8 +2837,9 @@ FileManager.Dialog = new Class({
 	destroy: function() {
 		if (this.el) {
 			this.el.fade(0).get('tween').chain((function(){
-				if (!this.options.hideOverlay)
+				if (!this.options.hideOverlay) {
 					this.overlay.destroy();
+				}
 				this.el.destroy();
 			}).bind(this));
 		}
@@ -2900,7 +2910,6 @@ this.Overlay = new Class({
 
 		return this;
 	}
-
 });
 
 })();

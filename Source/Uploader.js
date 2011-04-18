@@ -278,7 +278,7 @@ FileManager.implement({
 				self._lastFileUploaded = f.name;
 			},
 			onFail: function(error) {
-				if (error != 'empty') {
+				if (error !== 'empty') {
 					$$(self.upload.button, self.upload.label).dispose();
 					new FileManager.Dialog(new Element('div', {html: self.language.flash[error] || self.language.flash.flash}), {language: {confirm: self.language.ok}, buttons: ['confirm']});
 				}
