@@ -1897,15 +1897,15 @@ class FileManager
 			{
 				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
 
-				if (is_dir($dir))
-				{
-					$file = $this->getUniqueName(array('filename' => $filename), $dir);  // a directory has no 'extension'!
-					if ($file)
+					if (is_dir($dir))
 					{
-						$newdir = $this->legal_url_path2file_path($legal_url . $file);
-						$v_ex_code = null;
+						$file = $this->getUniqueName(array('filename' => $filename), $dir);  // a directory has no 'extension'!
+						if ($file)
+						{
+							$newdir = $this->legal_url_path2file_path($legal_url . $file);
+							$v_ex_code = null;
+						}
 					}
-				}
 			}
 
 			$fileinfo = array(
@@ -2205,39 +2205,39 @@ class FileManager
 			$meta = null;
 			if (!empty($file_arg))
 			{
-				$filename = $this->getUniqueName($file_arg, $dir);
-				if (!empty($filename))
-				{
-					$fi = pathinfo($filename);
+					$filename = $this->getUniqueName($file_arg, $dir);
+					if (!empty($filename))
+					{
+						$fi = pathinfo($filename);
 
-					// UPLOAD delivers files in temporary storage with extensions NOT matching the mime type, so we don't
-					// filter on extension; we just let getID3 go ahead and content-sniff the mime type.
-					// Since getID3::analyze() is a quite costly operation, we like to do it only ONCE per file,
-					// so we cache the last entries.
-					$meta = $this->getFileInfo($tmppath);
-					if (!empty($meta['mime_type']))
-						$mime = $meta['mime_type'];
-					//$mime = $this->getMimeType($file);
-					if (!$this->IsAllowedMimeType($mime, $mime_filters))
-					{
-						$v_ex_code = 'extension';
-					}
-					else
-					{
-						/*
-						 * Security:
-						 *
-						 * Upload::move() processes the unfiltered version of $_FILES[]['name'], at least to get the extension,
-						 * unless we ALWAYS override the filename and extension in the options array below. That's why we
-						 * calculate the extension at all times here.
-						 */
-						if ($this->options['safe'])
+						// UPLOAD delivers files in temporary storage with extensions NOT matching the mime type, so we don't
+						// filter on extension; we just let getID3 go ahead and content-sniff the mime type.
+						// Since getID3::analyze() is a quite costly operation, we like to do it only ONCE per file,
+						// so we cache the last entries.
+						$meta = $this->getFileInfo($tmppath);
+						if (!empty($meta['mime_type']))
+							$mime = $meta['mime_type'];
+						//$mime = $this->getMimeType($file);
+						if (!$this->IsAllowedMimeType($mime, $mime_filters))
 						{
-							$fi['extension'] = $this->getSafeExtension($fi['extension']);
+							$v_ex_code = 'extension';
 						}
-						$v_ex_code = null;
+						else
+						{
+							/*
+							 * Security:
+							 *
+							 * Upload::move() processes the unfiltered version of $_FILES[]['name'], at least to get the extension,
+							 * unless we ALWAYS override the filename and extension in the options array below. That's why we
+							 * calculate the extension at all times here.
+							 */
+							if ($this->options['safe'])
+							{
+								$fi['extension'] = $this->getSafeExtension($fi['extension']);
+							}
+							$v_ex_code = null;
+						}
 					}
-				}
 			}
 
 			$fileinfo = array(
@@ -2406,74 +2406,74 @@ class FileManager
 			$newname = null;
 			$newpath = null;
 			$is_dir = false;
-			if (!empty($file_arg))
-			{
-				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
-				$path = $this->legal_url_path2file_path($legal_url . $filename);
-
-				if (file_exists($path))
+				if (!empty($file_arg))
 				{
-					$is_dir = is_dir($path);
+					$filename = pathinfo($file_arg, PATHINFO_BASENAME);
+					$path = $this->legal_url_path2file_path($legal_url . $filename);
 
-					// note: we do not support copying entire directories, though directory rename/move is okay
-					if ($is_copy && $is_dir)
+					if (file_exists($path))
 					{
-						$v_ex_code = 'disabled';
-					}
-					else if ($rename)
-					{
-						$fn = 'rename';
-						$legal_newurl = $legal_url;
-						$newdir = $dir;
+						$is_dir = is_dir($path);
 
-						$newname = pathinfo($newname_arg, PATHINFO_BASENAME);
-						if ($is_dir)
-							$newname = $this->getUniqueName(array('filename' => $newname), $newdir);  // a directory has no 'extension'
-						else
-							$newname = $this->getUniqueName($newname, $newdir);
-
-						if (!$newname)
+						// note: we do not support copying entire directories, though directory rename/move is okay
+						if ($is_copy && $is_dir)
 						{
-							$v_ex_code = 'nonewfile';
+							$v_ex_code = 'disabled';
 						}
-						else
+						else if ($rename)
 						{
-							// when the new name seems to have a different extension, make sure the extension doesn't change after all:
-							// Note: - if it's only 'case' we're changing here, then exchange the extension instead of appending it.
-							//       - directories do not have extensions
-							$extOld = pathinfo($filename, PATHINFO_EXTENSION);
-							$extNew = pathinfo($newname, PATHINFO_EXTENSION);
-							if ((!$this->options['allowExtChange'] || (!$is_dir && empty($extNew))) && !empty($extOld) && strtolower($extOld) != strtolower($extNew))
+							$fn = 'rename';
+							$legal_newurl = $legal_url;
+							$newdir = $dir;
+
+							$newname = pathinfo($newname_arg, PATHINFO_BASENAME);
+							if ($is_dir)
+								$newname = $this->getUniqueName(array('filename' => $newname), $newdir);  // a directory has no 'extension'
+							else
+								$newname = $this->getUniqueName($newname, $newdir);
+
+							if (!$newname)
 							{
-								$newname .= '.' . $extOld;
+								$v_ex_code = 'nonewfile';
 							}
-							$v_ex_code = null;
+							else
+							{
+								// when the new name seems to have a different extension, make sure the extension doesn't change after all:
+								// Note: - if it's only 'case' we're changing here, then exchange the extension instead of appending it.
+								//       - directories do not have extensions
+								$extOld = pathinfo($filename, PATHINFO_EXTENSION);
+								$extNew = pathinfo($newname, PATHINFO_EXTENSION);
+								if ((!$this->options['allowExtChange'] || (!$is_dir && empty($extNew))) && !empty($extOld) && strtolower($extOld) != strtolower($extNew))
+								{
+									$newname .= '.' . $extOld;
+								}
+								$v_ex_code = null;
+							}
 						}
-					}
-					else
-					{
-						$fn = ($is_copy ? 'copy' : 'rename' /* 'move' */);
-						$legal_newurl = $this->rel2abs_legal_url_path($newdir_arg);
-						$legal_newurl = self::enforceTrailingSlash($legal_newurl);
-						$newdir = $this->legal_url_path2file_path($legal_newurl);
-
-						if ($is_dir)
-							$newname = $this->getUniqueName(array('filename' => $filename), $newdir);  // a directory has no 'extension'
 						else
-							$newname = $this->getUniqueName($filename, $newdir);
+						{
+							$fn = ($is_copy ? 'copy' : 'rename' /* 'move' */);
+							$legal_newurl = $this->rel2abs_legal_url_path($newdir_arg);
+							$legal_newurl = self::enforceTrailingSlash($legal_newurl);
+							$newdir = $this->legal_url_path2file_path($legal_newurl);
 
-						if (!$newname)
-							$v_ex_code = 'nonewfile';
-						else
-							$v_ex_code = null;
-					}
+							if ($is_dir)
+								$newname = $this->getUniqueName(array('filename' => $filename), $newdir);  // a directory has no 'extension'
+							else
+								$newname = $this->getUniqueName($filename, $newdir);
 
-					if (empty($v_ex_code))
-					{
-						$newpath = $this->legal_url_path2file_path($legal_newurl . $newname);
+							if (!$newname)
+								$v_ex_code = 'nonewfile';
+							else
+								$v_ex_code = null;
+						}
+
+						if (empty($v_ex_code))
+						{
+							$newpath = $this->legal_url_path2file_path($legal_newurl . $newname);
+						}
 					}
 				}
-			}
 
 			$fileinfo = array(
 					'legal_url' => $legal_url,
