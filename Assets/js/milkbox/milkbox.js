@@ -347,7 +347,9 @@ this.Milkbox = new Class({
 		var timer; // split due to jsLint: Problem at line 338 character 31: 'timer' has not been fully defined yet.
 		timer = (function(){
 			if(this.display.ready){
-				this.display.show_file(file,caption,this.currentIndex+1,this.currentGallery.items.length);
+				if (this.currentGallery.items != null) {
+					this.display.show_file(file,caption,this.currentIndex+1,this.currentGallery.items.length);
+				}
 				clearInterval(timer);
 			}
 		}).periodical(100,this);
