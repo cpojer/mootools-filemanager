@@ -35,7 +35,11 @@ FileManager.implement({
 			upload: function(){
 				if (!this.options.upload || !this.upload) return;
 
-				if (this.upload.uploader) this.upload.uploader.set('opacity', 0).dispose();
+				if (this.upload.uploader) {
+					this.upload.uploader.fade(0).get('tween').chain(function(){
+						this.element.dispose();
+					});
+				}
 			}
 		}
 	},
@@ -80,13 +84,14 @@ FileManager.implement({
 		this.upload.uploader.getElement('div').adopt(this.upload.list);
 
 		if (this.options.resizeImages){
-			var resizer = new Element('div', {'class': 'checkbox'}),
-				check = (function(){
-			this.toggleClass('checkboxChecked');
-		}).bind(resizer);
+			var resizer = new Element('div', {'class': 'checkbox'});
+			var check = (function(){
+					this.toggleClass('checkboxChecked');
+				}).bind(resizer);
 			check();
 			this.upload.label = new Element('label').adopt(
-				resizer, new Element('span', {text: this.language.resizeImages})
+				resizer,
+				new Element('span', {text: this.language.resizeImages})
 			).addEvent('click', check).inject(this.menu);
 		}
 
@@ -112,17 +117,19 @@ FileManager.implement({
 
 			render: function(){
 				if (this.invalid){
-					var message = self.language.uploader.unknown, sub = {
+					var message = self.language.uploader.unknown;
+					var sub = {
 						name: this.name,
 						size: Swiff.Uploader.formatUnit(this.size, 'b')
 					};
 
-					if (self.language.uploader[this.validationError])
+					if (self.language.uploader[this.validationError]) {
 						message = self.language.uploader[this.validationError];
+					}
 
-					if (this.validationError == 'sizeLimitMin')
+					if (this.validationError === 'sizeLimitMin')
 						sub.size_min = Swiff.Uploader.formatUnit(this.base.options.fileSizeMin, 'b');
-					else if (this.validationError == 'sizeLimitMax')
+					else if (this.validationError === 'sizeLimitMax')
 						sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
 
 					this.showError(message.substitute(sub, /\\?\$\{([^{}]+)\}/g));
@@ -141,7 +148,9 @@ FileManager.implement({
 				this.ui = {};
 				this.ui.icon = new Asset.image(self.assetBasePath+'Images/Icons/' + this.extension + '.png', {
 					'class': 'icon',
-					onerror: function(){ new Asset.image(self.assetBasePath + 'Images/Icons/default.png').replaces(this); }
+					onerror: function(){
+						new Asset.image(self.assetBasePath + 'Images/Icons/default.png').replaces(this);
+					}
 				});
 				this.ui.element = new Element('li', {'class': 'file', id: 'file-' + this.id});
 				this.ui.title = new Element('span', {'class': 'file-title', text: this.name});
