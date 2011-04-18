@@ -19,7 +19,9 @@ FileManager.implement({
 	options: {
 		resizeImages: true,
 		upload: true,
-		uploadAuthData: {}            // deprecated; use FileManager.propagateData instead!
+		uploadAuthData: {},            // deprecated; use FileManager.propagateData instead!
+		uploadTimeLimit: 260,
+		uploadFileSizeMax: 2600 * 2600 * 25
 	},
 
 	hooks: {
@@ -270,8 +272,8 @@ FileManager.implement({
 				(self.options.uploadAuthData || {})
 			),
 			fileClass: File,
-			timeLimit: 260,
-			fileSizeMax: 2600 * 2600 * 25,
+			timeLimit: self.options.uploadTimeLimit,
+			fileSizeMax: self.options.uploadFileSizeMax,
 			typeFilter: this.getFileTypes(),
 			zIndex: this.SwiffZIndex || 9999,
 			onSelectSuccess: function(){
