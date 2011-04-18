@@ -723,6 +723,7 @@ var MilkboxDisplay= new Class({
 		centered:false,
 		auto_size:false,
 		autosize_max_height:0,
+		fixup_dimension:true,
 		image_of_text:'of',
 		zIndex: 410000,  // required to be a high number > 400000 as the 'filemanager as tinyMCE plugin' sits at z-index 400K+
 		onNextClick:function(){},
@@ -929,8 +930,19 @@ var MilkboxDisplay= new Class({
 		};
 		if(!file_size.w || !file_size.h){
 			//data-milkbox-size not passed
-			alert('Milkbox error: you must pass size values if the file is swf or html or a free file (openWithFile)');
-			return;
+			if (!this.options.fixup_dimension) {
+				alert('Milkbox error: you must pass size values if the file is swf or html or a free file (openWithFile)');
+				return;
+			}
+			// assume some sensible defaults:
+			var dims = Window.getSize();
+			file.width = dims.x;
+			file.height = dims.y;
+			file_size = {
+				w: dims.x * 0.85,
+				h: dims.y * 0.85
+			};
+			file.set({ 'width':file_size.w.toInt(), 'height':file_size.h.toInt() });
 		}
 		file_size = Object.map(file_size,function(value){
 			return value.toInt();
@@ -1272,7 +1284,7 @@ var MilkboxGallery = new Class({
 
 
 
-//Creating Milkbox instance: you can comment this code and instantiate Milkbox somewhere else instead.
+//Creating Milkbox instance: you can comment this code out and instantiate Milkbox somewhere else instead.
 window.addEvent('domready', function(){
 	this.milkbox = new Milkbox({
 		centered:false
