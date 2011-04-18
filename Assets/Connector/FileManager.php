@@ -968,7 +968,7 @@ class FileManager
 			{
 				$file = $this->legal_url_path2file_path($url);
 
-				$mime = $this->getMimeType($file, false);
+				$mime = $this->getMimeType($file, false, $url);
 				$iconspec = basename($file);
 			}
 			else
@@ -1331,7 +1331,7 @@ class FileManager
 				{
 					if (is_file($file))
 					{
-						$meta = $this->getFileInfo($file);
+						$meta = $this->getFileInfo($file, $legal_url);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
 						//$mime = $this->getMimeType($file);
@@ -1526,7 +1526,7 @@ class FileManager
 				{
 					if (is_file($file))
 					{
-						$meta = $this->getFileInfo($file);
+						$meta = $this->getFileInfo($file, $legal_url);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
 						//$mime = $this->getMimeType($file);
@@ -1756,7 +1756,7 @@ class FileManager
 				{
 					if (is_file($file))
 					{
-						$meta = $this->getFileInfo($file);
+						$meta = $this->getFileInfo($file, $legal_url);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
 						//$mime = $this->getMimeType($file);
@@ -2061,7 +2061,7 @@ class FileManager
 				{
 					if (is_file($file))
 					{
-						$meta = $this->getFileInfo($file);
+						$meta = $this->getFileInfo($file, $legal_url);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
 						//$mime = $this->getMimeType($file);
@@ -2227,7 +2227,7 @@ class FileManager
 						// filter on extension; we just let getID3 go ahead and content-sniff the mime type.
 						// Since getID3::analyze() is a quite costly operation, we like to do it only ONCE per file,
 						// so we cache the last entries.
-						$meta = $this->getFileInfo($tmppath);
+						$meta = $this->getFileInfo($tmppath, null);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
 						//$mime = $this->getMimeType($file);
@@ -2620,7 +2620,7 @@ class FileManager
 	 *
 	 * Throw an exception on error.
 	 */
-	public function extractDetailInfo($json, $legal_url, $fi, $mime_filter, $mime_filters, $thumbnail_gen_mode)
+	public function extractDetailInfo($json_in, $legal_url, $fi, $mime_filter, $mime_filters, $thumbnail_gen_mode)
 	{
 		$auto_thumb_gen_mode = ($thumbnail_gen_mode !== 'direct');
 
@@ -2633,14 +2633,13 @@ class FileManager
 		$isdir = !is_file($file);
 		$bad_ext = false;
 		$mime = null;
-		//$fi = null;
+		// only perform the (costly) getID3 scan when it hasn't been done before, i.e. can we re-use previously obtained data or not?
+		if (!is_array($fi))
+		{
+			$fi = $this->getFileInfo($file, $legal_url);
+		}
 		if (!$isdir)
 		{
-			// only perform the (costly) getID3 scan when it hasn't been done before, i.e. can we re-use previously obtained data or not?
-			if (!is_array($fi))
-			{
-				$fi = $this->getFileInfo($file);
-			}
 			if (!empty($fi['mime_type']))
 				$mime = $fi['mime_type'];
 			if (empty($mime))
@@ -2665,6 +2664,8 @@ class FileManager
 		{
 			$mime = 'text/directory';
 			$iconspec = 'is.dir';
+			
+			$fi['mime_type'] = $mime;
 		}
 		else
 		{
@@ -2678,6 +2679,28 @@ class FileManager
 			throw new FileManagerException('nofile');
 		}
 
+		// as all the work below is quite costly, we check whether the already loaded cache entry got our number:
+		$json = false;
+		$hash = false;
+		$cachefile = false;
+		$cache_dir = false;
+		$cache_json_entry = false;
+		if (!empty($fi['cache_hash']))
+		{
+			$hash = $fi['cache_hash'];
+			$cachefile = $fi['cache_file'];
+			$cache_dir = $fi['cache_dir'];
+			
+			$cache_json_entry = ($auto_thumb_gen_mode ? 'direct_json' : 'auto_json');
+			if (array_key_exists($hash, $this->getid3_cache) && !empty($this->getid3_cache[$hash][$cache_json_entry]))
+			{
+				$json = $this->getid3_cache[$hash][$cache_json_entry];
+				$json['content'] .= '<p>full info retrieved from RAM/file</p>';
+			}
+		}
+		
+		if ($json === false)
+		{
 			$thumbnail = $this->getIcon($iconspec, false);
 			$thumb48_e = FileManagerUtility::rawurlencode_path($thumbnail);
 			$thumb250_e = $thumb48_e;
@@ -2691,7 +2714,6 @@ class FileManager
 						${nopreview}
 					</div>')
 				),
-				(is_array($json) ? $json : array()),
 				array(
 					'path' => FileManagerUtility::rawurlencode_path($url),
 					'name' => $filename,
@@ -3035,15 +3057,14 @@ class FileManager
 				{
 					$postdiag_err_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
 				}
-			
+				
 				try
 				{
 					unset($fi['GETID3_VERSION']);
 					unset($fi['filepath']);
 					unset($fi['filename']);
 					unset($fi['filenamepath']);
-					unset($fi['cache_timestamp']);
-				
+					
 					if ($thumb250_e === false)
 					{
 						// when the ID3 info scanner can dig up an EMBEDDED thumbnail, when we don't have anything else, we're happy with that one!
@@ -3160,7 +3181,7 @@ class FileManager
 								$json['thumb250-width'] = $tnsize[0];
 								$json['thumb250-height'] = $tnsize[1];
 							}
-						
+							
 							if ($thumb48 === $thumb250)
 							{
 								$json['thumb48-width'] = $tnsize[0];
@@ -3177,11 +3198,11 @@ class FileManager
 							}
 						}
 					}
-				
+					
 					$this->clean_ID3info_results($fi);
-				
+					
 					$dump = FileManagerUtility::table_var_dump($fi, false);
-				
+					
 					if (0)
 					{
 						self::clean_EXIF_results($fi);
@@ -3222,8 +3243,33 @@ class FileManager
 			}
 
 			$json['content'] = self::compressHTML('<div class="' . $content_classes . '">' . $content . '</div>');
+		
+		
+			// and now store the generated JSON in the RAM+FILE cache:
+			if ($hash !== false)
+			{
+				$this->getid3_cache[$hash][$cache_json_entry] = $json;
+				
+				// and save the new entry to file cache as well, so we can reuse it in a future request
+				if ($cachefile !== false)
+				{
+					$data = serialize($this->getid3_cache[$hash]);
+					if (!file_exists($cache_dir))
+					{
+						@mkdir($cache_dir);
+					}
+					if (false === @file_put_contents($cachefile, $data))
+					{
+						// destroy failed cache attempt
+						@unlink($cachefile);
+					}
+					$json['content'] .= '<p>full info</p>';
+				}
+			}
+			$json['content'] .= '<p>generated</p>';
+		}
 
-		return $json;
+		return array_merge((is_array($json_in) ? $json_in : array()), $json);
 	}
 
 	/**
@@ -4625,12 +4671,18 @@ class FileManager
 	/**
 	 * Returns (if possible) the mimetype of the given file
 	 *
-	 * @param string $file
+	 * @param string $file        physical filesystem path of the file for which we wish to know the mime type.
+	 *
 	 * @param boolean $just_guess when TRUE, files are not 'sniffed' to derive their actual mimetype
 	 *                            but instead only the swift (and blunt) process of guestimating
 	 *                            the mime type from the file extension is performed.
+	 *
+	 * @param string $legal_url   when not NULL, this should be the legal url path to the given file.
+	 *                            It is used by the caching system inside getFileInfo(), which is invoked
+	 *                            when $just_guess is FALSE. This parameter is therefore only relevant
+	 *                            when $just_guess is FALSE. (default: NULL)
 	 */
-	public function getMimeType($file, $just_guess = false)
+	public function getMimeType($file, $just_guess = false, $legal_url = null)
 	{
 		$ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
@@ -4652,7 +4704,7 @@ class FileManager
 		// so we cache the last entries.
 		if (empty($mime) && !$just_guess)
 		{
-			$fi = $this->getFileInfo($file);
+			$fi = $this->getFileInfo($file, $legal_url);
 			if (!empty($fi['mime_type']))
 				$mime = $fi['mime_type'];
 		}
@@ -4690,20 +4742,28 @@ class FileManager
 	/**
 	 * Returns (if possible) all info about the given file, mimetype, dimensions, the works
 	 *
-	 * @param string $file    physical filesystem path to the file we want to know all about
+	 * @param string $file       physical filesystem path to the file we want to know all about
+	 *
+	 * @param string $legal_url  legal url path to the file; used as the file/path basis for 
+	 *                           the caching system inside: getFileInfo() will cache the
+	 *                           extracted info alongside the thumbnails in a cache file with
+	 *                           '.nfo' extension.
 	 *
 	 * @return the info array as produced by getID3::analyze()
 	 */
-	public function getFileInfo($file)
+	public function getFileInfo($file, $legal_url)
 	{
-		$hash = md5($file . ':' . @filemtime($file));
+		$filetime = @filemtime($file);
+		$hash = md5($file . ':' . $filetime);
+		$cache_dir = false;
+		$cachefile = false;
 
 		$age_limit = $this->getid3_cache_lru_ts - MTFM_MIN_GETID3_CACHESIZE;
 
 		// when hash exists in cache, return that one:
 		if (array_key_exists($hash, $this->getid3_cache))
 		{
-			$rv = $this->getid3_cache[$hash];
+			$rv = $this->getid3_cache[$hash]['fileinfo'];
 
 			// mark as LRU entry; only update the timestamp when it's rather old (age/2) to prevent
 			// cache flushing due to hammering of a few entries:
@@ -4711,8 +4771,51 @@ class FileManager
 			{
 				$this->getid3_cache[$hash]['cache_timestamp'] = $this->getid3_cache_lru_ts++;
 			}
+			
+			$rv['cache_from'] = 'RAM';
 		}
 		else
+		{
+			$rv = false;
+			
+			/*
+			 * next: check file cache
+			 *
+			 * We only store the 'most recent' version of the file info per file, so we need to load the cache file and
+			 * verify the timestamp in there to decide whether we can us it as-is or should replace it with the updated
+			 * data obtained from analyze().
+			 */
+			$cachefile = false;
+			$cache_dir = false;
+			if (!empty($legal_url))
+			{
+				$cachefile = $this->generateThumbName($legal_url, 'info');
+				$tfi = pathinfo($cachefile);
+				$cf_subdir = $tfi['dirname'];
+				$cache_dir = $this->url_path2file_path($this->options['thumbnailPath'] . $cf_subdir);
+				$cache_dir = self::enforceTrailingSlash($cache_dir);
+				$cachefile = $cache_dir . $tfi['filename'] . '.nfo';
+				
+				if (is_readable($cachefile))
+				{
+					$data = file_get_contents($cachefile);
+					$data = @unserialize($data);
+					if (is_array($data) && $data['filetime'] == $filetime && !empty($data['fileinfo']))
+					{
+						// we're good to go: use the cached data!
+						$this->getid3_cache[$hash] = array_merge($data, array('cache_timestamp' => $this->getid3_cache_lru_ts++));
+						$rv = $data['fileinfo'];
+						$rv['cache_from'] = 'file';
+					}
+					else
+					{
+						// destroy outdated cache file
+						@unlink($cachefile);
+					}
+				}
+			}
+			
+			if ($rv === false)
 			{
 				$this->getid3->analyze($file);
 
@@ -4724,9 +4827,28 @@ class FileManager
 				}
 
 				// store it in the cache; mark as LRU entry
-				$rv['cache_timestamp'] = $this->getid3_cache_lru_ts++;
-				$this->getid3_cache[$hash] = $rv;
-
+				$this->getid3_cache[$hash] = array(
+					'cache_timestamp' => $this->getid3_cache_lru_ts++,
+					'fileinfo' => $rv,
+					'filetime' => $filetime
+				);
+			
+				// and save the new entry to file cache as well, so we can reuse it in a future request
+				if ($cachefile !== false)
+				{
+					$data = serialize($this->getid3_cache[$hash]);
+					if (!file_exists($cache_dir))
+					{
+						@mkdir($cache_dir);
+					}
+					if (false === @file_put_contents($cachefile, $data))
+					{
+						// destroy failed cache attempt
+						@unlink($cachefile);
+					}
+				}
+			}	
+				
 			/*
 			 * Cleanup/cache size restriction algorithm:
 			 *
@@ -4767,6 +4889,13 @@ class FileManager
 			}
 		}
 
+		$rv['cache_hash'] = $hash;
+		if ($cachefile !== false)
+		{
+			$rv['cache_file'] = $cachefile;
+			$rv['cache_dir'] = $cache_dir;
+		}
+		
 		return $rv;
 	}
 
