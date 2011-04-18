@@ -301,10 +301,9 @@ FileManager.Gallery = new Class({
 					mode: 'direct'                          // provide direct links to the thumbnail files
 				},
 				onRequest: function() {},
-				onSuccess: (function(j) {
-
+				onSuccess: (function(j)
+				{
 					if (!j || !j.status) {
-						//new FileManager.Dialog(('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: this.language.ok}, buttons: ['confirm']});
 						var msg = ('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g);
 
 						this.metadata[name].caption = msg;
@@ -338,11 +337,8 @@ FileManager.Gallery = new Class({
 
 				}).bind(this),
 				onError: (function(text, error) {
-					this.showError(text);
 				}).bind(this),
 				onFailure: (function(xmlHttpRequest) {
-					var text = this.cvtXHRerror2msg(xmlHttpRequest);
-					this.showError(text);
 				}).bind(this)
 			}, this).send();
 

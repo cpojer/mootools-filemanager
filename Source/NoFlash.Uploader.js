@@ -52,6 +52,8 @@ FileManager.implement({
 		}
 	},
 
+	_dummyframe: null,
+
 	onDialogOpenWhenUpload: function(){
 
 	},
@@ -60,10 +62,33 @@ FileManager.implement({
 
 	},
 
-  startUpload: function(){
-    var self = this;
+	// Writing to file input values is not permitted, we replace the field to blank it.
+	make_file_input: function(form_el)
+	{
+		var fileinput = (new Element('input')).set({type: 'file', 'name': 'Filedata'}).setStyles({width: 120});
+		if (form_el.getElement('input[type=file]'))
+		{
+			fileinput.replaces(form_el.getElement('input[type=file]'));
+		}
+		else
+		{
+			form_el.adopt(fileinput);
+		}
+		return form_el;
+	}
 
-    if (!this.options.upload || typeof this._dummyframe != 'undefined') return;
+
+	startUpload: function()
+	{
+		if (!this.options.upload) return;
+
+		// discard old iframe, if it exists:
+		if (this._dummyframe)
+		{
+			// remove fro the menu (dispose) and trash it (destroy)
+			this._dummyframe.dispose().destroy();
+			this._dummyframe = null;
+		}
 
 		var mfm = this;
 		var f = (new Element('form'))
@@ -73,29 +98,15 @@ FileManager.implement({
 			.set('target', 'dummyframe')
 			.setStyles({ 'float': 'left', 'padding-left': '3px', 'display':'block'});
 
-		Object.each(this.options.uploadAuthData, function(v, k){
-			f.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
+		var data = Object.merge({},
+			(this.options.propagateType == 'POST' ? this.options.propagateData : {}),
+			(this.options.uploadAuthData || {})
+		);
+		Object.each(data, function(v, k){
+			f.adopt((new Element('input')).set({type: 'hidden', name: k, value: v}));
 		});
 
-    // Writing to file input values is not permitted, we replace the field to blank it.
-    function make_file_input()
-    {
-      var fileinput = (new Element('input')).set({type:'file', 'name':'Filedata'}).setStyles({width:120});
-      if(f.getElement('input[type=file]'))
-      {
-        fileinput.replaces(f.getElement('input[type=file]'));
-      }
-      else
-      {
-        f.adopt(fileinput);
-      }
-    }
-
-    make_file_input();
-
-		// The FileManager.php can't make up it's mind about which it wants, directory is documented as GET,
-		// but is checked as POST, we'll send both.
-		f.adopt((new Element('input')).set({type:'hidden', 'name':'directory'}));
+		mfm.make_file_input(f);
 
 		f.inject(this.menu, 'top');
 
@@ -104,14 +115,14 @@ FileManager.implement({
 				e.stop();
 				mfm.browserLoader.set('opacity', 1);
 				f.action = mfm.options.url
-					+ (mfm.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
+					+ (mfm.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (self.options.propagateType == 'GET' ? self.options.propagateData : {}), {
 						event: 'upload',
 						directory: self.normalize(mfm.Directory),
 						filter: mfm.options.filter,
 						resize: ((this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0),
 						reportContentType: 'text/plain'        // Safer for iframes: the default 'application/json' mime type would cause FF3.X to pop up a save/view dialog!
 					}));
-          f.getElement('input[name=directory]').value = mfm.Directory;
+
 				f.submit();
 			},
 			mouseenter: function(){
@@ -129,8 +140,8 @@ FileManager.implement({
 		this.menu.adopt(uploadButton);
 
 		if (this.options.resizeImages){
-      var resizer = new Element('div', {'class': 'checkbox'}),
-        check = (function(){
+			var resizer = new Element('div', {'class': 'checkbox'});
+			var check = (function(){
 					this.toggleClass('checkboxChecked');
 				}).bind(resizer);
 
@@ -140,12 +151,12 @@ FileManager.implement({
 			).addEvent('click', check).inject(this.menu);
 		}
 
-
-    this._dummyframe = (new IFrame).set({src: 'about:blank', name: 'dummyframe'}).setStyles({display:'none'});
+		this._dummyframe = (new IFrame).set({src: 'about:blank', name: 'dummyframe'}).setStyles({display: 'none'});
 		this.menu.adopt(this._dummyframe);
 
-    this._dummyframe.addEvent('load', function(){
-        mfm.browserLoader.set('opacity', 0);
+		this._dummyframe.addEvent('load', function()
+		{
+			mfm.browserLoader.fade(0);
 
 			try
 			{
@@ -181,13 +192,17 @@ FileManager.implement({
 
 				if (response && !response.status)
 				{
-					new FileManager.Dialog(('' + response.error).substitute(self.language, /\\?\$\{([^{}]+)\}/g) , {language: {confirm: mfm.language.ok}, buttons: ['confirm']});
+					this.showError('' + response.error);
 				}
-          else
+				else if (response)
 				{
 					mfm.onShow = true; // why exactly do we need to set this, what purpose does the default of NOT preselecting the thing we asked to preselect have?
 
 					mfm.load(mfm.Directory.replace(/\/$/, ''), response.name ? response.name : null);
+				}
+				else
+				{
+					this.showError('bugger! No JSON response!');
 				}
 			}
 			catch(e)
@@ -197,7 +212,7 @@ FileManager.implement({
 				mfm.load(mfm.Directory);
 			}
 
-        make_file_input();
+			mfm.make_file_input(f);
 		});
 	}
 });

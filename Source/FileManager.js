@@ -2656,7 +2656,7 @@ FileManager.Request = new Class({
 					{
 						filebrowser.showError((emsg ? emsg + ' ' : '') + ('' + j.error).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g));
 					}
-				},
+				}.bind(this),
 
 				error: function(text, error)
 				{
