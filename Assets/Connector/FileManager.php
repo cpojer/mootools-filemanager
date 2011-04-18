@@ -1334,8 +1334,6 @@ class FileManager
 						$meta = $this->getFileInfo($file);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
-						if (empty($mime))
-							$mime = 'application/octet-stream';
 						//$mime = $this->getMimeType($file);
 						if (!$this->IsAllowedMimeType($mime, $mime_filters))
 							$v_ex_code = 'extension';
@@ -1531,8 +1529,6 @@ class FileManager
 						$meta = $this->getFileInfo($file);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
-						if (empty($mime))
-							$mime = 'application/octet-stream';
 						//$mime = $this->getMimeType($file);
 						if ($this->IsAllowedMimeType($mime, $mime_filters))
 						{
@@ -1763,8 +1759,6 @@ class FileManager
 						$meta = $this->getFileInfo($file);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
-						if (empty($mime))
-							$mime = 'application/octet-stream';
 						//$mime = $this->getMimeType($file);
 						if ($this->IsAllowedMimeType($mime, $mime_filters))
 							$v_ex_code = null;
@@ -2063,8 +2057,6 @@ class FileManager
 						$meta = $this->getFileInfo($file);
 						if (!empty($meta['mime_type']))
 							$mime = $meta['mime_type'];
-						if (empty($mime))
-							$mime = 'application/octet-stream';
 						//$mime = $this->getMimeType($file);
 						if ($this->IsAllowedMimeType($mime, $mime_filters))
 							$v_ex_code = null;
@@ -2210,6 +2202,7 @@ class FileManager
 			$filename = null;
 			$fi = array('filename' => null, 'extension' => null);
 			$mime = null;
+			$meta = null;
 			if (!empty($file_arg))
 			{
 				$filename = $this->getUniqueName($file_arg, $dir);
@@ -2223,10 +2216,8 @@ class FileManager
 					// so we cache the last entries.
 					$meta = $this->getFileInfo($tmppath);
 					if (!empty($meta['mime_type']))
-					{
 						$mime = $meta['mime_type'];
-					}
-
+					//$mime = $this->getMimeType($file);
 					if (!$this->IsAllowedMimeType($mime, $mime_filters))
 					{
 						$v_ex_code = 'extension';
@@ -2259,7 +2250,6 @@ class FileManager
 				'mime' => $mime,
 				'mime_filter' => $mime_filter,
 				'mime_filters' => $mime_filters,
-				'meta_data' => $meta,
 				'tmp_filepath' => $tmppath,
 				'size' => $file_size,
 				'maxsize' => $this->options['maxUploadSize'],
@@ -2633,8 +2623,7 @@ class FileManager
 			if (!empty($fi['mime_type']))
 				$mime = $fi['mime_type'];
 			if (empty($mime))
-				$mime = 'application/octet-stream';
-			//$mime = $this->getMimeType($file);
+				$mime = $this->getMimeType($file, true);
 
 			$mime2 = $this->getMimeType($file, true);
 			$fi['mime_type from file extension'] = $mime2;
@@ -4626,6 +4615,11 @@ class FileManager
 			$this->getid3->analyze($file);
 
 			$rv = $this->getid3->info;
+			if (empty($rv['mime_type']))
+			{
+				// guarantee to produce a mime type, at least!
+				$rv['mime_type'] = $this->getMimeType($file, true);		// guestimate mimetype when content sniffing didn't work
+			}
 
 			// store it in the cache; mark as LRU entry
 			$rv['cache_timestamp'] = $this->getid3_cache_lru_ts++;
