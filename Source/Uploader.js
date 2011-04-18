@@ -216,7 +216,7 @@ FileManager.implement({
 
 				if (typeof response === 'undefined' || response == null)
 				{
-					self.showError(self.language.uploader.mod_security);
+					self.showError((self.language.uploader.mod_security + "\nServer response:\n" + this.response.text).substitute(self.language, /\\?\$\{([^{}]+)\}/g));
 				}
 				else if (!response.status)
 				{
