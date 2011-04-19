@@ -1,5 +1,4 @@
 <?php
-die("<html><body><h1>Security precaution</h1> <p>To enable the test code, edit <file>Demos/".basename(__FILE__)."</file> and comment out line 2.</p></body></html>");
 
 error_reporting(E_ALL | E_STRICT);
 
