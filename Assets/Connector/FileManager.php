@@ -1167,6 +1167,7 @@ class FileManager
 
 		$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 		$list_type = ($this->getPOSTparam('type') !== 'thumb' ? 'list' : 'thumb');
+		$legal_url = null;
 
 		try
 		{
@@ -1250,7 +1251,7 @@ class FileManager
 
 		} while ($legal_url !== false);
 
-		$this->modify_json4exception($jserr, $emsg . ' : path :: ' . $original_legal_url);
+		$this->modify_json4exception($jserr, $emsg, 'path = ' . $original_legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -1297,6 +1298,7 @@ class FileManager
 	{
 		$emsg = null;
 		$legal_url = null;
+		$file_arg = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -1396,7 +1398,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
 
 		$thumb48 = $this->getIconForError($emsg, 'is.default-error', false);
 		$icon = $this->getIconForError($emsg, 'is.default-error', true);
@@ -1481,6 +1483,8 @@ class FileManager
 		$img_filepath = null;
 		$reqd_size = 48;
 		$filename = null;
+		$file_arg = null;
+		$legal_url = null;
 		$as_JSON = false;
 		$jserr = array(
 				'status' => 1
@@ -1682,7 +1686,7 @@ class FileManager
 			$jserr['thumbnail'] = $thumb_e;
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -1721,6 +1725,8 @@ class FileManager
 	protected function onDestroy()
 	{
 		$emsg = null;
+		$file_arg = null;
+		$legal_url = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -1819,7 +1825,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -1872,6 +1878,7 @@ class FileManager
 		$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 		$list_type = ($this->getPOSTparam('type') !== 'thumb' ? 'list' : 'thumb');
 
+		$file_arg = null;
 		$legal_url = null;
 
 		try
@@ -1881,14 +1888,14 @@ class FileManager
 
 			$v_ex_code = 'nofile';
 
+			$file_arg = $this->getPOSTparam('file');
+
 			$dir_arg = $this->getPOSTparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
-
-			$file_arg = $this->getPOSTparam('file');
 
 			$filename = null;
 			$file = null;
@@ -2004,7 +2011,7 @@ class FileManager
 			}
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'directory = ' . $file_arg . ', path = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -2176,6 +2183,8 @@ class FileManager
 	protected function onUpload()
 	{
 		$emsg = null;
+		$file_arg = null;
+		$legal_url = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -2345,7 +2354,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: ' . $this->getGetparam('reportContentType', 'application/json'));
 
@@ -2386,6 +2395,9 @@ class FileManager
 	protected function onMove()
 	{
 		$emsg = null;
+		$file_arg = null;
+		$legal_url = null;
+		$newpath = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -2565,7 +2577,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url . ', destination path = ' . $newpath);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -2808,19 +2820,6 @@ class FileManager
 									'filter' => $mime_filter
 								));
 						}
-
-						// get the size of the thumbnail/icon: the <img> is styled with width and height to ensure the background 'loader' image is shown correctly:
-
-						//$tnpath = $this->url_path2file_path($thumbfile);
-						//$tninf = @getimagesize($tnpath);
-					//$size = @getimagesize($file);
-					//// check for badly formatted image files (corruption); we'll handle the overly large ones next
-					//if (!$size)
-					//  throw new FileManagerException('corrupt_img:' . $url);
-
-						//$json['tn_width'] = $tninf[0];
-						//$json['tn_height'] = $tninf[1];
-
 					}
 					catch (Exception $e)
 					{
@@ -2858,7 +2857,7 @@ class FileManager
 					{
 						// use the abilities of modify_json4exception() to munge/format the exception message:
 						$jsa = array('error' => '');
-						$this->modify_json4exception($jsa, $emsg);
+						$this->modify_json4exception($jsa, $emsg, 'path = ' . $url);
 						$postdiag_err_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
 					}
 					if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
@@ -4254,7 +4253,23 @@ class FileManager
 
 
 
-
+	/**
+	 * Convert the given content to something that is safe to copy straight to HTML 
+	 */
+	public function mkSafe4Display($str)
+	{
+		// only allow ASCII to pass:
+		$str = preg_replace("/[^ -~\t\r\n]/", '?', $str);
+		$str = str_replace('%3C', '?', $str);             // in case someone want's to get really fancy: nuke the URLencoded '<'
+		
+		// anything that's more complex than a simple <TAG> is nuked:
+		$str = preg_replace('/<([\/]?script\s*[\/]?)>/', '?', $str);               // but first make sure '<script>' doesn't make it through the next regex!
+		$str = preg_replace('/<([\/]?[a-zA-Z]+\s*[\/]?)>/', "\x04\\1\x05", $str);
+		$str = strip_tags($str);
+		$str = strtr($str, "\x04", '<');
+		$str = strtr($str, "\x05", '>');
+		return $str;
+	}
 
 	/**
 	 * Safe replacement of dirname(); does not care whether the input has a trailing slash or not.
@@ -4561,7 +4576,7 @@ class FileManager
 	}
 
 
-	protected /* static */ function modify_json4exception(&$jserr, $emsg)
+	protected /* static */ function modify_json4exception(&$jserr, $emsg, $target_info = null)
 	{
 		if (empty($emsg))
 			return;
@@ -4578,7 +4593,7 @@ class FileManager
 			}
 			else
 			{
-				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : '');
+				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : !empty($target_info) ? ' (' . $this->mkSafe4Display($target_info) . ')' : '');
 			}
 			$jserr['status'] = 0;
 		}
