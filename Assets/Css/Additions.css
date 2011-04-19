@@ -19,20 +19,20 @@ div.filemanager-overlay {
   top: 0;
   display: none;
   
-  z-index: 999;
+  /* z-index: 999; */
   background: #aaa;
 }
 
 /* Dialog */
 div.filemanager-overlay-dialog {
-  z-index: 1999;
+  /* z-index: 1999; */
   background: #fff;
 }
 
 div.filemanager-dialog {
   position: absolute;
   display: none;
-  z-index: 2000;
+  /* z-index: 2000; */
 
   width: 229px;
   padding-bottom: 40px;

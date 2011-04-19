@@ -1,4 +1,5 @@
 <?php
+error_reporting(E_ALL | E_STRICT);
 
 define("FILEMANAGER_CODE", true);
 

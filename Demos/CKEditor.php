@@ -46,10 +46,15 @@
           selectable: true,
           hideClose: true,
           hideOverlay: true,
-          onComplete: complete
+          onComplete: complete,
+	  //  zIndex: ???,
+	  styles: {                                  
+	  	'width': '95%',
+		'height': '95%'
+	  }
       });
-      fileManager.filemanager.setStyle('width','100%');
-      fileManager.filemanager.setStyle('height','95%');
+      //fileManager.filemanager.setStyle('width','100%');
+      //fileManager.filemanager.setStyle('height','95%');
       
       fileManager.show();
     }

@@ -86,6 +86,8 @@ var FileManager = new Class({
 		hideClose: false,
 		hideOverlay: false,
 		hideQonDelete: false,
+		zIndex: 1000,
+		styles: {},
 		listPaginationSize: 100,          // add pagination per N items for huge directories (speed up interaction)
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
 		propagateData: {},                // extra query parameters sent with every request to the backend
@@ -105,7 +107,6 @@ var FileManager = new Class({
 	initialize: function(options) {
 		this.setOptions(options);
 		this.ID = String.uniqueID();
-		this.dragZIndex = 1300;
 		this.droppables = [];
 		this.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
 		this.Directory = this.options.directory;
@@ -132,10 +133,35 @@ var FileManager = new Class({
 			this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
 		}
 
-		this.container = new Element('div', {'class': 'filemanager-container' + (Browser.opera ? ' filemanager-engine-presto' : '') + (Browser.ie ? ' filemanager-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : '')});
-		this.filemanager = new Element('div', {'class': 'filemanager'}).inject(this.container);
-		this.header = new Element('div', {'class': 'filemanager-header'}).inject(this.filemanager);
-		this.menu = new Element('div', {'class': 'filemanager-menu'}).inject(this.filemanager);
+		this.container = new Element('div', {
+			'class': 'filemanager-container' + (Browser.opera ? ' filemanager-engine-presto' : '') + (Browser.ie ? ' filemanager-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
+			styles:
+			{
+				'z-index': this.options.zIndex
+			}
+		});
+		this.filemanager = new Element('div', {
+			'class': 'filemanager',
+			styles: Object.append({},
+			this.options.styles,
+			{
+				'z-index': this.options.zIndex + 1
+			})
+		}).inject(this.container);
+		this.header = new Element('div', {
+			'class': 'filemanager-header' /* ,
+			styles:
+			{
+				'z-index': this.options.zIndex + 3
+			} */
+		}).inject(this.filemanager);
+		this.menu = new Element('div', {
+			'class': 'filemanager-menu' /* ,
+			styles:
+			{
+				'z-index': this.options.zIndex + 2
+			} */
+		}).inject(this.filemanager);
 		this.loader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 'short'}}).inject(this.header);
 		this.previewLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 'short'}});
 		this.browserLoader = new Element('div', {'class': 'loader', opacity: 0, tween: {duration: 'short'}});
@@ -285,9 +311,15 @@ var FileManager = new Class({
 		if (this.options.download) this.addMenuButton('download');
 		if (this.options.selectable) this.addMenuButton('open');
 
-		this.info = new Element('div', {'class': 'filemanager-infos', opacity: 0}).inject(this.filemanager);
+		this.info = new Element('div', {'class': 'filemanager-infos'});
 
-		var head = new Element('div', {'class': 'filemanager-head'}).adopt([
+		this.info_head = new Element('div', {
+			'class': 'filemanager-head',
+			styles:
+			{
+				opacity: 0
+			}
+		}).adopt([
 			new Element('img', {'class': 'filemanager-icon'}),
 			new Element('h1')
 		]);
@@ -296,8 +328,14 @@ var FileManager = new Class({
 		// use some CSS to reorganise a bit.  So we create "infoarea" which
 		// will contain the h2 and list for the "Information", that is
 		// modification date, size, directory etc...
-		var infoarea = new Element('div', {'class': 'filemanager-info-area'});
-		this.info.adopt([head, infoarea.adopt(new Element('h2', {text: this.language.information}))]);
+		this.info_area = new Element('div', {
+			'class': 'filemanager-info-area',
+			styles:
+			{
+				opacity: 0
+			}
+		});
+		this.info.adopt([this.info_head, this.info_area.adopt(new Element('h2', {text: this.language.information}))]);
 
 		new Element('dl').adopt([
 			new Element('dt', {text: this.language.modified}),
@@ -306,7 +344,7 @@ var FileManager = new Class({
 			new Element('dd', {'class': 'filemanager-type'}),
 			new Element('dt', {text: this.language.size}),
 			new Element('dd', {'class': 'filemanager-size'})
-		]).inject(infoarea);
+		]).inject(this.info_area);
 
 		this.preview = new Element('div', {'class': 'filemanager-preview'}).addEvent('click:relay(img.preview)', function(){
 			self.fireEvent('preview', [this.get('src'), self, this]);
@@ -316,10 +354,17 @@ var FileManager = new Class({
 		// use some CSS to reorganise it a bit in the custom event handler.  So we create "filemanager-preview-area" which
 		// will contain the h2 for the preview and also the preview content returned from
 		// Backend/FileManager.php
-		this.info.adopt((new Element('div', {'class': 'filemanager-preview-area'})).adopt([
+		this.preview_area = new Element('div', {'class': 'filemanager-preview-area',
+			styles:
+			{
+				opacity: 0
+			}
+		});
+		this.preview_area.adopt([
 			new Element('h2', {'class': 'filemanager-headline', text: this.language.more}),
 			this.preview
-		]));
+		]);
+		this.info.adopt(this.preview_area).inject(this.filemanager);
 
 		if (!this.options.hideClose) {
 			this.closeIcon = new Element('a', {
@@ -341,7 +386,7 @@ var FileManager = new Class({
 			showDelay: 50,
 			hideDelay: 50,
 			onShow: function(){
-				this.tip.set('tween', {duration: 'short'}).setStyle('display', 'block').fade(1);
+				this.tip.setStyle('z-index', self.options.zIndex + 201).set('tween', {duration: 'short'}).setStyle('display', 'block').fade(1);
 			},
 			onHide: function(){
 				this.tip.fade(0).get('tween').chain(function(){
@@ -353,16 +398,26 @@ var FileManager = new Class({
 			this.tips.attach(this.closeIcon);
 
 		this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
-			'class': 'browser-add'
+			'class': 'browser-add',
+			styles:
+			{
+				'z-index': this.options.zIndex + 2000
+			}
 		}).set('opacity', 0).set('tween', {duration: 'short'}).inject(this.container);
 
 		this.container.inject(document.body);
 		if (!this.options.hideOverlay) {
-			this.overlay = new Overlay(this.options.hideOnClick ? {
+			this.overlay = new Overlay(Object.append((this.options.hideOnClick ? {
 				events: {
 					click: this.hide.bind(this)
 				}
-			} : null);
+			} : {}),
+			{
+				styles:
+				{
+					'z-index': this.options.zIndex - 1
+				}
+			}));
 		}
 
 		this.bound = {
@@ -658,7 +713,7 @@ var FileManager = new Class({
 			this.overlay.show();
 		}
 
-		this.info.fade(0);
+		this.show_our_info_sections(false);
 		this.container.fade(0).setStyles({
 				display: 'block'
 			});
@@ -713,6 +768,28 @@ var FileManager = new Class({
 
 		this.fireHooks('cleanup');
 		this.fireEvent('hide', [this]);
+	},
+
+	// hide the FM info <div>s. do NOT hide the outer info <div> itself, as the Uploader (and possibly other derivatives) may choose to show their own content there!
+	show_our_info_sections: function(state) {
+		if (!state)
+		{
+			this.info_head.fade(0).get('tween').chain(function(){
+				this.element.setStyle('display', 'none');
+			});
+			this.info_area.fade(0).get('tween').chain(function(){
+				this.element.setStyle('display', 'none');
+			});
+			this.preview_area.fade(0).get('tween').chain(function(){
+				this.element.setStyle('display', 'none');
+			});
+		}
+		else
+		{
+			this.info_head.setStyle('display', 'block').fade(1);
+			this.info_area.setStyle('display', 'block').fade(1);
+			this.preview_area.setStyle('display', 'block').fade(1);
+		}
 	},
 
 	open_on_click: function(e){
@@ -795,6 +872,7 @@ var FileManager = new Class({
 			content: [
 				input
 			],
+			zIndex: this.options.zIndex + 1000,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: (function() {
 				input.removeEvent('keyup', click_ok_f);
@@ -828,7 +906,7 @@ var FileManager = new Class({
 						}
 
 						this.deselect();
-						this.info.fade(0);
+						this.show_our_info_sections(false);
 
 						// make sure we store the JSON list!
 						this.reset_view_fill_store(j);
@@ -868,7 +946,7 @@ var FileManager = new Class({
 		if (typeof preselect === 'undefined') preselect = null;
 
 		this.deselect();
-		this.info.fade(0);
+		this.show_our_info_sections(false);
 
 		if (this.Request) this.Request.cancel();
 
@@ -1041,6 +1119,7 @@ var FileManager = new Class({
 					confirm: this.language.destroy,
 					decline: this.language.cancel
 				},
+				zIndex: this.options.zIndex + 1000,
 				onOpen: this.onDialogOpen.bind(this),
 				onClose: this.onDialogClose.bind(this),
 				onConfirm: (function() {
@@ -1064,6 +1143,7 @@ var FileManager = new Class({
 			content: [
 				input
 			],
+			zIndex: this.options.zIndex + 1000,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
 			onShow: function(){
@@ -1389,7 +1469,7 @@ var FileManager = new Class({
 	{
 		// similar activity as load(), but without the server communication...
 		this.deselect();
-		this.info.fade(0);
+		this.show_our_info_sections(false);
 
 		// if (this.Request) this.Request.cancel();
 
@@ -2007,7 +2087,7 @@ var FileManager = new Class({
 					if (typeof console !== 'undefined' && console.log) console.log('draggable:onBeforeStart');
 					var position = el.getPosition();
 					el.addClass('drag').setStyles({
-						'z-index': this.dragZIndex,
+						'z-index': this.options.zIndex + 1300,
 						'position': 'absolute',
 						'width': el.getWidth() - el.getStyle('paddingLeft').toInt() - el.getStyle('paddingRight').toInt(),
 						'left': position.x,
@@ -2333,7 +2413,7 @@ var FileManager = new Class({
 				onRequest: (function() {
 					this.previewLoader.inject(this.preview);
 					this.previewLoader.fade(1);
-					this.info.fade(0);
+					this.show_our_info_sections(false);
 				}).bind(this),
 				onSuccess: (function(j) {
 
@@ -2347,24 +2427,25 @@ var FileManager = new Class({
 					// speed up DOM tree manipulation: detach .info from document temporarily:
 					this.info.dispose();
 
-					this.info.getElement('img').set({
+					this.info_head.getElement('img').set({
 							src: icon,
 							alt: file.mime
 						});
 
-					this.info.getElement('h1').set('text', file.name);
-					this.info.getElement('h1').set('title', file.name);
+					this.info_head.getElement('h1').set('text', file.name);
+					this.info_head.getElement('h1').set('title', file.name);
 
-					this.info.getElement('dd.filemanager-modified').set('text', j.date);
-					this.info.getElement('dd.filemanager-type').set('text', j.mime);
-					this.info.getElement('dd.filemanager-size').set('text', !size[0] && size[1] === 'Bytes' ? '-' : (size.join(' ') + (size[1] !== 'Bytes' ? ' (' + j.size + ' Bytes)' : '')));
-					//this.info.getElement('h2.filemanager-headline').setStyle('display', j.mime === 'text/directory' ? 'none' : 'block');
+					this.info_area.getElement('dd.filemanager-modified').set('text', j.date);
+					this.info_area.getElement('dd.filemanager-type').set('text', j.mime);
+					this.info_area.getElement('dd.filemanager-size').set('text', !size[0] && size[1] === 'Bytes' ? '-' : (size.join(' ') + (size[1] !== 'Bytes' ? ' (' + j.size + ' Bytes)' : '')));
+					//this.info_area.getElement('h2.filemanager-headline').setStyle('display', j.mime === 'text/directory' ? 'none' : 'block');
 
 					// don't wait for the fade to finish to set up the new content
 					var prev = this.preview.removeClass('filemanager-loading').set('html', (j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '')).getElement('img.preview');
 
 					// and plug in the manipulated DOM subtree again:
-					this.info.inject(this.filemanager).fade(1);
+					this.info.inject(this.filemanager);
+					this.show_our_info_sections(true);
 
 					this.previewLoader.fade(0).get('tween').chain((function() {
 						this.previewLoader.dispose();
@@ -2554,6 +2635,7 @@ var FileManager = new Class({
 				content: [
 					errorText
 				],
+				zIndex: this.options.zIndex + 1000,
 				onOpen: this.onDialogOpen.bind(this),
 				onClose: function()
 				{
@@ -2574,6 +2656,7 @@ var FileManager = new Class({
 			content: [
 				textOrElement
 			],
+			zIndex: this.options.zIndex + 1000,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this)
 		});
@@ -2748,7 +2831,8 @@ FileManager.Dialog = new Class({
 		 */
 		request: null,
 		buttons: ['confirm', 'decline'],
-		language: {}
+		language: {},
+		zIndex: 2000
 	},
 
 	initialize: function(text, options){
@@ -2758,10 +2842,12 @@ FileManager.Dialog = new Class({
 		this.el = new Element('div', {
 			'class': 'filemanager-dialog' + (Browser.ie ? ' filemanager-dialog-engine-trident' : '') + (Browser.ie ? ' filemanager-dialog-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
 			opacity: 0,
-			tween: {duration: 'short'}
-		}).adopt([
-			typeOf(text) === 'string' ? new Element('div', {text: text}) : text
-		]);
+			tween: {duration: 'short'},
+			styles:
+			{
+				'z-index': this.options.zIndex
+			}
+		}).adopt(this.content_el);
 
 		if (typeof this.options.content !== 'undefined') {
 			this.options.content.each((function(content){
@@ -2789,7 +2875,11 @@ FileManager.Dialog = new Class({
 			events: {
 				click: this.fireEvent.pass('close',this)
 			},
-			tween: {duration: 'short'}
+			//tween: {duration: 'short'},
+			styles:
+			{
+				'z-index': this.options.zIndex - 1
+			}
 		});
 
 		this.bound = {

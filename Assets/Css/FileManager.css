@@ -17,7 +17,7 @@ div.filemanager {
   background: #F5F5F5;
   
   position: absolute;
-  z-index: 1001;
+  /* z-index: 1001; */
   width: 75%;
   height: 75%;
 
@@ -34,7 +34,7 @@ div.filemanager {
 
 /* filemanager-header */
 div.filemanager-header {
-  z-index: 3;
+  /* z-index: 3; */
   position: absolute;
   top: -30px;
   left: 0px;
@@ -59,7 +59,7 @@ div.filemanager-header {
 /* filemanager-menu */
 
 div.filemanager div.filemanager-menu {
-  z-index: 2;
+  /* z-index: 2; */
   position: absolute;
   height: 30px;
   left: 35%;
@@ -504,7 +504,7 @@ div.filemanager span.notice {
 }
 
 div.filemanager a.filemanager-close {
-  z-index: 4;
+  /* z-index: 4; */
   display: block;
   position: absolute;
   right: 6px;
@@ -522,7 +522,7 @@ div.filemanager div.filemanager-close img {
 }
 
 div.filemanager-infos {
-  z-index: 0;
+  /* z-index: 0; */
   position: absolute;
   left: 35%;
   top: 0;
@@ -725,7 +725,7 @@ div.filemanager-container img.browser-add {
   position: absolute;
   width: 16px;
   height: 16px;
-  z-index: 2000;
+  /* z-index: 2000; */
 }
 
 /* UPLOAD */
@@ -783,7 +783,7 @@ div.filemanager button.filemanager-serialize {
 
 div.filemanager-gallery {
   position: absolute;
-  z-index: 1000;
+  /* z-index: 1000; */
   width: 750px;
   height: 144px;
   display: none;
@@ -813,7 +813,7 @@ div.filemanager-gallery {
 
 div.filemanager-gallery div.howto {
   position: absolute;
-  z-index: 1002;
+  /* z-index: 1002; */
   left: 50px;
   top: 60px;
   
@@ -867,7 +867,7 @@ div.filemanager-gallery ul li img.filemanager-remove {
 
 div.filemanager-wrapper {
   position: absolute;
-  z-index: 1020;
+  /* z-index: 1020; */
   width: 222px;
   height: 250px;
 
@@ -916,7 +916,7 @@ img.filemanager-clone {
 
 /* TIPS */
 .tip-filebrowser {
-  z-index: 1201;
+  /* z-index: 1201; */
 }
 .tip-filebrowser .tip {
   background: #000;

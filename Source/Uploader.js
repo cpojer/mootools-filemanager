@@ -284,7 +284,7 @@ FileManager.implement({
 			timeLimit: self.options.uploadTimeLimit,
 			fileSizeMax: self.options.uploadFileSizeMax,
 			typeFilter: this.getFileTypes(),
-			zIndex: this.SwiffZIndex || 9999,
+			zIndex: this.options.zIndex + 3000,
 			onSelectSuccess: function(){
 				self.fillInfo();
 				//self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');

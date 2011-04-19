@@ -64,7 +64,13 @@ FileManager.Gallery = new Class({
 		});
 
 		this.addMenuButton('serialize');
-		this.galleryContainer = new Element('div', {'class': 'filemanager-gallery'}).inject(this.container);
+		this.galleryContainer = new Element('div', {
+			'class': 'filemanager-gallery',
+			styles:
+			{
+				'z-index': this.options.zIndex + 10
+			}
+		}).inject(this.container);
 		this.gallery = new Element('ul').inject(this.galleryContainer);
 
 		var timer;
@@ -77,6 +83,10 @@ FileManager.Gallery = new Class({
 		});
 		this.wrapper = new Element('div', {
 			'class': 'filemanager-wrapper',
+			styles:
+			{
+				'z-index': this.options.zIndex + 20
+			},
 			tween: {duration: 'short'},
 			opacity: 0,
 			events: {
@@ -103,7 +113,14 @@ FileManager.Gallery = new Class({
 		this.files = [];
 		this.animation = {};
 
-		this.howto = new Element('div', {'class': 'howto', text: this.language.gallery.drag}).inject(this.galleryContainer);
+		this.howto = new Element('div', {
+			'class': 'howto',
+			styles:
+			{
+				'z-index': this.options.zIndex + 15
+			},
+			text: this.language.gallery.drag
+		}).inject(this.galleryContainer);
 		this.switchButton();
 
 		// invoke the parent method directly
