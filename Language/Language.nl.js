@@ -61,6 +61,9 @@ FileManager.Language.nl = {
 	'backend.partial': 'Het bestand dat je verstuurde werd slechts gedeeltelijk ontvangen, probeer het bestand opnieuw te versturen.',
 	'backend.nofile': 'Er werd géén bestand verstuurd of het bestand / folder kon niet worden gevonden.',
 	'backend.default': 'Er ging iets fout bij het uploaden van het bestand.',
+	'backend.path_not_writable': 'You do not have write/upload permissions for this directory.',
+	'backend.filename_maybe_too_large': 'The filename/path is probably too long for the server filesystem. Please retry with a shorter file name.',
+	'backend.fmt_not_allowed': 'You are not allowed to upload this file format/name.',
 	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',

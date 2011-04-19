@@ -62,6 +62,9 @@ FileManager.Language.pl = {
 	'backend.partial': 'Plik nie został wysłany w całości. Ponów próbę wysyłki pliku.',
 	'backend.nofile': 'Nie wybrano pliku do wysyłki.',
 	'backend.default': 'Wystąpił błąd w trakcie wysyłki.',
+	'backend.path_not_writable': 'You do not have write/upload permissions for this directory.',
+	'backend.filename_maybe_too_large': 'The filename/path is probably too long for the server filesystem. Please retry with a shorter file name.',
+	'backend.fmt_not_allowed': 'You are not allowed to upload this file format/name.',
 	'backend.unidentified_error': 'An unindentified error occurred while communicating with the backend (web server).',
 
 	'backend.nonewfile': 'A new name for the file to be moved / copied is missing.',

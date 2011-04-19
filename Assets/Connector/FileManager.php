@@ -2223,7 +2223,7 @@ class FileManager
 			{
 				if (!$this->IsHiddenNameAllowed($file_arg))
 				{
-					$v_ex_code = 'authorized';
+					$v_ex_code = 'fmt_not_allowed';
 				}
 				else
 				{
@@ -2312,8 +2312,45 @@ class FileManager
 			if(!$fileinfo['overwrite'] && file_exists($file))
 				throw new FileManagerException('exists');
 
-			if(!move_uploaded_file($_FILES['Filedata']['tmp_name'], $file))
-				throw new FileManagerException(strtolower($_FILES['Filedata']['error'] <= 2 ? 'size' : ($_FILES['Filedata']['error'] == 3 ? 'partial' : 'path')));
+			if(!@move_uploaded_file($_FILES['Filedata']['tmp_name'], $file))
+			{
+				$emsg = 'path';
+				switch ($_FILES['Filedata']['error'])
+				{
+				case 1:
+				case 2:
+					$emsg = 'size';
+					break;
+					
+				case 3:
+					$emsg = 'partial';
+					break;
+					
+				default:
+					$dir = $this->legal_url_path2file_path($legal_url);
+					if (!is_dir($dir))
+					{
+						$emsg = 'path';
+					}
+					else if (!is_writable($dir))
+					{
+						$emsg = 'path_not_writable';
+					}
+					else 
+					{
+						$emsg = 'filename_maybe_too_large';
+					}
+			
+					$emsg_add = 'file = ' . $this->mkSafe4Display($file_arg . ', destination path = ' . $file);
+					if (!empty($_FILES['Filedata']['error']))
+					{
+						$emsg_add = 'error code = ' . strtolower($_FILES['Filedata']['error']) . ', ' . $emsg_add;
+					}
+					$emsg .= ':' . $emsg_add;
+					break;
+				}
+				throw new FileManagerException($emsg);
+			}
 
 			@chmod($file, $fileinfo['chmod']);
 
