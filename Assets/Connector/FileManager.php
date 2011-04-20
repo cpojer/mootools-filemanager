@@ -3474,6 +3474,27 @@ class FileManager
 			switch ((string)$key)
 			{
 			default:
+				//$key = $this->mkSafeUTF8($key);
+				if (preg_match('/[^ -~]/', $key))
+				{
+					// non-ASCII values in the key: hexdump those characters!
+					$klen = strlen($key);
+					$nk = '';
+					for ($i = 0; $i < $klen; ++$i)
+					{
+						$c = ord($key[$i]);
+						
+						if ($c >= 32 && $c <= 127)
+						{
+							$nk .= chr($c);
+						}
+						else
+						{
+							$nk .= sprintf('$%02x', $c);
+						}
+					}
+					$key = $nk;
+				}
 				break;
 
 			case 'avdataend':
@@ -3646,7 +3667,7 @@ class FileManager
 				}
 				else if ($key === 'data' && is_string($value) && isset($arr['frame_name']) && isset($arr['encoding']) && isset($arr['datalength'])) // MP3 tag chunk
 				{
-					$str = trim(strtr(getid3_lib::iconv_fallback($arr['encoding'], 'UTF-8', $value), "\x00", ' '));
+					$str = $this->mkSafeUTF8(trim(strtr(getid3_lib::iconv_fallback($arr['encoding'], 'UTF-8', $value), "\x00", ' ')));
 					$temp = unpack('H*', $value);
 					$temp = str_split($temp[1], 8);
 					$value = new BinaryDataContainer(implode(' ', $temp) . (!empty($str) ? ' (' . $str . ')' : ''));
@@ -3759,15 +3780,15 @@ class FileManager
 		}
 		else if (is_object($arr) && !isset($arr->id3_procsupport_obj))
 		{
-			$arr = new BinaryDataContainer('(object) ' . print_r($arr, true));
+			$arr = new BinaryDataContainer('(object) ' . $this->mkSafeUTF8(print_r($arr, true)));
 		}
 		else if (is_resource($arr))
 		{
-			$arr = new BinaryDataContainer('(resource) ' . print_r($arr, true));
+			$arr = new BinaryDataContainer('(resource) ' . $this->mkSafeUTF8(print_r($arr, true)));
 		}
 		else
 		{
-			$arr = new BinaryDataContainer('(unidentified type: ' . gettype($arr) . ') ' . print_r($arr, true));
+			$arr = new BinaryDataContainer('(unidentified type: ' . gettype($arr) . ') ' . $this->mkSafeUTF8(print_r($arr, true)));
 		}
 	}
 
@@ -4392,9 +4413,15 @@ class FileManager
 				}
 				
 				// when we get here, it's pretty hopeless. Strip ANYTHING that's non-ASCII:
-				$str = preg_replace("/[^ -~\t\r\n]/", '?', $str);
+				return preg_replace("/[^ -~\t\r\n]/", '?', $str);
 			}
 
+			// UTF8 cannot contain low-ASCII values; at least WE do not allow that!
+			if (preg_match("/[^ -\xFF\n\r\t]/", $dst))
+			{
+				// weird output that's not legible anyhow, so strip ANYTHING that's non-ASCII:
+				return preg_replace("/[^ -~\t\r\n]/", '?', $str);
+			}
 			return str_replace('&qmark;', '?', $dst);
 		}
 		return $str;
