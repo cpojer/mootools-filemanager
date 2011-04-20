@@ -2871,11 +2871,11 @@ class FileManager
 					$json['thumb48'] = $thumb48_e;
 					$json['thumb250'] = $thumb250_e;
 
-					$sw_make = $this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'Software');
-					$time_make = $this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'DateTime');
+					$sw_make = $this->mkSafeUTF8($this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'Software'));
+					$time_make = $this->mkSafeUTF8($this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'DateTime'));
 
-					$width = $this->getID3infoItem($fi, 0, 'video', 'resolution_x');
-					$height = $this->getID3infoItem($fi, 0, 'video', 'resolution_y');
+					$width = round($this->getID3infoItem($fi, 0, 'video', 'resolution_x'));
+					$height = round($this->getID3infoItem($fi, 0, 'video', 'resolution_y'));
 					$json['width'] = $width;
 					$json['height'] = $height;
 
@@ -2986,6 +2986,7 @@ class FileManager
 						{
 							foreach ($info as $name => $size)
 							{
+								$name = $this->mkSafeUTF8($name);
 								$isdir = is_array($size);
 								$out[$isdir ? 0 : 1][$name] = '<li><a><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($name, true)) . '" alt="" /> ' . $name . '</a></li>';
 							}
@@ -3002,8 +3003,8 @@ class FileManager
 							// Note: preview data= urls were formatted like this in CCMS:
 							// $this->options['assetBasePath'] . 'dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30'
 
-							$width = $this->getID3infoItem($fi, 0, 'swf', 'header', 'frame_width') / 10;
-							$height = $this->getID3infoItem($fi, 0, 'swf', 'header', 'frame_height') / 10;
+							$width = round($this->getID3infoItem($fi, 0, 'swf', 'header', 'frame_width') / 10);
+							$height = round($this->getID3infoItem($fi, 0, 'swf', 'header', 'frame_height') / 10);
 							$json['width'] = $width;
 							$json['height'] = $height;
 
@@ -3026,9 +3027,9 @@ class FileManager
 					$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
 
 
-					$title = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'title', 0), 'tags', 'id3v2', 'title', 0);
-					$artist = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'artist', 0), 'tags', 'id3v2', 'artist', 0);
-					$album = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'album', 0), 'tags', 'id3v2', 'album', 0);
+					$title = $this->mkSafeUTF8($this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'title', 0), 'tags', 'id3v2', 'title', 0));
+					$artist = $this->mkSafeUTF8($this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'artist', 0), 'tags', 'id3v2', 'artist', 0));
+					$album = $this->mkSafeUTF8($this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'album', 0), 'tags', 'id3v2', 'album', 0));
 
 					/*
 					<h2>${preview}</h2>
@@ -3044,7 +3045,7 @@ class FileManager
 							<dt>${title}</dt><dd>' . $title . '</dd>
 							<dt>${artist}</dt><dd>' . $artist . '</dd>
 							<dt>${album}</dt><dd>' . $album . '</dd>
-							<dt>${length}</dt><dd>' . $this->getID3infoItem($fi, '???', 'playtime_string') . '</dd>
+							<dt>${length}</dt><dd>' . $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'playtime_string')) . '</dd>
 							<dt>${bitrate}</dt><dd>' . round($this->getID3infoItem($fi, 0, 'bitrate') / 1000) . 'kbps</dd>
 						</dl>';
 					break;
@@ -3052,26 +3053,26 @@ class FileManager
 				case 'video':
 					$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
 
-					$a_fmt = $this->getID3infoItem($fi, '???', 'audio', 'dataformat');
-					$a_samplerate = $this->getID3infoItem($fi, 0, 'audio', 'sample_rate') / 1000;
-					$a_bitrate = round($this->getID3infoItem($fi, 0, 'audio', 'bitrate') / 1000);
-					$a_bitrate_mode = $this->getID3infoItem($fi, '???', 'audio', 'bitrate_mode');
-					$a_channels = $this->getID3infoItem($fi, 0, 'audio', 'channels');
-					$a_codec = $this->getID3infoItem($fi, '', 'audio', 'codec');
+					$a_fmt = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'audio', 'dataformat'));
+					$a_samplerate = round($this->getID3infoItem($fi, 0, 'audio', 'sample_rate') / 1000, 1);
+					$a_bitrate = round($this->getID3infoItem($fi, 0, 'audio', 'bitrate') / 1000, 1);
+					$a_bitrate_mode = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'audio', 'bitrate_mode'));
+					$a_channels = round($this->getID3infoItem($fi, 0, 'audio', 'channels'));
+					$a_codec = $this->mkSafeUTF8($this->getID3infoItem($fi, '', 'audio', 'codec'));
 					$a_streams = $this->getID3infoItem($fi, '???', 'audio', 'streams');
 					$a_streamcount = (is_array($a_streams) ? count($a_streams) : 0);
 
-					$v_fmt = $this->getID3infoItem($fi, '???', 'video', 'dataformat');
-					$v_bitrate = round($this->getID3infoItem($fi, 0, 'video', 'bitrate') / 1000);
-					$v_bitrate_mode = $this->getID3infoItem($fi, '???', 'video', 'bitrate_mode');
-					$v_framerate = $this->getID3infoItem($fi, '???', 'video', 'frame_rate');
-					$v_width = $this->getID3infoItem($fi, '???', 'video', 'resolution_x');
-					$v_height = $this->getID3infoItem($fi, '???', 'video', 'resolution_y');
-					$v_par = $this->getID3infoItem($fi, 1.0, 'video', 'pixel_aspect_ratio');
-					$v_codec = $this->getID3infoItem($fi, '', 'video', 'codec');
+					$v_fmt = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'video', 'dataformat'));
+					$v_bitrate = round($this->getID3infoItem($fi, 0, 'video', 'bitrate') / 1000, 1);
+					$v_bitrate_mode = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'video', 'bitrate_mode'));
+					$v_framerate = round($this->getID3infoItem($fi, 0, 'video', 'frame_rate'), 5);
+					$v_width = round($this->getID3infoItem($fi, '???', 'video', 'resolution_x'));
+					$v_height = round($this->getID3infoItem($fi, '???', 'video', 'resolution_y'));
+					$v_par = round($this->getID3infoItem($fi, 1.0, 'video', 'pixel_aspect_ratio'), 7);
+					$v_codec = $this->mkSafeUTF8($this->getID3infoItem($fi, '', 'video', 'codec'));
 
-					$g_bitrate = round($this->getID3infoItem($fi, 0, 'bitrate') / 1000);
-					$g_playtime_str = $this->getID3infoItem($fi, '???', 'playtime_string');
+					$g_bitrate = round($this->getID3infoItem($fi, 0, 'bitrate') / 1000, 1);
+					$g_playtime_str = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'playtime_string'));
 
 					$content = '<dl>
 							<dt>Audio</dt><dd>';
@@ -3104,7 +3105,7 @@ class FileManager
 
 				if (!empty($fi['error']))
 				{
-					$postdiag_err_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
+					$postdiag_err_HTML .= '<p class="err_info">' . $this->mkSafeUTF8(implode(', ', $fi['error'])) . '</p>';
 				}
 
 				try
@@ -3724,10 +3725,21 @@ class FileManager
 			{
 				if ($len > 0 && $len < 256)
 				{
-					// convert raw binary data to hex in 32 bit chunks:
-					$temp = unpack('H*', $arr);
-					$temp = str_split($temp[1], 8);
-					$arr = new BinaryDataContainer(implode(' ', $temp));
+					// check if we can turn it into something UTF8-LEGAL; when not, we hexdump!
+					$im = str_replace('?', '&QMaRK;', $value);
+					$dst = $this->mkSafeUTF8($im);
+					if (strpos($dst, '?') === false)
+					{
+						// it's a UTF-8 legal string now!
+						$arr = str_replace('&QMaRK;', '?', $dst);
+					}
+					else
+					{
+						// convert raw binary data to hex in 32 bit chunks:
+						$temp = unpack('H*', $arr);
+						$temp = str_split($temp[1], 8);
+						$arr = new BinaryDataContainer(implode(' ', $temp));
+					}
 				}
 				else
 				{
@@ -4341,8 +4353,53 @@ class FileManager
 		return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
 	}
 	
-	
-	
+	/**
+	 * inspired by http://nl3.php.net/manual/en/function.utf8-encode.php#102382; mix & mash to make sure the result is LEGAL UTF-8
+	 *
+	 * Introduced after the JSON encoder kept spitting out 'null' instead of a string value for a few choice French JPEGs with very non-UTF EXIF content. :-(
+	 */
+	public function mkSafeUTF8($str) 
+	{
+		// kill NUL bytes: they don't belong in here!
+		$str = strtr($str, "\x00", ' ');
+		
+		if (!mb_check_encoding($str, 'UTF-8') || $str !== mb_convert_encoding(mb_convert_encoding($str, 'UTF-32', 'UTF-8'), 'UTF-8', 'UTF-32')) 
+		{
+			$encoding = mb_detect_encoding($str, 'auto, ISO-8859-1', true);
+			$im = str_replace('?', '&qmark;', $str);
+			if ($encoding !== false)
+			{
+				$dst = mb_convert_encoding($im, 'UTF-8', $encoding);
+			}
+			else
+			{
+				$dst = mb_convert_encoding($im, 'UTF-8');
+			}
+			//$dst = utf8_encode($im);
+			//$dst = getid3_lib::iconv_fallback('ISO-8859-1', 'UTF-8', $im);
+
+			if (!mb_check_encoding($dst, 'UTF-8') || $dst !== mb_convert_encoding(mb_convert_encoding($dst, 'UTF-32', 'UTF-8'), 'UTF-8', 'UTF-32') || strpos($dst, '?') !== false)
+			{
+				// not UTF8 yet... try them all
+				$encs = mb_list_encodings();
+				foreach ($encs as $encoding)
+				{
+					$dst = mb_convert_encoding($im, 'UTF-8', $encoding);
+					if (mb_check_encoding($dst, 'UTF-8') && $dst === mb_convert_encoding(mb_convert_encoding($dst, 'UTF-32', 'UTF-8'), 'UTF-8', 'UTF-32') && strpos($dst, '?') === false)
+					{
+						return str_replace('&qmark;', '?', $dst);
+					}
+				}
+				
+				// when we get here, it's pretty hopeless. Strip ANYTHING that's non-ASCII:
+				$str = preg_replace("/[^ -~\t\r\n]/", '?', $str);
+			}
+
+			return str_replace('&qmark;', '?', $dst);
+		}
+		return $str;
+	}
+
 	
 
 	/**
