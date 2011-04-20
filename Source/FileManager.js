@@ -2857,6 +2857,12 @@ FileManager.Dialog = new Class({
 		this.setOptions(options);
 		this.dialogOpen = false;
 
+		this.content_el = new Element('div', {
+			'class': 'filemanager-dialog-content'
+		}).adopt([
+			typeOf(text) === 'string' ? this.str2el(text) : text
+		]);
+
 		this.el = new Element('div', {
 			'class': 'filemanager-dialog' + (Browser.ie ? ' filemanager-dialog-engine-trident' : '') + (Browser.ie ? ' filemanager-dialog-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
 			opacity: 0,
@@ -2869,11 +2875,16 @@ FileManager.Dialog = new Class({
 
 		if (typeof this.options.content !== 'undefined') {
 			this.options.content.each((function(content){
-				if (content && typeOf(content) === 'element') {
-					this.el.getElement('div').adopt(content);
-				}
-				else if (content) {
-					this.el.getElement('div').set('html',this.el.getElement('div').get('html')+'<br>'+content);
+				if (content)
+				{
+					if (typeOf(content) !== 'string')
+					{
+						this.content_el.adopt(content);
+					}
+					else
+					{
+						this.content_el.adopt(this.str2el(content));
+					}
 				}
 			}).bind(this));
 		}
@@ -2921,13 +2932,13 @@ FileManager.Dialog = new Class({
 	},
 
 	show: function(){
-		if (!this.options.hideOverlay) {
-			this.overlay.show();
-		}
+		this.overlay.show();
+
 		var self = this;
 		this.fireEvent('open');
-		this.el.setStyle('display', 'block').inject(document.body).center().fade(1).get('tween').chain(function(){
-		});
+		this.el.setStyle('display', 'block').inject(document.body);
+		this.restrictSize();
+		this.el.center().fade(1);
 		var button = (this.el.getElement('button.filemanager-dialog-confirm') || this.el.getElement('button'));
 		if (button) {
 			button.focus();
@@ -2943,9 +2954,68 @@ FileManager.Dialog = new Class({
 	},
 
 	appendMessage: function(text) {
-		this.el.adopt([
-			typeOf(text) === 'string' ? new Element('div', {text: text}) : text
+		this.content_el.adopt([
+			typeOf(text) === 'string' ? this.str2el(text) : text
 		]);
+		this.restrictSize();
+		this.el.center();
+	},
+
+	restrictSize: function()
+	{
+		// make sure the dialog never is larger than the viewport!
+		var ddim = this.el.getSize();
+		var vdim = window.getSize();
+		var maxx = (vdim.x - 20) * 0.85; // heuristic: make dialog a little smaller than the screen itself and keep a place for possible outer scrollbars
+		if (ddim.x >= maxx)
+		{
+			this.el.setStyles({ width: maxx.toInt() });
+		}
+		ddim = this.el.getSize();
+		var cdim = this.content_el.getSize();
+		var maxy = (vdim.y - 20) * 0.85; // heuristic: make dialog a little less high than the screen itself and keep a place for possible outer scrollbars
+		if (ddim.y >= maxy)
+		{
+			// first attempt to correct this by making the dialog wider:
+			var x = ddim.x * 2.0;
+			while (x < maxx && ddim.y >= maxy)
+			{
+				this.el.setStyles({ width: x.toInt() });
+				ddim = this.el.getSize();
+				x = ddim.x * 1.3;
+			}
+
+			cdim = this.content_el.getSize();
+			if (ddim.y >= maxy)
+			{
+				var y = maxy - ddim.y + cdim.y;
+				this.content_el.setStyles({
+					height: y.toInt(),
+					overflow: 'auto'
+				});
+			}
+		}
+	},
+
+	str2el: function(text)
+	{
+		var el = new Element('div');
+		if (text.indexOf('<') != -1 && text.indexOf('>') != -1)
+		{
+			try
+			{
+				el.set('html', text);
+			}
+			catch(e)
+			{
+				el.set('text', text);
+			}
+		}
+		else
+		{
+			el.set('text', text);
+		}
+		return el;
 	},
 
 	destroy: function() {

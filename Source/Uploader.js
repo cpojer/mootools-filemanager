@@ -132,7 +132,7 @@ FileManager.implement({
 					else if (this.validationError === 'sizeLimitMax')
 						sub.size_max = Swiff.Uploader.formatUnit(this.base.options.fileSizeMax, 'b');
 
-					this.showError(message.substitute(sub, /\\?\$\{([^{}]+)\}/g));
+					self.showError(message.substitute(sub, /\\?\$\{([^{}]+)\}/g));
 					return this;
 				}
 
