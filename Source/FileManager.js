@@ -2463,7 +2463,16 @@ var FileManager = new Class({
 
 					if (prev) {
 						prev.addEvent('load', function(){
-							this.setStyle('background', 'none');
+							// when the thumb250 image has loaded, remove the loader animation in the background ...
+							//this.setStyle('background', 'none');
+							// ... AND blow away the encoded 'width' and 'height' styles: after all, the thumb250 generation MAY have failed.
+							// In that case, an icon is produced by the backend, but it will have different dimensions, and we don't want to
+							// distort THAT one, either.
+							this.setStyles({
+								'background': 'none',
+								'width': '',
+								'height': ''
+							});
 						});
 					}
 
@@ -2971,7 +2980,7 @@ FileManager.Dialog = new Class({
 		var maxx = (vdim.x - 20) * 0.85; // heuristic: make dialog a little smaller than the screen itself and keep a place for possible outer scrollbars
 		if (ddim.x >= maxx)
 		{
-			this.el.setStyles({ width: maxx.toInt() });
+			this.el.setStyle('width', maxx.toInt());
 		}
 		ddim = this.el.getSize();
 		var cdim = this.content_el.getSize();
@@ -2982,7 +2991,7 @@ FileManager.Dialog = new Class({
 			var x = ddim.x * 2.0;
 			while (x < maxx && ddim.y >= maxy)
 			{
-				this.el.setStyles({ width: x.toInt() });
+				this.el.setStyle('width', x.toInt());
 				ddim = this.el.getSize();
 				x = ddim.x * 1.3;
 			}

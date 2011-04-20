@@ -770,7 +770,7 @@ class FileManager
 	 */
 	public function fireEvent($event = null)
 	{
-		$event = !empty($event) ? 'on' . ucfirst($event) : null;
+		$event = (!empty($event) ? 'on' . ucfirst($event) : null);
 		if (!$event || !method_exists($this, $event)) $event = 'onView';
 
 		$this->{$event}();
@@ -2255,7 +2255,7 @@ class FileManager
 							 */
 							if ($this->options['safe'])
 							{
-								$fi['extension'] = $this->getSafeExtension((isset($fi['extension']) ? $fi['extension'] : ''));
+								$fi['extension'] = $this->getSafeExtension(isset($fi['extension']) ? $fi['extension'] : '');
 							}
 							$v_ex_code = null;
 						}
@@ -2818,6 +2818,7 @@ class FileManager
 					 * the url argument is used to determine the thumbnail name/path.
 					 */
 					$meta = null;
+					$emsg = null;
 					try
 					{
 						$thumb250 = $this->getThumb($url, $file, 250, 250, $auto_thumb_gen_mode);
@@ -2887,20 +2888,32 @@ class FileManager
 						$content .= '<p>Made with ' . (empty($sw_make) ? '???' : $sw_make) . ' @ ' . (empty($time_make) ? '???' : $time_make) . '</p>';
 					}
 
-					$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-								   <img src="' . $thumb250_e . '" class="preview" alt="preview" />
-								 </a>';
+					// are we delaying the thumbnail generation? When yes, then we need to infer th thumbnail dimensions *anyway*!
+					if (empty($thumb250))
+					{
+						// to show the loader.gif in the preview <img> tag, we MUST set a width+height there, so we guestimate the thumbnail250 size as accurately as possible
+						//
+						// derive size from original:
+						$dims = $this->predictThumbDimensions($width, $height, 250, 250);
+					
+						$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+									   <img src="' . $thumb250_e . '" class="preview" alt="preview" style="width: ' . $dims['width'] . 'px; height: ' . $dims['height'] . 'px;" />
+									 </a>';
+					}
+					// else: defer the $preview_HTML production until we're at the end of this and have fetched the actual thumbnail dimensions
+					
 					if (!empty($emsg))
 					{
 						// use the abilities of modify_json4exception() to munge/format the exception message:
 						$jsa = array('error' => '');
 						$this->modify_json4exception($jsa, $emsg, 'path = ' . $url);
 						$postdiag_err_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
-					}
-					if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
-					{
-						$earr = explode(':', $e->getMessage(), 2);
-						$postdiag_err_HTML .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
+					
+						if (strpos($emsg, 'img_will_not_fit') !== false)
+						{
+							$earr = explode(':', $emsg, 2);
+							$postdiag_err_HTML .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
+						}
 					}
 
 					if (0)
@@ -2973,8 +2986,8 @@ class FileManager
 						{
 							foreach ($info as $name => $size)
 							{
-								$isdir = is_array($size) ? true : false;
-								$out[($isdir) ? 0 : 1][$name] = '<li><a><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($name, true)) . '" alt="" /> ' . $name . '</a></li>';
+								$isdir = is_array($size);
+								$out[$isdir ? 0 : 1][$name] = '<li><a><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($name, true)) . '" alt="" /> ' . $name . '</a></li>';
 							}
 							natcasesort($out[0]);
 							natcasesort($out[1]);
@@ -3069,7 +3082,7 @@ class FileManager
 					else
 					{
 						$content .= $a_fmt . (!empty($a_codec) ? ' (' . $a_codec . ')' : '') .
-									(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : $a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)') : '') .
+									(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : ($a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)')) : '') .
 									': ' . $a_samplerate . ' kHz @ ' . $a_bitrate . ' kbps (' . strtoupper($a_bitrate_mode) . ')' .
 									($a_streamcount > 1 ? ' (' . $a_streamcount . ' streams)' : '');
 					}
@@ -3096,6 +3109,7 @@ class FileManager
 
 				try
 				{
+					$emsgX = null;
 					if ($thumb250_e === false)
 					{
 						// when the ID3 info scanner can dig up an EMBEDDED thumbnail, when we don't have anything else, we're happy with that one!
@@ -3126,7 +3140,6 @@ class FileManager
 								// source file mapping is not bidirectional, either!) and go straight ahead and produce the 250px thumbnail at least.
 								$thumb250 = false;
 								$thumb48  = false;
-								$emsgX = null;
 								if (false === file_put_contents($thumbX_f, $embed->imagedata))
 								{
 									@unlink($thumbX_f);
@@ -3157,12 +3170,6 @@ class FileManager
 
 								if ($thumb250 !== false)
 								{
-									if (empty($preview_HTML))
-									{
-										$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-													   <img src="' . $thumb250_e . '" class="preview"' . (!empty($emsgX) ? ' alt="' . $emsgX . '"' : '') . '/>
-													 </a>';
-									}
 									$json['thumb250'] = $thumb250_e;
 								}
 								if ($thumb48 !== false)
@@ -3187,12 +3194,6 @@ class FileManager
 								$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 							}
 
-							if (empty($preview_HTML))
-							{
-								$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-											   <img src="' . $thumb250_e . '" class="preview"' . (!empty($emsgX) ? ' alt="' . $emsgX . '"' : '') . '/>
-											 </a>';
-							}
 							$json['thumb250'] = $thumb250_e;
 							if ($thumb48 !== false)
 							{
@@ -3211,6 +3212,14 @@ class FileManager
 							{
 								$json['thumb250-width'] = $tnsize[0];
 								$json['thumb250-height'] = $tnsize[1];
+								
+								if (empty($preview_HTML))
+								{
+									$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+												   <img src="' . $thumb250_e . '" class="preview" alt="' . (!empty($emsgX) ? $this->mkSafe4HTMLattr($emsgX) : 'preview') . '" 
+												        style="width: ' . $tnsize[0] . 'px; height: ' . $tnsize[1] . 'px;" />
+											 </a>';
+								}
 							}
 
 							if ($thumb48 === $thumb250)
@@ -4063,6 +4072,19 @@ class FileManager
 		return $fname;
 	}
 
+	
+	
+	/**
+	 * Predict the actual width/height dimensions of the thumbnail, given the original image's dimensions and the given size limits.
+	 *
+	 * Note: exists as a method in this class, so you can override it when you override getThumb().
+	 */
+	public function predictThumbDimensions($orig_x, $orig_y, $max_x = null, $max_y = null, $ratio = true, $resizeWhenSmaller = false)
+	{
+		return Image::calculate_resize_dimensions($orig_x, $orig_y, $max_x, $max_y, $ratio, $resizeWhenSmaller);
+	}
+	
+	
 	/**
 	 * Returns the URI path to the apropriate icon image for the given file / directory.
 	 *
@@ -4307,6 +4329,21 @@ class FileManager
 		$str = strtr($str, "\x05", '>');
 		return $str;
 	}
+	
+
+	/**
+ 	 * Make data suitable for inclusion in a HTML tag attribute value: strip all tags and encode quotes! 
+	 */
+	public function mkSafe4HTMLattr($str)
+	{
+		$str = str_replace('%3C', '?', $str);             // in case someone want's to get really fancy: nuke the URLencoded '<'
+		$str = strip_tags($str);
+		return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+	}
+	
+	
+	
+	
 
 	/**
 	 * Safe replacement of dirname(); does not care whether the input has a trailing slash or not.
@@ -4630,7 +4667,8 @@ class FileManager
 			}
 			else
 			{
-				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : !empty($target_info) ? ' (' . $this->mkSafe4Display($target_info) . ')' : '');
+				// WARNING: braces in here are MANDATORY as PHP doesn't evaluate the nested ?: as you'd expect: (C1 ? A : C2 ? B : C) will deliver B when both C! and C2 are TRUE!
+				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (!empty($e[1]) ? $e[1] : (!empty($target_info) ? ' (' . $this->mkSafe4Display($target_info) . ')' : ''));
 			}
 			$jserr['status'] = 0;
 		}

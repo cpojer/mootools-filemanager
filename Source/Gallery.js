@@ -189,7 +189,6 @@ FileManager.Gallery = new Class({
 			file = el.retrieve('file');
 		}
 
-		var self = this;
 		var name = this.normalize(file.dir + '/' + file.name);
 
 		// when the item already exists in the gallery, do not add it again:
@@ -350,7 +349,7 @@ FileManager.Gallery = new Class({
 					//this.onDragComplete(li, droppable);
 					this.metadata[name].file = file;
 
-					img_injector(file, imgcontainer, self);
+					img_injector(file, imgcontainer, this);
 
 				}).bind(this),
 				onError: (function(text, error) {
@@ -364,7 +363,7 @@ FileManager.Gallery = new Class({
 		else
 		{
 			// we already have all required information. Go show the image in the gallery pane!
-			img_injector(file, imgcontainer, self);
+			img_injector(file, imgcontainer, this);
 		}
 
 		return true;
