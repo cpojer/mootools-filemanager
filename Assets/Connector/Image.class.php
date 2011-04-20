@@ -90,20 +90,20 @@ class Image {
 		if(!empty($this->image)) imagedestroy($this->image);
 		unset($this->image);
 	}
-	
+
 	/**
-	 * Return an array of supported extensions (rather: the second parts of the mime types!) 
+	 * Return an array of supported extensions (rather: the second parts of the mime types!)
 	 *
 	 * A type is listed as 'supported' when it can be READ.
 	 */
 	public static function getSupportedTypes()
 	{
 		static $supported_types;
-		
+
 		if (empty($supported_types))
 		{
 			$gdi = gd_info();
-			
+
 			$supported_types = array();
 			if (!empty($gdi['GIF Read Support']))
 				$supported_types[] = 'gif';
@@ -560,7 +560,7 @@ class Image {
 
 		if(!$ext) $ext = $this->meta['ext'];
 		$ext = strtolower($ext);
-		
+
 		if($ext=='jpg') $ext = 'jpeg';
 		else if($ext=='png') imagesavealpha($this->image, true);
 
@@ -658,43 +658,43 @@ if (!function_exists('imagecreatefrombmp'))
 		$filesize = @filesize($filepath);
 		if ($filesize < 108 + 4)
 			return false;
-			
+
 		$read = file_get_contents($filepath);
 		if ($file === false)
 			return false;
-	   
+
 		$temp = unpack("H*",$read);
-		unset($read);				// reduce memory consumption
+		unset($read);               // reduce memory consumption
 		$hex = $temp[1];
 		unset($temp);
 		$header = substr($hex, 0, 108);
-	   
+
 		// Process the header
 		// Structure: http://www.fastgraph.com/help/bmp_header_format.html
 		if (substr($header, 0, 4) == '424d')
 		{
 			// Cut it in parts of 2 bytes
 			$header_parts = str_split($header, 2);
-		   
+
 			// Get the width        4 bytes
 			$width = hexdec($header_parts[19] . $header_parts[18]);
-		   
+
 			// Get the height        4 bytes
 			$height = hexdec($header_parts[23] . $header_parts[22]);
-		   
+
 			// Unset the header params
 			unset($header_parts);
 		}
-	   
+
 		// Define starting X and Y
 		$x = 0;
 		$y = 1;
-	   
+
 		// Create newimage
 		$image = imagecreatetruecolor($width, $height);
 		if ($image === false)
 			return $image;
-	   
+
 		// Grab the body from the image
 		$body = substr($hex, 108);
 		unset($hex);
@@ -707,7 +707,7 @@ if (!function_exists('imagecreatefrombmp'))
 
 		// Use end-line padding? Only when needed
 		$usePadding = ($body_size > $header_size * 3 + 4);
-	   
+
 		// Using a for-loop with index-calculation instaid of str_split to avoid large memory consumption
 		// Calculate the next DWORD-position in the body
 		for ($i = 0; $i < $body_size; $i += 3)
@@ -719,25 +719,25 @@ if (!function_exists('imagecreatefrombmp'))
 				// Shift i to the ending of the current 32-bit-block
 				if ($usePadding)
 					$i += $width % 4;
-			   
+
 				// Reset horizontal position
 				$x = 0;
-			   
+
 				// Raise the height-position (bottom-up)
 				$y++;
-			   
+
 				// Reached the image-height? Break the for-loop
 				if ($y > $height)
 					break;
 			}
-		   
+
 			// Calculation of the RGB-pixel (defined as BGR in image-data)
 			// Define $i_pos as absolute position in the body
 			$i_pos = $i * 2;
 			$r = hexdec($body[$i_pos+4] . $body[$i_pos+5]);
 			$g = hexdec($body[$i_pos+2] . $body[$i_pos+3]);
 			$b = hexdec($body[$i_pos] . $body[$i_pos+1]);
-		   
+
 			// Calculate and draw the pixel
 			$color = imagecolorallocate($image, $r, $g, $b);
 			if ($color === false)
@@ -746,14 +746,14 @@ if (!function_exists('imagecreatefrombmp'))
 				return false;
 			}
 			imagesetpixel($image, $x, $height - $y, $color);
-		   
+
 			// Raise the horizontal position
 			$x++;
 		}
-	   
+
 		// Unset the body / free the memory
 		unset($body);
-	   
+
 		// Return image-object
 		return $image;
 	}

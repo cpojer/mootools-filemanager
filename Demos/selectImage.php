@@ -29,9 +29,9 @@ $fm_basedir = str_replace(strtr($_SERVER['DOCUMENT_ROOT'], '\\', '/'), '', dirna
 
 /*
  * Go to FM-common.php to edit the Alias array there to mirror your local situation.
- * 
+ *
  * See also the 'SITE_USES_ALIASES' define and the mkNewFileManager() function in there.
- * 
+ *
  * mkNewFileManager() is just a wrapper used to keep the demo code lean...
  */
 $browser = mkNewFileManager(array(

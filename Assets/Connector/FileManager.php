@@ -544,7 +544,7 @@
  *
  *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular 'thumbnail'
  *                                       operation, when the ['status']==0, we are performing a defective 'thumbnail' operation.
- *                                       Note that it is pretty useless to edit this entry when $info['mode'] != 'json', i.e. when this call 
+ *                                       Note that it is pretty useless to edit this entry when $info['mode'] != 'json', i.e. when this call
  *                                       is required to produce a binary image.
  *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
@@ -611,7 +611,7 @@ define('MTFM_MIN_GETID3_CACHESIZE', 16);
 
 // flags for clean_ID3info_results()
 define('MTFM_CLEAN_ID3_STRIP_EMBEDDED_IMAGES', 0x0001);
-	
+
 
 
 
@@ -1591,8 +1591,8 @@ class FileManager
 			 * and too little available RAM) we /still/ want to see that happen: for broken and overlarge images, we
 			 * produce some alternative graphics instead!
 			 */
-			 
-			// access the image and create a thumbnail image; this can fail dramatically. 
+
+			// access the image and create a thumbnail image; this can fail dramatically.
 			//
 			// Note that 'onThumbnail' ASSUMES 'onDetail' has been called before, for this same file. (Otherwise, thumbnails for
 			// non-images won't work!)
@@ -1610,7 +1610,7 @@ class FileManager
 			{
 				$thumb_path = $this->getThumb($legal_url, ($thumb250 !== false ? $this->url_path2file_path($thumb250) : $file), $reqd_size, $reqd_size);
 			}
-			else 
+			else
 			{
 				// 'abuse' the info extraction to produce any embedded images, which can be used for thumbnail production.
 				// This is really using a side effect of this call...
@@ -2304,7 +2304,7 @@ class FileManager
 				throw new FileManagerException('size');
 
 			//if(!isset($fileinfo['extension']))
-			//	throw new FileManagerException('extension');
+			//  throw new FileManagerException('extension');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url . $filename);
@@ -2321,11 +2321,11 @@ class FileManager
 				case 2:
 					$emsg = 'size';
 					break;
-					
+
 				case 3:
 					$emsg = 'partial';
 					break;
-					
+
 				default:
 					$dir = $this->legal_url_path2file_path($legal_url);
 					if (!is_dir($dir))
@@ -2336,11 +2336,11 @@ class FileManager
 					{
 						$emsg = 'path_not_writable';
 					}
-					else 
+					else
 					{
 						$emsg = 'filename_maybe_too_large';
 					}
-			
+
 					$emsg_add = 'file = ' . $this->mkSafe4Display($file_arg . ', destination path = ' . $file);
 					if (!empty($_FILES['Filedata']['error']))
 					{
@@ -2713,7 +2713,7 @@ class FileManager
 		{
 			$mime = 'text/directory';
 			$iconspec = 'is.dir';
-			
+
 			$fi['mime_type'] = $mime;
 		}
 		else
@@ -2739,7 +2739,7 @@ class FileManager
 			$hash = $fi['cache_hash'];
 			$cachefile = $fi['cache_file'];
 			$cache_dir = $fi['cache_dir'];
-			
+
 			$cache_json_entry = ($auto_thumb_gen_mode ? 'direct_json' : 'auto_json');
 			if (array_key_exists($hash, $this->getid3_cache) && !empty($this->getid3_cache[$hash][$cache_json_entry]))
 			{
@@ -2747,7 +2747,7 @@ class FileManager
 				//$json['content'] .= '<p>full info retrieved from RAM/file</p>';
 			}
 		}
-		
+
 		if ($json === false)
 		{
 			$thumbnail = $this->getIcon($iconspec, false);
@@ -3093,7 +3093,7 @@ class FileManager
 				{
 					$postdiag_err_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
 				}
-				
+
 				try
 				{
 					if ($thumb250_e === false)
@@ -3103,7 +3103,7 @@ class FileManager
 						if ($thumb250 === false)
 						{
 							/*
-							 * No thumbnail available yet, so find me one! 
+							 * No thumbnail available yet, so find me one!
 							 *
 							 * When we find a thumbnail during the 'cleanup' scan, we don't know up front if it's suitable to be used directly,
 							 * so we treat it as an alternative 'original' file and generate a 250px/48px thumbnail set from it.
@@ -3171,7 +3171,7 @@ class FileManager
 								}
 							}
 						}
-						else 
+						else
 						{
 							// $thumb250 !== false
 							$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
@@ -3212,7 +3212,7 @@ class FileManager
 								$json['thumb250-width'] = $tnsize[0];
 								$json['thumb250-height'] = $tnsize[1];
 							}
-							
+
 							if ($thumb48 === $thumb250)
 							{
 								$json['thumb48-width'] = $tnsize[0];
@@ -3229,12 +3229,12 @@ class FileManager
 							}
 						}
 					}
-					
+
 					$fi4dump = array_merge(array(), $fi); // clone $fi
 					$this->clean_ID3info_results($fi4dump);
-					
+
 					$dump = FileManagerUtility::table_var_dump($fi4dump, false);
-					
+
 					if (0)
 					{
 						self::clean_EXIF_results($fi4dump);
@@ -3275,13 +3275,13 @@ class FileManager
 			}
 
 			$json['content'] = self::compressHTML('<div class="' . $content_classes . '">' . $content . '</div>');
-		
-		
+
+
 			// and now store the generated JSON in the RAM+FILE cache:
 			if ($hash !== false)
 			{
 				$this->getid3_cache[$hash][$cache_json_entry] = $json;
-				
+
 				// and save the new entry to file cache as well, so we can reuse it in a future request
 				if ($cachefile !== false)
 				{
@@ -3371,7 +3371,7 @@ class FileManager
 		array_walk_recursive($arr, 'self::__clean_EXIF_results');
 	}
 
-	
+
 	/**
 	 * Extract an embedded image from the getID3 info data.
 	 *
@@ -3379,11 +3379,11 @@ class FileManager
 	 */
 	protected function extract_ID3info_embedded_image(&$arr)
 	{
-		if (is_array($arr)) 
+		if (is_array($arr))
 		{
 			foreach ($arr as $key => &$value)
 			{
-				if ($key === 'data' && isset($arr['image_mime'])) 
+				if ($key === 'data' && isset($arr['image_mime']))
 				{
 					// first make sure this is a valid image
 					$imageinfo = array();
@@ -3392,7 +3392,7 @@ class FileManager
 					{
 						return new EmbeddedImageContainer($imagechunkcheck, $value);
 					}
-				} 
+				}
 				else if (is_array($value))
 				{
 					$rv = $this->extract_ID3info_embedded_image($value);
@@ -3411,7 +3411,7 @@ class FileManager
 		{
 			// fold these up all the way to the root:
 			$key_prefix .= '.' . $arr['hierarchy'];
-			
+
 			$satms = $arr['subatoms'];
 			unset($arr['subatoms']);
 			$inject[$key_prefix] = $satms;
@@ -3451,7 +3451,7 @@ class FileManager
 		}
 		$arr = $dst;
 	}
-	
+
 	// another round of scanning to rewrite the keys to human legibility: as this changes the keys, we'll need to rewrite all entries to keep order intact
 	protected function clean_ID3info_keys(&$arr)
 	{
@@ -3459,38 +3459,38 @@ class FileManager
 		foreach($arr as $key => &$value)
 		{
 			$key = strtr($key, "_\x00", '  ');
-			
+
 			// custom transformations: (hopefully switch/case/case/... is faster than str_replace/strtr here)
 			switch ((string)$key)
 			{
 			default:
 				break;
-				
+
 			case 'avdataend':
 				$key = 'AV data end';
 				break;
-				
+
 			case 'avdataoffset':
 				$key = 'AV data offset';
 				break;
-				
+
 			case 'channelmode':
 				$key = 'channel mode';
 				break;
-				
+
 			case 'dataformat':
 				$key = 'data format';
 				break;
-				
+
 			case 'fileformat':
 				$key = 'file format';
 				break;
-				
+
 			case 'modeextension':
 				$key = 'mode extension';
 				break;
-			}	
-			
+			}
+
 			$dst[$key] = $value;
 			if (is_array($value))
 			{
@@ -3502,14 +3502,14 @@ class FileManager
 
 	protected function clean_ID3info_results_r(&$arr, $flags)
 	{
-		if (is_array($arr)) 
+		if (is_array($arr))
 		{
 			// heuristic #1: fold all the quickatoms subatoms using their hierarchy and name fields; this is a tree rewrite
 			if (array_key_exists('quicktime', $arr) && is_array($arr['quicktime']))
 			{
 				$inject = array();
 				$this->fold_quicktime_subatoms($arr['quicktime'], $inject, 'quicktime');
-				
+
 				// can't use array_splice on associative arrays, so we rewrite $arr now:
 				$newarr = array();
 				foreach ($arr as $key => &$value)
@@ -3527,12 +3527,12 @@ class FileManager
 				unset($inject);
 				unset($newarr);
 			}
-			
-			$activity = true; 
+
+			$activity = true;
 			while ($activity)
 			{
 				$activity = false; // assume there's nothing to do anymore. Prove us wrong now...
-				
+
 				// heuristic #2: when the number of items in the array which are themselves arrays is 80%, contract the set
 				$todo = array();
 				foreach ($arr as $key => &$value)
@@ -3547,7 +3547,7 @@ class FileManager
 								$acnt++;
 							}
 						}
-						
+
 						// the floor() here helps to fold single-element arrays alongside! :-)
 						if (floor(0.5 * count($value)) <= $acnt)
 						{
@@ -3563,7 +3563,7 @@ class FileManager
 						if (is_array($value) && in_array($key, $todo))
 						{
 							unset($todo[$key]);
-							
+
 							foreach ($value as $sk => &$sv)
 							{
 								$nk = $key . '.' . $sk;
@@ -3592,10 +3592,10 @@ class FileManager
 					$activity = true;
 				}
 			}
-			
+
 			foreach ($arr as $key => &$value)
 			{
-				if ($key === 'data' && isset($arr['image_mime'])) 
+				if ($key === 'data' && isset($arr['image_mime']))
 				{
 					// when this is a valid image, it's already available as a thumbnail, most probably
 					$imageinfo = array();
@@ -3618,14 +3618,14 @@ class FileManager
 							$value = new BinaryDataContainer('(unidentified image data ... ' . (is_string($value) ? 'length = ' . strlen($value) : '') . ' -- ' . print_r($imagechunkcheck) . ')');
 						}
 					}
-				} 
+				}
 				else if (isset($arr[$key . '_guid']))
 				{
 					// convert guid raw binary data to hex:
 					$temp = unpack('H*', $value);
 					$value = new BinaryDataContainer($temp[1]);
 				}
-				else if (  $key === 'non_intra_quant'  																		// MPEG quantization matrix
+				else if (  $key === 'non_intra_quant'                                                                       // MPEG quantization matrix
 						|| $key === 'error_correct_type'
 						)
 				{
@@ -3634,23 +3634,23 @@ class FileManager
 					$temp = str_split($temp[1], 8);
 					$value = new BinaryDataContainer(implode(' ', $temp));
 				}
-				else if ($key === 'data' && is_string($value) && isset($arr['frame_name']) && isset($arr['encoding']) && isset($arr['datalength']))	// MP3 tag chunk
+				else if ($key === 'data' && is_string($value) && isset($arr['frame_name']) && isset($arr['encoding']) && isset($arr['datalength'])) // MP3 tag chunk
 				{
 					$str = trim(strtr(getid3_lib::iconv_fallback($arr['encoding'], 'UTF-8', $value), "\x00", ' '));
 					$temp = unpack('H*', $value);
 					$temp = str_split($temp[1], 8);
 					$value = new BinaryDataContainer(implode(' ', $temp) . (!empty($str) ? ' (' . $str . ')' : ''));
 				}
-				else if (  ($key === 'data' && is_string($value) && isset($arr['offset']) && isset($arr['size']))      		// AVI offset/size/data items: data = binary
+				else if (  ($key === 'data' && is_string($value) && isset($arr['offset']) && isset($arr['size']))           // AVI offset/size/data items: data = binary
 						|| ($key === 'type_specific_data' && is_string($value) /* && isset($arr['type_specific_len']) */ )  // munch WMV/RM 'type specific data': binary   ('type specific len' will occur alongside, but not in WMV)
 						)
 				{
 					// a bit like UNIX strings tool: strip out anything which isn't at least possibly legible
-					$str = ' ' . preg_replace('/[^ !#-~]/', ' ', strtr($value, "\x00", ' ')) . ' ';		// convert non-ASCII and double quote " to space
+					$str = ' ' . preg_replace('/[^ !#-~]/', ' ', strtr($value, "\x00", ' ')) . ' ';     // convert non-ASCII and double quote " to space
 					do
 					{
 						$repl_count = 0;
-						$str = preg_replace(array('/ [^ ] /', 
+						$str = preg_replace(array('/ [^ ] /',
 												  '/ [^A-Za-z0-9\\(.]/',
 												  '/ [A-Za-z0-9][^A-Za-z0-9\\(. ] /'
 												 ), ' ', $str, -1, $repl_count);
@@ -3699,7 +3699,7 @@ class FileManager
 						$this->clean_ID3info_results_r($value, $flags);
 					}
 				}
-				else 
+				else
 				{
 					$this->clean_ID3info_results_r($value, $flags);
 				}
@@ -3759,23 +3759,23 @@ class FileManager
 		unset($arr['cache_hash']);
 		unset($arr['cache_file']);
 		unset($arr['cache_dir']);
-		
+
 		$this->clean_ID3info_results_r($arr, $flags);
-		
+
 		// heuristic #4: convert keys to something legible:
 		if (is_array($arr))
 		{
 			$this->clean_ID3info_keys($arr);
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
 	/**
 	 * Delete a file or directory, inclusing subdirectories and files.
 	 *
@@ -3902,8 +3902,8 @@ class FileManager
 		return $coll;
 	}
 
-	
-	
+
+
 	/**
 	 * Check the $extension argument and replace it with a suitable 'safe' extension.
 	 */
@@ -3930,12 +3930,12 @@ class FileManager
 		case 'php5':
 		case 'phps':
 			return (!empty($safe_extension) ? $safe_extension : $extension);
-		
+
 		default:
 			return $extension;
 		}
 	}
-	
+
 	/**
 	 * Only allow a 'dotted', i.e. UNIX hidden filename when options['safe'] == FALSE
 	 */
@@ -3967,8 +3967,8 @@ class FileManager
 		}
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Make a cleaned-up, unique filename
 	 *
@@ -3997,7 +3997,7 @@ class FileManager
 			$fileinfo = pathinfo($fileinfo);
 		}
 
-		if (!is_array($fileinfo)) 
+		if (!is_array($fileinfo))
 		{
 			return null;
 		}
@@ -4028,7 +4028,7 @@ class FileManager
 				$filename = $fname;
 				$ext = '';
 			}
-			
+
 			/*
 			 * make a unique name. Do this by postfixing the filename with '_X' where X is a sequential number.
 			 *
@@ -4219,7 +4219,7 @@ class FileManager
 
 		default:
 			//$ext = preg_replace('/[^A-Za-z0-9]+/', '_', $ext);
-			
+
 			// default to PNG, as it'll handle transparancy and full color both:
 			$ext = 'png';
 			break;
@@ -4291,14 +4291,14 @@ class FileManager
 
 
 	/**
-	 * Convert the given content to something that is safe to copy straight to HTML 
+	 * Convert the given content to something that is safe to copy straight to HTML
 	 */
 	public function mkSafe4Display($str)
 	{
 		// only allow ASCII to pass:
 		$str = preg_replace("/[^ -~\t\r\n]/", '?', $str);
 		$str = str_replace('%3C', '?', $str);             // in case someone want's to get really fancy: nuke the URLencoded '<'
-		
+
 		// anything that's more complex than a simple <TAG> is nuked:
 		$str = preg_replace('/<([\/]?script\s*[\/]?)>/', '?', $str);               // but first make sure '<script>' doesn't make it through the next regex!
 		$str = preg_replace('/<([\/]?[a-zA-Z]+\s*[\/]?)>/', "\x04\\1\x05", $str);
@@ -4800,7 +4800,7 @@ class FileManager
 	 *
 	 * @param string $file       physical filesystem path to the file we want to know all about
 	 *
-	 * @param string $legal_url  legal url path to the file; used as the file/path basis for 
+	 * @param string $legal_url  legal url path to the file; used as the file/path basis for
 	 *                           the caching system inside: getFileInfo() will cache the
 	 *                           extracted info alongside the thumbnails in a cache file with
 	 *                           '.nfo' extension.
@@ -4827,13 +4827,13 @@ class FileManager
 			{
 				$this->getid3_cache[$hash]['cache_timestamp'] = $this->getid3_cache_lru_ts++;
 			}
-			
+
 			//$rv['cache_from'] = 'RAM';
 		}
 		else
 		{
 			$rv = false;
-			
+
 			/*
 			 * next: check file cache
 			 *
@@ -4851,7 +4851,7 @@ class FileManager
 				$cache_dir = $this->url_path2file_path($this->options['thumbnailPath'] . $cf_subdir);
 				$cache_dir = self::enforceTrailingSlash($cache_dir);
 				$cachefile = $cache_dir . $tfi['filename'] . '.nfo';
-				
+
 				if (is_readable($cachefile))
 				{
 					$data = file_get_contents($cachefile);
@@ -4870,7 +4870,7 @@ class FileManager
 					}
 				}
 			}
-			
+
 			if ($rv === false)
 			{
 				if (is_dir($file))
@@ -4887,7 +4887,7 @@ class FileManager
 					if (empty($rv['mime_type']))
 					{
 						// guarantee to produce a mime type, at least!
-						$rv['mime_type'] = $this->getMimeType($file, true);		// guestimate mimetype when content sniffing didn't work
+						$rv['mime_type'] = $this->getMimeType($file, true);     // guestimate mimetype when content sniffing didn't work
 					}
 				}
 
@@ -4897,7 +4897,7 @@ class FileManager
 					'fileinfo' => $rv,
 					'filetime' => $filetime
 				);
-			
+
 				// and save the new entry to file cache as well, so we can reuse it in a future request
 				if ($cachefile !== false)
 				{
@@ -4912,8 +4912,8 @@ class FileManager
 						@unlink($cachefile);
 					}
 				}
-			}	
-				
+			}
+
 			/*
 			 * Cleanup/cache size restriction algorithm:
 			 *
@@ -4960,7 +4960,7 @@ class FileManager
 			$rv['cache_file'] = $cachefile;
 			$rv['cache_dir'] = $cache_dir;
 		}
-		
+
 		return $rv;
 	}
 
@@ -5156,7 +5156,7 @@ class FileManagerUtility
 		return $val . '&#160;' . $unit[$x];
 	}
 
-	
+
 
 
 	/*
@@ -5164,44 +5164,44 @@ class FileManagerUtility
 	 *
 	 * Attempts some 'intelligent' conversions for better readability and information compacting.
 	 */
-	public static function table_var_dump(&$variable, $wrap_in_td = false, $show_types = false) 
+	public static function table_var_dump(&$variable, $wrap_in_td = false, $show_types = false)
 	{
 		$returnstring = '';
-		if (is_array($variable)) 
+		if (is_array($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td>' : '');
 			$returnstring .= '<table class="dump_array" cellspacing="0" cellpadding="2">';
-			foreach ($variable as $key => &$value) 
+			foreach ($variable as $key => &$value)
 			{
 				$returnstring .= '<tr><td valign="top"><b>'.$key.'</b></td>';
 				if ($show_types)
 				{
 					$returnstring .= '<td valign="top">'.gettype($value);
-					if (is_array($value)) 
+					if (is_array($value))
 					{
 						$returnstring .= '&nbsp;('.count($value).')';
-					} 
-					elseif (is_string($value)) 
+					}
+					elseif (is_string($value))
 					{
 						$returnstring .= '&nbsp;('.strlen($value).')';
 					}
 					$returnstring .= '</td>';
 				}
-				
+
 				switch ((string)$key)
 				{
 				case 'filesize':
 					$returnstring .= '<td class="dump_seconds">' . self::fmt_bytecount($value) . ($value >= 1024 ? ' (' . $value . ' bytes)' : '') . '</td>';
 					continue 2;
-					
+
 				case 'playtime seconds':
 					$returnstring .= '<td class="dump_seconds">' . number_format($value, 1) . ' s</td>';
 					continue 2;
-					
+
 				case 'compression ratio':
 					$returnstring .= '<td class="dump_compression_ratio">' . number_format($value * 100, 1) . '%</td>';
 					continue 2;
-					
+
 				case 'bitrate':
 				case 'bit rate':
 				case 'avg bit rate':
@@ -5213,7 +5213,7 @@ class FileManagerUtility
 				case 'avg bytes per sec':
 					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/s</td>';
 					continue 2;
-					
+
 				case 'bytes per minute':
 					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/min</td>';
 					continue 2;
@@ -5223,15 +5223,15 @@ class FileManagerUtility
 			$returnstring .= '</table>';
 			$returnstring .= ($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_bool($variable)) 
+		else if (is_bool($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_boolean">' : '').($variable ? 'TRUE' : 'FALSE').($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_int($variable)) 
+		else if (is_int($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_integer">' : '').$variable.($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_float($variable)) 
+		else if (is_float($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_double">' : '').$variable.($wrap_in_td ? '</td>' : '');
 		}
@@ -5269,25 +5269,25 @@ class FileManagerUtility
 				$returnstring .= ($wrap_in_td ? '<td class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</td>' : '');
 			}
 		}
-		else if (is_object($variable)) 
+		else if (is_object($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_null($variable)) 
+		else if (is_null($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_null">' : '').'(null)'.($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_string($variable)) 
+		else if (is_string($variable))
 		{
 			$variable = strtr($variable, "\x00", ' ');
 			$varlen = strlen($variable);
-			for ($i = 0; $i < $varlen; $i++) 
+			for ($i = 0; $i < $varlen; $i++)
 			{
 				$returnstring .= htmlentities($variable{$i}, ENT_QUOTES, 'UTF-8');
 			}
 			$returnstring = ($wrap_in_td ? '<td class="dump_string">' : '').nl2br($returnstring).($wrap_in_td ? '</td>' : '');
 		}
-		else 
+		else
 		{
 			$returnstring .= ($wrap_in_td ? '<td>' : '').nl2br(htmlspecialchars(strtr($variable, "\x00", ' '))).($wrap_in_td ? '</td>' : '');
 		}
@@ -5303,7 +5303,7 @@ class EmbeddedImageContainer
 	public $metadata;
 	public $imagedata;
 	public $id3_procsupport_obj;
-	
+
 	public function __construct($meta, $img)
 	{
 		$this->metadata = $meta;
@@ -5317,7 +5317,7 @@ class BinaryDataContainer
 	public $binarydata;
 	public $binarydata_mode;
 	public $id3_procsupport_obj;
-	
+
 	public function __construct($data, $mode = 'procd')
 	{
 		$this->binarydata_mode = $mode;

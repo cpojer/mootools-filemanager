@@ -590,7 +590,7 @@ function start_session_ex($override = false)
 				//session_destroy();
 				session_write_close();
 				unset($_SESSION);
-				
+
 				/*
 				 * Before we set the sessionID, we'd better make darn sure it's a legitimate request instead of a hacker trying to get in:
 				 *
