@@ -107,6 +107,7 @@ var FileManager = new Class({
 
 	initialize: function(options) {
 		this.setOptions(options);
+		this.diag.verbose = this.options.verbose;
 		this.ID = String.uniqueID();
 		this.droppables = [];
 		this.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
@@ -170,7 +171,7 @@ var FileManager = new Class({
 		this.clickablePath = new Element('span', {'class': 'filemanager-dir'});
 		this.selectablePath = new Element('input',{'type': 'text', 'class': 'filemanager-dir', 'readonly': 'readonly'});
 		this.pathTitle = new Element('a', {href:'#','class': 'filemanager-dir-title',text: this.language.dir}).addEvent('click',(function(e){
-			if (typeof console !== 'undefined' && console.log) console.log('pathTitle-click event: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
+			this.diag.log('pathTitle-click event: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
 			e.stop();
 			if (this.header.getElement('span.filemanager-dir') != null) {
 				this.selectablePath.setStyle('width',(this.header.getSize().x - this.pathTitle.getSize().x - 55));
@@ -439,7 +440,7 @@ var FileManager = new Class({
 			}).bind(this),
 			keyup: (function(e)
 			{
-				if (typeof console !== 'undefined' && console.log) console.log('keyup: key press: ' + e.key + ', ctrl: ' + e.control);
+				this.diag.log('keyup: key press: ' + e.key + ', ctrl: ' + e.control);
 				if (!e.control && !e.meta)
 				{
 					if (/* this.drag_is_active && */ this.ctrl_key_pressed)
@@ -467,7 +468,7 @@ var FileManager = new Class({
 			}).bind(this),
 			keyboardInput: (function(e)
 			{
-				if (typeof console !== 'undefined' && console.log) console.log('keyboardInput key press: ' + e.key);
+				this.diag.log('keyboardInput key press: ' + e.key);
 				if (this.dialogOpen) return;
 				switch (e.key)
 				{
@@ -726,7 +727,7 @@ var FileManager = new Class({
 			'resize': this.bound.scroll
 		});
 		// add keyboard navigation
-		if (typeof console !== 'undefined' && console.log) console.log('add keyboard nav on show file = ' + this.Directory + ', source = ' + '---');
+		this.diag.log('add keyboard nav on show file = ' + this.Directory + ', source = ' + '---');
 		document.addEvent('keydown', this.bound.keydown);
 		document.addEvent('keyup', this.bound.keyup);
 		if ((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
@@ -762,7 +763,7 @@ var FileManager = new Class({
 		this.container.setStyle('display', 'none');
 
 		// remove keyboard navigation
-		if (typeof console !== 'undefined' && console.log) console.log('REMOVE keyboard nav on hide');
+		this.diag.log('REMOVE keyboard nav on hide');
 		window.removeEvent('scroll', this.bound.scroll).removeEvent('resize', this.bound.scroll);
 		document.removeEvent('keydown', this.bound.keydown);
 		document.removeEvent('keyup', this.bound.keyup);
@@ -1429,7 +1430,7 @@ var FileManager = new Class({
 			});
 		}
 
-		if (typeof console !== 'undefined' && console.log) console.log('DISABLE keyboard up/down on revert');
+		this.diag.log('DISABLE keyboard up/down on revert');
 		//document.removeEvent('keydown', this.bound.keydown).removeEvent('keyup', this.bound.keyup);
 		this.drag_is_active = false;
 		this.imageadd.fade(0);
@@ -1583,7 +1584,7 @@ var FileManager = new Class({
 						href: '#',
 						text: folderName
 					}).addEvent('click', (function(e){
-						if (typeof console !== 'undefined' && console.log) console.log('path section - click event: ' + e.target + ' (' + path + ') : ' + e.type + ' @ ' + e.target.outerHTML);
+						this.diag.log('path section - click event: ' + e.target + ' (' + path + ') : ' + e.type + ' @ ' + e.target.outerHTML);
 						e.stop();
 						this.load(path);
 					}).bind(this))
@@ -1773,9 +1774,9 @@ var FileManager = new Class({
 			// This is just a raw image
 			el = this.list_row_maker(file.thumbnail, file);
 
-			if (typeof console !== 'undefined' && console.log) console.log('add DIRECTORY click event to ' + file.name);
+			this.diag.log('add DIRECTORY click event to ' + file.name);
 			el.addEvent('click', (function(e) {
-				if (typeof console !== 'undefined' && console.log) console.log('is_dir:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
+				self.diag.log('is_dir:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
 				//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
 				//var node = el;
 				var node = this;
@@ -1975,9 +1976,9 @@ var FileManager = new Class({
 				// 2011/04/09: only register the 'click' event when the element is NOT a draggable:
 				if (!support_DnD_for_this_dir)
 				{
-					if (typeof console !== 'undefined' && console.log) console.log('add FILE click event to ' + file.name + ' : ' + file.mime);
+					self.diag.log('add FILE click event to ' + file.name + ' : ' + file.mime);
 					el.addEvent('click', (function(e) {
-						if (typeof console !== 'undefined' && console.log) console.log('is_file:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
+						self.diag.log('is_file:CLICK: ' + e.target + ': ' + e.type + ' @ ' + e.target.outerHTML);
 						//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
 						//var node = el;
 						var node = this;
@@ -2030,7 +2031,7 @@ var FileManager = new Class({
 							this.Current = file.element;
 							new Fx.Scroll(this.browserScroll,{duration: 'short', offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
 							file.element.addClass('selected');
-							if (typeof console !== 'undefined' && console.log) console.log('fill on PRESELECT: fillInfo: file = ' + file.name);
+							this.diag.log('fill on PRESELECT: fillInfo: file = ' + file.name);
 							this.fillInfo(file);
 						}
 					}
@@ -2042,13 +2043,13 @@ var FileManager = new Class({
 							this.Current = file.element;
 							new Fx.Scroll(this.browserScroll,{duration: 'short', offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
 							file.element.addClass('selected');
-							if (typeof console !== 'undefined' && console.log) console.log('fill: fillInfo: file = ' + file.name);
+							this.diag.log('fill: fillInfo: file = ' + file.name);
 							this.fillInfo(file);
 						}
 					}
 					else if (fmFile == null)
 					{
-						if (typeof console !== 'undefined' && console.log) console.log('fill: RESET onShow: file = ' + file.name);
+						this.diag.log('fill: RESET onShow: file = ' + file.name);
 						this.onShow = false;
 					}
 				}
@@ -2093,7 +2094,7 @@ var FileManager = new Class({
 				}).bind(this),
 
 				onBeforeStart: (function(el){
-					if (typeof console !== 'undefined' && console.log) console.log('draggable:onBeforeStart');
+					this.diag.log('draggable:onBeforeStart');
 					var position = el.getPosition();
 					el.addClass('drag').setStyles({
 						'z-index': this.options.zIndex + 1300,
@@ -2106,7 +2107,7 @@ var FileManager = new Class({
 
 				// FIX: do not deselect item when aborting dragging _another_ item!
 				onCancel: (function(el) {
-					if (typeof console !== 'undefined' && console.log) console.log('draggable:onCancel');
+					this.diag.log('draggable:onCancel');
 					this.revert_drag_n_drop(el);
 					/*
 					 * Fixing the 'click' on FF+Opera (other browsers do get that event for any item which is made draggable):
@@ -2121,13 +2122,13 @@ var FileManager = new Class({
 				}).bind(this),
 
 				onStart: (function(el) {
-					if (typeof console !== 'undefined' && console.log) console.log('draggable:onStart');
+					this.diag.log('draggable:onStart');
 					//this.deselect(el);
 					this.tips.hide();
 
 					el.fade(0.7).addClass('move');
 
-					if (typeof console !== 'undefined' && console.log) console.log('ENABLE keyboard up/down on drag start');
+					this.diag.log('ENABLE keyboard up/down on drag start');
 					//document.addEvents({
 					//  keydown: this.bound.keydown,
 					//  keyup: this.bound.keyup
@@ -2148,7 +2149,7 @@ var FileManager = new Class({
 				},
 
 				onDrop: (function(el, droppable, e){
-					if (typeof console !== 'undefined' && console.log) console.log('draggable:onDrop');
+					this.diag.log('draggable:onDrop');
 
 					var is_a_move = !(e.control || e.meta);
 					this.drop_pending = 1 + is_a_move;
@@ -2171,7 +2172,7 @@ var FileManager = new Class({
 						}
 
 						dir = droppable.retrieve('file');
-						if (typeof console !== 'undefined' && console.log) console.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
+						this.diag.log('on drop dir = ' + dir.dir + ' : ' + dir.name + ', source = ' + 'retrieve');
 					}
 
 					if ((!this.options.move_or_copy) || (is_a_move && !droppable)) {
@@ -2705,13 +2706,14 @@ var FileManager = new Class({
 	// always return a string; dump object/array/... in 'arr' to human readable string:
 	diag:
 	{
+		verbose: false,
 		dump: function(arr, level, max_depth, max_lines, no_show)
 		{
 			return '';
 		},
 		log: function(/* ... */)
 		{
-			if (typeof this.options !== 'undefined' && this.options.verbose) return;
+			if (!this.verbose) return;
 
 			if (typeof console !== 'undefined')
 			{

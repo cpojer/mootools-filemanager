@@ -284,12 +284,12 @@ FileManager.Gallery = new Class({
 					});
 				},
 				onError: function() {
-					if (typeof console !== 'undefined' && console.log) console.log('image asset: error!');
+					self.diag.log('image asset: error!');
 					var iconpath = self.assetBasePath + 'Images/Icons/Large/default-error.png';
 					img.src = iconpath;
 				},
 				onAbort: function() {
-					if (typeof console !== 'undefined' && console.log) console.log('image asset: ABORT!');
+					self.diag.log('image asset: ABORT!');
 					var iconpath = self.assetBasePath + 'Images/Icons/Large/default-error.png';
 					img.src = iconpath;
 				}
@@ -448,9 +448,9 @@ FileManager.Gallery = new Class({
 
 	populate: function(data)
 	{
-		if (typeof console !== 'undefined' && console.log) console.log('GALLERY.populate: ' + debug.dump(data));
+		this.diag.log('GALLERY.populate: ' + debug.dump(data));
 		Object.each(data || {}, function(v, i){
-			if (typeof console !== 'undefined' && console.log) console.log('GALLERY.populate: index = ' + i + ', value = ' + v);
+			this.diag.log('GALLERY.populate: index = ' + i + ', value = ' + v);
 			this.onDragComplete(i, this.gallery);
 			this.metadata[i].caption = v;
 		}, this);

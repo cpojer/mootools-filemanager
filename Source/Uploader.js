@@ -106,7 +106,7 @@ FileManager.implement({
 				this.parent(base, data);
 				this.has_completed = false;
 
-				//if (typeof console !== 'undefined' && console.log) console.log('Uploader: setOptions');
+				self.diag.log('Uploader: setOptions');
 				this.setOptions({
 					//data: Object.merge({}, base.options.data, self.options.uploadAuthData),
 					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (self.options.propagateType == 'GET' ? self.options.propagateData : {}), {
@@ -232,7 +232,7 @@ FileManager.implement({
 				}
 				catch(e)
 				{
-					if (typeof console !== 'undefined' && console.log) console.log(this.response);
+					self.diag.log(this.response);
 				}
 
 				if (typeof response === 'undefined' || response == null)
@@ -305,7 +305,7 @@ FileManager.implement({
 			return fileTypes;
 		};
 
-		//if (typeof console !== 'undefined' && console.log) console.log('Uploader: SWF init');
+		this.diag.log('Uploader: SWF init');
 		this.lastFileUploaded = null;
 		this.error_count = 0;
 		this.swf = new Swiff.Uploader({
