@@ -4,6 +4,7 @@
 As AJAX calls cannot set cookies, we set up the session for the authentication demonstration right here; that way, the session cookie
 will travel with every request.
 */
+session_name('alt_session_name');
 if (!session_start()) die('session_start() failed');
 
 /*

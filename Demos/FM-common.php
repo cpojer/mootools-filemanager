@@ -494,7 +494,7 @@ function mkNewFileManager($options = null)
 /**
 Start the session, whether the session ID is passed through the URL query section or as a cookie.
 */
-function start_session_ex($override = false)
+function session_start_ex($override = false)
 {
 	/*
 	 * Load session if not already done by CCMS!
@@ -678,7 +678,8 @@ function start_session_ex($override = false)
 function FM_IsAuthorized($mgr, $action, &$info)
 {
 	// Start session, if not already started
-	start_session_ex();
+	session_name('alt_session_name');
+	session_start_ex();
 
 	//$settings = $mgr->getSettings();
 	//$mimetdefs = $mgr->getMimeTypeDefinitions();

@@ -4,6 +4,7 @@
 As AJAX calls cannot set cookies, we set up the session for the authentication demonstration right here; that way, the session cookie
 will travel with every request.
 */
+session_name('alt_session_name');
 if (!session_start()) die('session_start() failed');
 
 /*
@@ -18,16 +19,18 @@ $params = session_get_cookie_params();
 /* the remainder of the code does not need access to the session data. */
 session_write_close();
 
-// and add a couple other, slightly malicious cookies to check whether Flash will crash on it, or not.
-setcookie("ASP.NET_SessionId", 'ASP.NET: b0rk b0rk b0rk & ... b0rk!', time() + 600,
-	$params['path'], $params['domain'],
-	$params['secure'], $params['httponly']
-);
-setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
-	$params['path'], $params['domain'],
-	$params['secure'], $params['httponly']
-);
-
+if (0)
+{
+	// and add a couple other, slightly malicious cookies to check whether Flash will crash on it, or not.
+	setcookie("ASP.NET_SessionId", 'ASP.NET: b0rk b0rk b0rk & ... b0rk!', time() + 600,
+		$params['path'], $params['domain'],
+		$params['secure'], $params['httponly']
+	);
+	setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
+		$params['path'], $params['domain'],
+		$params['secure'], $params['httponly']
+	);
+}
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -169,7 +172,9 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 			var div, manager2;
 			var complete = function(path, file, mgr) {
 				el.set('value', path);
-				if (div) div.destroy();
+				if (div) {
+					div.destroy();
+				}
 				var icon = new Asset.image(
 					mgr.assetBasePath+'Images/cancel.png',
 					{
@@ -198,7 +203,7 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 							new Element('a', {
 									'data-milkbox': 'single',
 									'title': file.name,
-									'href': encodeURI(path)              // see also:  http://www.javascripter.net/faq/escape.htm
+									'href': path  // no need to URLencode the path as FM does it already: encodeURI(path)  // see also:  http://www.javascripter.net/faq/escape.htm
 								}).adopt(new Element('img', {
 									'src': (file.thumb250 ? file.thumb250 : file.icon),
 									'class': 'preview',
@@ -246,9 +251,11 @@ setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
 			el.setStyle('display', 'none');
 			var val = el.get('value');
 			if (val) {
+				var file_ext = val.split('.').getLast();
 				complete.apply(manager2, [val, {
 					name: val.split('/').getLast(),
-					icon: '../Assets/Images/Icons/'+val.split('.').getLast()+'.png'
+					mime: 'image/' + file_ext,
+					icon: '../Assets/Images/Icons/'+file_ext+'.png'
 				}, manager2]);
 			}
 

@@ -1,3 +1,27 @@
+<?php
+
+/*
+As AJAX calls cannot set cookies, we set up the session for the authentication demonstration right here; that way, the session cookie
+will travel with every request.
+*/
+session_name('alt_session_name');
+if (!session_start()) die('session_start() failed');
+
+/*
+set a 'secret' value to doublecheck the legality of the session: did it originate from here?
+*/
+$_SESSION['FileManager'] = 'DemoMagick';
+
+/*
+Note that for the sake of the demo, we simulate an UNauthorized user in the session.
+*/
+$_SESSION['UploadAuth'] = 'NO';
+
+
+/* the remainder of the code does not need access to the session data. */
+session_write_close();
+
+?>
 <!DOCTYPE html>
 <html>
   <head>

@@ -11,6 +11,15 @@ define('DEVELOPMENT', 01);   // set to 01 / 1 to enable logging of each incoming
 
 require('FM-common.php');
 
+
+/*
+As AJAX calls cannot set cookies, we set up the session for the authentication demonstration right here; that way, the session cookie
+will travel with every request.
+*/
+session_name('alt_session_name');
+if (!session_start()) die('session_start() failed');
+
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
