@@ -84,7 +84,7 @@ div.filemanager div.filemanager-menu {
 div.filemanager button {
   cursor: pointer;
   height: 22px;
-  line-height: 22px;
+  line-height: 20px;		/* lift the text in the button by 1 px: line-height: 20px vs height: 22px */
   margin: 4px 5px;
   padding: 0 2px;
   
