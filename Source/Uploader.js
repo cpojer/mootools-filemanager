@@ -199,6 +199,8 @@ FileManager.implement({
 
 			onComplete: function(file_obj)
 			{
+				self.diag.log('File-onComplete', arguments, self.swf.fileList.length);
+
 				var response = null;
 				var failure = true;
 
@@ -244,6 +246,9 @@ FileManager.implement({
 				}).delay(!failure ? 1000 : 5000, this);
 
 				// don't wait for the cute delays to start updating the directory view!
+				var cnt = self.upload.list.getElements('li').length;
+				var fcnt = self.swf.fileList.length;
+				self.diag.log('upload:onComplete for FILE', file_obj, cnt, fcnt);
 				self.onShow = true;
 				self.load(self.Directory, self._lastFileUploaded);
 				// self.fillInfo();
@@ -276,6 +281,7 @@ FileManager.implement({
 			allowDuplicates: true,
 			instantStart: true,
 			appendCookieData: true, // pass along any session cookie data, etc. in the request section (PHP: $_GET[])
+			verbose: true,
 			data: Object.merge({},
 				(self.options.propagateType == 'POST' ? self.options.propagateData : {}),
 				(self.options.uploadAuthData || {})
@@ -286,22 +292,93 @@ FileManager.implement({
 			typeFilter: this.getFileTypes(),
 			zIndex: this.options.zIndex + 3000,
 			onSelectSuccess: function(){
+				self.diag.log('onSelectSuccess', arguments, self.swf.fileList.length);
 				self.fillInfo();
 				//self.info.getElement('h2.filemanager-headline').setStyle('display', 'none');
 				self.info.adopt(self.upload.uploader.setStyle('display', 'block'));
 				self.upload.uploader.fade(1);
 			},
-			onComplete: function(){
+			onComplete: function(info){
+				this.diag.log('onComplete', arguments, self.swf.fileList.length);
 
 			},
 			onFileComplete: function(f){
+				self.diag.log('onFileComplete', arguments, self.swf.fileList.length);
 				self._lastFileUploaded = f.name;
 			},
 			onFail: function(error) {
+				self.diag.log('onFail', arguments, self.swf.fileList.length);
 				if (error !== 'empty') {
 					$$(self.upload.button, self.upload.label).dispose();
 					self.showError(self.language.flash[error] || self.language.flash.flash);
 				}
+			},
+
+			onLoad: function(){
+				self.diag.log('onLoad', arguments, self.swf.fileList.length);
+			},
+			onStart: function(){
+				self.diag.log('onStart', arguments, self.swf.fileList.length);
+			},
+			onQueue: function(){
+				self.diag.log('onQueue', arguments, self.swf.fileList.length);
+			},
+			onBrowse: function(){
+				self.diag.log('onBrowse', arguments, self.swf.fileList.length);
+			},
+			onDisabledBrowse: function(){
+				self.diag.log('onDisabledBrowse', arguments, self.swf.fileList.length);
+			},
+			onCancel: function(){
+				self.diag.log('onCancel', arguments, self.swf.fileList.length);
+			},
+			onSelect: function(){
+				self.diag.log('onSelect', arguments, self.swf.fileList.length);
+			},
+			onSelectFail: function(){
+				self.diag.log('onSelectFail', arguments, self.swf.fileList.length);
+			},
+
+			onButtonEnter: function(){
+				self.diag.log('onButtonEnter', arguments, self.swf.fileList.length);
+			},
+			onButtonLeave: function(){
+				self.diag.log('onButtonLeave', arguments, self.swf.fileList.length);
+			},
+			onButtonDown: function(){
+				self.diag.log('onButtonDown', arguments, self.swf.fileList.length);
+			},
+			onButtonDisable: function(){
+				self.diag.log('onButtonDisable', arguments, self.swf.fileList.length);
+			},
+
+			onFileStart: function(){
+				self.diag.log('onFileStart', arguments, self.swf.fileList.length);
+			},
+			onFileStop: function(){
+				self.diag.log('onFileStop', arguments, self.swf.fileList.length);
+			},
+			onFileRequeue: function(){
+				self.diag.log('onFileRequeue', arguments, self.swf.fileList.length);
+			},
+			onFileOpen: function(){
+				self.diag.log('onFileOpen', arguments, self.swf.fileList.length);
+			},
+			onFileProgress: function(){
+				self.diag.log('onFileProgress', arguments, self.swf.fileList.length);
+			},
+			onFileRemove: function(){
+				self.diag.log('onFileRemove', arguments, self.swf.fileList.length);
+			},
+
+			onBeforeStart: function(){
+				self.diag.log('onBeforeStart', arguments, self.swf.fileList.length);
+			},
+			onBeforeStop: function(){
+				self.diag.log('onBeforeStop', arguments, self.swf.fileList.length);
+			},
+			onBeforeRemove: function(){
+				self.diag.log('onBeforeRemove', arguments, self.swf.fileList.length);
 			}
 		});
 	}
