@@ -92,7 +92,12 @@ var FileManager = new Class({
 		listPaginationSize: 100,          // add pagination per N items for huge directories (speed up interaction)
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
 		propagateData: {},                // extra query parameters sent with every request to the backend
-		propagateType: 'GET'              // either POST or GET
+		propagateType: 'GET',             // either POST or GET
+
+		isDirectImageURL: function(url)	  // override this one when the '.php?' check doesn't work for you; done as a function so you can use any suitable logic to check the URL
+		{
+			return (url.indexOf('.php?') != -1);
+		}
 	},
 
 	/*
@@ -1491,9 +1496,8 @@ var FileManager = new Class({
 		return this.fill(null, startindex, pagesize, kbd_dir);
 	},
 
-	// Xinha: add the ability to preselect a file in the dir
-	fill: function(j, startindex, pagesize, kbd_dir, preselect) {
-
+	fill: function(j, startindex, pagesize, kbd_dir, preselect)
+	{
 		var j_item_count;
 
 		if (typeof preselect === 'undefined') preselect = null;
@@ -1859,7 +1863,7 @@ var FileManager = new Class({
 				this.diag.log('thumbnail: "' + file.thumbnail + '"');
 				//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
 
-				if (file.thumbnail.indexOf('.php?') == -1)
+				if (!this.options.isDirectImageURL(file.thumbnail))
 				{
 					// This is just a raw image
 					el = this.list_row_maker(file.thumbnail, file);
@@ -1874,6 +1878,7 @@ var FileManager = new Class({
 					// actually returning the binary image data, thus the iframe contents becoming the thumbnail image.
 
 					el = (function(file) {           // Closure
+						var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
 						var list_row = this.list_row_maker(null, file);
 
 						new FileManager.Request({
@@ -1884,7 +1889,6 @@ var FileManager = new Class({
 							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
 							onRequest: function(){},
 							onSuccess: (function(j) {
-								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
 								if (!j || !j.status)
 								{
 									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
@@ -1899,11 +1903,9 @@ var FileManager = new Class({
 								}
 							}).bind(this),
 							onError: (function(text, error) {
-								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this),
 							onFailure: (function(xmlHttpRequest) {
-								var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this)
 						}, this).send();
