@@ -1598,9 +1598,12 @@ var FileManager = new Class({
 		}).bind(this));
 
 		text.pop();
-		text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', function(e) {
+		text[text.length-1].addClass('selected').removeEvents('click').addEvent('click', (function(e) {
 			e.stop();
-		});
+			// show the 'directory' info in the detail pane again (this is a way to get back from previewing single files to previewing the directory as a gallery)
+			this.diag.log('click: fillInfo: current directory!');
+			this.fillInfo();
+		}).bind(this));
 		this.selectablePath.set('value', '/'+this.CurrentPath);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
 
