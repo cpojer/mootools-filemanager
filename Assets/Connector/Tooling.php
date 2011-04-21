@@ -383,52 +383,52 @@ if (!function_exists('send_response_status_header'))
  */
 if (!function_exists('image_type_to_extension'))
 {
-    function image_type_to_extension($type, $dot = true)
-    {
-        $e = array(1 => 'gif', 'jpeg', 'png', 'swf', 'psd', 'bmp', 'tiff', 'tiff', 'jpc', 'jp2', 'jpf', 'jb2', 'swc', 'aiff', 'wbmp', 'xbm');
+	function image_type_to_extension($type, $dot = true)
+	{
+		$e = array(1 => 'gif', 'jpeg', 'png', 'swf', 'psd', 'bmp', 'tiff', 'tiff', 'jpc', 'jp2', 'jpf', 'jb2', 'swc', 'aiff', 'wbmp', 'xbm');
 
-        // We are expecting an integer.
-        $t = (int)$type;
-        if (!$t) 
+		// We are expecting an integer.
+		$t = (int)$type;
+		if (!$t)
 		{
-            trigger_error('invalid IMAGETYPE_XXX(' . $type . ') passed to image_type_to_extension()', E_USER_NOTICE);
-            return null;
-        }
-        if (!isset($e[$t]))
+			trigger_error('invalid IMAGETYPE_XXX(' . $type . ') passed to image_type_to_extension()', E_USER_NOTICE);
+			return null;
+		}
+		if (!isset($e[$t]))
 		{
-            trigger_error('unidentified IMAGETYPE_XXX(' . $type . ') passed to image_type_to_extension()', E_USER_NOTICE);
-            return null;
-        }
+			trigger_error('unidentified IMAGETYPE_XXX(' . $type . ') passed to image_type_to_extension()', E_USER_NOTICE);
+			return null;
+		}
 
-        return ($dot ? '.' : '') . $e[$t];
-    }
+		return ($dot ? '.' : '') . $e[$t];
+	}
 }
 
 
-if (!function_exists('image_type_to_mime_type')) 
+if (!function_exists('image_type_to_mime_type'))
 {
-    function image_type_to_mime_type($type)
-    {
-        $m = array(1 => 'image/gif', 'image/jpeg', 'image/png',
-            'application/x-shockwave-flash', 'image/psd', 'image/bmp',
-            'image/tiff', 'image/tiff', 'application/octet-stream',
-            'image/jp2', 'application/octet-stream', 'application/octet-stream',
-            'application/x-shockwave-flash', 'image/iff', 'image/vnd.wap.wbmp', 'image/xbm');
+	function image_type_to_mime_type($type)
+	{
+		$m = array(1 => 'image/gif', 'image/jpeg', 'image/png',
+			'application/x-shockwave-flash', 'image/psd', 'image/bmp',
+			'image/tiff', 'image/tiff', 'application/octet-stream',
+			'image/jp2', 'application/octet-stream', 'application/octet-stream',
+			'application/x-shockwave-flash', 'image/iff', 'image/vnd.wap.wbmp', 'image/xbm');
 
-        // We are expecting an integer.
-        $t = (int)$type;
-        if (!$t) 
+		// We are expecting an integer.
+		$t = (int)$type;
+		if (!$t)
 		{
-            trigger_error('invalid IMAGETYPE_XXX(' . $type . ') passed to image_type_to_mime_type()', E_USER_NOTICE);
-            return null;
-        }
-        if (!isset($m[$t]))
+			trigger_error('invalid IMAGETYPE_XXX(' . $type . ') passed to image_type_to_mime_type()', E_USER_NOTICE);
+			return null;
+		}
+		if (!isset($m[$t]))
 		{
-            trigger_error('unidentified IMAGETYPE_XXX(' . $type . ') passed to image_type_to_mime_type()', E_USER_NOTICE);
-            return null;
-        }
-        return $m[$t];
-    }
+			trigger_error('unidentified IMAGETYPE_XXX(' . $type . ') passed to image_type_to_mime_type()', E_USER_NOTICE);
+			return null;
+		}
+		return $m[$t];
+	}
 }
 
 

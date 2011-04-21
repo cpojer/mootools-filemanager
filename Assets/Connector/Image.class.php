@@ -90,20 +90,20 @@ class Image {
 		if(!empty($this->image)) imagedestroy($this->image);
 		unset($this->image);
 	}
-	
+
 	/**
-	 * Return an array of supported extensions (rather: the second parts of the mime types!) 
+	 * Return an array of supported extensions (rather: the second parts of the mime types!)
 	 *
 	 * A type is listed as 'supported' when it can be READ.
 	 */
 	public static function getSupportedTypes()
 	{
 		static $supported_types;
-		
+
 		if (empty($supported_types))
 		{
 			$gdi = gd_info();
-			
+
 			$supported_types = array();
 			if (!empty($gdi['GIF Read Support']))
 				$supported_types[] = 'gif';
@@ -275,6 +275,73 @@ class Image {
 		return $meta;
 	}
 
+	/**
+	 * Calculate the resize dimensions of an image, given the original dimensions and size limits
+	 *
+	 * @param int $orig_x the original's width 
+	 * @param int $orig_y the original's height
+	 * @param int $x the maximum width after resizing has been done
+	 * @param int $y the maximum height after resizing has been done
+	 * @param bool $ratio set to FALSE if the image ratio is solely to be determined
+	 *                    by the $x and $y parameter values; when TRUE (the default)
+	 *                    the resize operation will keep the image aspect ratio intact
+	 * @param bool $resizeWhenSmaller if FALSE the images will not be resized when
+	 *                    already smaller, if TRUE the images will always be resized
+	 * @return array with 'width', 'height' and 'must_resize' component values on success; FALSE on error
+	 */
+	public static function calculate_resize_dimensions($orig_x, $orig_y, $x = null, $y = null, $ratio = true, $resizeWhenSmaller = false)
+	{
+		if(empty($orig_x) || empty($orig_y) || (empty($x) && empty($y))) return false;
+
+		$xStart = $x;
+		$yStart = $y;
+		$ratioX = $orig_x / $orig_y;
+		$ratioY = $orig_y / $orig_x;
+		$ratio |= (empty($y) || empty($x)); // keep ratio when only width OR height is set
+		//echo 'ALLOWED: <br>'.$xStart.'x'."<br>".$yStart.'y'."<br>---------------<br>";
+		// ->> keep the RATIO
+		if($ratio) {
+			//echo 'BEGINN: <br>'.$orig_x.'x'."<br>".$orig_y.'y'."<br><br>";
+			// -> align to WIDTH
+			if(!empty($x) && ($x < $orig_x || $resizeWhenSmaller))
+				$y = $x / $ratioX;
+			// -> align to HEIGHT
+			elseif(!empty($y) && ($y < $orig_y || $resizeWhenSmaller))
+				$x = $y / $ratioY;
+			else {
+				$y = $orig_y;
+				$x = $orig_x;
+			}
+			//echo 'BET: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
+			// ->> align to WIDTH AND HEIGHT
+			if((!empty($yStart) && $y > $yStart) || (!empty($xStart) && $x > $xStart)) {
+				if($y > $yStart) {
+					$y = $yStart;
+					$x = $y / $ratioY;
+				} elseif($x > $xStart) {
+					$x = $xStart;
+					$y = $x / $ratioX;
+				}
+			}
+		}
+		// else: ->> DONT keep the RATIO
+
+		$x = round($x);
+		$y = round($y);
+
+		//echo 'END: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
+		$rv = array(
+			'width' => $x,
+			'height' => $y,
+			'must_resize' => false
+		);
+		// speedup? only do the resize operation when it must happen:
+		if ($x != $orig_x || $y != $orig_y)
+		{
+			$rv['must_resize'] = true;
+		}
+		return $rv;
+	}
 
 	/**
 	 * Returns the size of the image
@@ -400,52 +467,24 @@ class Image {
 	 *                    already smaller, if TRUE the images will always be resized
 	 * @return resource Image resource on success; throws an exception on failure
 	 */
-	public function resize($x = null, $y = null, $ratio = true, $resizeWhenSmaller = false){
-		if(empty($this->image) || (empty($x) && empty($y))) return false;
-
-		$xStart = $x;
-		$yStart = $y;
-		$ratioX = $this->meta['width'] / $this->meta['height'];
-		$ratioY = $this->meta['height'] / $this->meta['width'];
-		$ratio |= (empty($y) || empty($x)); // keep ratio when only width OR height is set
-		//echo 'ALLOWED: <br>'.$xStart.'x'."<br>".$yStart.'y'."<br>---------------<br>";
-		// ->> keep the RATIO
-		if($ratio) {
-			//echo 'BEGINN: <br>'.$this->meta['width'].'x'."<br>".$this->meta['height'].'y'."<br><br>";
-			// -> align to WIDTH
-			if(!empty($x) && ($x < $this->meta['width'] || $resizeWhenSmaller))
-				$y = $x / $ratioX;
-			// -> align to HEIGHT
-			elseif(!empty($y) && ($y < $this->meta['height'] || $resizeWhenSmaller))
-				$x = $y / $ratioY;
-			else {
-				$y = $this->meta['height'];
-				$x = $this->meta['width'];
-			}
-			//echo 'BET: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
-			// ->> align to WIDTH AND HEIGHT
-			if((!empty($yStart) && $y > $yStart) || (!empty($xStart) && $x > $xStart)) {
-				if($y > $yStart) {
-					$y = $yStart;
-					$x = $y / $ratioY;
-				} elseif($x > $xStart) {
-					$x = $xStart;
-					$y = $x / $ratioX;
-				}
-			}
-		}
-		// else: ->> DONT keep the RATIO
-
-		$x = round($x);
-		$y = round($y);
-
-		//echo 'END: <br>'.$x.'x'."<br>".$y.'y'."<br><br>";
-
-		// speedup? only do the resize operation when it must happen:
-		if ($x != $this->meta['width'] || $y != $this->meta['height'])
+	public function resize($x = null, $y = null, $ratio = true, $resizeWhenSmaller = false)
+	{
+		if(empty($this->image) || (empty($x) && empty($y))) 
 		{
-			$new = $this->create($x, $y);
-			if(@imagecopyresampled($new, $this->image, 0, 0, 0, 0, $x, $y, $this->meta['width'], $this->meta['height'])) {
+			throw new Exception('resize_inerr');
+		}
+
+		$dims = Image::calculate_resize_dimensions($this->meta['width'], $this->meta['height'], $x, $y, $ratio, $resizeWhenSmaller);
+		if ($dims === false)
+		{
+			throw new Exception('resize_inerr:' . $this->meta['width'] . ' x ' . $this->meta['height']);
+		}
+	
+		// speedup? only do the resize operation when it must happen:
+		if ($dims['must_resize'])
+		{
+			$new = $this->create($dims['width'], $dims['height']);
+			if(@imagecopyresampled($new, $this->image, 0, 0, 0, 0, $dims['width'], $dims['height'], $this->meta['width'], $this->meta['height'])) {
 				$this->set($new);
 				unset($new);
 				return $this;
@@ -560,7 +599,7 @@ class Image {
 
 		if(!$ext) $ext = $this->meta['ext'];
 		$ext = strtolower($ext);
-		
+
 		if($ext=='jpg') $ext = 'jpeg';
 		else if($ext=='png') imagesavealpha($this->image, true);
 
@@ -658,43 +697,43 @@ if (!function_exists('imagecreatefrombmp'))
 		$filesize = @filesize($filepath);
 		if ($filesize < 108 + 4)
 			return false;
-			
+
 		$read = file_get_contents($filepath);
 		if ($file === false)
 			return false;
-	   
+
 		$temp = unpack("H*",$read);
-		unset($read);				// reduce memory consumption
+		unset($read);               // reduce memory consumption
 		$hex = $temp[1];
 		unset($temp);
 		$header = substr($hex, 0, 108);
-	   
+
 		// Process the header
 		// Structure: http://www.fastgraph.com/help/bmp_header_format.html
 		if (substr($header, 0, 4) == '424d')
 		{
 			// Cut it in parts of 2 bytes
 			$header_parts = str_split($header, 2);
-		   
+
 			// Get the width        4 bytes
 			$width = hexdec($header_parts[19] . $header_parts[18]);
-		   
+
 			// Get the height        4 bytes
 			$height = hexdec($header_parts[23] . $header_parts[22]);
-		   
+
 			// Unset the header params
 			unset($header_parts);
 		}
-	   
+
 		// Define starting X and Y
 		$x = 0;
 		$y = 1;
-	   
+
 		// Create newimage
 		$image = imagecreatetruecolor($width, $height);
 		if ($image === false)
 			return $image;
-	   
+
 		// Grab the body from the image
 		$body = substr($hex, 108);
 		unset($hex);
@@ -707,7 +746,7 @@ if (!function_exists('imagecreatefrombmp'))
 
 		// Use end-line padding? Only when needed
 		$usePadding = ($body_size > $header_size * 3 + 4);
-	   
+
 		// Using a for-loop with index-calculation instaid of str_split to avoid large memory consumption
 		// Calculate the next DWORD-position in the body
 		for ($i = 0; $i < $body_size; $i += 3)
@@ -719,25 +758,25 @@ if (!function_exists('imagecreatefrombmp'))
 				// Shift i to the ending of the current 32-bit-block
 				if ($usePadding)
 					$i += $width % 4;
-			   
+
 				// Reset horizontal position
 				$x = 0;
-			   
+
 				// Raise the height-position (bottom-up)
 				$y++;
-			   
+
 				// Reached the image-height? Break the for-loop
 				if ($y > $height)
 					break;
 			}
-		   
+
 			// Calculation of the RGB-pixel (defined as BGR in image-data)
 			// Define $i_pos as absolute position in the body
 			$i_pos = $i * 2;
 			$r = hexdec($body[$i_pos+4] . $body[$i_pos+5]);
 			$g = hexdec($body[$i_pos+2] . $body[$i_pos+3]);
 			$b = hexdec($body[$i_pos] . $body[$i_pos+1]);
-		   
+
 			// Calculate and draw the pixel
 			$color = imagecolorallocate($image, $r, $g, $b);
 			if ($color === false)
@@ -746,14 +785,14 @@ if (!function_exists('imagecreatefrombmp'))
 				return false;
 			}
 			imagesetpixel($image, $x, $height - $y, $color);
-		   
+
 			// Raise the horizontal position
 			$x++;
 		}
-	   
+
 		// Unset the body / free the memory
 		unset($body);
-	   
+
 		// Return image-object
 		return $image;
 	}

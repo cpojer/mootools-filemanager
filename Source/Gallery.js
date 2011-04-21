@@ -64,7 +64,13 @@ FileManager.Gallery = new Class({
 		});
 
 		this.addMenuButton('serialize');
-		this.galleryContainer = new Element('div', {'class': 'filemanager-gallery'}).inject(this.container);
+		this.galleryContainer = new Element('div', {
+			'class': 'filemanager-gallery',
+			styles:
+			{
+				'z-index': this.options.zIndex + 10
+			}
+		}).inject(this.container);
 		this.gallery = new Element('ul').inject(this.galleryContainer);
 
 		var timer;
@@ -77,6 +83,10 @@ FileManager.Gallery = new Class({
 		});
 		this.wrapper = new Element('div', {
 			'class': 'filemanager-wrapper',
+			styles:
+			{
+				'z-index': this.options.zIndex + 20
+			},
 			tween: {duration: 'short'},
 			opacity: 0,
 			events: {
@@ -103,7 +113,14 @@ FileManager.Gallery = new Class({
 		this.files = [];
 		this.animation = {};
 
-		this.howto = new Element('div', {'class': 'howto', text: this.language.gallery.drag}).inject(this.galleryContainer);
+		this.howto = new Element('div', {
+			'class': 'howto',
+			styles:
+			{
+				'z-index': this.options.zIndex + 15
+			},
+			text: this.language.gallery.drag
+		}).inject(this.galleryContainer);
 		this.switchButton();
 
 		// invoke the parent method directly
@@ -172,7 +189,6 @@ FileManager.Gallery = new Class({
 			file = el.retrieve('file');
 		}
 
-		var self = this;
 		var name = this.normalize(file.dir + '/' + file.name);
 
 		// when the item already exists in the gallery, do not add it again:
@@ -267,12 +283,12 @@ FileManager.Gallery = new Class({
 					});
 				},
 				onError: function() {
-					if (typeof console !== 'undefined' && console.log) console.log('image asset: error!');
+					self.diag.log('image asset: error!');
 					var iconpath = self.assetBasePath + 'Images/Icons/Large/default-error.png';
 					img.src = iconpath;
 				},
 				onAbort: function() {
-					if (typeof console !== 'undefined' && console.log) console.log('image asset: ABORT!');
+					self.diag.log('image asset: ABORT!');
 					var iconpath = self.assetBasePath + 'Images/Icons/Large/default-error.png';
 					img.src = iconpath;
 				}
@@ -333,7 +349,7 @@ FileManager.Gallery = new Class({
 					//this.onDragComplete(li, droppable);
 					this.metadata[name].file = file;
 
-					img_injector(file, imgcontainer, self);
+					img_injector(file, imgcontainer, this);
 
 				}).bind(this),
 				onError: (function(text, error) {
@@ -347,7 +363,7 @@ FileManager.Gallery = new Class({
 		else
 		{
 			// we already have all required information. Go show the image in the gallery pane!
-			img_injector(file, imgcontainer, self);
+			img_injector(file, imgcontainer, this);
 		}
 
 		return true;
@@ -431,9 +447,9 @@ FileManager.Gallery = new Class({
 
 	populate: function(data)
 	{
-		if (typeof console !== 'undefined' && console.log) console.log('GALLERY.populate: ' + debug.dump(data));
+		this.diag.log('GALLERY.populate: ' + debug.dump(data));
 		Object.each(data || {}, function(v, i){
-			if (typeof console !== 'undefined' && console.log) console.log('GALLERY.populate: index = ' + i + ', value = ' + v);
+			this.diag.log('GALLERY.populate: index = ' + i + ', value = ' + v);
 			this.onDragComplete(i, this.gallery);
 			this.metadata[i].caption = v;
 		}, this);

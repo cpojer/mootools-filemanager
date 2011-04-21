@@ -189,8 +189,9 @@ FileManager.implement({
 					catch(e) {}
 				}
 
-				if (!response)
+				if (!response) {
 					throw "Can't find response.";
+				}
 
 				response = JSON.decode(response);
 
@@ -212,7 +213,8 @@ FileManager.implement({
 			catch(e)
 			{
 				// Maybe this.contentDocument.documentElement.innerText isn't where we need to look?
-				// debugger; console.log(this);
+				//debugger;
+				//this.diag.log(this);
 				mfm.load(mfm.Directory);
 			}
 

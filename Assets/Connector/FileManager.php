@@ -544,7 +544,7 @@
  *
  *               'preliminary_json'      (array) the JSON data collected so far; when ['status']==1, then we're performing a regular 'thumbnail'
  *                                       operation, when the ['status']==0, we are performing a defective 'thumbnail' operation.
- *                                       Note that it is pretty useless to edit this entry when $info['mode'] != 'json', i.e. when this call 
+ *                                       Note that it is pretty useless to edit this entry when $info['mode'] != 'json', i.e. when this call
  *                                       is required to produce a binary image.
  *
  *               'validation_failure'    (string) NULL: no validation error has been detected before the callback was invoked; non-NULL, e.g.
@@ -585,15 +585,19 @@ if (function_exists('UploadIsAuthenticated'))
 if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 0);   // make sure this #define is always known to us
 
 
-
+/*
 require(strtr(dirname(__FILE__), '\\', '/') . '/Tooling.php');
 require(strtr(dirname(__FILE__), '\\', '/') . '/Image.class.php');
 require(strtr(dirname(__FILE__), '\\', '/') . '/Assets/getid3/getid3.php');
+*/
+require(strtr(dirname(__FILE__), '\\', '/') . '/Filemanager/Tooling.php');
+require(strtr(dirname(__FILE__), '\\', '/') . '/Filemanager/Image.class.php');
+require(strtr(dirname(__FILE__), '\\', '/') . '/getid3/getid3.php');
 
 
 
 // the jpeg quality for the largest thumbnails (smaller ones are automatically done at increasingly higher quality)
-define('MTFM_THUMBNAIL_JPEG_QUALITY', 75);
+define('MTFM_THUMBNAIL_JPEG_QUALITY', 80);
 
 // the number of directory levels in the thumbnail cache; set to 2 when you expect to handle huge image collections.
 //
@@ -611,7 +615,7 @@ define('MTFM_MIN_GETID3_CACHESIZE', 16);
 
 // flags for clean_ID3info_results()
 define('MTFM_CLEAN_ID3_STRIP_EMBEDDED_IMAGES', 0x0001);
-	
+
 
 
 
@@ -633,7 +637,7 @@ class FileManager
 			'directory' => null,                                       // MUST be in the DocumentRoot tree
 			'assetBasePath' => null,                                   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
 			'thumbnailPath' => null,                                   // may sit outside options['directory'] but MUST be in the DocumentRoot tree
-			'mimeTypesPath' => strtr(dirname(__FILE__), '\\', '/') . '/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
+			'mimeTypesPath' => strtr(dirname(__FILE__), '\\', '/') . '/Filemanager/MimeTypes.ini',   // an absolute filesystem path anywhere; when relative, it will be assumed to be against SERVER['SCRIPT_NAME']
 			'dateFormat' => 'j M Y - H:i',
 			'maxUploadSize' => 2600 * 2600 * 3,
 			// 'maxImageSize' => 99999,                                 // obsoleted, replaced by 'suggestedMaxImageDimension'
@@ -770,7 +774,7 @@ class FileManager
 	 */
 	public function fireEvent($event = null)
 	{
-		$event = !empty($event) ? 'on' . ucfirst($event) : null;
+		$event = (!empty($event) ? 'on' . ucfirst($event) : null);
 		if (!$event || !method_exists($this, $event)) $event = 'onView';
 
 		$this->{$event}();
@@ -1167,10 +1171,11 @@ class FileManager
 
 		$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 		$list_type = ($this->getPOSTparam('type') !== 'thumb' ? 'list' : 'thumb');
+		$legal_url = null;
 
 		try
 		{
-			$dir_arg = $this->getPOSTparam('directory');
+			$dir_arg = $this->getPOSTparam('directory', $this->options['directory']);
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
 
@@ -1250,7 +1255,7 @@ class FileManager
 
 		} while ($legal_url !== false);
 
-		$this->modify_json4exception($jserr, $emsg . ' : path :: ' . $original_legal_url);
+		$this->modify_json4exception($jserr, $emsg, 'path = ' . $original_legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -1297,6 +1302,7 @@ class FileManager
 	{
 		$emsg = null;
 		$legal_url = null;
+		$file_arg = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -1396,7 +1402,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
 
 		$thumb48 = $this->getIconForError($emsg, 'is.default-error', false);
 		$icon = $this->getIconForError($emsg, 'is.default-error', true);
@@ -1481,6 +1487,8 @@ class FileManager
 		$img_filepath = null;
 		$reqd_size = 48;
 		$filename = null;
+		$file_arg = null;
+		$legal_url = null;
 		$as_JSON = false;
 		$jserr = array(
 				'status' => 1
@@ -1587,8 +1595,8 @@ class FileManager
 			 * and too little available RAM) we /still/ want to see that happen: for broken and overlarge images, we
 			 * produce some alternative graphics instead!
 			 */
-			 
-			// access the image and create a thumbnail image; this can fail dramatically. 
+
+			// access the image and create a thumbnail image; this can fail dramatically.
 			//
 			// Note that 'onThumbnail' ASSUMES 'onDetail' has been called before, for this same file. (Otherwise, thumbnails for
 			// non-images won't work!)
@@ -1596,9 +1604,9 @@ class FileManager
 			// Use the 250px thumbnail as a source when it already exists AND we are looking for a smaller thumbnail right now.
 			// Otherwise, use the original file.
 			$thumb250 = false;
-			if ($reqd_size < 250)
+			if ($reqd_size < $this->options['thumbnailSize'])
 			{
-				$thumb250 = $this->getThumb($legal_url, $file, 250, 250, true);
+				$thumb250 = $this->getThumb($legal_url, $file, $this->options['thumbnailSize'], $this->options['thumbnailSize'], true);
 			}
 			$thumb_path = null;
 			// only try to /generate/ a thumbnail when we are looking at a image SOURCE, be it the original file or the 250px thumbnail file:
@@ -1606,7 +1614,7 @@ class FileManager
 			{
 				$thumb_path = $this->getThumb($legal_url, ($thumb250 !== false ? $this->url_path2file_path($thumb250) : $file), $reqd_size, $reqd_size);
 			}
-			else 
+			else
 			{
 				// 'abuse' the info extraction to produce any embedded images, which can be used for thumbnail production.
 				// This is really using a side effect of this call...
@@ -1682,7 +1690,7 @@ class FileManager
 			$jserr['thumbnail'] = $thumb_e;
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -1721,6 +1729,8 @@ class FileManager
 	protected function onDestroy()
 	{
 		$emsg = null;
+		$file_arg = null;
+		$legal_url = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -1819,7 +1829,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -1872,6 +1882,7 @@ class FileManager
 		$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 		$list_type = ($this->getPOSTparam('type') !== 'thumb' ? 'list' : 'thumb');
 
+		$file_arg = null;
 		$legal_url = null;
 
 		try
@@ -1881,14 +1892,14 @@ class FileManager
 
 			$v_ex_code = 'nofile';
 
+			$file_arg = $this->getPOSTparam('file');
+
 			$dir_arg = $this->getPOSTparam('directory');
 			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
 			$legal_url = self::enforceTrailingSlash($legal_url);
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
-
-			$file_arg = $this->getPOSTparam('file');
 
 			$filename = null;
 			$file = null;
@@ -2004,7 +2015,7 @@ class FileManager
 			}
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'directory = ' . $file_arg . ', path = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -2176,6 +2187,8 @@ class FileManager
 	protected function onUpload()
 	{
 		$emsg = null;
+		$file_arg = null;
+		$legal_url = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -2214,7 +2227,7 @@ class FileManager
 			{
 				if (!$this->IsHiddenNameAllowed($file_arg))
 				{
-					$v_ex_code = 'authorized';
+					$v_ex_code = 'fmt_not_allowed';
 				}
 				else
 				{
@@ -2246,7 +2259,7 @@ class FileManager
 							 */
 							if ($this->options['safe'])
 							{
-								$fi['extension'] = $this->getSafeExtension((isset($fi['extension']) ? $fi['extension'] : ''));
+								$fi['extension'] = $this->getSafeExtension(isset($fi['extension']) ? $fi['extension'] : '');
 							}
 							$v_ex_code = null;
 						}
@@ -2295,7 +2308,7 @@ class FileManager
 				throw new FileManagerException('size');
 
 			//if(!isset($fileinfo['extension']))
-			//	throw new FileManagerException('extension');
+			//  throw new FileManagerException('extension');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$file = $this->legal_url_path2file_path($legal_url . $filename);
@@ -2303,8 +2316,45 @@ class FileManager
 			if(!$fileinfo['overwrite'] && file_exists($file))
 				throw new FileManagerException('exists');
 
-			if(!move_uploaded_file($_FILES['Filedata']['tmp_name'], $file))
-				throw new FileManagerException(strtolower($_FILES['Filedata']['error'] <= 2 ? 'size' : ($_FILES['Filedata']['error'] == 3 ? 'partial' : 'path')));
+			if(!@move_uploaded_file($_FILES['Filedata']['tmp_name'], $file))
+			{
+				$emsg = 'path';
+				switch ($_FILES['Filedata']['error'])
+				{
+				case 1:
+				case 2:
+					$emsg = 'size';
+					break;
+
+				case 3:
+					$emsg = 'partial';
+					break;
+
+				default:
+					$dir = $this->legal_url_path2file_path($legal_url);
+					if (!is_dir($dir))
+					{
+						$emsg = 'path';
+					}
+					else if (!is_writable($dir))
+					{
+						$emsg = 'path_not_writable';
+					}
+					else
+					{
+						$emsg = 'filename_maybe_too_large';
+					}
+
+					$emsg_add = 'file = ' . $this->mkSafe4Display($file_arg . ', destination path = ' . $file);
+					if (!empty($_FILES['Filedata']['error']))
+					{
+						$emsg_add = 'error code = ' . strtolower($_FILES['Filedata']['error']) . ', ' . $emsg_add;
+					}
+					$emsg .= ':' . $emsg_add;
+					break;
+				}
+				throw new FileManagerException($emsg);
+			}
 
 			@chmod($file, $fileinfo['chmod']);
 
@@ -2345,7 +2395,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: ' . $this->getGetparam('reportContentType', 'application/json'));
 
@@ -2386,6 +2436,9 @@ class FileManager
 	protected function onMove()
 	{
 		$emsg = null;
+		$file_arg = null;
+		$legal_url = null;
+		$newpath = null;
 		$jserr = array(
 				'status' => 1
 			);
@@ -2565,7 +2618,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url . ', destination path = ' . $newpath);
 
 		if (!headers_sent()) header('Content-Type: application/json');
 
@@ -2664,7 +2717,7 @@ class FileManager
 		{
 			$mime = 'text/directory';
 			$iconspec = 'is.dir';
-			
+
 			$fi['mime_type'] = $mime;
 		}
 		else
@@ -2690,7 +2743,7 @@ class FileManager
 			$hash = $fi['cache_hash'];
 			$cachefile = $fi['cache_file'];
 			$cache_dir = $fi['cache_dir'];
-			
+
 			$cache_json_entry = ($auto_thumb_gen_mode ? 'direct_json' : 'auto_json');
 			if (array_key_exists($hash, $this->getid3_cache) && !empty($this->getid3_cache[$hash][$cache_json_entry]))
 			{
@@ -2698,7 +2751,7 @@ class FileManager
 				//$json['content'] .= '<p>full info retrieved from RAM/file</p>';
 			}
 		}
-		
+
 		if ($json === false)
 		{
 			$thumbnail = $this->getIcon($iconspec, false);
@@ -2769,9 +2822,10 @@ class FileManager
 					 * the url argument is used to determine the thumbnail name/path.
 					 */
 					$meta = null;
+					$emsg = null;
 					try
 					{
-						$thumb250 = $this->getThumb($url, $file, 250, 250, $auto_thumb_gen_mode);
+						$thumb250 = $this->getThumb($url, $file, $this->options['thumbnailSize'], $this->options['thumbnailSize'], $auto_thumb_gen_mode);
 						$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
 						$thumb48  = $this->getThumb($url, (($auto_thumb_gen_mode && $thumb250 !== false) ? $this->url_path2file_path($thumb250) : $file), 48, 48, $auto_thumb_gen_mode);
 						$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
@@ -2808,19 +2862,6 @@ class FileManager
 									'filter' => $mime_filter
 								));
 						}
-
-						// get the size of the thumbnail/icon: the <img> is styled with width and height to ensure the background 'loader' image is shown correctly:
-
-						//$tnpath = $this->url_path2file_path($thumbfile);
-						//$tninf = @getimagesize($tnpath);
-					//$size = @getimagesize($file);
-					//// check for badly formatted image files (corruption); we'll handle the overly large ones next
-					//if (!$size)
-					//  throw new FileManagerException('corrupt_img:' . $url);
-
-						//$json['tn_width'] = $tninf[0];
-						//$json['tn_height'] = $tninf[1];
-
 					}
 					catch (Exception $e)
 					{
@@ -2834,11 +2875,11 @@ class FileManager
 					$json['thumb48'] = $thumb48_e;
 					$json['thumb250'] = $thumb250_e;
 
-					$sw_make = $this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'Software');
-					$time_make = $this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'DateTime');
+					$sw_make = $this->mkSafeUTF8($this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'Software'));
+					$time_make = $this->mkSafeUTF8($this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'DateTime'));
 
-					$width = $this->getID3infoItem($fi, 0, 'video', 'resolution_x');
-					$height = $this->getID3infoItem($fi, 0, 'video', 'resolution_y');
+					$width = round($this->getID3infoItem($fi, 0, 'video', 'resolution_x'));
+					$height = round($this->getID3infoItem($fi, 0, 'video', 'resolution_y'));
 					$json['width'] = $width;
 					$json['height'] = $height;
 
@@ -2851,20 +2892,32 @@ class FileManager
 						$content .= '<p>Made with ' . (empty($sw_make) ? '???' : $sw_make) . ' @ ' . (empty($time_make) ? '???' : $time_make) . '</p>';
 					}
 
-					$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-								   <img src="' . $thumb250_e . '" class="preview" alt="preview" />
-								 </a>';
+					// are we delaying the thumbnail generation? When yes, then we need to infer th thumbnail dimensions *anyway*!
+					if (empty($thumb250))
+					{
+						// to show the loader.gif in the preview <img> tag, we MUST set a width+height there, so we guestimate the thumbnail250 size as accurately as possible
+						//
+						// derive size from original:
+						$dims = $this->predictThumbDimensions($width, $height, 250, 250);
+					
+						$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+									   <img src="' . $thumb250_e . '" class="preview" alt="preview" style="width: ' . $dims['width'] . 'px; height: ' . $dims['height'] . 'px;" />
+									 </a>';
+					}
+					// else: defer the $preview_HTML production until we're at the end of this and have fetched the actual thumbnail dimensions
+					
 					if (!empty($emsg))
 					{
 						// use the abilities of modify_json4exception() to munge/format the exception message:
 						$jsa = array('error' => '');
-						$this->modify_json4exception($jsa, $emsg);
+						$this->modify_json4exception($jsa, $emsg, 'path = ' . $url);
 						$postdiag_err_HTML .= "\n" . '<p class="err_info">' . $jsa['error'] . '</p>';
-					}
-					if (!empty($emsg) && strpos($emsg, 'img_will_not_fit') !== false)
-					{
-						$earr = explode(':', $e->getMessage(), 2);
-						$postdiag_err_HTML .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
+					
+						if (strpos($emsg, 'img_will_not_fit') !== false)
+						{
+							$earr = explode(':', $emsg, 2);
+							$postdiag_err_HTML .= "\n" . '<p class="tech_info">Estimated minimum memory requirements to create thumbnails for this image: ' . $earr[1] . '</p>';
+						}
 					}
 
 					if (0)
@@ -2937,8 +2990,9 @@ class FileManager
 						{
 							foreach ($info as $name => $size)
 							{
-								$isdir = is_array($size) ? true : false;
-								$out[($isdir) ? 0 : 1][$name] = '<li><a><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($name, true)) . '" alt="" /> ' . $name . '</a></li>';
+								$name = $this->mkSafeUTF8($name);
+								$isdir = is_array($size);
+								$out[$isdir ? 0 : 1][$name] = '<li><a><img src="' . FileManagerUtility::rawurlencode_path($this->getIcon($name, true)) . '" alt="" /> ' . $name . '</a></li>';
 							}
 							natcasesort($out[0]);
 							natcasesort($out[1]);
@@ -2953,8 +3007,8 @@ class FileManager
 							// Note: preview data= urls were formatted like this in CCMS:
 							// $this->options['assetBasePath'] . 'dewplayer.swf?mp3=' . rawurlencode($url) . '&volume=30'
 
-							$width = $this->getID3infoItem($fi, 0, 'swf', 'header', 'frame_width') / 10;
-							$height = $this->getID3infoItem($fi, 0, 'swf', 'header', 'frame_height') / 10;
+							$width = round($this->getID3infoItem($fi, 0, 'swf', 'header', 'frame_width') / 10);
+							$height = round($this->getID3infoItem($fi, 0, 'swf', 'header', 'frame_height') / 10);
 							$json['width'] = $width;
 							$json['height'] = $height;
 
@@ -2977,9 +3031,9 @@ class FileManager
 					$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
 
 
-					$title = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'title', 0), 'tags', 'id3v2', 'title', 0);
-					$artist = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'artist', 0), 'tags', 'id3v2', 'artist', 0);
-					$album = $this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'album', 0), 'tags', 'id3v2', 'album', 0);
+					$title = $this->mkSafeUTF8($this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'title', 0), 'tags', 'id3v2', 'title', 0));
+					$artist = $this->mkSafeUTF8($this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'artist', 0), 'tags', 'id3v2', 'artist', 0));
+					$album = $this->mkSafeUTF8($this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'album', 0), 'tags', 'id3v2', 'album', 0));
 
 					/*
 					<h2>${preview}</h2>
@@ -2995,7 +3049,7 @@ class FileManager
 							<dt>${title}</dt><dd>' . $title . '</dd>
 							<dt>${artist}</dt><dd>' . $artist . '</dd>
 							<dt>${album}</dt><dd>' . $album . '</dd>
-							<dt>${length}</dt><dd>' . $this->getID3infoItem($fi, '???', 'playtime_string') . '</dd>
+							<dt>${length}</dt><dd>' . $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'playtime_string')) . '</dd>
 							<dt>${bitrate}</dt><dd>' . round($this->getID3infoItem($fi, 0, 'bitrate') / 1000) . 'kbps</dd>
 						</dl>';
 					break;
@@ -3003,26 +3057,26 @@ class FileManager
 				case 'video':
 					$dewplayer = FileManagerUtility::rawurlencode_path($this->options['assetBasePath'] . 'dewplayer.swf');
 
-					$a_fmt = $this->getID3infoItem($fi, '???', 'audio', 'dataformat');
-					$a_samplerate = $this->getID3infoItem($fi, 0, 'audio', 'sample_rate') / 1000;
-					$a_bitrate = round($this->getID3infoItem($fi, 0, 'audio', 'bitrate') / 1000);
-					$a_bitrate_mode = $this->getID3infoItem($fi, '???', 'audio', 'bitrate_mode');
-					$a_channels = $this->getID3infoItem($fi, 0, 'audio', 'channels');
-					$a_codec = $this->getID3infoItem($fi, '', 'audio', 'codec');
+					$a_fmt = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'audio', 'dataformat'));
+					$a_samplerate = round($this->getID3infoItem($fi, 0, 'audio', 'sample_rate') / 1000, 1);
+					$a_bitrate = round($this->getID3infoItem($fi, 0, 'audio', 'bitrate') / 1000, 1);
+					$a_bitrate_mode = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'audio', 'bitrate_mode'));
+					$a_channels = round($this->getID3infoItem($fi, 0, 'audio', 'channels'));
+					$a_codec = $this->mkSafeUTF8($this->getID3infoItem($fi, '', 'audio', 'codec'));
 					$a_streams = $this->getID3infoItem($fi, '???', 'audio', 'streams');
 					$a_streamcount = (is_array($a_streams) ? count($a_streams) : 0);
 
-					$v_fmt = $this->getID3infoItem($fi, '???', 'video', 'dataformat');
-					$v_bitrate = round($this->getID3infoItem($fi, 0, 'video', 'bitrate') / 1000);
-					$v_bitrate_mode = $this->getID3infoItem($fi, '???', 'video', 'bitrate_mode');
-					$v_framerate = $this->getID3infoItem($fi, '???', 'video', 'frame_rate');
-					$v_width = $this->getID3infoItem($fi, '???', 'video', 'resolution_x');
-					$v_height = $this->getID3infoItem($fi, '???', 'video', 'resolution_y');
-					$v_par = $this->getID3infoItem($fi, 1.0, 'video', 'pixel_aspect_ratio');
-					$v_codec = $this->getID3infoItem($fi, '', 'video', 'codec');
+					$v_fmt = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'video', 'dataformat'));
+					$v_bitrate = round($this->getID3infoItem($fi, 0, 'video', 'bitrate') / 1000, 1);
+					$v_bitrate_mode = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'video', 'bitrate_mode'));
+					$v_framerate = round($this->getID3infoItem($fi, 0, 'video', 'frame_rate'), 5);
+					$v_width = round($this->getID3infoItem($fi, '???', 'video', 'resolution_x'));
+					$v_height = round($this->getID3infoItem($fi, '???', 'video', 'resolution_y'));
+					$v_par = round($this->getID3infoItem($fi, 1.0, 'video', 'pixel_aspect_ratio'), 7);
+					$v_codec = $this->mkSafeUTF8($this->getID3infoItem($fi, '', 'video', 'codec'));
 
-					$g_bitrate = round($this->getID3infoItem($fi, 0, 'bitrate') / 1000);
-					$g_playtime_str = $this->getID3infoItem($fi, '???', 'playtime_string');
+					$g_bitrate = round($this->getID3infoItem($fi, 0, 'bitrate') / 1000, 1);
+					$g_playtime_str = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'playtime_string'));
 
 					$content = '<dl>
 							<dt>Audio</dt><dd>';
@@ -3033,7 +3087,7 @@ class FileManager
 					else
 					{
 						$content .= $a_fmt . (!empty($a_codec) ? ' (' . $a_codec . ')' : '') .
-									(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : $a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)') : '') .
+									(!empty($a_channels) ? ($a_channels === 1 ? ' (mono)' : ($a_channels === 2 ? ' (stereo)' : ' (' . $a_channels . ' channels)')) : '') .
 									': ' . $a_samplerate . ' kHz @ ' . $a_bitrate . ' kbps (' . strtoupper($a_bitrate_mode) . ')' .
 									($a_streamcount > 1 ? ' (' . $a_streamcount . ' streams)' : '');
 					}
@@ -3055,11 +3109,12 @@ class FileManager
 
 				if (!empty($fi['error']))
 				{
-					$postdiag_err_HTML .= '<p class="err_info">' . implode(', ', $fi['error']) . '</p>';
+					$postdiag_err_HTML .= '<p class="err_info">' . $this->mkSafeUTF8(implode(', ', $fi['error'])) . '</p>';
 				}
-				
+
 				try
 				{
+					$emsgX = null;
 					if ($thumb250_e === false)
 					{
 						// when the ID3 info scanner can dig up an EMBEDDED thumbnail, when we don't have anything else, we're happy with that one!
@@ -3067,7 +3122,7 @@ class FileManager
 						if ($thumb250 === false)
 						{
 							/*
-							 * No thumbnail available yet, so find me one! 
+							 * No thumbnail available yet, so find me one!
 							 *
 							 * When we find a thumbnail during the 'cleanup' scan, we don't know up front if it's suitable to be used directly,
 							 * so we treat it as an alternative 'original' file and generate a 250px/48px thumbnail set from it.
@@ -3090,7 +3145,6 @@ class FileManager
 								// source file mapping is not bidirectional, either!) and go straight ahead and produce the 250px thumbnail at least.
 								$thumb250 = false;
 								$thumb48  = false;
-								$emsgX = null;
 								if (false === file_put_contents($thumbX_f, $embed->imagedata))
 								{
 									@unlink($thumbX_f);
@@ -3121,12 +3175,6 @@ class FileManager
 
 								if ($thumb250 !== false)
 								{
-									if (empty($preview_HTML))
-									{
-										$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-													   <img src="' . $thumb250_e . '" class="preview"' . (!empty($emsgX) ? ' alt="' . $emsgX . '"' : '') . '/>
-													 </a>';
-									}
 									$json['thumb250'] = $thumb250_e;
 								}
 								if ($thumb48 !== false)
@@ -3135,7 +3183,7 @@ class FileManager
 								}
 							}
 						}
-						else 
+						else
 						{
 							// $thumb250 !== false
 							$thumb250_e = FileManagerUtility::rawurlencode_path($thumb250);
@@ -3151,12 +3199,6 @@ class FileManager
 								$thumb48_e = FileManagerUtility::rawurlencode_path($thumb48);
 							}
 
-							if (empty($preview_HTML))
-							{
-								$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-											   <img src="' . $thumb250_e . '" class="preview"' . (!empty($emsgX) ? ' alt="' . $emsgX . '"' : '') . '/>
-											 </a>';
-							}
 							$json['thumb250'] = $thumb250_e;
 							if ($thumb48 !== false)
 							{
@@ -3175,8 +3217,16 @@ class FileManager
 							{
 								$json['thumb250-width'] = $tnsize[0];
 								$json['thumb250-height'] = $tnsize[1];
+								
+								if (empty($preview_HTML))
+								{
+									$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
+												   <img src="' . $thumb250_e . '" class="preview" alt="' . (!empty($emsgX) ? $this->mkSafe4HTMLattr($emsgX) : 'preview') . '" 
+												        style="width: ' . $tnsize[0] . 'px; height: ' . $tnsize[1] . 'px;" />
+											 </a>';
+								}
 							}
-							
+
 							if ($thumb48 === $thumb250)
 							{
 								$json['thumb48-width'] = $tnsize[0];
@@ -3193,12 +3243,12 @@ class FileManager
 							}
 						}
 					}
-					
+
 					$fi4dump = array_merge(array(), $fi); // clone $fi
 					$this->clean_ID3info_results($fi4dump);
-					
+
 					$dump = FileManagerUtility::table_var_dump($fi4dump, false);
-					
+
 					if (0)
 					{
 						self::clean_EXIF_results($fi4dump);
@@ -3239,13 +3289,13 @@ class FileManager
 			}
 
 			$json['content'] = self::compressHTML('<div class="' . $content_classes . '">' . $content . '</div>');
-		
-		
+
+
 			// and now store the generated JSON in the RAM+FILE cache:
 			if ($hash !== false)
 			{
 				$this->getid3_cache[$hash][$cache_json_entry] = $json;
-				
+
 				// and save the new entry to file cache as well, so we can reuse it in a future request
 				if ($cachefile !== false)
 				{
@@ -3335,7 +3385,7 @@ class FileManager
 		array_walk_recursive($arr, 'self::__clean_EXIF_results');
 	}
 
-	
+
 	/**
 	 * Extract an embedded image from the getID3 info data.
 	 *
@@ -3343,11 +3393,11 @@ class FileManager
 	 */
 	protected function extract_ID3info_embedded_image(&$arr)
 	{
-		if (is_array($arr)) 
+		if (is_array($arr))
 		{
 			foreach ($arr as $key => &$value)
 			{
-				if ($key === 'data' && isset($arr['image_mime'])) 
+				if ($key === 'data' && isset($arr['image_mime']))
 				{
 					// first make sure this is a valid image
 					$imageinfo = array();
@@ -3356,7 +3406,7 @@ class FileManager
 					{
 						return new EmbeddedImageContainer($imagechunkcheck, $value);
 					}
-				} 
+				}
 				else if (is_array($value))
 				{
 					$rv = $this->extract_ID3info_embedded_image($value);
@@ -3375,7 +3425,7 @@ class FileManager
 		{
 			// fold these up all the way to the root:
 			$key_prefix .= '.' . $arr['hierarchy'];
-			
+
 			$satms = $arr['subatoms'];
 			unset($arr['subatoms']);
 			$inject[$key_prefix] = $satms;
@@ -3415,7 +3465,7 @@ class FileManager
 		}
 		$arr = $dst;
 	}
-	
+
 	// another round of scanning to rewrite the keys to human legibility: as this changes the keys, we'll need to rewrite all entries to keep order intact
 	protected function clean_ID3info_keys(&$arr)
 	{
@@ -3423,38 +3473,59 @@ class FileManager
 		foreach($arr as $key => &$value)
 		{
 			$key = strtr($key, "_\x00", '  ');
-			
+
 			// custom transformations: (hopefully switch/case/case/... is faster than str_replace/strtr here)
 			switch ((string)$key)
 			{
 			default:
+				//$key = $this->mkSafeUTF8($key);
+				if (preg_match('/[^ -~]/', $key))
+				{
+					// non-ASCII values in the key: hexdump those characters!
+					$klen = strlen($key);
+					$nk = '';
+					for ($i = 0; $i < $klen; ++$i)
+					{
+						$c = ord($key[$i]);
+						
+						if ($c >= 32 && $c <= 127)
+						{
+							$nk .= chr($c);
+						}
+						else
+						{
+							$nk .= sprintf('$%02x', $c);
+						}
+					}
+					$key = $nk;
+				}
 				break;
-				
+
 			case 'avdataend':
 				$key = 'AV data end';
 				break;
-				
+
 			case 'avdataoffset':
 				$key = 'AV data offset';
 				break;
-				
+
 			case 'channelmode':
 				$key = 'channel mode';
 				break;
-				
+
 			case 'dataformat':
 				$key = 'data format';
 				break;
-				
+
 			case 'fileformat':
 				$key = 'file format';
 				break;
-				
+
 			case 'modeextension':
 				$key = 'mode extension';
 				break;
-			}	
-			
+			}
+
 			$dst[$key] = $value;
 			if (is_array($value))
 			{
@@ -3466,14 +3537,14 @@ class FileManager
 
 	protected function clean_ID3info_results_r(&$arr, $flags)
 	{
-		if (is_array($arr)) 
+		if (is_array($arr))
 		{
 			// heuristic #1: fold all the quickatoms subatoms using their hierarchy and name fields; this is a tree rewrite
 			if (array_key_exists('quicktime', $arr) && is_array($arr['quicktime']))
 			{
 				$inject = array();
 				$this->fold_quicktime_subatoms($arr['quicktime'], $inject, 'quicktime');
-				
+
 				// can't use array_splice on associative arrays, so we rewrite $arr now:
 				$newarr = array();
 				foreach ($arr as $key => &$value)
@@ -3491,12 +3562,12 @@ class FileManager
 				unset($inject);
 				unset($newarr);
 			}
-			
-			$activity = true; 
+
+			$activity = true;
 			while ($activity)
 			{
 				$activity = false; // assume there's nothing to do anymore. Prove us wrong now...
-				
+
 				// heuristic #2: when the number of items in the array which are themselves arrays is 80%, contract the set
 				$todo = array();
 				foreach ($arr as $key => &$value)
@@ -3511,7 +3582,7 @@ class FileManager
 								$acnt++;
 							}
 						}
-						
+
 						// the floor() here helps to fold single-element arrays alongside! :-)
 						if (floor(0.5 * count($value)) <= $acnt)
 						{
@@ -3527,7 +3598,7 @@ class FileManager
 						if (is_array($value) && in_array($key, $todo))
 						{
 							unset($todo[$key]);
-							
+
 							foreach ($value as $sk => &$sv)
 							{
 								$nk = $key . '.' . $sk;
@@ -3556,10 +3627,10 @@ class FileManager
 					$activity = true;
 				}
 			}
-			
+
 			foreach ($arr as $key => &$value)
 			{
-				if ($key === 'data' && isset($arr['image_mime'])) 
+				if ($key === 'data' && isset($arr['image_mime']))
 				{
 					// when this is a valid image, it's already available as a thumbnail, most probably
 					$imageinfo = array();
@@ -3582,14 +3653,14 @@ class FileManager
 							$value = new BinaryDataContainer('(unidentified image data ... ' . (is_string($value) ? 'length = ' . strlen($value) : '') . ' -- ' . print_r($imagechunkcheck) . ')');
 						}
 					}
-				} 
+				}
 				else if (isset($arr[$key . '_guid']))
 				{
 					// convert guid raw binary data to hex:
 					$temp = unpack('H*', $value);
 					$value = new BinaryDataContainer($temp[1]);
 				}
-				else if (  $key === 'non_intra_quant'  																		// MPEG quantization matrix
+				else if (  $key === 'non_intra_quant'                                                                       // MPEG quantization matrix
 						|| $key === 'error_correct_type'
 						)
 				{
@@ -3598,23 +3669,23 @@ class FileManager
 					$temp = str_split($temp[1], 8);
 					$value = new BinaryDataContainer(implode(' ', $temp));
 				}
-				else if ($key === 'data' && is_string($value) && isset($arr['frame_name']) && isset($arr['encoding']) && isset($arr['datalength']))	// MP3 tag chunk
+				else if ($key === 'data' && is_string($value) && isset($arr['frame_name']) && isset($arr['encoding']) && isset($arr['datalength'])) // MP3 tag chunk
 				{
-					$str = trim(strtr(getid3_lib::iconv_fallback($arr['encoding'], 'UTF-8', $value), "\x00", ' '));
+					$str = $this->mkSafeUTF8(trim(strtr(getid3_lib::iconv_fallback($arr['encoding'], 'UTF-8', $value), "\x00", ' ')));
 					$temp = unpack('H*', $value);
 					$temp = str_split($temp[1], 8);
 					$value = new BinaryDataContainer(implode(' ', $temp) . (!empty($str) ? ' (' . $str . ')' : ''));
 				}
-				else if (  ($key === 'data' && is_string($value) && isset($arr['offset']) && isset($arr['size']))      		// AVI offset/size/data items: data = binary
+				else if (  ($key === 'data' && is_string($value) && isset($arr['offset']) && isset($arr['size']))           // AVI offset/size/data items: data = binary
 						|| ($key === 'type_specific_data' && is_string($value) /* && isset($arr['type_specific_len']) */ )  // munch WMV/RM 'type specific data': binary   ('type specific len' will occur alongside, but not in WMV)
 						)
 				{
 					// a bit like UNIX strings tool: strip out anything which isn't at least possibly legible
-					$str = ' ' . preg_replace('/[^ !#-~]/', ' ', strtr($value, "\x00", ' ')) . ' ';		// convert non-ASCII and double quote " to space
+					$str = ' ' . preg_replace('/[^ !#-~]/', ' ', strtr($value, "\x00", ' ')) . ' ';     // convert non-ASCII and double quote " to space
 					do
 					{
 						$repl_count = 0;
-						$str = preg_replace(array('/ [^ ] /', 
+						$str = preg_replace(array('/ [^ ] /',
 												  '/ [^A-Za-z0-9\\(.]/',
 												  '/ [A-Za-z0-9][^A-Za-z0-9\\(. ] /'
 												 ), ' ', $str, -1, $repl_count);
@@ -3663,7 +3734,7 @@ class FileManager
 						$this->clean_ID3info_results_r($value, $flags);
 					}
 				}
-				else 
+				else
 				{
 					$this->clean_ID3info_results_r($value, $flags);
 				}
@@ -3679,10 +3750,21 @@ class FileManager
 			{
 				if ($len > 0 && $len < 256)
 				{
-					// convert raw binary data to hex in 32 bit chunks:
-					$temp = unpack('H*', $arr);
-					$temp = str_split($temp[1], 8);
-					$arr = new BinaryDataContainer(implode(' ', $temp));
+					// check if we can turn it into something UTF8-LEGAL; when not, we hexdump!
+					$im = str_replace('?', '&QMaRK;', $value);
+					$dst = $this->mkSafeUTF8($im);
+					if (strpos($dst, '?') === false)
+					{
+						// it's a UTF-8 legal string now!
+						$arr = str_replace('&QMaRK;', '?', $dst);
+					}
+					else
+					{
+						// convert raw binary data to hex in 32 bit chunks:
+						$temp = unpack('H*', $arr);
+						$temp = str_split($temp[1], 8);
+						$arr = new BinaryDataContainer(implode(' ', $temp));
+					}
 				}
 				else
 				{
@@ -3702,15 +3784,15 @@ class FileManager
 		}
 		else if (is_object($arr) && !isset($arr->id3_procsupport_obj))
 		{
-			$arr = new BinaryDataContainer('(object) ' . print_r($arr, true));
+			$arr = new BinaryDataContainer('(object) ' . $this->mkSafeUTF8(print_r($arr, true)));
 		}
 		else if (is_resource($arr))
 		{
-			$arr = new BinaryDataContainer('(resource) ' . print_r($arr, true));
+			$arr = new BinaryDataContainer('(resource) ' . $this->mkSafeUTF8(print_r($arr, true)));
 		}
 		else
 		{
-			$arr = new BinaryDataContainer('(unidentified type: ' . gettype($arr) . ') ' . print_r($arr, true));
+			$arr = new BinaryDataContainer('(unidentified type: ' . gettype($arr) . ') ' . $this->mkSafeUTF8(print_r($arr, true)));
 		}
 	}
 
@@ -3723,23 +3805,23 @@ class FileManager
 		unset($arr['cache_hash']);
 		unset($arr['cache_file']);
 		unset($arr['cache_dir']);
-		
+
 		$this->clean_ID3info_results_r($arr, $flags);
-		
+
 		// heuristic #4: convert keys to something legible:
 		if (is_array($arr))
 		{
 			$this->clean_ID3info_keys($arr);
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
 	/**
 	 * Delete a file or directory, inclusing subdirectories and files.
 	 *
@@ -3866,8 +3948,8 @@ class FileManager
 		return $coll;
 	}
 
-	
-	
+
+
 	/**
 	 * Check the $extension argument and replace it with a suitable 'safe' extension.
 	 */
@@ -3894,12 +3976,12 @@ class FileManager
 		case 'php5':
 		case 'phps':
 			return (!empty($safe_extension) ? $safe_extension : $extension);
-		
+
 		default:
 			return $extension;
 		}
 	}
-	
+
 	/**
 	 * Only allow a 'dotted', i.e. UNIX hidden filename when options['safe'] == FALSE
 	 */
@@ -3931,8 +4013,8 @@ class FileManager
 		}
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Make a cleaned-up, unique filename
 	 *
@@ -3961,7 +4043,7 @@ class FileManager
 			$fileinfo = pathinfo($fileinfo);
 		}
 
-		if (!is_array($fileinfo)) 
+		if (!is_array($fileinfo))
 		{
 			return null;
 		}
@@ -3992,7 +4074,7 @@ class FileManager
 				$filename = $fname;
 				$ext = '';
 			}
-			
+
 			/*
 			 * make a unique name. Do this by postfixing the filename with '_X' where X is a sequential number.
 			 *
@@ -4027,6 +4109,19 @@ class FileManager
 		return $fname;
 	}
 
+	
+	
+	/**
+	 * Predict the actual width/height dimensions of the thumbnail, given the original image's dimensions and the given size limits.
+	 *
+	 * Note: exists as a method in this class, so you can override it when you override getThumb().
+	 */
+	public function predictThumbDimensions($orig_x, $orig_y, $max_x = null, $max_y = null, $ratio = true, $resizeWhenSmaller = false)
+	{
+		return Image::calculate_resize_dimensions($orig_x, $orig_y, $max_x, $max_y, $ratio, $resizeWhenSmaller);
+	}
+	
+	
 	/**
 	 * Returns the URI path to the apropriate icon image for the given file / directory.
 	 *
@@ -4183,7 +4278,7 @@ class FileManager
 
 		default:
 			//$ext = preg_replace('/[^A-Za-z0-9]+/', '_', $ext);
-			
+
 			// default to PNG, as it'll handle transparancy and full color both:
 			$ext = 'png';
 			break;
@@ -4254,7 +4349,89 @@ class FileManager
 
 
 
+	/**
+	 * Convert the given content to something that is safe to copy straight to HTML
+	 */
+	public function mkSafe4Display($str)
+	{
+		// only allow ASCII to pass:
+		$str = preg_replace("/[^ -~\t\r\n]/", '?', $str);
+		$str = str_replace('%3C', '?', $str);             // in case someone want's to get really fancy: nuke the URLencoded '<'
 
+		// anything that's more complex than a simple <TAG> is nuked:
+		$str = preg_replace('/<([\/]?script\s*[\/]?)>/', '?', $str);               // but first make sure '<script>' doesn't make it through the next regex!
+		$str = preg_replace('/<([\/]?[a-zA-Z]+\s*[\/]?)>/', "\x04\\1\x05", $str);
+		$str = strip_tags($str);
+		$str = strtr($str, "\x04", '<');
+		$str = strtr($str, "\x05", '>');
+		return $str;
+	}
+	
+
+	/**
+ 	 * Make data suitable for inclusion in a HTML tag attribute value: strip all tags and encode quotes! 
+	 */
+	public function mkSafe4HTMLattr($str)
+	{
+		$str = str_replace('%3C', '?', $str);             // in case someone want's to get really fancy: nuke the URLencoded '<'
+		$str = strip_tags($str);
+		return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+	}
+	
+	/**
+	 * inspired by http://nl3.php.net/manual/en/function.utf8-encode.php#102382; mix & mash to make sure the result is LEGAL UTF-8
+	 *
+	 * Introduced after the JSON encoder kept spitting out 'null' instead of a string value for a few choice French JPEGs with very non-UTF EXIF content. :-(
+	 */
+	public function mkSafeUTF8($str) 
+	{
+		// kill NUL bytes: they don't belong in here!
+		$str = strtr($str, "\x00", ' ');
+		
+		if (!mb_check_encoding($str, 'UTF-8') || $str !== mb_convert_encoding(mb_convert_encoding($str, 'UTF-32', 'UTF-8'), 'UTF-8', 'UTF-32')) 
+		{
+			$encoding = mb_detect_encoding($str, 'auto, ISO-8859-1', true);
+			$im = str_replace('?', '&qmark;', $str);
+			if ($encoding !== false)
+			{
+				$dst = mb_convert_encoding($im, 'UTF-8', $encoding);
+			}
+			else
+			{
+				$dst = mb_convert_encoding($im, 'UTF-8');
+			}
+			//$dst = utf8_encode($im);
+			//$dst = getid3_lib::iconv_fallback('ISO-8859-1', 'UTF-8', $im);
+
+			if (!mb_check_encoding($dst, 'UTF-8') || $dst !== mb_convert_encoding(mb_convert_encoding($dst, 'UTF-32', 'UTF-8'), 'UTF-8', 'UTF-32') || strpos($dst, '?') !== false)
+			{
+				// not UTF8 yet... try them all
+				$encs = mb_list_encodings();
+				foreach ($encs as $encoding)
+				{
+					$dst = mb_convert_encoding($im, 'UTF-8', $encoding);
+					if (mb_check_encoding($dst, 'UTF-8') && $dst === mb_convert_encoding(mb_convert_encoding($dst, 'UTF-32', 'UTF-8'), 'UTF-8', 'UTF-32') && strpos($dst, '?') === false)
+					{
+						return str_replace('&qmark;', '?', $dst);
+					}
+				}
+				
+				// when we get here, it's pretty hopeless. Strip ANYTHING that's non-ASCII:
+				return preg_replace("/[^ -~\t\r\n]/", '?', $str);
+			}
+
+			// UTF8 cannot contain low-ASCII values; at least WE do not allow that!
+			if (preg_match("/[^ -\xFF\n\r\t]/", $dst))
+			{
+				// weird output that's not legible anyhow, so strip ANYTHING that's non-ASCII:
+				return preg_replace("/[^ -~\t\r\n]/", '?', $str);
+			}
+			return str_replace('&qmark;', '?', $dst);
+		}
+		return $str;
+	}
+
+	
 
 	/**
 	 * Safe replacement of dirname(); does not care whether the input has a trailing slash or not.
@@ -4561,7 +4738,7 @@ class FileManager
 	}
 
 
-	protected /* static */ function modify_json4exception(&$jserr, $emsg)
+	protected /* static */ function modify_json4exception(&$jserr, $emsg, $target_info = null)
 	{
 		if (empty($emsg))
 			return;
@@ -4578,7 +4755,8 @@ class FileManager
 			}
 			else
 			{
-				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (isset($e[1]) ? $e[1] : '');
+				// WARNING: braces in here are MANDATORY as PHP doesn't evaluate the nested ?: as you'd expect: (C1 ? A : C2 ? B : C) will deliver B when both C! and C2 are TRUE!
+				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (!empty($e[1]) ? $e[1] : (!empty($target_info) ? ' (' . $this->mkSafe4Display($target_info) . ')' : ''));
 			}
 			$jserr['status'] = 0;
 		}
@@ -4748,7 +4926,7 @@ class FileManager
 	 *
 	 * @param string $file       physical filesystem path to the file we want to know all about
 	 *
-	 * @param string $legal_url  legal url path to the file; used as the file/path basis for 
+	 * @param string $legal_url  legal url path to the file; used as the file/path basis for
 	 *                           the caching system inside: getFileInfo() will cache the
 	 *                           extracted info alongside the thumbnails in a cache file with
 	 *                           '.nfo' extension.
@@ -4775,13 +4953,13 @@ class FileManager
 			{
 				$this->getid3_cache[$hash]['cache_timestamp'] = $this->getid3_cache_lru_ts++;
 			}
-			
+
 			//$rv['cache_from'] = 'RAM';
 		}
 		else
 		{
 			$rv = false;
-			
+
 			/*
 			 * next: check file cache
 			 *
@@ -4799,7 +4977,7 @@ class FileManager
 				$cache_dir = $this->url_path2file_path($this->options['thumbnailPath'] . $cf_subdir);
 				$cache_dir = self::enforceTrailingSlash($cache_dir);
 				$cachefile = $cache_dir . $tfi['filename'] . '.nfo';
-				
+
 				if (is_readable($cachefile))
 				{
 					$data = file_get_contents($cachefile);
@@ -4818,7 +4996,7 @@ class FileManager
 					}
 				}
 			}
-			
+
 			if ($rv === false)
 			{
 				if (is_dir($file))
@@ -4835,7 +5013,7 @@ class FileManager
 					if (empty($rv['mime_type']))
 					{
 						// guarantee to produce a mime type, at least!
-						$rv['mime_type'] = $this->getMimeType($file, true);		// guestimate mimetype when content sniffing didn't work
+						$rv['mime_type'] = $this->getMimeType($file, true);     // guestimate mimetype when content sniffing didn't work
 					}
 				}
 
@@ -4845,7 +5023,7 @@ class FileManager
 					'fileinfo' => $rv,
 					'filetime' => $filetime
 				);
-			
+
 				// and save the new entry to file cache as well, so we can reuse it in a future request
 				if ($cachefile !== false)
 				{
@@ -4860,8 +5038,8 @@ class FileManager
 						@unlink($cachefile);
 					}
 				}
-			}	
-				
+			}
+
 			/*
 			 * Cleanup/cache size restriction algorithm:
 			 *
@@ -4908,7 +5086,7 @@ class FileManager
 			$rv['cache_file'] = $cachefile;
 			$rv['cache_dir'] = $cache_dir;
 		}
-		
+
 		return $rv;
 	}
 
@@ -5104,7 +5282,7 @@ class FileManagerUtility
 		return $val . '&#160;' . $unit[$x];
 	}
 
-	
+
 
 
 	/*
@@ -5112,44 +5290,44 @@ class FileManagerUtility
 	 *
 	 * Attempts some 'intelligent' conversions for better readability and information compacting.
 	 */
-	public static function table_var_dump(&$variable, $wrap_in_td = false, $show_types = false) 
+	public static function table_var_dump(&$variable, $wrap_in_td = false, $show_types = false)
 	{
 		$returnstring = '';
-		if (is_array($variable)) 
+		if (is_array($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td>' : '');
 			$returnstring .= '<table class="dump_array" cellspacing="0" cellpadding="2">';
-			foreach ($variable as $key => &$value) 
+			foreach ($variable as $key => &$value)
 			{
 				$returnstring .= '<tr><td valign="top"><b>'.$key.'</b></td>';
 				if ($show_types)
 				{
 					$returnstring .= '<td valign="top">'.gettype($value);
-					if (is_array($value)) 
+					if (is_array($value))
 					{
 						$returnstring .= '&nbsp;('.count($value).')';
-					} 
-					elseif (is_string($value)) 
+					}
+					elseif (is_string($value))
 					{
 						$returnstring .= '&nbsp;('.strlen($value).')';
 					}
 					$returnstring .= '</td>';
 				}
-				
+
 				switch ((string)$key)
 				{
 				case 'filesize':
 					$returnstring .= '<td class="dump_seconds">' . self::fmt_bytecount($value) . ($value >= 1024 ? ' (' . $value . ' bytes)' : '') . '</td>';
 					continue 2;
-					
+
 				case 'playtime seconds':
 					$returnstring .= '<td class="dump_seconds">' . number_format($value, 1) . ' s</td>';
 					continue 2;
-					
+
 				case 'compression ratio':
 					$returnstring .= '<td class="dump_compression_ratio">' . number_format($value * 100, 1) . '%</td>';
 					continue 2;
-					
+
 				case 'bitrate':
 				case 'bit rate':
 				case 'avg bit rate':
@@ -5161,7 +5339,7 @@ class FileManagerUtility
 				case 'avg bytes per sec':
 					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/s</td>';
 					continue 2;
-					
+
 				case 'bytes per minute':
 					$returnstring .= '<td class="dump_rate">' . self::fmt_bytecount($value) . '/min</td>';
 					continue 2;
@@ -5171,15 +5349,15 @@ class FileManagerUtility
 			$returnstring .= '</table>';
 			$returnstring .= ($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_bool($variable)) 
+		else if (is_bool($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_boolean">' : '').($variable ? 'TRUE' : 'FALSE').($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_int($variable)) 
+		else if (is_int($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_integer">' : '').$variable.($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_float($variable)) 
+		else if (is_float($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_double">' : '').$variable.($wrap_in_td ? '</td>' : '');
 		}
@@ -5217,25 +5395,25 @@ class FileManagerUtility
 				$returnstring .= ($wrap_in_td ? '<td class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</td>' : '');
 			}
 		}
-		else if (is_object($variable)) 
+		else if (is_object($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_null($variable)) 
+		else if (is_null($variable))
 		{
 			$returnstring .= ($wrap_in_td ? '<td class="dump_null">' : '').'(null)'.($wrap_in_td ? '</td>' : '');
 		}
-		else if (is_string($variable)) 
+		else if (is_string($variable))
 		{
 			$variable = strtr($variable, "\x00", ' ');
 			$varlen = strlen($variable);
-			for ($i = 0; $i < $varlen; $i++) 
+			for ($i = 0; $i < $varlen; $i++)
 			{
 				$returnstring .= htmlentities($variable{$i}, ENT_QUOTES, 'UTF-8');
 			}
 			$returnstring = ($wrap_in_td ? '<td class="dump_string">' : '').nl2br($returnstring).($wrap_in_td ? '</td>' : '');
 		}
-		else 
+		else
 		{
 			$returnstring .= ($wrap_in_td ? '<td>' : '').nl2br(htmlspecialchars(strtr($variable, "\x00", ' '))).($wrap_in_td ? '</td>' : '');
 		}
@@ -5251,7 +5429,7 @@ class EmbeddedImageContainer
 	public $metadata;
 	public $imagedata;
 	public $id3_procsupport_obj;
-	
+
 	public function __construct($meta, $img)
 	{
 		$this->metadata = $meta;
@@ -5265,7 +5443,7 @@ class BinaryDataContainer
 	public $binarydata;
 	public $binarydata_mode;
 	public $id3_procsupport_obj;
-	
+
 	public function __construct($data, $mode = 'procd')
 	{
 		$this->binarydata_mode = $mode;
