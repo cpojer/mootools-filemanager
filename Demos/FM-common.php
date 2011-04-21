@@ -468,8 +468,10 @@ function mkNewFileManager($options = null)
 			'DetailIsAuthorized_cb' => 'FM_IsAuthorized',
 			'ThumbnailIsAuthorized_cb' => 'FM_IsAuthorized',
 
-			'Aliases' => $Aliases
-		), (is_array($options) ? $options : array()));
+			// FileManagerWithAliasSupport-specific options:
+			'Aliases' => $Aliases,
+			//'RequestScriptURI' => strtr($_SERVER['SCRIPT_NAME'], '\\', '/')   // or whatever URL you fancy. As long as the run-time ends up invoking the $browser class instantiated below on each request
+	), (is_array($options) ? $options : array()));
 
 	if (SITE_USES_ALIASES)
 	{
@@ -745,7 +747,16 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		 * force the thumbnail to become a thumbnail of the 'nuke':
 		 */
 		$fsize = @filesize($info['file']);
-		if (DEVELOPMENT && $info['mime'] == 'image/jpeg' && $fsize >= 500 * 1024 && $fsize <= 2 * 1024 * 1024)
+		/*
+		 * When the thumbnail request is made, the demo will error on 
+		 *   bison-head-with-horns (Ray Rauch, U.S. Fish and Wildlife Service).jpg
+		 *   fruits-vegetables-milk-and-yogurt (Peggy Greb, U.S. Department of Agriculture).jpg
+		 * intentionally with the next bit of code; just to give you an idea what can be done in here.
+		 *
+		 * you can do a similar thing for any other request and have a good file fail or a bad file recover and succeed,
+		 * simply by patching the $info[] items.
+		 */
+		if (DEVELOPMENT && $info['mime'] == 'image/jpeg' && $fsize >= 180 * 1024 && $fsize <= 200 * 1024)
 		{
 			// force the manager to fetch the 'nuke' icon:
 			$info['filename'] = 'is.default-error';
