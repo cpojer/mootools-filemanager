@@ -4740,8 +4740,9 @@ class FileManager
 			}
 			else
 			{
-				// WARNING: braces in here are MANDATORY as PHP doesn't evaluate the nested ?: as you'd expect: (C1 ? A : C2 ? B : C) will deliver B when both C! and C2 are TRUE!
-				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . (!empty($e[1]) ? $e[1] : (!empty($target_info) ? ' (' . $this->mkSafe4Display($target_info) . ')' : ''));
+				$extra1 = (!empty($e[1]) ? $this->mkSafe4Display($e[1]) : '');
+				$extra2 = (!empty($target_info) ? ' (' . $this->mkSafe4Display($target_info) . ')' : '');
+				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . $extra1 . $extra2);
 			}
 			$jserr['status'] = 0;
 		}
