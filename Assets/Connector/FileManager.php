@@ -716,14 +716,14 @@ class FileManager
 		 */
 		$new_root = $this->options['directory'];
 		$this->options['directory'] = '/';      // use DocumentRoot temporarily as THE root for this optional transform
-		$this->options['directory'] = self::enforceTrailingSlash($this->rel2abs_url_path($new_root));
+		$this->options['directory'] = $this->rel2abs_url_path($new_root . '/');
 
 		$this->options['assumed_base_filepath'] = $this->url_path2file_path($this->options['directory']);
 
 		// now that the correct options['directory'] has been set up, go and check/clean the other paths in the options[]:
 
-		$this->options['thumbnailPath'] = self::enforceTrailingSlash($this->rel2abs_url_path($this->options['thumbnailPath']));
-		$this->options['assetBasePath'] = self::enforceTrailingSlash($this->rel2abs_url_path($this->options['assetBasePath']));
+		$this->options['thumbnailPath'] = $this->rel2abs_url_path($this->options['thumbnailPath'] . '/');
+		$this->options['assetBasePath'] = $this->rel2abs_url_path($this->options['assetBasePath'] . '/');
 
 		$this->options['mimeTypesPath'] = @realpath($this->options['mimeTypesPath']);
 		if (empty($this->options['mimeTypesPath']))
@@ -1085,7 +1085,7 @@ class FileManager
 				'path' => $legal_url,                                  // is relative to options['directory']
 				'dir' => array(
 					'path' => FileManagerUtility::rawurlencode_path($legal_url),
-					'name' => pathinfo($legal_url, PATHINFO_BASENAME),
+					'name' => basename($legal_url),
 					'date' => date($this->options['dateFormat'], @filemtime($dir)),
 					'mime' => 'text/directory',
 					'thumbnail' => $thumb_de,
@@ -1172,8 +1172,7 @@ class FileManager
 		try
 		{
 			$dir_arg = $this->getPOSTparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg . '/');
 
 			$file_preselect_arg = $this->getPOSTparam('file_preselect');
 			try
@@ -1194,7 +1193,7 @@ class FileManager
 					}
 					else
 					{
-						$file_preselect_arg = pathinfo($file_preselect_arg, PATHINFO_BASENAME);
+						$file_preselect_arg = basename($file_preselect_arg);
 					}
 				}
 			}
@@ -1312,8 +1311,7 @@ class FileManager
 			$file_arg = $this->getPOSTparam('file');
 
 			$dir_arg = $this->getPOSTparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg . '/');
 
 			$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
@@ -1324,7 +1322,7 @@ class FileManager
 			$meta = null;
 			if (!empty($file_arg))
 			{
-				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
+				$filename = basename($file_arg);
 				$legal_url .= $filename;
 				// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 				$file = $this->legal_url_path2file_path($legal_url);
@@ -1507,8 +1505,7 @@ class FileManager
 			$file_arg = $this->getGETparam('file');
 
 			$dir_arg = $this->getGETparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg . '/');
 
 			$mime_filter = $this->getGETparam('filter', $this->options['filter']);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
@@ -1521,7 +1518,7 @@ class FileManager
 			{
 				$v_ex_code = 'nofile';
 
-				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
+				$filename = basename($file_arg);
 				$legal_url .= $filename;
 				// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 				$file = $this->legal_url_path2file_path($legal_url);
@@ -1741,8 +1738,7 @@ class FileManager
 			$file_arg = $this->getPOSTparam('file');
 
 			$dir_arg = $this->getPOSTparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg . '/');
 
 			$mime_filter = $this->getPOSTparam('filter', $this->options['filter']);
 			$mime_filters = $this->getAllowedMimeTypes($mime_filter);
@@ -1753,7 +1749,7 @@ class FileManager
 			$meta = null;
 			if (!empty($file_arg))
 			{
-				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
+				$filename = basename($file_arg);
 				$legal_url .= $filename;
 				// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 				$file = $this->legal_url_path2file_path($legal_url);
@@ -1891,8 +1887,7 @@ class FileManager
 			$file_arg = $this->getPOSTparam('file');
 
 			$dir_arg = $this->getPOSTparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg . '/');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
@@ -1902,7 +1897,7 @@ class FileManager
 			$newdir = null;
 			if (!empty($file_arg))
 			{
-				$filename = pathinfo($file_arg, PATHINFO_BASENAME);
+				$filename = basename($file_arg);
 
 				if (!$this->IsHiddenNameAllowed($file_arg))
 				{
@@ -2205,8 +2200,7 @@ class FileManager
 			$file_arg = $_FILES['Filedata']['name'];
 
 			$dir_arg = $this->getGETparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg . '/');
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
 
@@ -2377,7 +2371,7 @@ class FileManager
 
 			echo json_encode(array(
 					'status' => 1,
-					'name' => pathinfo($file, PATHINFO_BASENAME)
+					'name' => basename($file)
 				));
 			return;
 		}
@@ -2449,8 +2443,7 @@ class FileManager
 			$file_arg = $this->getPOSTparam('file');
 
 			$dir_arg = $this->getPOSTparam('directory');
-			$legal_url = $this->rel2abs_legal_url_path($dir_arg);
-			$legal_url = self::enforceTrailingSlash($legal_url);
+			$legal_url = $this->rel2abs_legal_url_path($dir_arg . '/');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 			$dir = $this->legal_url_path2file_path($legal_url);
@@ -2477,7 +2470,7 @@ class FileManager
 			{
 				if (!empty($file_arg))
 				{
-					$filename = pathinfo($file_arg, PATHINFO_BASENAME);
+					$filename = basename($file_arg);
 					$path = $this->legal_url_path2file_path($legal_url . $filename);
 
 					if (file_exists($path))
@@ -2495,7 +2488,7 @@ class FileManager
 							$legal_newurl = $legal_url;
 							$newdir = $dir;
 
-							$newname = pathinfo($newname_arg, PATHINFO_BASENAME);
+							$newname = basename($newname_arg);
 							if ($is_dir)
 								$newname = $this->getUniqueName(array('filename' => $newname), $newdir);  // a directory has no 'extension'
 							else
@@ -2522,8 +2515,7 @@ class FileManager
 						else
 						{
 							$fn = ($is_copy ? 'copy' : 'rename' /* 'move' */);
-							$legal_newurl = $this->rel2abs_legal_url_path($newdir_arg);
-							$legal_newurl = self::enforceTrailingSlash($legal_newurl);
+							$legal_newurl = $this->rel2abs_legal_url_path($newdir_arg . '/');
 							$newdir = $this->legal_url_path2file_path($legal_newurl);
 
 							if ($is_dir)
@@ -2674,7 +2666,7 @@ class FileManager
 		$auto_thumb_gen_mode = ($thumbnail_gen_mode !== 'direct');
 
 		$url = $this->legal2abs_url_path($legal_url);
-		$filename = pathinfo($url, PATHINFO_BASENAME);
+		$filename = basename($url);
 
 		// must transform here so alias/etc. expansions inside url_path2file_path() get a chance:
 		$file = $this->url_path2file_path($url);
@@ -2841,7 +2833,7 @@ class FileManager
 									'event' => 'thumbnail',
 									// directory and filename of the ORIGINAL image should follow next:
 									'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
-									'file' => pathinfo($legal_url, PATHINFO_BASENAME),
+									'file' => basename($legal_url),
 									'size' => 48,          // thumbnail suitable for 'view/type=thumb' list views
 									'filter' => $mime_filter
 								));
@@ -2853,7 +2845,7 @@ class FileManager
 									'event' => 'thumbnail',
 									// directory and filename of the ORIGINAL image should follow next:
 									'directory' => pathinfo($legal_url, PATHINFO_DIRNAME),
-									'file' => pathinfo($legal_url, PATHINFO_BASENAME),
+									'file' => basename($legal_url),
 									'size' => 250,         // thumbnail suitable for 'view/type=thumb' list views
 									'filter' => $mime_filter
 								));
@@ -2888,7 +2880,7 @@ class FileManager
 						$content .= '<p>Made with ' . (empty($sw_make) ? '???' : $sw_make) . ' @ ' . (empty($time_make) ? '???' : $time_make) . '</p>';
 					}
 
-					// are we delaying the thumbnail generation? When yes, then we need to infer th thumbnail dimensions *anyway*!
+					// are we delaying the thumbnail generation? When yes, then we need to infer the thumbnail dimensions *anyway*!
 					if (empty($thumb250))
 					{
 						// to show the loader.gif in the preview <img> tag, we MUST set a width+height there, so we guestimate the thumbnail250 size as accurately as possible
@@ -4970,8 +4962,7 @@ class FileManager
 				$cachefile = $this->generateThumbName($legal_url, 'info');
 				$tfi = pathinfo($cachefile);
 				$cf_subdir = $tfi['dirname'];
-				$cache_dir = $this->url_path2file_path($this->options['thumbnailPath'] . $cf_subdir);
-				$cache_dir = self::enforceTrailingSlash($cache_dir);
+				$cache_dir = $this->url_path2file_path($this->options['thumbnailPath'] . $cf_subdir . '/');
 				$cachefile = $cache_dir . $tfi['filename'] . '.nfo';
 
 				if (is_readable($cachefile))
