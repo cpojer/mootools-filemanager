@@ -2355,14 +2355,32 @@ class FileManager
 			 *       Having uploaded such huge images, a developer/somebody can always go in later and up the memory limit if the site admins
 			 *       feel it is deserved. Until then, no thumbnails of such images (though you /should/ be able to milkbox-view the real thing!)
 			 */
-			if (FileManagerUtility::startsWith($mime, 'image/') && $this->getGETparam('resize', 0))
+			$thumb250   = false;
+			$thumb250_e = false;
+			$thumb48    = false;
+			$thumb48_e  = false;
+			if (FileManagerUtility::startsWith($mime, 'image/'))
 			{
-				$img = new Image($file);
-				$size = $img->getSize();
-				// Image::resize() takes care to maintain the proper aspect ratio, so this is easy
-				// (default quality is 100% for JPEG so we get the cleanest resized images here)
-				$img->resize($this->options['maxImageDimension']['width'], $this->options['maxImageDimension']['height'])->save();
-				unset($img);
+				if ($this->getGETparam('resize', 0))
+				{
+					$img = new Image($file);
+					$size = $img->getSize();
+					// Image::resize() takes care to maintain the proper aspect ratio, so this is easy
+					// (default quality is 100% for JPEG so we get the cleanest resized images here)
+					$img->resize($this->options['maxImageDimension']['width'], $this->options['maxImageDimension']['height'])->save();
+					unset($img);
+				}
+			}
+
+			/*
+			 * 'abuse' the info extraction process to generate the thumbnails. Besides, doing it this way will also prime the metadata cache for this item,
+			 * so we'll have a very fast performance viewing this file's details and thumbnails both from this point forward!
+			 */
+			$jsbogus = array('status' => 1);
+			$jsbogus = $this->extractDetailInfo($jsbogus, $url, $meta, $mime_filter, $mime_filters, 'direct');
+			if (!empty($jserr['thumb' . $reqd_size]))
+			{
+				$thumb_path = $jserr['thumb' . $reqd_size];
 			}
 
 			if (!headers_sent()) header('Content-Type: ' . $this->getGetparam('reportContentType', 'application/json'));
