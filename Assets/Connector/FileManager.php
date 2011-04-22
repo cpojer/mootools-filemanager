@@ -4171,7 +4171,7 @@ class FileManager
 	 */
 	public function getThumb($legal_url, $path, $width, $height, $onlyIfExistsInCache = false)
 	{
-		$thumb = $this->generateThumbName($legal_url, $width);
+		$thumb = $this->generateThumbName($legal_url, $width . 'x' . $height);
 		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumb);
 		if (!is_file($thumbPath))
 		{
@@ -4254,7 +4254,7 @@ class FileManager
 	 * Note: when you expect to manage a really HUGE file collection from FM, you may dial up the
 	 *       $number_of_dir_levels to 2 here.
 	 */
-	protected function generateThumbName($legal_url, $width = 250, $number_of_dir_levels = MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE)
+	protected function generateThumbName($legal_url, $specifics, $number_of_dir_levels = MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE)
 	{
 		$fi = pathinfo($legal_url);
 		$ext = strtolower((isset($fi['extension']) && strlen($fi['extension']) > 0) ? $fi['extension'] : '');
@@ -4297,7 +4297,7 @@ class FileManager
 		$fn = substr($dircode, 0, 4) . preg_replace('/[^A-Za-z0-9]+/', '_', $fn);
 		$fn = substr($fn . $dircode, 0, 38);
 
-		$rv .= $fn . '-' . $width . '.' . $ext;
+		$rv .= $fn . '-' . $specifics . '.' . $ext;
 		return $rv;
 	}
 
