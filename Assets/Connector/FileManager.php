@@ -2301,7 +2301,8 @@ class FileManager
 			//  throw new FileManagerException('extension');
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
-			$file = $this->legal_url_path2file_path($legal_url . $filename);
+			$url = $legal_url . $filename;
+			$file = $this->legal_url_path2file_path($url);
 
 			if(!$fileinfo['overwrite'] && file_exists($file))
 				throw new FileManagerException('exists');
@@ -2335,19 +2336,16 @@ class FileManager
 						$emsg = 'filename_maybe_too_large';
 					}
 
-					$emsg_add = 'file = ' . $this->mkSafe4Display($file_arg . ', destination path = ' . $file);
 					if (!empty($_FILES['Filedata']['error']))
 					{
-						$emsg_add = 'error code = ' . strtolower($_FILES['Filedata']['error']) . ', ' . $emsg_add;
+						$emsg .= ': error code = ' . strtolower($_FILES['Filedata']['error']) . ', ' . $emsg_add;
 					}
-					$emsg .= ':' . $emsg_add;
 					break;
 				}
 				throw new FileManagerException($emsg);
 			}
 
 			@chmod($file, $fileinfo['chmod']);
-
 
 			/*
 			 * NOTE: you /can/ (and should be able to, IMHO) upload 'overly large' image files to your site, but the resizing process step
@@ -2385,7 +2383,7 @@ class FileManager
 			$emsg = $e->getMessage();
 		}
 
-		$this->modify_json4exception($jserr, $emsg, 'file = ' . $file_arg . ', path = ' . $legal_url);
+		$this->modify_json4exception($jserr, $emsg, 'file = ' . $this->mkSafe4Display($file_arg . ', destination path = ' . $file . ', target directory (URI path) = ' . $legal_url);
 
 		if (!headers_sent()) header('Content-Type: ' . $this->getGetparam('reportContentType', 'application/json'));
 
