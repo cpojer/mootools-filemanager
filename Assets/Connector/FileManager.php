@@ -4243,7 +4243,7 @@ class FileManager
 	 * Note: when you expect to manage a really HUGE file collection from FM, you may dial up the
 	 *       $number_of_dir_levels to 2 here.
 	 */
-	protected function generateThumbName($legal_url, $specifics, $number_of_dir_levels = MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE)
+	protected function generateThumbName($legal_url, $specifics, $extension_augment = null, $number_of_dir_levels = MTFM_NUMBER_OF_DIRLEVELS_FOR_CACHE)
 	{
 		$fi = pathinfo($legal_url);
 		$ext = strtolower((isset($fi['extension']) && strlen($fi['extension']) > 0) ? $fi['extension'] : '');
@@ -4286,21 +4286,21 @@ class FileManager
 		$fn = substr($dircode, 0, 4) . preg_replace('/[^A-Za-z0-9]+/', '_', $fn);
 		$fn = substr($fn . $dircode, 0, 38);
 
-		$rv .= $fn . '-' . $specifics . '.' . $ext;
+		$rv .= $fn . '-' . $specifics . '.' . $ext . (!empty($extension_augment) ? $extension_augment : '');
 		return $rv;
 	}
 
 	protected function deleteThumb($legal_url)
 	{
 		// generate a thumbnail name with embedded wildcard for the size parameter:
-		$thumb = $this->generateThumbName($legal_url, '*');
+		$thumb = $this->generateThumbName($legal_url, '*', '*');
 		$tfi = pathinfo($thumb);
 		$thumbnail_subdir = $tfi['dirname'];
 		$thumbPath = $this->url_path2file_path($this->options['thumbnailPath'] . $thumbnail_subdir);
 		$thumbPath = self::enforceTrailingSlash($thumbPath);
 
 		// remove thumbnails (any size) and any other related cached files (TODO: future version should cache getID3 metadata as well -- and delete it here!)
-		$coll = $this->scandir($thumbPath, $tfi['filename'] . '.*', true, 0, ~GLOB_NOHIDDEN);
+		$coll = $this->scandir($thumbPath, $tfi['basename'], true, 0, ~GLOB_NOHIDDEN);
 
 		$rv = true;
 		if ($coll !== false)
@@ -4956,11 +4956,11 @@ class FileManager
 			$cache_dir = false;
 			if (!empty($legal_url))
 			{
-				$cachefile = $this->generateThumbName($legal_url, 'info');
+				$cachefile = $this->generateThumbName($legal_url, 'info', '.nfo');
 				$tfi = pathinfo($cachefile);
 				$cf_subdir = $tfi['dirname'];
 				$cache_dir = $this->url_path2file_path($this->options['thumbnailPath'] . $cf_subdir . '/');
-				$cachefile = $cache_dir . $tfi['filename'] . '.nfo';
+				$cachefile = $cache_dir . $tfi['basename'];
 
 				if (is_readable($cachefile))
 				{
