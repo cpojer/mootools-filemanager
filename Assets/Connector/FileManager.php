@@ -4760,7 +4760,7 @@ class FileManager
 			{
 				$extra1 = (!empty($e[1]) ? $this->mkSafe4Display($e[1]) : '');
 				$extra2 = (!empty($target_info) ? ' (' . $this->mkSafe4Display($target_info) . ')' : '');
-				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . $extra1 . $extra2);
+				$jserr['error'] = $emsg = '${backend.' . $e[0] . '}' . $extra1 . $extra2;
 			}
 			$jserr['status'] = 0;
 		}
