@@ -252,7 +252,7 @@ div.filemanager-browsercontainer div.filemanager-browserheader a.listType#toggle
 div.filemanager-browsercontainer div.filemanager-browserheader a.listType#toggle_side_boxes {
   background: url("../Images/application_side_boxes.png") no-repeat;
 }
-div.filemanager-browsercontainer div.filemanager-browserheader a#toggle_side_thumbs {
+div.filemanager-browsercontainer div.filemanager-browserheader a#show_dir_thumb_gallery {
     background: url("../Images/application_side_thumbs.png") no-repeat top left;
     height: 16px;
     width: 16px;
@@ -985,7 +985,7 @@ div.filemanager-details {
 div.filemanager-filelist { 
 	padding: 5px;
 }
-div.filemanager-filelist .file {
+div.filemanager-filelist .fi {
     position: relative;
     float: left;
     margin: 3px;
@@ -998,19 +998,19 @@ div.filemanager-filelist .file {
     white-space: nowrap;
     cursor: pointer;
 }
-div.filemanager-filelist .file:hover { 
+div.filemanager-filelist .fi:hover { 
 	background-color: #dee6f0; 
 }
-div.filemanager-filelist .file:hover .name { 
+div.filemanager-filelist .fi:hover .name { 
 	color: #098ED1;
 }
-div.filemanager-filelist .file .thumb {
+div.filemanager-filelist .fi .dir-gal-thumb-bg {
     background-repeat: no-repeat;
     background-position: center center;
 }
-div.filemanager-filelist .file .name {
+div.filemanager-filelist .fi .name {
     overflow: hidden;
     margin-top: 5px;
-    font-weight: bold;
+    font-weight: normal;
 }
 

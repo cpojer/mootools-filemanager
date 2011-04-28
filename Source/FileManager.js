@@ -94,9 +94,8 @@ var FileManager = new Class({
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
 		propagateData: {},                 // extra query parameters sent with every request to the backend
 
-		standalone: false,					// (boolean). Default to true. If set to false, returns the Filemanager without enclosing window / overlay.
+		standalone: true,					// (boolean). Default to true. If set to false, returns the Filemanager without enclosing window / overlay.
 		parentContainer: null,				// (string). ID of the parent container. If not set, FM will consider its first container parent for fitSizes();
-		// advancedEffects: false,				// (boolean). Default to true. If set to false, it disables the fading effects.
 		hideOnSelect: true					// (boolean). Default to true. If set to false, it leavers the FM open after a picture select.
 	},
 
@@ -134,6 +133,9 @@ var FileManager = new Class({
 		this.drag_is_active = false;
 		this.ctrl_key_pressed = false;
 		this.pending_error_dialog = null;
+		// timer for dir-gallery click / dblclick events:
+		this.dir_gallery_click_timer = null;
+
 
 		this.RequestQueue = new Request.Queue({
 			concurrent: 3,				// 3 --> 75% max load on a quad core server
@@ -305,15 +307,28 @@ var FileManager = new Class({
 
 // Partikule : Thumbs list in preview panel
 	    this.browserMenu_thumbList = new Element('a',{
-				'id': 'toggle_side_thumbs'
+				'id': 'show_dir_thumb_gallery',
+				'title': this.language.show_dir_thumb_gallery
 			}).addEvent('click', function()
 			{
-				if (typeof jsGET !== 'undefined')
-					jsGET.clear();
+				// do NOT change the jsGET history carrying our browsing so far; the fact we want to view the dirtree should
+				// *NOT* blow away the recall in which directory we are (and what item is currently selected):
 
-				self.load(self.Directory, true);
-				return self.deselect();
-			});
+				//if (typeof jsGET !== 'undefined')
+				//	jsGET.clear();
+
+				// no need to request the dirscan again: after all, we only wish to render another view of the same directory.
+				// (This means, however, that we MAY requesting any deferred thumbnails)
+
+				//self.load(self.Directory, true);
+				//return self.deselect();   // nothing to return on a click event, anyway. And do NOT loose the selection!
+
+				// the code you need here is identical to clicking on the current directory in the top path bar:
+
+				// show the 'directory' info in the detail pane again (this is a way to get back from previewing single files to previewing the directory as a gallery)
+				this.diag.log('click: fillInfo: current directory!');
+				this.fillInfo();
+			}.bind(this));
 // /Partikule
 
 
@@ -426,6 +441,25 @@ var FileManager = new Class({
 		this.info.adopt(this.preview_area).inject(this.filemanager);
 // /Partikule
 
+// Partikule
+// Add of the thumbnail list in the preview panel
+
+// We fill this one while we render the directory tree view to ensure that the deferred thumbnail loading system
+// (using 'detail / mode=direct' requests to obtain the actual thumbnail paths) doesn't become a seriously complex
+// mess.
+// This way, any updates coming from the server are automatically edited into this list; whether it is shown or
+// not depends on the decisions in fillInfo()
+//
+// Usage:
+// - One doubleclick on one thumb in this list will select the file : quicker select
+// - One click displays the preview, but with the file in bigger format : less clicks to see the picture wider.
+
+		// Thumbs list container (in preview panel)
+		this.dir_filelist = new Element('div', {'class': 'filemanager-filelist'});
+		//this.preview.adopt(this.dir_filelist);
+
+// /Partikule
+
 		if (!this.options.hideClose) {
 			this.closeIcon = new Element('a', {
 				'class': 'filemanager-close',
@@ -454,8 +488,9 @@ var FileManager = new Class({
 				});
 			}
 		});
-		if (!this.options.hideClose)
+		if (!this.options.hideClose) {
 			this.tips.attach(this.closeIcon);
+		}
 
 		this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
 			'class': 'browser-add',
@@ -554,7 +589,7 @@ var FileManager = new Class({
 		};
 
 // Partikule
-		if (this.options.standalone == true)
+		if (this.options.standalone)
 		{
 	    	this.container.inject(document.body);
 
@@ -566,8 +601,8 @@ var FileManager = new Class({
 // Partikule : Removed the autostart bacause of the standalone mode.
 // Certainly a better way to do that...
 	    	this.options.hideOverlay = true;
-	    	return this;
 	    }
+    	return this;
 	},
 
 	initialShowBase: function() {
@@ -601,7 +636,7 @@ var FileManager = new Class({
 	fitSizes: function()
 	{
 // Partikule : Add the standalone check
-		if (this.standalone)
+		if (this.options.standalone)
 		{
 			this.filemanager.center(this.offsets);
 		}
@@ -690,26 +725,42 @@ var FileManager = new Class({
 // Partikule
 
 	/**
-	 * Catches a double click on thumb list icon in the preview thumb list
+	 * Catches both single and double click on thumb list icon in the directory preview thumb/gallery list
 	 */
-	relayDblClick: function(e, el)
+	relayDblClick: function(e, self, dg_el, file, clicks)
 	{
-		if(e) e.stop();
+		if (e) e.stop();
 
-		this.diag.log('on relayDblClick file = ', file, this.Directory);
+		this.diag.log('on relayDblClick file = ', file, this.Directory, ', # clicks: ', clicks);
 
-		var file = el.retrieve('file');
+		this.tips.hide();
+
+		//var file = el.retrieve('file'); -- wrong 'el': that 'el' is a <LI> in the directory view!
+		var el_ref = dg_el.retrieve('el_ref');
 
 		if (this.Current)
 		{
 			this.Current.removeClass('selected');
 		}
 
-		this.Current = el.addClass('selected');
+		this.Current = el_ref.addClass('selected');
+		file = el_ref.retrieve('file');
 
 		this.CurrentFile = file;
 
-		this.open_on_click();
+		// now make sure we can see the selected item in the left pane: scroll there:
+		this.browserSelection('none');
+
+		// only simulate the 'select' button click by doubleclick on thumbnail in directory preview, when 'select' is actually allowed.
+		if (clicks === 2 && this.options.selectable)
+		{
+			this.open_on_click(null);
+		}
+		else
+		{
+			// the single-click action is to simulate a click on the corresponding line in the directory view (left pane)
+			this.relayClick(e, el_ref);
+		}
 	},
 
 // /Partikule
@@ -930,7 +981,7 @@ var FileManager = new Class({
 	},
 
 	open_on_click: function(e){
-		e.stop();
+		if (e) e.stop();
 
 		if (!this.Current)
 			return;
@@ -1478,6 +1529,11 @@ var FileManager = new Class({
 			direction = 'up';
 			break;
 
+		case 'none':        // 'faked' key sent when picking a row 'remotely', i.e. when we don't know where we are currently, but when we want to scroll to 'current' anyhow
+			current.addClass('hover');
+			this.Current = current;
+			break;
+
 		// select
 		case 'enter':
 			this.storeHistory = true;
@@ -1501,7 +1557,7 @@ var FileManager = new Class({
 		case 'delete':
 			this.storeHistory = true;
 			this.Current = current;
-			this.browser.getElements('span.fi.selected').each(function(span){
+			this.browser.getElements('span.fi.selected').each(function(span) {
 				span.removeClass('selected');
 			});
 
@@ -1688,6 +1744,13 @@ var FileManager = new Class({
 		}
 		this.browser.empty();
 
+// Partikule
+// Add of the thumbnail list in the preview panel: blow away any pre-existing list now, as we'll generate a new one now:
+
+		this.dir_filelist.empty();
+
+// /Partikule
+
 		// set history
 		if (typeof jsGET !== 'undefined' && this.storeHistory && j.dir.mime === 'text/directory')
 		{
@@ -1840,10 +1903,43 @@ var FileManager = new Class({
 		return file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
 			new Element('span', {
 				'class': this.listType,
-				'style': thumbnail_url ? 'background-image: url(' + thumbnail_url + ')' : 'background-image: url(' + this.assetBasePath + 'Images/loader.gif' + ')'
-			}).addClass('fm-thumb-bg') /* .adopt(icon) */ ,
+				'styles': {
+					'background-image': 'url(' + (thumbnail_url ? thumbnail_url : this.assetBasePath + 'Images/loader.gif') + ')'
+				}
+			}).addClass('fm-thumb-bg'),
 			new Element('span', {'class': 'filemanager-filename', text: file.name, title: file.name})
 		).store('file', file);
+	},
+
+	dir_gallery_item_maker: function(thumbnail_url, file)
+	{
+		// as we want the thumbnails line up reasonably well in a grid and have no huge white areas thanks to long filenames,
+		// we strip the filename on display. When the user wishes to know the full filename, he can hover over the image, anyway.
+		var fname = file.name;
+		if (fname.length > 6)
+		{
+			fname = fname.substr(0, 6) + '...';
+		}
+
+		var el = new Element('div', {
+			'class': 'fi',
+			'title': file.name
+		}).adopt(
+			new Element('div', {
+				'class': 'dir-gal-thumb-bg',
+				'styles': {
+					'background-image': 'url(' + (thumbnail_url ? thumbnail_url : this.assetBasePath + 'Images/loader.gif') + ')',
+					'width': 48,
+					'height': 48
+				}
+			}),
+			new Element('div', {
+				'class': 'name',
+				'text': fname
+			})
+		);
+		this.tips.attach(el);
+		return el;
 	},
 
 	/*
@@ -1878,6 +1974,7 @@ var FileManager = new Class({
 		// first loop: only render directories, when the indexes fit the range: 0 .. j.dirs.length-1
 		// Assume several directory aspects, such as no thumbnail hassle (it's one of two icons anyway, really!)
 		var el, editButtons;
+
 		for (idx = startindex; idx < endindex && idx < j.dirs.length; idx++)
 		{
 			file = j.dirs[idx];
@@ -1959,24 +2056,11 @@ var FileManager = new Class({
 		// and another, ALMOST identical, loop to render the files. Note that these buggers have their own peculiarities... and make sure the index is adjusted to point into files[]
 		var dir_count = j.dirs.length;
 
-// Partikule
-// Add of the thumbnail list in the preview panel
-// Perhaps not the good place to add it...
-// - One doubleclick on one thumb in this list will select the file : quicker select
-// - One click displays the preview, but with the file in bigger format : less clicks to see the picture wider.
-
-		// define timer, for dblclick event.
-		var timer = null;
-
-		// Thumbs list container (in preview panel)
-		var filelist = new Element('div', {'class': 'filemanager-filelist'});
-		this.preview.adopt(filelist);
-
-// /Partikule
-
 		// skip files[] rendering, when the startindex still points inside dirs[]  ~  too many directories to fit any files on this page!
 		if (idx >= dir_count)
 		{
+			var dg_el;
+
 			for ( ; idx < endindex && idx - dir_count < j.files.length; idx++)
 			{
 				file = j.files[idx - dir_count];
@@ -2007,10 +2091,15 @@ var FileManager = new Class({
 				this.diag.log('thumbnail: "' + file.thumb48 + '"');
 				//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumb48 /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumb48);
 
-				if (file.thumb48 || this.listType !== 'thumb' || !file.thumbs_deferred)
+				// As we now have two views into the directory, we have to fetch the thumbnails, even when we're in 'list' view: the direcory gallery will need them!
+				// Besides, fetching the thumbs and all right after we render the directory also makes these thumbs + metadata available for drag&drop gallery and
+				// 'select mode', so they don't always have to ask for the meta data when it is required there and then.
+				if (file.thumb48 || /* this.listType !== 'thumb' || */ !file.thumbs_deferred)
 				{
 					// This is just a raw image
 					el = this.list_row_maker((this.listType === 'thumb' ? (file.thumb48 ? file.thumb48 : file.icon48) : file.icon), file);
+
+					dg_el = this.dir_gallery_item_maker((file.thumb48 ? file.thumb48 : file.icon48), file);
 				}
 				else	// thumbs_deferred...
 				{
@@ -2021,8 +2110,11 @@ var FileManager = new Class({
 					// to a tiny iframe, which is suitably sized to contain the generated thumbnail and the POST
 					// actually returning the binary image data, thus the iframe contents becoming the thumbnail image.
 
-					el = (function(file) {           // Closure
-						var iconpath = this.assetBasePath + 'Images/Icons/Large/default-error.png';
+					// update this one alongside the 'el':
+					dg_el = this.dir_gallery_item_maker(file.icon48, file);
+
+					el = (function(file, dg_el) {           // Closure
+						var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'thumb' ? 'Large/' : '') + 'default-error.png';
 						var list_row = this.list_row_maker(file.icon48, file);
 
 						var req = new FileManager.Request({
@@ -2041,11 +2133,13 @@ var FileManager = new Class({
 							onSuccess: (function(j) {
 								if (!j || !j.status || !j.thumb48)
 								{
-									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + (j.icon48 ? j.icon48 : iconpath) + ')');
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + (this.listType === 'thumb' ? (j.icon48 ? j.icon48 : iconpath) : (j.icon ? j.icon : iconpath)) + ')');
+									dg_el.getElement('div.dir-gal-thumb-bg').setStyle('background-image', 'url(' + (j.icon48 ? j.icon48 : iconpath) + ')');
 								}
 								else
 								{
-									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + j.thumb48 + ')');
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + (this.listType === 'thumb' ? j.thumb48 : j.icon) + ')');
+									dg_el.getElement('div.dir-gal-thumb-bg').setStyle('background-image', 'url(' + j.thumb48 + ')');
 								}
 
 								// update the stored json for this file as well:
@@ -2063,9 +2157,11 @@ var FileManager = new Class({
 							}).bind(this),
 							onError: (function(text, error) {
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+								dg_el.getElement('div.dir-gal-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this),
 							onFailure: (function(xmlHttpRequest) {
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+								dg_el.getElement('div.dir-gal-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this)
 						}, this);
 
@@ -2073,7 +2169,7 @@ var FileManager = new Class({
 						req.send();
 
 						return list_row;
-					}).bind(this)(file);
+					}).bind(this)(file, dg_el);
 				}
 
 				/*
@@ -2217,31 +2313,25 @@ var FileManager = new Class({
 // Partikule
 // Thumbs list
 
-				// Thumb container
-				var thumb = new Element('div', {'class': 'thumb ' + file.icon}).setStyles({
-					'width': self.options.thumbSize + 'px',
-					'height': self.options.thumbSize + 'px'
-				});
-
-				// Thumb background : Picture thumb or large icon of the file type
-				thumb.setStyle('background-image', 'url(' + file.thumbnail +')');
-
-				var domfile = new Element('div', {'class': 'file'}).adopt([
-					thumb,
-					new Element('div', {'class': 'name'}).setStyle('width', self.options.thumbSize).set('text', file.name)
-				]).store('file', file).addEvents(
+				// use a closure to keep a reference to the current dg_el, otherwise dg_el, file, etc. will carry the values they got at the end of the loop!
+				(function(dg_el, el, file)
 				{
-					'click': function(){
-						clearTimeout(timer);
-				        timer = self.relayClick.delay(500, domfile);
-					},
-					'dblclick': function(){
-						clearTimeout(timer);
-						timer = self.relayDblClick.delay(0, domfile);
-					}
-				});
+					dg_el.store('el_ref', el).addEvents({
+						'click': function(e)
+						{
+							clearTimeout(self.dir_gallery_click_timer);
+							self.dir_gallery_click_timer = self.relayDblClick.delay(700, self, [e, this, dg_el, file, 1]);
+						},
+						'dblclick': function(e)
+						{
+							clearTimeout(this.dir_gallery_click_timer);
+							this.dir_gallery_click_timer = self.relayDblClick.delay(0, self, [e, this, dg_el, file, 2]);
+						}
+					});
 
-				domfile.inject(filelist);
+					dg_el.inject(this.dir_filelist);
+				}).bind(this)(dg_el, el, file);
+
 // / Partikule
 			}
 		}
@@ -2642,6 +2732,11 @@ var FileManager = new Class({
 
 					// don't wait for the fade to finish to set up the new content
 					var prev = this.preview.removeClass('filemanager-loading').set('html', (j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '')).getElement('img.preview');
+
+					if (file.mime === 'text/directory')
+					{
+						this.preview.adopt(this.dir_filelist);
+					}
 
 					// and plug in the manipulated DOM subtree again:
 					this.info.inject(this.filemanager);
