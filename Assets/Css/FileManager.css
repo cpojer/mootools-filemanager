@@ -679,7 +679,7 @@ div.filemanager span.filemanager-dir a.icon {
   border: 1px solid #bebebe;
   padding: 2px 5px 2px 20px;
   text-decoration: none;
-  background: #eee url("../Images/Icons/dir.png") 2px 0 no-repeat;
+  background: #eee url("../Images/Icons/directory.png") 2px 0 no-repeat;
   color: #000;
 
   -moz-border-radius: 3px;
@@ -691,7 +691,7 @@ div.filemanager span.filemanager-dir a.icon {
 div.filemanager span.filemanager-dir span.icon {
   border: none;
   padding: 2px 5px 2px 20px;
-  background: url("../Images/Icons/dir.png") 2px 0 no-repeat;
+  background: url("../Images/Icons/directory.png") 2px 0 no-repeat;
   color: #999;
 }
 
