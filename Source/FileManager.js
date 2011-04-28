@@ -2271,7 +2271,7 @@ var FileManager = new Class({
 							this.fillInfo(file);
 						}
 					}
-					else if (fmFile == null)
+					else
 					{
 						this.diag.log('fill: RESET onShow: file = ' + file.name);
 						this.onShow = false;
