@@ -98,5 +98,9 @@ session_write_close();
   </style>
 </head>
 <body>
+	<div class="go_home">
+	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
+	</div>
+
 </body>
 </html>

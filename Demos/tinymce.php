@@ -28,7 +28,6 @@ session_write_close();
 <head>
 	<title>MooTools FileManager TinyMCE example</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<link rel="shortcut icon" href="http://og5.net/christoph/favicon.png" />
 	<link rel="stylesheet" href="demos.css" type="text/css" />
 
 	<link rel="stylesheet" media="all" type="text/css" href="../Assets/js/milkbox/css/milkbox.css" />
