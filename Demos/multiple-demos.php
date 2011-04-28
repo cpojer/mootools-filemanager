@@ -287,6 +287,10 @@ if (0)
 </head>
 <body>
 <div id="content" class="content">
+	<div class="go_home">
+	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
+	</div>
+
 	<h1>FileManager Demo</h1>
 	<div class="example">
 		<button id="example1" class="BrowseExample">Open File-Manager</button>
@@ -305,18 +309,6 @@ if (0)
 	<div class="example">
 		<button id="example4">Create a Gallery</button>
 		<input name="BrowseExample4" type="text" id="myGallery" value="Gallery output will be stored in here" style="width: 550px;" />
-	</div>
-
-	<div class="example">
-		<a href="test-backend.php">Run tests on the backend of the File-Manager</a>
-	</div>
-
-	<div class="example">
-		<a href="../Assets/js/demo.html">Run jsGET demo</a>
-	</div>
-
-	<div class="example">
-		<a href="video-embedding.html">Test video and audio embedding</a>
 	</div>
 
 	<div style="clear: both;"></div>

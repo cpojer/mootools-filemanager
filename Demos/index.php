@@ -114,7 +114,7 @@ if (0)
 </head>
 <body>
 <div id="content" class="content">
-	<h1>Basic FileManager Demo</h1>
+	<h1><img src="home_16x16.png"> Basic FileManager Demo</h1>
 	<div class="example">
 		<button id="example1" class="BrowseExample">Open File-Manager</button>
 	</div>

@@ -1,8 +1,18 @@
-div.filemanager-container { display: none; }
-div.filemanager * { outline: 0; }
-div.filemanager a img { border: 0 }
+div.filemanager-container { 
+	display: none; 
+}
+div.filemanager * { 
+	outline: 0; 
+}
+div.filemanager a img { 
+	border: 0; 
+}
 
-div.filemanager-container, div.filemanager, div.filemanager button, div.filemanager label, div.filemanager h1 {
+div.filemanager-container, 
+div.filemanager, 
+div.filemanager button, 
+div.filemanager label, 
+div.filemanager h1 {
   width: auto;
   margin: 0;
   
@@ -99,7 +109,8 @@ div.filemanager button {
   -o-border-radius: 4px;
   border-radius: 4px;
 }
-div.filemanager-engine-trident4 button, div.filemanager-engine-trident5 button {
+div.filemanager-engine-trident4 button, 
+div.filemanager-engine-trident5 button {
   padding: 0 .25em;
   overflow: visible;
 }
@@ -108,11 +119,15 @@ div.filemanager-menu button {
   float: right;
 }
 
-div.filemanager button:hover, div.filemanager button.hover, div.filemanager button:focus {
+div.filemanager button:hover, 
+div.filemanager button.hover, 
+div.filemanager button:focus {
   border: 1px solid #5f676e;
 }
 
-div.filemanager button.disabled, div.filemanager button.disabled:hover, div.filemanager button.disabled:focus {
+div.filemanager button.disabled, 
+div.filemanager button.disabled:hover, 
+div.filemanager button.disabled:focus {
   cursor: default;
   color: #666;
   text-shadow: none;
@@ -237,6 +252,14 @@ div.filemanager-browsercontainer div.filemanager-browserheader a.listType#toggle
 div.filemanager-browsercontainer div.filemanager-browserheader a.listType#toggle_side_boxes {
   background: url("../Images/application_side_boxes.png") no-repeat;
 }
+div.filemanager-browsercontainer div.filemanager-browserheader a#show_dir_thumb_gallery {
+    background: url("../Images/application_side_thumbs.png") no-repeat top left;
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    float: right;
+    margin: 5px;
+}
 div.filemanager-browsercontainer div.filemanager-browserheader a#drag_n_drop {
 	display: inline-block;
 	float: right;
@@ -345,7 +368,8 @@ div.filemanager-container span.fi.hover {
   background:#E2EBF6;
 }
 
-div.filemanager-container span.fi span, div.filemanager-container span.thumb {
+div.filemanager-container span.fi span, 
+div.filemanager-container span.thumb {
   white-space: nowrap;
   display: block;
   overflow: hidden;
@@ -439,24 +463,28 @@ div.filemanager ul li span.dir {
   background-color: transparent;
 }
 
-div.filemanager ul li span.droppable, div.filemanager-gallery ul.droppable {
+div.filemanager ul li span.droppable, 
+div.filemanager-gallery ul.droppable {
   background-color: #99b7e7;
 }
 
-ul.filemanager-browser a, ul.filemanager-browser span {
+ul.filemanager-browser a, 
+ul.filemanager-browser span {
   position: relative;
 }
 
 /*
-div.filemanager ul li a.selected, div.filemanager ul li span.selected {
+div.filemanager ul li a.selected, 
+div.filemanager ul li span.selected {
   background: url("../Images/filelist_selected.png") repeat-x;
   color: #eee;
   outline: none;
 }
 */
 
-div.filemanager ul li span.thumb.selected, div.filemanager ul li span.fi.selected {
-  background:#8EAAD6;
+div.filemanager ul li span.thumb.selected, 
+div.filemanager ul li span.fi.selected {
+  background: #8EAAD6;
   color: #eee;
   outline: none;
 }
@@ -476,13 +504,13 @@ div.filemanager-container span.thumb img {
 */
 
 div.filemanager-container span.file img {
-  border:none;
-  margin-top:5px;
+  border: none;
+  margin-top: 5px;
 }
 
 div.filemanager-container span.fi img.browser-icon {
   float: right;
-  border:none;
+  border: none;
   margin-top: 3px; /* vertically center the little buggers */
 }
 
@@ -557,7 +585,8 @@ div.filemanager h1 {
   background-color: transparent;
 }
 
-div.filemanager h2, div.filemanager h3 {
+div.filemanager h2, 
+div.filemanager h3 {
   margin: 0;
   border-top: 1px solid #bebebe;
   font-weight: bold;
@@ -591,7 +620,8 @@ div.filemanager dl {
   overflow: auto;
 }
 
-div.filemanager dt, div.filemanager dd {
+div.filemanager dt, 
+div.filemanager dd {
   float: left;
   line-height: 20px;
   font-size: 11px;
@@ -660,7 +690,8 @@ div.filemanager span.filemanager-dir a.icon:hover {
   background-color: #fff;
 }
 
-div.filemanager span.filemanager-dir a.selected, div.filemanager span.filemanager-dir a.selected:hover {
+div.filemanager span.filemanager-dir a.selected, 
+div.filemanager span.filemanager-dir a.selected:hover {
   margin: 0 1px;
   background-color: transparent;
   border: none;
@@ -683,7 +714,8 @@ div.filemanager-preview img.preview:hover {
   border: 1px solid #666;
 }
 
-div.filemanager-preview ul li img, div.filemanager-uploader ul li img {
+div.filemanager-preview ul li img, 
+div.filemanager-uploader ul li img {
   margin-top: 2px;
   margin-right: 4px;
   float: left;
@@ -709,7 +741,9 @@ div.filemanager-engine-trident4 div.filemanager-preview img.preview {
 }
 */
 
-div.filemanager-preview ul, div.filemanager-uploader ul, div.filemanager-preview div.textpreview {
+div.filemanager-preview ul, 
+div.filemanager-uploader ul, 
+div.filemanager-preview div.textpreview {
   border: 1px solid #bebebe;
   background: #fff;
   
@@ -952,6 +986,43 @@ img.filemanager-clone {
 
 .tip-filebrowser .tip-text {
   display: none;
+}
+
+/* THUMBNAILS IN PREVIEW LIST */
+div.filemanager-details {
+    overflow: auto;
+    height: 100%;
+}
+div.filemanager-filelist { 
+	padding: 5px;
+}
+div.filemanager-filelist .fi {
+    position: relative;
+    float: left;
+    margin: 3px;
+    padding: 4px;
+    background-color: #f2f2f2;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+}
+div.filemanager-filelist .fi:hover { 
+	background-color: #dee6f0; 
+}
+div.filemanager-filelist .fi:hover .name { 
+	color: #098ED1;
+}
+div.filemanager-filelist .fi .dir-gal-thumb-bg {
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+div.filemanager-filelist .fi .name {
+    overflow: hidden;
+    margin-top: 5px;
+    font-weight: normal;
 }
 
 

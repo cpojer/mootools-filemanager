@@ -114,8 +114,12 @@ session_write_close();
 </head>
 <body>
 <div id="content" class="content">
-	<h1>FileManager Demo</h1>
+	<div class="go_home">
+	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
+	</div>
 
+	<h1>FileManager Demo</h1>
+	
 	<div class="example">
 		<button id="example4">Create a Gallery</button>
 		<input name="BrowseExample4" type="text" id="myGallery" value="Gallery output will be stored in here" style="width: 550px;" />
