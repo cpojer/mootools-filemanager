@@ -4995,42 +4995,43 @@ class FileManagerUtility
 	 *
 	 * Attempts some 'intelligent' conversions for better readability and information compacting.
 	 */
-	public static function table_var_dump(&$variable, $wrap_in_td = false, $show_types = false)
+	public static function table_var_dump(&$variable, $wrap_in_td = false, $show_types = false, $level = 0)
 	{
 		$returnstring = '';
 		if (is_array($variable))
 		{
-			$returnstring .= ($wrap_in_td ? '<dd>' : '');
-			$returnstring .= '<dt class="dump_array">';
+			$returnstring .= ($wrap_in_td ? '' : '');
+			$returnstring .= '<ul class="dump_array dump_level_' . sprintf('%02u', $level) . '">';
 			foreach ($variable as $key => &$value)
 			{
-				$returnstring .= '<dt>'.$key.'</dt>';
+				$returnstring .= '<li><span class="key">' . $key . '</span>';
+				$tstring = '';
 				if ($show_types)
 				{
-					$returnstring .= '<dd>'.gettype($value);
+					$tstring = '<span class="type">'.gettype($value);
 					if (is_array($value))
 					{
-						$returnstring .= '&nbsp;('.count($value).')';
+						$tstring .= '&nbsp;('.count($value).')';
 					}
 					elseif (is_string($value))
 					{
-						$returnstring .= '&nbsp;('.strlen($value).')';
+						$tstring .= '&nbsp;('.strlen($value).')';
 					}
-					$returnstring .= '</dd>';
+					$tstring = '</span>';
 				}
 
 				switch ((string)$key)
 				{
 				case 'filesize':
-					$returnstring .= '<dd class="dump_seconds">' . self::fmt_bytecount($value) . ($value >= 1024 ? ' (' . $value . ' bytes)' : '') . '</dd>';
+					$returnstring .= '<span class="dump_seconds">' . $tstring . self::fmt_bytecount($value) . ($value >= 1024 ? ' (' . $value . ' bytes)' : '') . '</span></li>';
 					continue 2;
 
 				case 'playtime seconds':
-					$returnstring .= '<dd class="dump_seconds">' . number_format($value, 1) . ' s</dd>';
+					$returnstring .= '<span class="dump_seconds">' . $tstring . number_format($value, 1) . ' s</span></li>';
 					continue 2;
 
 				case 'compression ratio':
-					$returnstring .= '<dd class="dump_compression_ratio">' . number_format($value * 100, 1) . '%</dd>';
+					$returnstring .= '<span class="dump_compression_ratio">' . $tstring . number_format($value * 100, 1) . '%</span></li>';
 					continue 2;
 
 				case 'bitrate':
@@ -5042,71 +5043,71 @@ class FileManagerUtility
 				case 'sample rate2':
 				case 'samples per sec':
 				case 'avg bytes per sec':
-					$returnstring .= '<dd class="dump_rate">' . self::fmt_bytecount($value) . '/s</dd>';
+					$returnstring .= '<span class="dump_rate">' . $tstring . self::fmt_bytecount($value) . '/s</span></li>';
 					continue 2;
 
 				case 'bytes per minute':
-					$returnstring .= '<dd class="dump_rate">' . self::fmt_bytecount($value) . '/min</dd>';
+					$returnstring .= '<span class="dump_rate">' . $tstring . self::fmt_bytecount($value) . '/min</span></li>';
 					continue 2;
 				}
-				$returnstring .= FileManagerUtility::table_var_dump($value, true, $show_types) . '</tr>';
+				$returnstring .= FileManagerUtility::table_var_dump($value, true, $show_types, $level + 1) . '</li>';
 			}
-			$returnstring .= '</dl>';
-			$returnstring .= ($wrap_in_td ? '</dd>' : '');
+			$returnstring .= '</ul>';
+			$returnstring .= ($wrap_in_td ? '' : '');
 		}
 		else if (is_bool($variable))
 		{
-			$returnstring .= ($wrap_in_td ? '<dd class="dump_boolean">' : '').($variable ? 'TRUE' : 'FALSE').($wrap_in_td ? '</dd>' : '');
+			$returnstring .= ($wrap_in_td ? '<span class="dump_boolean">' : '').($variable ? 'TRUE' : 'FALSE').($wrap_in_td ? '</span>' : '');
 		}
 		else if (is_int($variable))
 		{
-			$returnstring .= ($wrap_in_td ? '<dd class="dump_integer">' : '').$variable.($wrap_in_td ? '</dd>' : '');
+			$returnstring .= ($wrap_in_td ? '<span class="dump_integer">' : '').$variable.($wrap_in_td ? '</span>' : '');
 		}
 		else if (is_float($variable))
 		{
-			$returnstring .= ($wrap_in_td ? '<dd class="dump_double">' : '').$variable.($wrap_in_td ? '</dd>' : '');
+			$returnstring .= ($wrap_in_td ? '<span class="dump_double">' : '').$variable.($wrap_in_td ? '</span>' : '');
 		}
 		else if (is_object($variable) && isset($variable->id3_procsupport_obj))
 		{
 			if (isset($variable->metadata) && isset($variable->imagedata))
 			{
 				// an embedded image (MP3 et al)
-				$returnstring .= ($wrap_in_td ? '<dd class="dump_embedded_image">' : '');
-				$returnstring .= '<dl class="dump_image">';
-				$returnstring .= '<dt>type</dt><dd>'.getid3_lib::ImageTypesLookup($variable->metadata[2]).'</dd>';
-				$returnstring .= '<dt><b>width</dt><dd>'.number_format($variable->metadata[0]).' px</dd>';
-				$returnstring .= '<dt><b>height</dt><dd>'.number_format($variable->metadata[1]).' px</dd>';
-				$returnstring .= '<dt><b>size</dt><dd>'.number_format(strlen($variable->imagedata)).' bytes</dd></dl>';
+				$returnstring .= ($wrap_in_td ? '<div class="dump_embedded_image">' : '');
+				$returnstring .= '<table class="dump_image">';
+				$returnstring .= '<tr><td><b>type</b></td><td>'.getid3_lib::ImageTypesLookup($variable->metadata[2]).'</td></tr>';
+				$returnstring .= '<tr><td><b>width</b></td><td>'.number_format($variable->metadata[0]).' px</td></tr>';
+				$returnstring .= '<tr><td><b>height</b></td><td>'.number_format($variable->metadata[1]).' px</td></tr>';
+				$returnstring .= '<tr><td><b>size</b></td><td>'.number_format(strlen($variable->imagedata)).' bytes</td></tr></table>';
 				$returnstring .= '<img src="data:'.$variable->metadata['mime'].';base64,'.base64_encode($variable->imagedata).'" width="'.$variable->metadata[0].'" height="'.$variable->metadata[1].'">';
-				$returnstring .= ($wrap_in_td ? '</dd>' : '');
+				$returnstring .= ($wrap_in_td ? '</div>' : '');
 			}
 			else if (isset($variable->binarydata_mode))
 			{
-				$returnstring .= ($wrap_in_td ? '<dd class="dump_binary_data">' : '');
+				$returnstring .= ($wrap_in_td ? '<span class="dump_binary_data">' : '');
 				if ($variable->binarydata_mode == 'procd')
 				{
-					$returnstring .= '<i>' . self::table_var_dump($variable->binarydata, false, false) . '</i>';
+					$returnstring .= '<i>' . self::table_var_dump($variable->binarydata, false, false, $level + 1) . '</i>';
 				}
 				else
 				{
 					$temp = unpack('H*', $variable->binarydata);
 					$temp = str_split($temp[1], 8);
-					$returnstring .= '<i>' . self::table_var_dump(implode(' ', $temp), false, false) . '</i>';
+					$returnstring .= '<i>' . self::table_var_dump(implode(' ', $temp), false, false, $level + 1) . '</i>';
 				}
-				$returnstring .= ($wrap_in_td ? '</dd>' : '');
+				$returnstring .= ($wrap_in_td ? '</span>' : '');
 			}
 			else
 			{
-				$returnstring .= ($wrap_in_td ? '<dd class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</dd>' : '');
+				$returnstring .= ($wrap_in_td ? '<span class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</span>' : '');
 			}
 		}
 		else if (is_object($variable))
 		{
-			$returnstring .= ($wrap_in_td ? '<dd class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</dd>' : '');
+			$returnstring .= ($wrap_in_td ? '<span class="dump_object">' : '').print_r($variable, true).($wrap_in_td ? '</span>' : '');
 		}
 		else if (is_null($variable))
 		{
-			$returnstring .= ($wrap_in_td ? '<dd class="dump_null">' : '').'(null)'.($wrap_in_td ? '</dd>' : '');
+			$returnstring .= ($wrap_in_td ? '<span class="dump_null">' : '').'(null)'.($wrap_in_td ? '</span>' : '');
 		}
 		else if (is_string($variable))
 		{
@@ -5116,11 +5117,11 @@ class FileManagerUtility
 			{
 				$returnstring .= htmlentities($variable{$i}, ENT_QUOTES, 'UTF-8');
 			}
-			$returnstring = ($wrap_in_td ? '<dd class="dump_string">' : '').nl2br($returnstring).($wrap_in_td ? '</dd>' : '');
+			$returnstring = ($wrap_in_td ? '<span class="dump_string">' : '').nl2br($returnstring).($wrap_in_td ? '</span>' : '');
 		}
 		else
 		{
-			$returnstring .= ($wrap_in_td ? '<dd>' : '').nl2br(htmlspecialchars(strtr($variable, "\x00", ' '))).($wrap_in_td ? '</dd>' : '');
+			$returnstring .= ($wrap_in_td ? '<span class="dump_other">' : '').nl2br(htmlspecialchars(strtr($variable, "\x00", ' '))).($wrap_in_td ? '</span>' : '');
 		}
 		return $returnstring;
 	}

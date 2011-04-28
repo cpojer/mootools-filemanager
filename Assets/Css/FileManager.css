@@ -464,7 +464,6 @@ div.filemanager ul li span.thumb.selected, div.filemanager ul li span.fi.selecte
 div.filemanager-container span.fi img {
   float: left;
   margin: 3px 3px 0 0;
-
 }
 
 /*
@@ -563,6 +562,17 @@ div.filemanager h2, div.filemanager h3 {
   border-top: 1px solid #bebebe;
   font-weight: bold;
   padding: 2px 0 0 5px;
+  clear: both;
+}
+
+div.filemanager div.filemanager-errors {
+  border-top: 1px solid #bebebe;
+  padding: 2px 0 0 0;
+  clear: both;
+}
+div.filemanager div.filemanager-diag-dump {
+  border-top: 1px solid #bebebe;
+  padding: 2px 0 0 0;
   clear: both;
 }
 
@@ -943,3 +953,40 @@ img.filemanager-clone {
 .tip-filebrowser .tip-text {
   display: none;
 }
+
+
+/* Extra (Tech.) Info / Diagnostics in preview pane */
+
+div.filemanager div.filemanager-diag-dump ul {
+  width: auto;
+  height: auto;
+  background: inherit;
+  border-top: 1px solid #BEBEBE;
+  border-bottom: 1px solid #E7E7E7;
+  border-left: 0;
+  border-right: 0;
+  margin: 5px 0 5px 10px;
+}
+
+div.filemanager div.filemanager-diag-dump ul.dump_level_00 {
+  border: 0;
+}
+
+div.filemanager div.filemanager-diag-dump li span.key {
+  margin-right: 2em;
+  display: inline-block;
+  width: 150px;
+  font-weight: bold;
+}
+
+div.filemanager div.filemanager-diag-dump li {
+  white-space: normal;
+}
+
+div.filemanager div.filemanager-diag-dump li img {
+  /* embedded images should not float in here */
+  float: none;
+}
+
+
+
