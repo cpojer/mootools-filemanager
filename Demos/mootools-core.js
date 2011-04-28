@@ -24,7 +24,7 @@ provides: [Core, MooTools, Type, typeOf, instanceOf, Native]
 
 this.MooTools = {
 	version: '1.3.2dev',
-	build: 'bc652c9ab8a64331ef11801603a1b592ac8045ef'
+	build: '%build%'
 };
 
 // typeOf, instanceOf
@@ -3944,6 +3944,13 @@ Element.implement({
 			// [i_a] don't set a negative width or height: MSIE6 croaks!
 			//debugger;
 			this.style[property] = '0px';
+			return this;
+		}
+		else if (property == 'zIndex' && value == 'auto')
+		{
+			// [i_a] MSIE6 croaks on this one; set to nil instead
+			//debugger;
+			this.style[property] = '';
 			return this;
 		}
 		this.style[property] = value;

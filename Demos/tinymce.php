@@ -105,8 +105,11 @@ session_write_close();
 </head>
 <body>
 <div id="content" class="content">
+	<div class="go_home">
+	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
+	</div>
+
 	<h1>FileManager Demo</h1>
-	<div style="float: right;"><a href="index.php">Go to the examples' overview</a></div>
 
 	<div style="clear: both;">
 		<textarea>Add an image or a link to a file!</textarea>

@@ -92,7 +92,12 @@ var FileManager = new Class({
 		styles: {},
 		listPaginationSize: 100,          // add pagination per N items for huge directories (speed up interaction)
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
-		propagateData: {}                 // extra query parameters sent with every request to the backend
+		propagateData: {},                 // extra query parameters sent with every request to the backend
+
+		standalone: false,					// (boolean). Default to true. If set to false, returns the Filemanager without enclosing window / overlay.
+		parentContainer: null,				// (string). ID of the parent container. If not set, FM will consider its first container parent for fitSizes();
+		// advancedEffects: false,				// (boolean). Default to true. If set to false, it disables the fading effects.
+		hideOnSelect: true					// (boolean). Default to true. If set to false, it leavers the FM open after a picture select.
 	},
 
 	/*
@@ -141,6 +146,14 @@ var FileManager = new Class({
 			this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
 		}
 
+// Partikule
+		if (!this.options.standalone)
+		{
+			this.options.hideOverlay = true;
+			this.options.hideClose = true;
+		}
+// /Partikule
+
 		this.container = new Element('div', {
 			'class': 'filemanager-container' + (Browser.opera ? ' filemanager-engine-presto' : '') + (Browser.ie ? ' filemanager-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
 			styles:
@@ -188,6 +201,16 @@ var FileManager = new Class({
 			}
 		}).bind(this));
 		this.header.adopt(this.pathTitle,this.clickablePath);
+
+// Partikule
+// Because the header is positioned -30px before the container, we hide it for the moment if the FM isn't standalone.
+// Need to think about a better integration
+		if (!this.options.standalone)
+		{
+			this.header.hide();
+			this.filemanager.setStyle('width', '100%');
+		}
+// /Partikule
 
 		var self = this;
 
@@ -279,6 +302,21 @@ var FileManager = new Class({
 			}).set('opacity',1).addEvents({
 				click: this.toggleList.bind(this)
 			});
+
+// Partikule : Thumbs list in preview panel
+	    this.browserMenu_thumbList = new Element('a',{
+				'id': 'toggle_side_thumbs'
+			}).addEvent('click', function()
+			{
+				if (typeof jsGET !== 'undefined')
+					jsGET.clear();
+
+				self.load(self.Directory, true);
+				return self.deselect();
+			});
+// /Partikule
+
+
 		this.browser_dragndrop_info = new Element('a',{
 				'id':'drag_n_drop',
 				'title': this.language.drag_n_drop_disabled
@@ -311,7 +349,10 @@ var FileManager = new Class({
 				'text': ''
 			});
 		this.browser_paging.adopt([this.browser_paging_first, this.browser_paging_prev, this.browser_paging_info, this.browser_paging_next, this.browser_paging_last]);
-		this.browserheader.adopt([this.browserMenu_thumb, this.browserMenu_list, this.browser_dragndrop_info, this.browser_paging]);
+
+// Partikule : Added the browserMenu_thumbList to the browserheader
+		this.browserheader.adopt([this.browserMenu_thumbList, this.browserMenu_thumb, this.browserMenu_list, this.browser_dragndrop_info, this.browser_paging]);
+// /Partikule
 
 		this.browser = new Element('ul', {'class': 'filemanager-browser'}).inject(this.browserScroll);
 
@@ -343,7 +384,13 @@ var FileManager = new Class({
 				opacity: 0
 			}
 		});
-		this.info.adopt([this.info_head, this.info_area.adopt(new Element('h2', {text: this.language.information}))]);
+
+// Partikule. Removed this.info_area header
+// 1. To gain more vertical space for preview
+// 2. Because the user knows this is info about the file
+// 3. Less is more :-)
+		this.info.adopt([this.info_head, this.info_area]);
+// /Partikule
 
 		new Element('dl').adopt([
 			new Element('dt', {text: this.language.modified}),
@@ -368,11 +415,16 @@ var FileManager = new Class({
 				opacity: 0
 			}
 		});
+
+// Partikule. Removed new Element('h2', {'class': 'filemanager-headline' :
+// 1. To gain more vertical space for preview
+// 2. Because the user knows this is info about the file
 		this.preview_area.adopt([
-			new Element('h2', {'class': 'filemanager-headline', text: this.language.more}),
+			//new Element('h2', {'class': 'filemanager-headline', text: this.language.more}),
 			this.preview
 		]);
 		this.info.adopt(this.preview_area).inject(this.filemanager);
+// /Partikule
 
 		if (!this.options.hideClose) {
 			this.closeIcon = new Element('a', {
@@ -413,7 +465,10 @@ var FileManager = new Class({
 			}
 		}).set('opacity', 0).set('tween', {duration: 'short'}).inject(this.container);
 
-		this.container.inject(document.body);
+// Partikule : Moved a little bit more on the bottom...
+//		this.container.inject(document.body);
+// /Partikule
+
 		if (!this.options.hideOverlay) {
 			this.overlay = new Overlay(Object.append((this.options.hideOnClick ? {
 				events: {
@@ -498,8 +553,21 @@ var FileManager = new Class({
 			}).bind(this)
 		};
 
-		// ->> autostart filemanager when set
-		this.initialShow();
+// Partikule
+		if (this.options.standalone == true)
+		{
+	    	this.container.inject(document.body);
+
+			// ->> autostart filemanager when set
+			this.initialShow();
+	    }
+	    else
+	    {
+// Partikule : Removed the autostart bacause of the standalone mode.
+// Certainly a better way to do that...
+	    	this.options.hideOverlay = true;
+	    	return this;
+	    }
 	},
 
 	initialShowBase: function() {
@@ -530,8 +598,24 @@ var FileManager = new Class({
 		return (j.dirs.length + j.files.length <= pagesize * 4);
 	},
 
-	fitSizes: function() {
-		this.filemanager.center(this.offsets);
+	fitSizes: function()
+	{
+// Partikule : Add the standalone check
+		if (this.standalone)
+		{
+			this.filemanager.center(this.offsets);
+		}
+		else
+		{
+			var parent = (this.options.parentContainer != null ? $(this.options.parentContainer) : this.container.getParent());
+			if (parent)
+			{
+				parentSize = parent.getSize();
+				this.filemanager.setStyle('height', parentSize.y);
+			}
+		}
+// /Partikule
+
 		var containerSize = this.filemanager.getSize();
 		var headerSize = this.browserheader.getSize();
 		var menuSize = this.menu.getSize();
@@ -602,6 +686,33 @@ var FileManager = new Class({
 			this.switchButton4Current();
 		}
 	},
+
+// Partikule
+
+	/**
+	 * Catches a double click on thumb list icon in the preview thumb list
+	 */
+	relayDblClick: function(e, el)
+	{
+		if(e) e.stop();
+
+		this.diag.log('on relayDblClick file = ', file, this.Directory);
+
+		var file = el.retrieve('file');
+
+		if (this.Current)
+		{
+			this.Current.removeClass('selected');
+		}
+
+		this.Current = el.addClass('selected');
+
+		this.CurrentFile = file;
+
+		this.open_on_click();
+	},
+
+// /Partikule
 
 	toggleList: function(e) {
 		if (e) e.stop();
@@ -752,6 +863,13 @@ var FileManager = new Class({
 		this.fitSizes();
 		this.fireEvent('show', [this]);
 		this.fireHooks('show');
+
+// Partikule : If not standalone, returns the HTML content
+	   	if (!this.options.standalone)
+		{
+	    	return this.container;
+	    }
+// /Partikule
 	},
 
 	hide: function(e){
@@ -813,14 +931,24 @@ var FileManager = new Class({
 
 	open_on_click: function(e){
 		e.stop();
-		if (!this.Current) return;
+
+		if (!this.Current)
+			return;
+
 		var file = this.Current.retrieve('file');
 		this.fireEvent('complete', [
 			file.path, //this.escapeRFC3986(this.normalize('/' + this.root + file.dir + file.name)), // the absolute URL for the selected file, rawURLencoded
 			file,                 // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 			this
 		]);
-		this.hide();
+
+// Partikule
+// Why Hide ? For some usage, it can be useful to keep it open (more than 3 files and it will be really annoying to re-open the FM for each file select)
+		if (this.options.hideOnSelect)
+		{
+			this.hide();
+		}
+// /Partikule
 	},
 
 	download_on_click: function(e) {
@@ -1563,7 +1691,7 @@ var FileManager = new Class({
 		// set history
 		if (typeof jsGET !== 'undefined' && this.storeHistory && j.dir.mime === 'text/directory')
 		{
-			jsGET.set({'fmPath':j.path});
+			jsGET.set({'fmPath': j.path});
 		}
 
 		this.CurrentPath = this.normalize(this.root + this.Directory);
@@ -1831,6 +1959,21 @@ var FileManager = new Class({
 		// and another, ALMOST identical, loop to render the files. Note that these buggers have their own peculiarities... and make sure the index is adjusted to point into files[]
 		var dir_count = j.dirs.length;
 
+// Partikule
+// Add of the thumbnail list in the preview panel
+// Perhaps not the good place to add it...
+// - One doubleclick on one thumb in this list will select the file : quicker select
+// - One click displays the preview, but with the file in bigger format : less clicks to see the picture wider.
+
+		// define timer, for dblclick event.
+		var timer = null;
+
+		// Thumbs list container (in preview panel)
+		var filelist = new Element('div', {'class': 'filemanager-filelist'});
+		this.preview.adopt(filelist);
+
+// /Partikule
+
 		// skip files[] rendering, when the startindex still points inside dirs[]  ~  too many directories to fit any files on this page!
 		if (idx >= dir_count)
 		{
@@ -2069,6 +2212,37 @@ var FileManager = new Class({
 						this.onShow = false;
 					}
 				}
+
+
+// Partikule
+// Thumbs list
+
+				// Thumb container
+				var thumb = new Element('div', {'class': 'thumb ' + file.icon}).setStyles({
+					'width': self.options.thumbSize + 'px',
+					'height': self.options.thumbSize + 'px'
+				});
+
+				// Thumb background : Picture thumb or large icon of the file type
+				thumb.setStyle('background-image', 'url(' + file.thumbnail +')');
+
+				var domfile = new Element('div', {'class': 'file'}).adopt([
+					thumb,
+					new Element('div', {'class': 'name'}).setStyle('width', self.options.thumbSize).set('text', file.name)
+				]).store('file', file).addEvents(
+				{
+					'click': function(){
+						clearTimeout(timer);
+				        timer = self.relayClick.delay(500, domfile);
+					},
+					'dblclick': function(){
+						clearTimeout(timer);
+						timer = self.relayDblClick.delay(0, domfile);
+					}
+				});
+
+				domfile.inject(filelist);
+// / Partikule
 			}
 		}
 

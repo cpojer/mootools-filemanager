@@ -49,6 +49,10 @@ if (!session_start()) die('session_start() failed');
 </head>
 <body>
 <div id="content" class="content">
+	<div class="go_home">
+	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
+	</div>
+
   <h1>FileManager Backend Tests</h1>
 
   <h2>Basic PHP tests</h2>
