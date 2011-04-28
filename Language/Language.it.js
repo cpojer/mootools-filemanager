@@ -47,6 +47,7 @@ FileManager.Language.it = {
 
 	toggle_side_boxes: 'Thumbnail view',
 	toggle_side_list: 'List view',
+	show_dir_thumb_gallery: 'Show thumbnails of the files in the preview pane',
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
