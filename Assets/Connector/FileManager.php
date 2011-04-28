@@ -677,7 +677,7 @@ class MTFMCacheItem
 
 	public function load()
 	{
-		if (!$this->loaded && 0)
+		if (!$this->loaded)
 		{
 			$this->loaded = true; // always mark as loaded, even when the load fails
 			
@@ -695,8 +695,11 @@ class MTFMCacheItem
 					&& $statdata[7]  == $this->fstat[7]   // size
 				   )
 				{
-					// mix disk cache data with items already existing in RAM cache: we use a delayed-load scheme which necessitates this.
-					$this->store = array_merge($data, $this->store);
+					if (!DEVELOPMENT)
+					{
+						// mix disk cache data with items already existing in RAM cache: we use a delayed-load scheme which necessitates this.
+						$this->store = array_merge($data, $this->store);
+					}
 				}
 				else
 				{
@@ -758,7 +761,7 @@ class MTFMCacheItem
 	
 	public function __destruct()
 	{
-		if ($this->dirty && 0)
+		if ($this->dirty)
 		{
 			// store data to persistent storage:
 			if (!$this->mkCacheDir() && !$this->loaded)
@@ -5142,6 +5145,12 @@ class EmbeddedImageContainer
 		$this->imagedata = $img;
 		$this->id3_procsupport_obj = true;
 	}
+
+	public static function __set_state($arr)
+	{
+		$obj = new EmbeddedImageContainer($arr['metadata'], $arr['imagedata']);
+		return $obj;
+	}
 }
 
 class BinaryDataContainer
@@ -5155,6 +5164,12 @@ class BinaryDataContainer
 		$this->binarydata_mode = $mode;
 		$this->binarydata = $data;
 		$this->id3_procsupport_obj = true;
+	}
+
+	public static function __set_state($arr)
+	{
+		$obj = new BinaryDataContainer($arr['binarydata'], $arr['binarydata_mode']);
+		return $obj;
 	}
 }
 
