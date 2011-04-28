@@ -28,8 +28,8 @@ session_write_close();
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<link rel="stylesheet" href="demos.css" type="text/css" />
 
-	<script type="text/javascript" src="../../../../../lib/includes/js/mootools-core.js"></script>
-	<script type="text/javascript" src="../../../../../lib/includes/js/mootools-more.js"></script>
+	<script type="text/javascript" src="mootools-core.js"></script>
+	<script type="text/javascript" src="mootools-more.js"></script>
 
 	<script type="text/javascript" src="../Source/FileManager.js"></script>
 	<script type="text/javascript" src="../Source/Gallery.js"></script>
