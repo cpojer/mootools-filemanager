@@ -70,7 +70,7 @@ FileManager.Language.de = {
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.resize_inerr': 'This file could not be resized due to an internal error.',
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
-	'backend.delete_thumbnail_failed': 'An error occurred when attempting to delete the image thumbnail',
+	'backend.delete_cache_entries_failed': 'An error occurred when attempting to delete the item cache (thumbnails, metadata)',
 	'backend.mkdir_failed': 'An error occurred when attempting to create the directory: ', // path
 	'backend.move_failed': 'An error occurred while moving / renaming the file / directory: ', // oldlocalpath : newlocalpath
 	'backend.path_tampering': 'Path tampering detected.',

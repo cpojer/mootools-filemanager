@@ -18,7 +18,7 @@ if (!defined('SITE_USES_ALIASES')) define('SITE_USES_ALIASES', 0);
 
 
 
-if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 01);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
+if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 0);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
 
 
 
@@ -470,7 +470,7 @@ function mkNewFileManager($options = null)
 
 			// FileManagerWithAliasSupport-specific options:
 			'Aliases' => $Aliases,
-			//'RequestScriptURI' => strtr($_SERVER['SCRIPT_NAME'], '\\', '/')   // or whatever URL you fancy. As long as the run-time ends up invoking the $browser class instantiated below on each request
+			'RequestScriptURI' => strtr($_SERVER['SCRIPT_NAME'], '\\', '/')   // or whatever URL you fancy. As long as the run-time ends up invoking the $browser class instantiated below on each request
 	), (is_array($options) ? $options : array()));
 
 	if (SITE_USES_ALIASES)
@@ -700,7 +700,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 	if (empty($_SESSION['FileManager']) || $_SESSION['FileManager'] !== 'DemoMagick')
 	{
 		session_write_close();
-		throw new FileManagerException('authorized: The session is illegal, as it does not the mandatory magic value set up by the demo entry pages.');
+		throw new FileManagerException('authorized: The session is illegal, as it does not contain the mandatory magic value set up by the demo entry pages.');
 		return false;
 	}
 
@@ -736,10 +736,6 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		break;
 
 	case 'detail':
-		$rv = true;
-		break;
-
-	case 'thumbnail':
 		/*
 		 * For the demo, we deny generation of thumbnails for images in a certain size range: 500KB - 2MB, jpeg only.
 		 *

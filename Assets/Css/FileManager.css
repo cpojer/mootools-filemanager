@@ -846,8 +846,12 @@ div.filemanager-gallery ul li {
 
 div.filemanager-gallery ul li span.gallery-image {
   padding: 2px;
+  /*
   width: 75px;
   height: 56px;
+  
+  -- see comment in Gallery.js; these are set up there as getSize() won't deliver these (it delivers actual size, and that's different for this one)
+  */
   cursor: pointer;
 }
 
@@ -859,8 +863,8 @@ div.filemanager-gallery ul li span.gallery-image img {
 
 div.filemanager-gallery ul li img.filemanager-remove {
   position: absolute;
-  right: -5px;
-  top: -5px;
+  right: -2px; /* place the red X inside the li entirely; otherwise the adjacent image may partly obscure it */
+  top: -1px;
   width: 16px;
   height: 16px;
 }
@@ -868,8 +872,8 @@ div.filemanager-gallery ul li img.filemanager-remove {
 div.filemanager-wrapper {
   position: absolute;
   /* z-index: 1020; */
-  width: 222px;
-  height: 250px;
+  width: 272px;
+  height: 350px;
 
   font-family: Tahoma, sans-serif;
   font-size: 12px;
@@ -884,8 +888,8 @@ div.filemanager-wrapper {
 }
 
 div.filemanager-wrapper div.img {
-  width: 210px;
-  height: 160px;
+  width: 260px;
+  height: 260px;
   margin: 5px;
 
   border: 1px solid #bebebe;
@@ -899,7 +903,7 @@ div.filemanager-wrapper span {
 }
 
 div.filemanager-wrapper input {
-  width: 210px;
+  width: 260px;
   margin: 3px 5px 0;
 
   border: 1px solid #bebebe;

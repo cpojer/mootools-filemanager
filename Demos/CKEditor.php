@@ -89,6 +89,8 @@ session_write_close();
   /* ]]> */
   </script>
   
+  <link rel="stylesheet" href="demos.css" type="text/css" />
+  
   <style type="text/css">
   body {
     overflow: hidden;

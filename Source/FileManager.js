@@ -21,6 +21,7 @@ var FileManager = new Class({
 	Implements: [Options, Events],
 
 	Request: null,
+	RequestQueue: null,
 	Directory: null,
 	Current: null,
 	ID: null,
@@ -29,13 +30,13 @@ var FileManager = new Class({
 		/*
 		 * onComplete: function(           // Fired when the 'Select' button is clicked
 		 *                      path,      // URLencoded absolute URL path to selected file
-		 *                      file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+		 *                      file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 		 *                      fmobj      // reference to the FileManager instance which fired the event
 		 *                     ){},
 		 *
 		 * onModify: function(             // Fired when either the 'Rename' or 'Delete' icons are clicked or when a file is drag&dropped.
 		 *                                 // Fired AFTER the action is executed.
-		 *                    file,        // a CLONE of the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+		 *                    file,        // a CLONE of the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 		 *                    json,        // The JSON data as sent by the server for this 'destroy/rename/move/copy' request
 		 *                    mode,        // string specifying the action: 'destroy', 'rename', 'move', 'copy'
 		 *                    fmobj        // reference to the FileManager instance which fired the event
@@ -91,13 +92,7 @@ var FileManager = new Class({
 		styles: {},
 		listPaginationSize: 100,          // add pagination per N items for huge directories (speed up interaction)
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
-		propagateData: {},                // extra query parameters sent with every request to the backend
-		propagateType: 'GET',             // either POST or GET
-
-		isDirectImageURL: function(url)	  // override this one when the '.php?' check doesn't work for you; done as a function so you can use any suitable logic to check the URL
-		{
-			return (url.indexOf('.php?') != -1);
-		}
+		propagateData: {}                 // extra query parameters sent with every request to the backend
 	},
 
 	/*
@@ -129,11 +124,17 @@ var FileManager = new Class({
 		this.view_fill_json = null;      // the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly consulting the server.
 		this.listPaginationLastSize = this.options.listPaginationSize;
 		this.Request = null;
-		this._downloadIframe = null;
-		this._downloadForm = null;
+		this.downloadIframe = null;
+		this.downloadForm = null;
 		this.drag_is_active = false;
 		this.ctrl_key_pressed = false;
 		this.pending_error_dialog = null;
+
+		this.RequestQueue = new Request.Queue({
+			concurrent: 3,				// 3 --> 75% max load on a quad core server
+			autoAdvance: true,
+			stopOnFailure: false
+		});
 
 		this.language = Object.clone(FileManager.Language.en);
 		if (this.options.language !== 'en') {
@@ -393,7 +394,7 @@ var FileManager = new Class({
 			showDelay: 50,
 			hideDelay: 50,
 			onShow: function(){
-				this.tip.setStyle('z-index', self.options.zIndex + 201).set('tween', {duration: 'short'}).setStyle('display', 'block').fade(1);
+				this.tip.setStyle('z-index', self.options.zIndex + 501).set('tween', {duration: 'short'}).setStyle('display', 'block').fade(1);
 			},
 			onHide: function(){
 				this.tip.fade(0).get('tween').chain(function(){
@@ -408,7 +409,7 @@ var FileManager = new Class({
 			'class': 'browser-add',
 			styles:
 			{
-				'z-index': this.options.zIndex + 2000
+				'z-index': this.options.zIndex + 1600
 			}
 		}).set('opacity', 0).set('tween', {duration: 'short'}).inject(this.container);
 
@@ -618,7 +619,14 @@ var FileManager = new Class({
 			if (typeof jsGET !== 'undefined') jsGET.set('fmListType=list');
 		}
 		this.diag.log('on toggleList dir = ', this.Directory, e);
-		this.load(this.Directory);
+		//this.load(this.Directory);
+
+		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+		//this.reset_view_fill_store();
+		clearTimeout(this.view_fill_timer);
+		this.view_fill_timer = null;
+
+		this.fill(null, this.get_view_fill_startindex(), this.listPaginationLastSize);
 	},
 
 	/*
@@ -809,7 +817,7 @@ var FileManager = new Class({
 		var file = this.Current.retrieve('file');
 		this.fireEvent('complete', [
 			file.path, //this.escapeRFC3986(this.normalize('/' + this.root + file.dir + file.name)), // the absolute URL for the selected file, rawURLencoded
-			file,                 // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+			file,                 // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 			this
 		]);
 		this.hide();
@@ -832,40 +840,41 @@ var FileManager = new Class({
 		}
 
 		// discard old iframe, if it exists:
-		if (this._downloadIframe)
+		if (this.downloadIframe)
 		{
-			// remove fro the menu (dispose) and trash it (destroy)
-			this._downloadIframe.dispose().destroy();
-			this._downloadIframe = null;
+			// remove from the menu (dispose) and trash it (destroy)
+			this.downloadIframe.dispose().destroy();
+			this.downloadIframe = null;
 		}
-		if (this._downloadForm)
+		if (this.downloadForm)
 		{
-			// remove fro the menu (dispose) and trash it (destroy)
-			this._downloadForm.dispose().destroy();
-			this._downloadForm = null;
-		}
-
-		this._downloadIframe = (new IFrame).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});
-		this.menu.adopt(this._downloadIframe);
-
-		this._downloadForm = new Element('form', {target: '_downloadIframe', method: 'post'});
-		this.menu.adopt(this._downloadForm);
-
-		if (this.options.propagateType === 'POST')
-		{
-			var self = this;
-			Object.each(this.options.propagateData, function(v, k) {
-				self._downloadForm.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
-			});
+			// remove from the menu (dispose) and trash it (destroy)
+			this.downloadForm.dispose().destroy();
+			this.downloadForm = null;
 		}
 
-		this._downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (this.options.propagateType === 'GET' ? this.options.propagateData : {}), {
-			event: 'download',
-			file: this.normalize(file.dir + file.name),
-			filter: this.options.filter
-		  }));
+		this.downloadIframe = (new IFrame()).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});
+		this.menu.adopt(this.downloadIframe);
 
-		return this._downloadForm.submit();
+		this.downloadForm = new Element('form', {target: '_downloadIframe', method: 'post', enctype: 'multipart/form-data'});
+		this.menu.adopt(this.downloadForm);
+
+		Object.each(Object.merge(	{},
+									this.options.propagateData,
+									{
+										file: this.normalize(file.dir + file.name),
+										filter: this.options.filter
+									}),
+					function(v, k)
+					{
+						this.downloadForm.adopt((new Element('input')).set({type: 'hidden', name: k, value: v}));
+					}.bind(this));
+
+		this.downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString({
+			event: 'download'
+		  });
+
+		return this.downloadForm.submit();
 	},
 
 	create_on_click: function(e) {
@@ -885,7 +894,7 @@ var FileManager = new Class({
 			content: [
 				input
 			],
-			zIndex: this.options.zIndex + 1000,
+			zIndex: this.options.zIndex + 900,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: (function() {
 				input.removeEvent('keyup', click_ok_f);
@@ -908,7 +917,6 @@ var FileManager = new Class({
 					data: {
 						file: input.get('value'),
 						directory: this.Directory,
-						type: this.listType,
 						filter: this.options.filter
 					},
 					onRequest: function(){},
@@ -977,7 +985,6 @@ var FileManager = new Class({
 			})),
 			data: {
 				directory: dir,
-				type: this.listType,
 				filter: this.options.filter,
 				file_preselect: (preselect || '')
 			},
@@ -1064,7 +1071,6 @@ var FileManager = new Class({
 				directory: this.Directory,
 				filter: this.options.filter
 			},
-			fmErrDefaultMsg: this.language.nodestroy,
 			onRequest: function(){},
 			onSuccess: (function(j) {
 				if (!j || !j.status) {
@@ -1134,7 +1140,7 @@ var FileManager = new Class({
 					confirm: this.language.destroy,
 					decline: this.language.cancel
 				},
-				zIndex: this.options.zIndex + 1000,
+				zIndex: this.options.zIndex + 900,
 				onOpen: this.onDialogOpen.bind(this),
 				onClose: this.onDialogClose.bind(this),
 				onConfirm: (function() {
@@ -1158,7 +1164,7 @@ var FileManager = new Class({
 			content: [
 				input
 			],
-			zIndex: this.options.zIndex + 1000,
+			zIndex: this.options.zIndex + 900,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
 			onShow: (function(){
@@ -1649,7 +1655,7 @@ var FileManager = new Class({
 				var pagecnt = Math.ceil(j_item_count / pagesize);
 				var curpagno = Math.floor(startindex / pagesize) + 1;
 
-				this.browser_paging_info.set('text', 'P:' + curpagno);
+				this.browser_paging_info.set('text', '' + curpagno + '/' + pagecnt);
 
 				if (curpagno > 1)
 				{
@@ -1771,15 +1777,11 @@ var FileManager = new Class({
 
 			file.dir = j.path;
 
-			//// generate unique id
-			//var newDate = new Date;
-			//uniqueId = newDate.getTime();
-
-			this.diag.log('thumbnail: "' + file.thumbnail + '"');
-			//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
+			this.diag.log('thumbnail: "' + file.thumb48 + '"');
+			//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumb48 /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumb48);
 
 			// This is just a raw image
-			el = this.list_row_maker(file.thumbnail, file);
+			el = this.list_row_maker((this.listType === 'thumb' ? (file.thumb48 ? file.thumb48 : file.icon48) : file.icon), file);
 
 			this.diag.log('add DIRECTORY click event to ' + file.name);
 			el.addEvent('click', (function(e) {
@@ -1859,19 +1861,15 @@ var FileManager = new Class({
 
 				file.dir = j.path;
 
-				//// generate unique id
-				//var newDate = new Date;
-				//uniqueId = newDate.getTime();
+				this.diag.log('thumbnail: "' + file.thumb48 + '"');
+				//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumb48 /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumb48);
 
-				this.diag.log('thumbnail: "' + file.thumbnail + '"');
-				//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
-
-				if (!this.options.isDirectImageURL(file.thumbnail))
+				if (file.thumb48 || this.listType !== 'thumb' || !file.thumbs_deferred)
 				{
 					// This is just a raw image
-					el = this.list_row_maker(file.thumbnail, file);
+					el = this.list_row_maker((this.listType === 'thumb' ? (file.thumb48 ? file.thumb48 : file.icon48) : file.icon), file);
 				}
-				else if (this.options.propagateType === 'POST')
+				else	// thumbs_deferred...
 				{
 					// We must AJAX POST our propagateData, so we need to do the post and take the url to the
 					// thumbnail from the post results.
@@ -1881,28 +1879,43 @@ var FileManager = new Class({
 					// actually returning the binary image data, thus the iframe contents becoming the thumbnail image.
 
 					el = (function(file) {           // Closure
-						var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
-						var list_row = this.list_row_maker(null, file);
+						var iconpath = this.assetBasePath + 'Images/Icons/Large/default-error.png';
+						var list_row = this.list_row_maker(file.icon48, file);
 
-						new FileManager.Request({
-							url: file.thumbnail,
+						var req = new FileManager.Request({
+							url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
+								//event: 'thumbnail'
+								event: 'detail'
+							})),
 							data: {
-								asJSON: 1
+								directory: file.dir,
+								file: file.name,
+								filter: this.options.filter,
+								mode: 'direct'
 							},
 							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
 							onRequest: function(){},
 							onSuccess: (function(j) {
-								if (!j || !j.status)
+								if (!j || !j.status || !j.thumb48)
 								{
-									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
-								}
-								else if (j && j.thumbnail)
-								{
-									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + j.thumbnail + ')');
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + (j.icon48 ? j.icon48 : iconpath) + ')');
 								}
 								else
 								{
-									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + j.thumb48 + ')');
+								}
+
+								// update the stored json for this file as well:
+								file = Object.merge(file, j);
+
+								delete file.thumbs_deferred;
+								delete file.error;
+								delete file.status;
+								delete file.content;
+
+								if (file.element)
+								{
+									file.element.store('file', file);
 								}
 							}).bind(this),
 							onError: (function(text, error) {
@@ -1911,15 +1924,13 @@ var FileManager = new Class({
 							onFailure: (function(xmlHttpRequest) {
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this)
-						}, this).send();
+						}, this);
+
+						this.RequestQueue.addRequest(String.uniqueID(), req);
+						req.send();
 
 						return list_row;
 					}).bind(this)(file);
-				}
-				else
-				{
-					// If we are using GET, append the data to the url
-					el = this.list_row_maker(file.thumbnail + '&' + Object.toQueryString(this.options.propagateData), file);
 				}
 
 				/*
@@ -2102,7 +2113,7 @@ var FileManager = new Class({
 					this.diag.log('draggable:onBeforeStart');
 					var position = el.getPosition();
 					el.addClass('drag').setStyles({
-						'z-index': this.options.zIndex + 1300,
+						'z-index': this.options.zIndex + 1500,
 						'position': 'absolute',
 						'width': el.getWidth() - el.getStyle('paddingLeft').toInt() - el.getStyle('paddingRight').toInt(),
 						'left': position.x,
@@ -2466,21 +2477,6 @@ var FileManager = new Class({
 						this.previewLoader.dispose();
 					}).bind(this));
 
-					if (prev) {
-						prev.addEvent('load', function(){
-							// when the thumb250 image has loaded, remove the loader animation in the background ...
-							//this.setStyle('background', 'none');
-							// ... AND blow away the encoded 'width' and 'height' styles: after all, the thumb250 generation MAY have failed.
-							// In that case, an icon is produced by the backend, but it will have different dimensions, and we don't want to
-							// distort THAT one, either.
-							this.setStyles({
-								'background': 'none',
-								'width': '',
-								'height': ''
-							});
-						});
-					}
-
 					var els = this.preview.getElements('button');
 					if (els) {
 						els.addEvent('click', function(e){
@@ -2489,27 +2485,129 @@ var FileManager = new Class({
 						});
 					}
 
-					// Xinha: We need to add in a form for setting the attributes of images etc,
-					// so we add this event and pass it the information we have about the item
-					// as returned by Backend/FileManager.php
-					this.fireEvent('details', [j, this]);
+					if (prev && !j.thumb250 && j.thumbs_deferred)
+					{
+						var iconpath = this.assetBasePath + 'Images/Icons/Large/default-error.png';
 
-					// We also want to hold onto the data so we can access it later on,
-					// e.g. when selecting the image.
+						if (0)
+						{
+							prev.set('src', iconpath);
+							prev.setStyles({
+								'width': '',
+								'height': '',
+								'background': 'none'
+							});
+						}
 
-					// now mix with the previously existing 'file' info (as produced by a 'view' run):
-					file = Object.merge(file, j);
-					// remove unwanted JSON elements:
-					delete file.status;
-					delete file.error;
-					delete file.content;
+						var req = new FileManager.Request({
+							url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
+								//event: 'thumbnail'
+								event: 'detail'
+							})),
+							data: {
+								directory: dir,
+								file: file.name,
+								filter: this.options.filter,
+								mode: 'direct'
+							},
+							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
+							onRequest: function(){},
+							onSuccess: (function(j) {
+								var img_url = (j.icon48 ? j.icon48 : iconpath);
+								if (j && j.status && j.thumb250)
+								{
+									img_url = j.thumb250;
+								}
 
-					if (file.element) {
-						file.element.store('file', file);
+								prev.set('src', img_url);
+								prev.addEvent('load', function(){
+									// when the thumb250 image has loaded, remove the loader animation in the background ...
+									//this.setStyle('background', 'none');
+									// ... AND blow away the encoded 'width' and 'height' styles: after all, the thumb250 generation MAY have failed.
+									// In that case, an icon is produced by the backend, but it will have different dimensions, and we don't want to
+									// distort THAT one, either.
+									this.setStyles({
+										'width': '',
+										'height': '',
+										'background': 'none'
+									});
+								});
+
+								// Xinha: We need to add in a form for setting the attributes of images etc,
+								// so we add this event and pass it the information we have about the item
+								// as returned by Backend/FileManager.php
+								this.fireEvent('details', [j, this]);
+
+								// update the stored json for this file as well:
+
+								// now mix with the previously existing 'file' info (as produced by a 'view' run):
+								file = Object.merge(file, j);
+
+								// remove unwanted JSON elements:
+								delete file.thumbs_deferred;
+								delete file.status;
+								delete file.error;
+								delete file.content;
+
+								if (file.element)
+								{
+									file.element.store('file', file);
+								}
+
+								if (typeof milkbox !== 'undefined')
+								{
+									milkbox.reloadPageGalleries();
+								}
+							}).bind(this),
+							onError: (function(text, error) {
+								prev.set('src', iconpath);
+								prev.setStyles({
+									'width': '',
+									'height': '',
+									'background': 'none'
+								});
+							}).bind(this),
+							onFailure: (function(xmlHttpRequest) {
+								prev.set('src', iconpath);
+								prev.setStyles({
+									'width': '',
+									'height': '',
+									'background': 'none'
+								});
+							}).bind(this)
+						}, this);
+
+						this.RequestQueue.addRequest(String.uniqueID(), req);
+						req.send();
 					}
+					else
+					{
+						// Xinha: We need to add in a form for setting the attributes of images etc,
+						// so we add this event and pass it the information we have about the item
+						// as returned by Backend/FileManager.php
+						this.fireEvent('details', [j, this]);
 
-					if (typeof milkbox !== 'undefined') {
-						milkbox.reloadPageGalleries();
+						// We also want to hold onto the data so we can access it later on,
+						// e.g. when selecting the image.
+
+						// now mix with the previously existing 'file' info (as produced by a 'view' run):
+						file = Object.merge(file, j);
+
+						// remove unwanted JSON elements:
+						delete file.thumbs_deferred;
+						delete file.status;
+						delete file.error;
+						delete file.content;
+
+						if (file.element)
+						{
+							file.element.store('file', file);
+						}
+
+						if (typeof milkbox !== 'undefined')
+						{
+							milkbox.reloadPageGalleries();
+						}
 					}
 				}).bind(this),
 				onError: (function(text, error) {
@@ -2529,8 +2627,12 @@ var FileManager = new Class({
 		});
 
 		$(appearOn).addEvents({
-			mouseenter: (function(){this.set('opacity',opacity[0]);}).bind(icon),
-			mouseleave: (function(){this.set('opacity',opacity[1]);}).bind(icon)
+			mouseenter: (function(){
+							this.set('opacity', opacity[0]);
+						}).bind(icon),
+			mouseleave: (function(){
+							this.set('opacity', opacity[1]);
+						}).bind(icon)
 		});
 		return icon;
 	},
@@ -2553,7 +2655,10 @@ var FileManager = new Class({
 		els.push(this.menu.getElement('button.filemanager-open'));
 		els.push(this.menu.getElement('button.filemanager-download'));
 		els.each(function(el){
-			if (el) el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
+			if (el)
+			{
+				el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
+			}
 		});
 	},
 
@@ -2563,13 +2668,37 @@ var FileManager = new Class({
 			'class': 'filemanager-' + name,
 			text: this.language[name]
 		}).inject(this.menu, 'top');
-		if (this[name+'_on_click']) el.addEvent('click', this[name+'_on_click'].bind(this));
+
+		if (this[name+'_on_click'])
+		{
+			el.addEvent('click', this[name+'_on_click'].bind(this));
+		}
 		return el;
 	},
 
 	// clear the view chunk timer, erase the JSON store but do NOT reset the pagination to page 0:
 	// we may be reloading and we don't want to destroy the page indicator then!
 	reset_view_fill_store: function(j)
+	{
+		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
+		if (this.view_fill_json)
+		{
+			// make sure the old 'fill' run is aborted ASAP: clear the old files[] array to break
+			// the heaviest loop in fill:
+			this.view_fill_json.files = [];
+			this.view_fill_json.dirs = [];
+		}
+
+		this.reset_fill();
+
+		this.view_fill_json = ((j && j.status) ? j : null);      // clear out the old JSON data and set up possibly new data.
+		// ^^^ the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly
+		//     consulting the server. The server doesn't need to know we're so slow we need pagination now! ;-)
+	},
+
+
+	// clear the view chunk timer only. We are probably redrawing the list view!
+	reset_fill: function()
 	{
 		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
 		this.browser_dragndrop_info.fade(0.5);
@@ -2584,18 +2713,6 @@ var FileManager = new Class({
 		// abort any still running ('antiquated') fill chunks:
 		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
-
-		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
-		if (this.view_fill_json)
-		{
-			// make sure the old 'fill' run is aborted ASAP: clear the old files[] array to break
-			// the heaviest loop in fill:
-			this.view_fill_json.files = [];
-			this.view_fill_json.dirs = [];
-		}
-		this.view_fill_json = ((j && j.status) ? j : null);      // clear out the old JSON data and set up possibly new data.
-		// ^^^ the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly
-		//     consulting the server. The server doesn't need to know we're so slow we need pagination now! ;-)
 	},
 
 	store_view_fill_startindex: function(idx)
@@ -2680,7 +2797,7 @@ var FileManager = new Class({
 			content: [
 				textOrElement
 			],
-			zIndex: this.options.zIndex + 1000,
+			zIndex: this.options.zIndex + 950,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this)
 		});
@@ -2750,35 +2867,26 @@ FileManager.Request = new Class({
 	options:
 	{
 		secure:          true, // Isn't this true by default anyway in REQUEST.JSON?
-		fmDisplayErrors: true, // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
-		fmErrDefaultMsg: ''
+		fmDisplayErrors: true  // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
 	},
 
 	initialize: function(options, filebrowser){
 		this.parent(options);
 
-		if (filebrowser.options.propagateType === 'GET')
-		{
-			this.options.url += (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(filebrowser.options.propagateData);
-		}
-		else
-		{
-			this.options.data = Object.merge({}, filebrowser.options.propagateData, this.options.data);
-		}
+		this.options.data = Object.merge({}, filebrowser.options.propagateData, this.options.data);
 
 		if (this.options.fmDisplayErrors)
 		{
 			this.addEvents({
 				success: function(j)
 				{
-					var emsg = ('' + this.options.fmErrDefaultMsg).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g);
 					if (!j)
 					{
-						filebrowser.showError(emsg);
+						filebrowser.showError();
 					}
 					else if (!j.status)
 					{
-						filebrowser.showError((emsg ? emsg + ' ' : '') + ('' + j.error).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g));
+						filebrowser.showError(('' + j.error).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g));
 					}
 				}.bind(this),
 
