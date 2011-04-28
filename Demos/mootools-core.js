@@ -195,7 +195,7 @@ var implement = function(name, method){
 		if (typeOf(hook) == 'type') implement.call(hook, name, method);
 		else hook.call(this, name, method);
 	}
-	
+
 	var previous = this.prototype[name];
 	if (previous == null || !previous.$protected) this.prototype[name] = method;
 
@@ -529,13 +529,7 @@ provides: Array
 
 Array.implement({
 
-	invoke: function(methodName){
-		var args = Array.slice(arguments, 1);
-		return this.map(function(item){
-			return item[methodName].apply(item, args);
-		});
-	},
-
+	/*<!ES5>*/
 	every: function(fn, bind){
 		for (var i = 0, l = this.length; i < l; i++){
 			if ((i in this) && !fn.call(bind, this[i], i, this)) return false;
@@ -549,12 +543,6 @@ Array.implement({
 			if ((i in this) && fn.call(bind, this[i], i, this)) results.push(this[i]);
 		}
 		return results;
-	},
-
-	clean: function(){
-		return this.filter(function(item){
-			return item != null;
-		});
 	},
 
 	indexOf: function(item, from){
@@ -578,6 +566,20 @@ Array.implement({
 			if ((i in this) && fn.call(bind, this[i], i, this)) return true;
 		}
 		return false;
+	},
+	/*</!ES5>*/
+
+	clean: function(){
+		return this.filter(function(item){
+			return item != null;
+		});
+	},
+
+	invoke: function(methodName){
+		var args = Array.slice(arguments, 1);
+		return this.map(function(item){
+			return item[methodName].apply(item, args);
+		});
 	},
 
 	associate: function(keys){
@@ -862,20 +864,22 @@ Function.implement({
 		try {
 			return this.apply(bind, Array.from(args));
 		} catch (e){}
-		
+
 		return null;
 	},
 
+	/*<!ES5>*/
 	bind: function(bind){
 		var self = this,
 			args = (arguments.length > 1) ? Array.slice(arguments, 1) : null;
-		
+
 		return function(){
 			if (!args && !arguments.length) return self.call(bind);
 			if (args && arguments.length) return self.apply(bind, args.concat(Array.from(arguments)));
 			return self.apply(bind, args || arguments);
 		};
 	},
+	/*</!ES5>*/
 
 	pass: function(args, bind){
 		var self = this;
@@ -1317,12 +1321,13 @@ Document.mirror(function(name, method){
 });
 
 document.html = document.documentElement;
-document.head = document.getElementsByTagName('head')[0];
+if (!document.head) document.head = document.getElementsByTagName('head')[0];
 
 if (document.execCommand) try {
 	document.execCommand("BackgroundImageCache", false, true);
 } catch (e){}
 
+/*<ltIE9>*/
 if (this.attachEvent && !this.addEventListener){
 	var unloadEvent = function(){
 		this.detachEvent('onunload', unloadEvent);
@@ -1354,6 +1359,7 @@ try {
 		};
 	});
 }
+/*</ltIE9>*/
 
 //<1.2compat>
 
@@ -1750,7 +1756,7 @@ this.Events = new Class({
 		}, this);
 		return this;
 	},
-	
+
 	removeEvent: function(type, fn){
 		type = removeOn(type);
 		var events = this.$events[type];
@@ -3036,8 +3042,10 @@ var Element = function(tag, props){
 		var attributes = parsed.attributes;
 		if (attributes) for (var i = 0, l = attributes.length; i < l; i++){
 			var attr = attributes[i];
-			if (attr.value != null && attr.operator == '=' && props[attr.key] == null)
-				props[attr.key] = attr.value;
+			if (props[attr.key] != null) continue;
+
+			if (attr.value != null && attr.operator == '=') props[attr.key] = attr.value;
+			else if (!attr.value && !attr.operator) props[attr.key] = true;
 		}
 
 		if (parsed.classList && props['class'] == null) props['class'] = parsed.classList.join(' ');
@@ -3775,11 +3783,12 @@ Element.implement('hasChild', function(element){
 
 });
 
-// IE purge
+/*<ltIE9>*/
 if (window.attachEvent && !window.addEventListener) window.addListener('unload', function(){
 	Object.each(collected, clean);
 	if (window.CollectGarbage) CollectGarbage();
 });
+/*</ltIE9>*/
 
 })();
 
@@ -3815,6 +3824,7 @@ Element.Properties.tag = {
 
 };
 
+/*<ltIE9>*/
 (function(maxLength){
 	if (maxLength != null) Element.Properties.maxlength = Element.Properties.maxLength = {
 		get: function(){
@@ -3823,7 +3833,9 @@ Element.Properties.tag = {
 		}
 	};
 })(document.createElement('input').getAttribute('maxLength'));
+/*</ltIE9>*/
 
+/*<!webkit>*/
 Element.Properties.html = (function(){
 
 	var tableTest = Function.attempt(function(){
@@ -3860,6 +3872,7 @@ Element.Properties.html = (function(){
 
 	return html;
 })();
+/*</!webkit>*/
 
 
 /*
@@ -3957,13 +3970,13 @@ Element.implement({
 		} else if (value == String(Number(value))){
 			value = Math.round(value);
 		}
-		if ((property == 'width' || property == 'height') && value.toString().indexOf('-') >= 0)
+		if ((property === 'width' || property === 'height') && value.toString().indexOf('-') >= 0)
 		{
 			// [i_a] don't set a negative width or height: MSIE6 croaks!
 			this.style[property] = '0px';
 			return this;
 		}
-		else if (property == 'zIndex' && value == 'auto')
+		else if (property === 'zIndex' && value === 'auto')
 		{
 			// [i_a] MSIE6 croaks on this one; set to nil instead
 			this.style[property] = '';
@@ -4577,7 +4590,7 @@ var Fx = this.Fx = new Class({
 		} else {
 			this.frame++;
 		}
-		
+
 		if (this.frame < this.frames){
 			var delta = this.transition(this.frame / this.frames);
 			this.set(this.compute(this.from, this.to, delta));
@@ -4620,7 +4633,7 @@ var Fx = this.Fx = new Class({
 		pushInstance.call(this, fps);
 		return this;
 	},
-	
+
 	stop: function(){
 		if (this.isRunning()){
 			this.time = null;
@@ -4634,7 +4647,7 @@ var Fx = this.Fx = new Class({
 		}
 		return this;
 	},
-	
+
 	cancel: function(){
 		if (this.isRunning()){
 			this.time = null;
@@ -4644,7 +4657,7 @@ var Fx = this.Fx = new Class({
 		}
 		return this;
 	},
-	
+
 	pause: function(){
 		if (this.isRunning()){
 			this.time = null;
@@ -4652,12 +4665,12 @@ var Fx = this.Fx = new Class({
 		}
 		return this;
 	},
-	
+
 	resume: function(){
 		if ((this.frame < this.frames) && !this.isRunning()) pushInstance.call(this, this.options.fps);
 		return this;
 	},
-	
+
 	isRunning: function(){
 		var list = instances[this.options.fps];
 		return list && list.contains(this);
@@ -5228,7 +5241,7 @@ var Request = this.Request = new Class({
 		xhr.onreadystatechange = empty;
 		if (progressSupport) xhr.onprogress = xhr.onloadstart = empty;
 		clearTimeout(this.timer);
-		
+
 		this.response = {text: this.xhr.responseText || '', xml: this.xhr.responseXML};
 		if (this.options.isSuccess.call(this, this.status))
 			this.success(this.response.text, this.response.xml);
@@ -5265,15 +5278,15 @@ var Request = this.Request = new Class({
 	onFailure: function(){
 		this.fireEvent('complete').fireEvent('failure', this.xhr);
 	},
-	
+
 	loadstart: function(event){
 		this.fireEvent('loadstart', [event, this.xhr]);
 	},
-	
+
 	progress: function(event){
 		this.fireEvent('progress', [event, this.xhr]);
 	},
-	
+
 	timeout: function(){
 		this.fireEvent('timeout', this.xhr);
 	},
@@ -5297,7 +5310,7 @@ var Request = this.Request = new Class({
 		}
 		return false;
 	},
-	
+
 	send: function(options){
 		if (!this.check(options)) return this;
 
@@ -5333,7 +5346,7 @@ var Request = this.Request = new Class({
 		}
 
 		if (!url) url = document.location.pathname;
-		
+
 		var trimPosition = url.lastIndexOf('/');
 		if (trimPosition > -1 && (trimPosition = url.indexOf('#')) > -1) url = url.substr(0, trimPosition);
 
@@ -5353,7 +5366,7 @@ var Request = this.Request = new Class({
 
 		xhr.open(method.toUpperCase(), url, this.options.async, this.options.user, this.options.password);
 		if (this.options.user && 'withCredentials' in xhr) xhr.withCredentials = true;
-		
+
 		xhr.onreadystatechange = this.onStateChange.bind(this);
 
 		Object.each(this.headers, function(value, key){
@@ -5752,7 +5765,7 @@ var domready = function(){
 	if (ready) return;
 	Browser.loaded = ready = true;
 	document.removeListener('DOMContentLoaded', domready).removeListener('readystatechange', check);
-	
+
 	document.fireEvent('domready');
 	window.fireEvent('domready');
 };

@@ -29,7 +29,7 @@ provides: [MooTools.More]
 
 MooTools.More = {
 	'version': '1.3.1.2dev',
-	'build': 'd847456e5bdcb0fd5669628e9101087b68e93d0d'
+	'build': 'e586bcd2496e9b22acfde32e12f84d49ce09e59d'
 };
 
 
@@ -2671,9 +2671,9 @@ var formObserver = function(eventName){
 				forms = this.retrieve($delegationKey + 'forms', []),
 				target = event.target,
 				form = (target.get('tag') == 'form') ? target : event.target.getParent('form');
-				
+
 			if (!form) return;
-				
+
 			var formEvents = form.retrieve($delegationKey + 'originalFn', []),
 				formListeners = form.retrieve($delegationKey + 'listeners', []),
 				self = this;
@@ -8467,7 +8467,7 @@ var Table = this.Table = function(){
 	this.length = 0;
 	var keys = [],
 	    values = [];
-	
+
 	this.set = function(key, value){
 		var index = keys.indexOf(key);
 		if (index == -1){
@@ -8499,7 +8499,7 @@ var Table = this.Table = function(){
 	this.each = this.forEach = function(fn, bind){
 		for (var i = 0, l = this.length; i < l; i++) fn.call(bind, keys[i], values[i], this);
 	};
-	
+
 };
 
 if (this.Type) new Type('Table', Table);
@@ -9714,7 +9714,7 @@ HtmlTable = Class.refactor(HtmlTable, {
 					clearTimeout(timer);
 					held = false;
 				};
-				
+
 				this.keyboard.addEvents({
 					'keydown:shift+up': move(-1),
 					'keydown:shift+down': move(1),
