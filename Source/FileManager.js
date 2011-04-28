@@ -21,6 +21,7 @@ var FileManager = new Class({
 	Implements: [Options, Events],
 
 	Request: null,
+	RequestQueue: null,
 	Directory: null,
 	Current: null,
 	ID: null,
@@ -29,13 +30,13 @@ var FileManager = new Class({
 		/*
 		 * onComplete: function(           // Fired when the 'Select' button is clicked
 		 *                      path,      // URLencoded absolute URL path to selected file
-		 *                      file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+		 *                      file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 		 *                      fmobj      // reference to the FileManager instance which fired the event
 		 *                     ){},
 		 *
 		 * onModify: function(             // Fired when either the 'Rename' or 'Delete' icons are clicked or when a file is drag&dropped.
 		 *                                 // Fired AFTER the action is executed.
-		 *                    file,        // a CLONE of the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+		 *                    file,        // a CLONE of the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 		 *                    json,        // The JSON data as sent by the server for this 'destroy/rename/move/copy' request
 		 *                    mode,        // string specifying the action: 'destroy', 'rename', 'move', 'copy'
 		 *                    fmobj        // reference to the FileManager instance which fired the event
@@ -91,13 +92,11 @@ var FileManager = new Class({
 		styles: {},
 		listPaginationSize: 100,          // add pagination per N items for huge directories (speed up interaction)
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
-		propagateData: {},                // extra query parameters sent with every request to the backend
-		propagateType: 'GET',             // either POST or GET
+		propagateData: {},                 // extra query parameters sent with every request to the backend
 
-		isDirectImageURL: function(url)	  // override this one when the '.php?' check doesn't work for you; done as a function so you can use any suitable logic to check the URL
-		{
-			return (url.indexOf('.php?') != -1);
-		}
+		standalone: true,					// (boolean). Default to true. If set to false, returns the Filemanager without enclosing window / overlay.
+		parentContainer: null,				// (string). ID of the parent container. If not set, FM will consider its first container parent for fitSizes();
+		hideOnSelect: true					// (boolean). Default to true. If set to false, it leavers the FM open after a picture select.
 	},
 
 	/*
@@ -129,16 +128,33 @@ var FileManager = new Class({
 		this.view_fill_json = null;      // the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly consulting the server.
 		this.listPaginationLastSize = this.options.listPaginationSize;
 		this.Request = null;
-		this._downloadIframe = null;
-		this._downloadForm = null;
+		this.downloadIframe = null;
+		this.downloadForm = null;
 		this.drag_is_active = false;
 		this.ctrl_key_pressed = false;
 		this.pending_error_dialog = null;
+		// timer for dir-gallery click / dblclick events:
+		this.dir_gallery_click_timer = null;
+
+
+		this.RequestQueue = new Request.Queue({
+			concurrent: 3,				// 3 --> 75% max load on a quad core server
+			autoAdvance: true,
+			stopOnFailure: false
+		});
 
 		this.language = Object.clone(FileManager.Language.en);
 		if (this.options.language !== 'en') {
 			this.language = Object.merge(this.language, FileManager.Language[this.options.language]);
 		}
+
+// Partikule
+		if (!this.options.standalone)
+		{
+			this.options.hideOverlay = true;
+			this.options.hideClose = true;
+		}
+// /Partikule
 
 		this.container = new Element('div', {
 			'class': 'filemanager-container' + (Browser.opera ? ' filemanager-engine-presto' : '') + (Browser.ie ? ' filemanager-engine-trident' : '') + (Browser.ie8 ? '4' : '') + (Browser.ie9 ? '5' : ''),
@@ -187,6 +203,16 @@ var FileManager = new Class({
 			}
 		}).bind(this));
 		this.header.adopt(this.pathTitle,this.clickablePath);
+
+// Partikule
+// Because the header is positioned -30px before the container, we hide it for the moment if the FM isn't standalone.
+// Need to think about a better integration
+		if (!this.options.standalone)
+		{
+			this.header.hide();
+			this.filemanager.setStyle('width', '100%');
+		}
+// /Partikule
 
 		var self = this;
 
@@ -278,6 +304,34 @@ var FileManager = new Class({
 			}).set('opacity',1).addEvents({
 				click: this.toggleList.bind(this)
 			});
+
+// Partikule : Thumbs list in preview panel
+	    this.browserMenu_thumbList = new Element('a',{
+				'id': 'show_dir_thumb_gallery',
+				'title': this.language.show_dir_thumb_gallery
+			}).addEvent('click', function()
+			{
+				// do NOT change the jsGET history carrying our browsing so far; the fact we want to view the dirtree should
+				// *NOT* blow away the recall in which directory we are (and what item is currently selected):
+
+				//if (typeof jsGET !== 'undefined')
+				//	jsGET.clear();
+
+				// no need to request the dirscan again: after all, we only wish to render another view of the same directory.
+				// (This means, however, that we MAY requesting any deferred thumbnails)
+
+				//self.load(self.Directory, true);
+				//return self.deselect();   // nothing to return on a click event, anyway. And do NOT loose the selection!
+
+				// the code you need here is identical to clicking on the current directory in the top path bar:
+
+				// show the 'directory' info in the detail pane again (this is a way to get back from previewing single files to previewing the directory as a gallery)
+				this.diag.log('click: fillInfo: current directory!');
+				this.fillInfo();
+			}.bind(this));
+// /Partikule
+
+
 		this.browser_dragndrop_info = new Element('a',{
 				'id':'drag_n_drop',
 				'title': this.language.drag_n_drop_disabled
@@ -310,7 +364,10 @@ var FileManager = new Class({
 				'text': ''
 			});
 		this.browser_paging.adopt([this.browser_paging_first, this.browser_paging_prev, this.browser_paging_info, this.browser_paging_next, this.browser_paging_last]);
-		this.browserheader.adopt([this.browserMenu_thumb, this.browserMenu_list, this.browser_dragndrop_info, this.browser_paging]);
+
+// Partikule : Added the browserMenu_thumbList to the browserheader
+		this.browserheader.adopt([this.browserMenu_thumbList, this.browserMenu_thumb, this.browserMenu_list, this.browser_dragndrop_info, this.browser_paging]);
+// /Partikule
 
 		this.browser = new Element('ul', {'class': 'filemanager-browser'}).inject(this.browserScroll);
 
@@ -331,28 +388,6 @@ var FileManager = new Class({
 			new Element('h1')
 		]);
 
-		// We need to group the headers and lists together because we will
-		// use some CSS to reorganise a bit.  So we create "infoarea" which
-		// will contain the h2 and list for the "Information", that is
-		// modification date, size, directory etc...
-		this.info_area = new Element('div', {
-			'class': 'filemanager-info-area',
-			styles:
-			{
-				opacity: 0
-			}
-		});
-		this.info.adopt([this.info_head, this.info_area.adopt(new Element('h2', {text: this.language.information}))]);
-
-		new Element('dl').adopt([
-			new Element('dt', {text: this.language.modified}),
-			new Element('dd', {'class': 'filemanager-modified'}),
-			new Element('dt', {text: this.language.type}),
-			new Element('dd', {'class': 'filemanager-type'}),
-			new Element('dt', {text: this.language.size}),
-			new Element('dd', {'class': 'filemanager-size'})
-		]).inject(this.info_area);
-
 		this.preview = new Element('div', {'class': 'filemanager-preview'}).addEvent('click:relay(img.preview)', function(){
 			self.fireEvent('preview', [this.get('src'), self, this]);
 		});
@@ -367,11 +402,40 @@ var FileManager = new Class({
 				opacity: 0
 			}
 		});
+
+// Partikule. Removed new Element('h2', {'class': 'filemanager-headline' :
+// 1. To gain more vertical space for preview
+// 2. Because the user knows this is info about the file
 		this.preview_area.adopt([
-			new Element('h2', {'class': 'filemanager-headline', text: this.language.more}),
+			//new Element('h2', {'class': 'filemanager-headline', text: this.language.more}),
 			this.preview
 		]);
-		this.info.adopt(this.preview_area).inject(this.filemanager);
+
+// Partikule.
+// 1. To gain more vertical space for preview
+// 2. Because the user knows this is info about the file
+// 3. Less is more :-)
+		this.info.adopt([this.info_head, this.preview_area]).inject(this.filemanager);
+// /Partikule
+
+// Partikule
+// Add of the thumbnail list in the preview panel
+
+// We fill this one while we render the directory tree view to ensure that the deferred thumbnail loading system
+// (using 'detail / mode=direct' requests to obtain the actual thumbnail paths) doesn't become a seriously complex
+// mess.
+// This way, any updates coming from the server are automatically edited into this list; whether it is shown or
+// not depends on the decisions in fillInfo()
+//
+// Usage:
+// - One doubleclick on one thumb in this list will select the file : quicker select
+// - One click displays the preview, but with the file in bigger format : less clicks to see the picture wider.
+
+		// Thumbs list container (in preview panel)
+		this.dir_filelist = new Element('div', {'class': 'filemanager-filelist'});
+		//this.preview.adopt(this.dir_filelist);
+
+// /Partikule
 
 		if (!this.options.hideClose) {
 			this.closeIcon = new Element('a', {
@@ -393,7 +457,7 @@ var FileManager = new Class({
 			showDelay: 50,
 			hideDelay: 50,
 			onShow: function(){
-				this.tip.setStyle('z-index', self.options.zIndex + 201).set('tween', {duration: 'short'}).setStyle('display', 'block').fade(1);
+				this.tip.setStyle('z-index', self.options.zIndex + 501).set('tween', {duration: 'short'}).setStyle('display', 'block').fade(1);
 			},
 			onHide: function(){
 				this.tip.fade(0).get('tween').chain(function(){
@@ -401,18 +465,22 @@ var FileManager = new Class({
 				});
 			}
 		});
-		if (!this.options.hideClose)
+		if (!this.options.hideClose) {
 			this.tips.attach(this.closeIcon);
+		}
 
 		this.imageadd = new Asset.image(this.assetBasePath + 'Images/add.png', {
 			'class': 'browser-add',
 			styles:
 			{
-				'z-index': this.options.zIndex + 2000
+				'z-index': this.options.zIndex + 1600
 			}
 		}).set('opacity', 0).set('tween', {duration: 'short'}).inject(this.container);
 
-		this.container.inject(document.body);
+// Partikule : Moved a little bit more on the bottom...
+//		this.container.inject(document.body);
+// /Partikule
+
 		if (!this.options.hideOverlay) {
 			this.overlay = new Overlay(Object.append((this.options.hideOnClick ? {
 				events: {
@@ -497,8 +565,21 @@ var FileManager = new Class({
 			}).bind(this)
 		};
 
-		// ->> autostart filemanager when set
-		this.initialShow();
+// Partikule
+		if (this.options.standalone)
+		{
+	    	this.container.inject(document.body);
+
+			// ->> autostart filemanager when set
+			this.initialShow();
+	    }
+	    else
+	    {
+// Partikule : Removed the autostart bacause of the standalone mode.
+// Certainly a better way to do that...
+	    	this.options.hideOverlay = true;
+	    }
+    	return this;
 	},
 
 	initialShowBase: function() {
@@ -529,8 +610,24 @@ var FileManager = new Class({
 		return (j.dirs.length + j.files.length <= pagesize * 4);
 	},
 
-	fitSizes: function() {
-		this.filemanager.center(this.offsets);
+	fitSizes: function()
+	{
+// Partikule : Add the standalone check
+		if (this.options.standalone)
+		{
+			this.filemanager.center(this.offsets);
+		}
+		else
+		{
+			var parent = (this.options.parentContainer != null ? $(this.options.parentContainer) : this.container.getParent());
+			if (parent)
+			{
+				parentSize = parent.getSize();
+				this.filemanager.setStyle('height', parentSize.y);
+			}
+		}
+// /Partikule
+
 		var containerSize = this.filemanager.getSize();
 		var headerSize = this.browserheader.getSize();
 		var menuSize = this.menu.getSize();
@@ -602,6 +699,49 @@ var FileManager = new Class({
 		}
 	},
 
+// Partikule
+
+	/**
+	 * Catches both single and double click on thumb list icon in the directory preview thumb/gallery list
+	 */
+	relayDblClick: function(e, self, dg_el, file, clicks)
+	{
+		if (e) e.stop();
+
+		this.diag.log('on relayDblClick file = ', file, this.Directory, ', # clicks: ', clicks);
+
+		this.tips.hide();
+
+		//var file = el.retrieve('file'); -- wrong 'el': that 'el' is a <LI> in the directory view!
+		var el_ref = dg_el.retrieve('el_ref');
+
+		if (this.Current)
+		{
+			this.Current.removeClass('selected');
+		}
+
+		this.Current = el_ref.addClass('selected');
+		file = el_ref.retrieve('file');
+
+		this.CurrentFile = file;
+
+		// now make sure we can see the selected item in the left pane: scroll there:
+		this.browserSelection('none');
+
+		// only simulate the 'select' button click by doubleclick on thumbnail in directory preview, when 'select' is actually allowed.
+		if (clicks === 2 && this.options.selectable)
+		{
+			this.open_on_click(null);
+		}
+		else
+		{
+			// the single-click action is to simulate a click on the corresponding line in the directory view (left pane)
+			this.relayClick(e, el_ref);
+		}
+	},
+
+// /Partikule
+
 	toggleList: function(e) {
 		if (e) e.stop();
 
@@ -618,7 +758,14 @@ var FileManager = new Class({
 			if (typeof jsGET !== 'undefined') jsGET.set('fmListType=list');
 		}
 		this.diag.log('on toggleList dir = ', this.Directory, e);
-		this.load(this.Directory);
+		//this.load(this.Directory);
+
+		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+		//this.reset_view_fill_store();
+		clearTimeout(this.view_fill_timer);
+		this.view_fill_timer = null;
+
+		this.fill(null, this.get_view_fill_startindex(), this.listPaginationLastSize);
 	},
 
 	/*
@@ -744,6 +891,13 @@ var FileManager = new Class({
 		this.fitSizes();
 		this.fireEvent('show', [this]);
 		this.fireHooks('show');
+
+// Partikule : If not standalone, returns the HTML content
+	   	if (!this.options.standalone)
+		{
+	    	return this.container;
+	    }
+// /Partikule
 	},
 
 	hide: function(e){
@@ -788,9 +942,6 @@ var FileManager = new Class({
 			this.info_head.fade(0).get('tween').chain(function(){
 				this.element.setStyle('display', 'none');
 			});
-			this.info_area.fade(0).get('tween').chain(function(){
-				this.element.setStyle('display', 'none');
-			});
 			this.preview_area.fade(0).get('tween').chain(function(){
 				this.element.setStyle('display', 'none');
 			});
@@ -798,21 +949,30 @@ var FileManager = new Class({
 		else
 		{
 			this.info_head.setStyle('display', 'block').fade(1);
-			this.info_area.setStyle('display', 'block').fade(1);
 			this.preview_area.setStyle('display', 'block').fade(1);
 		}
 	},
 
 	open_on_click: function(e){
-		e.stop();
-		if (!this.Current) return;
+		if (e) e.stop();
+
+		if (!this.Current)
+			return;
+
 		var file = this.Current.retrieve('file');
 		this.fireEvent('complete', [
 			file.path, //this.escapeRFC3986(this.normalize('/' + this.root + file.dir + file.name)), // the absolute URL for the selected file, rawURLencoded
-			file,                 // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .thumbnail
+			file,                 // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 			this
 		]);
-		this.hide();
+
+// Partikule
+// Why Hide ? For some usage, it can be useful to keep it open (more than 3 files and it will be really annoying to re-open the FM for each file select)
+		if (this.options.hideOnSelect)
+		{
+			this.hide();
+		}
+// /Partikule
 	},
 
 	download_on_click: function(e) {
@@ -832,40 +992,41 @@ var FileManager = new Class({
 		}
 
 		// discard old iframe, if it exists:
-		if (this._downloadIframe)
+		if (this.downloadIframe)
 		{
-			// remove fro the menu (dispose) and trash it (destroy)
-			this._downloadIframe.dispose().destroy();
-			this._downloadIframe = null;
+			// remove from the menu (dispose) and trash it (destroy)
+			this.downloadIframe.dispose().destroy();
+			this.downloadIframe = null;
 		}
-		if (this._downloadForm)
+		if (this.downloadForm)
 		{
-			// remove fro the menu (dispose) and trash it (destroy)
-			this._downloadForm.dispose().destroy();
-			this._downloadForm = null;
-		}
-
-		this._downloadIframe = (new IFrame).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});
-		this.menu.adopt(this._downloadIframe);
-
-		this._downloadForm = new Element('form', {target: '_downloadIframe', method: 'post'});
-		this.menu.adopt(this._downloadForm);
-
-		if (this.options.propagateType === 'POST')
-		{
-			var self = this;
-			Object.each(this.options.propagateData, function(v, k) {
-				self._downloadForm.adopt((new Element('input')).set({type:'hidden', name: k, value: v}));
-			});
+			// remove from the menu (dispose) and trash it (destroy)
+			this.downloadForm.dispose().destroy();
+			this.downloadForm = null;
 		}
 
-		this._downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (this.options.propagateType === 'GET' ? this.options.propagateData : {}), {
-			event: 'download',
-			file: this.normalize(file.dir + file.name),
-			filter: this.options.filter
-		  }));
+		this.downloadIframe = (new IFrame()).set({src: 'about:blank', name: '_downloadIframe'}).setStyles({display:'none'});
+		this.menu.adopt(this.downloadIframe);
 
-		return this._downloadForm.submit();
+		this.downloadForm = new Element('form', {target: '_downloadIframe', method: 'post', enctype: 'multipart/form-data'});
+		this.menu.adopt(this.downloadForm);
+
+		Object.each(Object.merge(	{},
+									this.options.propagateData,
+									{
+										file: this.normalize(file.dir + file.name),
+										filter: this.options.filter
+									}),
+					function(v, k)
+					{
+						this.downloadForm.adopt((new Element('input')).set({type: 'hidden', name: k, value: v}));
+					}.bind(this));
+
+		this.downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString({
+			event: 'download'
+		  });
+
+		return this.downloadForm.submit();
 	},
 
 	create_on_click: function(e) {
@@ -885,7 +1046,7 @@ var FileManager = new Class({
 			content: [
 				input
 			],
-			zIndex: this.options.zIndex + 1000,
+			zIndex: this.options.zIndex + 900,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: (function() {
 				input.removeEvent('keyup', click_ok_f);
@@ -908,7 +1069,6 @@ var FileManager = new Class({
 					data: {
 						file: input.get('value'),
 						directory: this.Directory,
-						type: this.listType,
 						filter: this.options.filter
 					},
 					onRequest: function(){},
@@ -977,7 +1137,6 @@ var FileManager = new Class({
 			})),
 			data: {
 				directory: dir,
-				type: this.listType,
 				filter: this.options.filter,
 				file_preselect: (preselect || '')
 			},
@@ -1064,7 +1223,6 @@ var FileManager = new Class({
 				directory: this.Directory,
 				filter: this.options.filter
 			},
-			fmErrDefaultMsg: this.language.nodestroy,
 			onRequest: function(){},
 			onSuccess: (function(j) {
 				if (!j || !j.status) {
@@ -1134,7 +1292,7 @@ var FileManager = new Class({
 					confirm: this.language.destroy,
 					decline: this.language.cancel
 				},
-				zIndex: this.options.zIndex + 1000,
+				zIndex: this.options.zIndex + 900,
 				onOpen: this.onDialogOpen.bind(this),
 				onClose: this.onDialogClose.bind(this),
 				onConfirm: (function() {
@@ -1158,7 +1316,7 @@ var FileManager = new Class({
 			content: [
 				input
 			],
-			zIndex: this.options.zIndex + 1000,
+			zIndex: this.options.zIndex + 900,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
 			onShow: (function(){
@@ -1344,6 +1502,11 @@ var FileManager = new Class({
 			direction = 'up';
 			break;
 
+		case 'none':        // 'faked' key sent when picking a row 'remotely', i.e. when we don't know where we are currently, but when we want to scroll to 'current' anyhow
+			current.addClass('hover');
+			this.Current = current;
+			break;
+
 		// select
 		case 'enter':
 			this.storeHistory = true;
@@ -1367,7 +1530,7 @@ var FileManager = new Class({
 		case 'delete':
 			this.storeHistory = true;
 			this.Current = current;
-			this.browser.getElements('span.fi.selected').each(function(span){
+			this.browser.getElements('span.fi.selected').each(function(span) {
 				span.removeClass('selected');
 			});
 
@@ -1554,10 +1717,17 @@ var FileManager = new Class({
 		}
 		this.browser.empty();
 
+// Partikule
+// Add of the thumbnail list in the preview panel: blow away any pre-existing list now, as we'll generate a new one now:
+
+		this.dir_filelist.empty();
+
+// /Partikule
+
 		// set history
 		if (typeof jsGET !== 'undefined' && this.storeHistory && j.dir.mime === 'text/directory')
 		{
-			jsGET.set({'fmPath':j.path});
+			jsGET.set({'fmPath': j.path});
 		}
 
 		this.CurrentPath = this.normalize(this.root + this.Directory);
@@ -1649,7 +1819,7 @@ var FileManager = new Class({
 				var pagecnt = Math.ceil(j_item_count / pagesize);
 				var curpagno = Math.floor(startindex / pagesize) + 1;
 
-				this.browser_paging_info.set('text', 'P:' + curpagno);
+				this.browser_paging_info.set('text', '' + curpagno + '/' + pagecnt);
 
 				if (curpagno > 1)
 				{
@@ -1706,10 +1876,43 @@ var FileManager = new Class({
 		return file.element = new Element('span', {'class': 'fi ' + this.listType, href: '#'}).adopt(
 			new Element('span', {
 				'class': this.listType,
-				'style': thumbnail_url ? 'background-image: url(' + thumbnail_url + ')' : 'background-image: url(' + this.assetBasePath + 'Images/loader.gif' + ')'
-			}).addClass('fm-thumb-bg') /* .adopt(icon) */ ,
+				'styles': {
+					'background-image': 'url(' + (thumbnail_url ? thumbnail_url : this.assetBasePath + 'Images/loader.gif') + ')'
+				}
+			}).addClass('fm-thumb-bg'),
 			new Element('span', {'class': 'filemanager-filename', text: file.name, title: file.name})
 		).store('file', file);
+	},
+
+	dir_gallery_item_maker: function(thumbnail_url, file)
+	{
+		// as we want the thumbnails line up reasonably well in a grid and have no huge white areas thanks to long filenames,
+		// we strip the filename on display. When the user wishes to know the full filename, he can hover over the image, anyway.
+		var fname = file.name;
+		if (fname.length > 6)
+		{
+			fname = fname.substr(0, 6) + '...';
+		}
+
+		var el = new Element('div', {
+			'class': 'fi',
+			'title': file.name
+		}).adopt(
+			new Element('div', {
+				'class': 'dir-gal-thumb-bg',
+				'styles': {
+					'background-image': 'url(' + (thumbnail_url ? thumbnail_url : this.assetBasePath + 'Images/loader.gif') + ')',
+					'width': 48,
+					'height': 48
+				}
+			}),
+			new Element('div', {
+				'class': 'name',
+				'text': fname
+			})
+		);
+		this.tips.attach(el);
+		return el;
 	},
 
 	/*
@@ -1744,6 +1947,7 @@ var FileManager = new Class({
 		// first loop: only render directories, when the indexes fit the range: 0 .. j.dirs.length-1
 		// Assume several directory aspects, such as no thumbnail hassle (it's one of two icons anyway, really!)
 		var el, editButtons;
+
 		for (idx = startindex; idx < endindex && idx < j.dirs.length; idx++)
 		{
 			file = j.dirs[idx];
@@ -1771,15 +1975,11 @@ var FileManager = new Class({
 
 			file.dir = j.path;
 
-			//// generate unique id
-			//var newDate = new Date;
-			//uniqueId = newDate.getTime();
-
-			this.diag.log('thumbnail: "' + file.thumbnail + '"');
-			//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
+			this.diag.log('thumbnail: "' + file.icon48 + '"');
+			//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumb48 /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumb48);
 
 			// This is just a raw image
-			el = this.list_row_maker(file.thumbnail, file);
+			el = this.list_row_maker((this.listType === 'thumb' ? file.icon48 : file.icon), file);
 
 			this.diag.log('add DIRECTORY click event to ' + file.name);
 			el.addEvent('click', (function(e) {
@@ -1832,6 +2032,8 @@ var FileManager = new Class({
 		// skip files[] rendering, when the startindex still points inside dirs[]  ~  too many directories to fit any files on this page!
 		if (idx >= dir_count)
 		{
+			var dg_el;
+
 			for ( ; idx < endindex && idx - dir_count < j.files.length; idx++)
 			{
 				file = j.files[idx - dir_count];
@@ -1859,19 +2061,20 @@ var FileManager = new Class({
 
 				file.dir = j.path;
 
-				//// generate unique id
-				//var newDate = new Date;
-				//uniqueId = newDate.getTime();
+				this.diag.log('thumbnail: "' + file.thumb48 + '"');
+				//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumb48 /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumb48);
 
-				this.diag.log('thumbnail: "' + file.thumbnail + '"');
-				//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumbnail /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumbnail);
-
-				if (!this.options.isDirectImageURL(file.thumbnail))
+				// As we now have two views into the directory, we have to fetch the thumbnails, even when we're in 'list' view: the direcory gallery will need them!
+				// Besides, fetching the thumbs and all right after we render the directory also makes these thumbs + metadata available for drag&drop gallery and
+				// 'select mode', so they don't always have to ask for the meta data when it is required there and then.
+				if (file.thumb48 || /* this.listType !== 'thumb' || */ !file.thumbs_deferred)
 				{
 					// This is just a raw image
-					el = this.list_row_maker(file.thumbnail, file);
+					el = this.list_row_maker((this.listType === 'thumb' ? (file.thumb48 ? file.thumb48 : file.icon48) : file.icon), file);
+
+					dg_el = this.dir_gallery_item_maker((file.thumb48 ? file.thumb48 : file.icon48), file);
 				}
-				else if (this.options.propagateType === 'POST')
+				else	// thumbs_deferred...
 				{
 					// We must AJAX POST our propagateData, so we need to do the post and take the url to the
 					// thumbnail from the post results.
@@ -1880,46 +2083,66 @@ var FileManager = new Class({
 					// to a tiny iframe, which is suitably sized to contain the generated thumbnail and the POST
 					// actually returning the binary image data, thus the iframe contents becoming the thumbnail image.
 
-					el = (function(file) {           // Closure
-						var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'list' ? '' : 'Large/') + 'default-error.png';
-						var list_row = this.list_row_maker(null, file);
+					// update this one alongside the 'el':
+					dg_el = this.dir_gallery_item_maker(file.icon48, file);
 
-						new FileManager.Request({
-							url: file.thumbnail,
+					el = (function(file, dg_el) {           // Closure
+						var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'thumb' ? 'Large/' : '') + 'default-error.png';
+						var list_row = this.list_row_maker(file.icon48, file);
+
+						var req = new FileManager.Request({
+							url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
+								//event: 'thumbnail'
+								event: 'detail'
+							})),
 							data: {
-								asJSON: 1
+								directory: file.dir,
+								file: file.name,
+								filter: this.options.filter,
+								mode: 'direct'
 							},
 							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
 							onRequest: function(){},
 							onSuccess: (function(j) {
-								if (!j || !j.status)
+								if (!j || !j.status || !j.thumb48)
 								{
-									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
-								}
-								else if (j && j.thumbnail)
-								{
-									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + j.thumbnail + ')');
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + (this.listType === 'thumb' ? (j.icon48 ? j.icon48 : iconpath) : (j.icon ? j.icon : iconpath)) + ')');
+									dg_el.getElement('div.dir-gal-thumb-bg').setStyle('background-image', 'url(' + (j.icon48 ? j.icon48 : iconpath) + ')');
 								}
 								else
 								{
-									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+									list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + (this.listType === 'thumb' ? j.thumb48 : j.icon) + ')');
+									dg_el.getElement('div.dir-gal-thumb-bg').setStyle('background-image', 'url(' + j.thumb48 + ')');
+								}
+
+								// update the stored json for this file as well:
+								file = Object.merge(file, j);
+
+								delete file.thumbs_deferred;
+								delete file.error;
+								delete file.status;
+								delete file.content;
+
+								if (file.element)
+								{
+									file.element.store('file', file);
 								}
 							}).bind(this),
 							onError: (function(text, error) {
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+								dg_el.getElement('div.dir-gal-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this),
 							onFailure: (function(xmlHttpRequest) {
 								list_row.getElement('span.fm-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
+								dg_el.getElement('div.dir-gal-thumb-bg').setStyle('background-image', 'url(' + iconpath + ')');
 							}).bind(this)
-						}, this).send();
+						}, this);
+
+						this.RequestQueue.addRequest(String.uniqueID(), req);
+						req.send();
 
 						return list_row;
-					}).bind(this)(file);
-				}
-				else
-				{
-					// If we are using GET, append the data to the url
-					el = this.list_row_maker(file.thumbnail + '&' + Object.toQueryString(this.options.propagateData), file);
+					}).bind(this)(file, dg_el);
 				}
 
 				/*
@@ -2019,10 +2242,6 @@ var FileManager = new Class({
 
 				els[0].push(el);
 				el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
-				//icons = $$(icons.map((function(icon){
-				//  this.showFunctions(icon,icon,0.5,1);
-				//  this.showFunctions(icon,el.getParent('li'),1);
-				//}).bind(this)));
 
 				// ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
 				this.diag.log('fill on PRESELECT: onShow = ' + this.onShow + ', file = ' + file.name + ', fmFile = ' + fmFile + ', preselect = ' + (preselect ? preselect : '???'));
@@ -2052,12 +2271,37 @@ var FileManager = new Class({
 							this.fillInfo(file);
 						}
 					}
-					else if (fmFile == null)
+					else
 					{
 						this.diag.log('fill: RESET onShow: file = ' + file.name);
 						this.onShow = false;
 					}
 				}
+
+
+// Partikule
+// Thumbs list
+
+				// use a closure to keep a reference to the current dg_el, otherwise dg_el, file, etc. will carry the values they got at the end of the loop!
+				(function(dg_el, el, file)
+				{
+					dg_el.store('el_ref', el).addEvents({
+						'click': function(e)
+						{
+							clearTimeout(self.dir_gallery_click_timer);
+							self.dir_gallery_click_timer = self.relayDblClick.delay(700, self, [e, this, dg_el, file, 1]);
+						},
+						'dblclick': function(e)
+						{
+							clearTimeout(this.dir_gallery_click_timer);
+							this.dir_gallery_click_timer = self.relayDblClick.delay(0, self, [e, this, dg_el, file, 2]);
+						}
+					});
+
+					dg_el.inject(this.dir_filelist);
+				}).bind(this)(dg_el, el, file);
+
+// / Partikule
 			}
 		}
 
@@ -2102,7 +2346,7 @@ var FileManager = new Class({
 					this.diag.log('draggable:onBeforeStart');
 					var position = el.getPosition();
 					el.addClass('drag').setStyles({
-						'z-index': this.options.zIndex + 1300,
+						'z-index': this.options.zIndex + 1500,
 						'position': 'absolute',
 						'width': el.getWidth() - el.getStyle('paddingLeft').toInt() - el.getStyle('paddingRight').toInt(),
 						'left': position.x,
@@ -2437,8 +2681,6 @@ var FileManager = new Class({
 						return;
 					}
 
-					var size = this.size(j.size);
-
 					// speed up DOM tree manipulation: detach .info from document temporarily:
 					this.info.dispose();
 
@@ -2450,13 +2692,13 @@ var FileManager = new Class({
 					this.info_head.getElement('h1').set('text', file.name);
 					this.info_head.getElement('h1').set('title', file.name);
 
-					this.info_area.getElement('dd.filemanager-modified').set('text', j.date);
-					this.info_area.getElement('dd.filemanager-type').set('text', j.mime);
-					this.info_area.getElement('dd.filemanager-size').set('text', !size[0] && size[1] === 'Bytes' ? '-' : (size.join(' ') + (size[1] !== 'Bytes' ? ' (' + j.size + ' Bytes)' : '')));
-					//this.info_area.getElement('h2.filemanager-headline').setStyle('display', j.mime === 'text/directory' ? 'none' : 'block');
-
 					// don't wait for the fade to finish to set up the new content
 					var prev = this.preview.removeClass('filemanager-loading').set('html', (j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '')).getElement('img.preview');
+
+					if (file.mime === 'text/directory')
+					{
+						this.preview.adopt(this.dir_filelist);
+					}
 
 					// and plug in the manipulated DOM subtree again:
 					this.info.inject(this.filemanager);
@@ -2466,21 +2708,6 @@ var FileManager = new Class({
 						this.previewLoader.dispose();
 					}).bind(this));
 
-					if (prev) {
-						prev.addEvent('load', function(){
-							// when the thumb250 image has loaded, remove the loader animation in the background ...
-							//this.setStyle('background', 'none');
-							// ... AND blow away the encoded 'width' and 'height' styles: after all, the thumb250 generation MAY have failed.
-							// In that case, an icon is produced by the backend, but it will have different dimensions, and we don't want to
-							// distort THAT one, either.
-							this.setStyles({
-								'background': 'none',
-								'width': '',
-								'height': ''
-							});
-						});
-					}
-
 					var els = this.preview.getElements('button');
 					if (els) {
 						els.addEvent('click', function(e){
@@ -2489,27 +2716,129 @@ var FileManager = new Class({
 						});
 					}
 
-					// Xinha: We need to add in a form for setting the attributes of images etc,
-					// so we add this event and pass it the information we have about the item
-					// as returned by Backend/FileManager.php
-					this.fireEvent('details', [j, this]);
+					if (prev && !j.thumb250 && j.thumbs_deferred)
+					{
+						var iconpath = this.assetBasePath + 'Images/Icons/Large/default-error.png';
 
-					// We also want to hold onto the data so we can access it later on,
-					// e.g. when selecting the image.
+						if (0)
+						{
+							prev.set('src', iconpath);
+							prev.setStyles({
+								'width': '',
+								'height': '',
+								'background': 'none'
+							});
+						}
 
-					// now mix with the previously existing 'file' info (as produced by a 'view' run):
-					file = Object.merge(file, j);
-					// remove unwanted JSON elements:
-					delete file.status;
-					delete file.error;
-					delete file.content;
+						var req = new FileManager.Request({
+							url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
+								//event: 'thumbnail'
+								event: 'detail'
+							})),
+							data: {
+								directory: dir,
+								file: file.name,
+								filter: this.options.filter,
+								mode: 'direct'
+							},
+							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
+							onRequest: function(){},
+							onSuccess: (function(j) {
+								var img_url = (j.icon48 ? j.icon48 : iconpath);
+								if (j && j.status && j.thumb250)
+								{
+									img_url = j.thumb250;
+								}
 
-					if (file.element) {
-						file.element.store('file', file);
+								prev.set('src', img_url);
+								prev.addEvent('load', function(){
+									// when the thumb250 image has loaded, remove the loader animation in the background ...
+									//this.setStyle('background', 'none');
+									// ... AND blow away the encoded 'width' and 'height' styles: after all, the thumb250 generation MAY have failed.
+									// In that case, an icon is produced by the backend, but it will have different dimensions, and we don't want to
+									// distort THAT one, either.
+									this.setStyles({
+										'width': '',
+										'height': '',
+										'background': 'none'
+									});
+								});
+
+								// Xinha: We need to add in a form for setting the attributes of images etc,
+								// so we add this event and pass it the information we have about the item
+								// as returned by Backend/FileManager.php
+								this.fireEvent('details', [j, this]);
+
+								// update the stored json for this file as well:
+
+								// now mix with the previously existing 'file' info (as produced by a 'view' run):
+								file = Object.merge(file, j);
+
+								// remove unwanted JSON elements:
+								delete file.thumbs_deferred;
+								delete file.status;
+								delete file.error;
+								delete file.content;
+
+								if (file.element)
+								{
+									file.element.store('file', file);
+								}
+
+								if (typeof milkbox !== 'undefined')
+								{
+									milkbox.reloadPageGalleries();
+								}
+							}).bind(this),
+							onError: (function(text, error) {
+								prev.set('src', iconpath);
+								prev.setStyles({
+									'width': '',
+									'height': '',
+									'background': 'none'
+								});
+							}).bind(this),
+							onFailure: (function(xmlHttpRequest) {
+								prev.set('src', iconpath);
+								prev.setStyles({
+									'width': '',
+									'height': '',
+									'background': 'none'
+								});
+							}).bind(this)
+						}, this);
+
+						this.RequestQueue.addRequest(String.uniqueID(), req);
+						req.send();
 					}
+					else
+					{
+						// Xinha: We need to add in a form for setting the attributes of images etc,
+						// so we add this event and pass it the information we have about the item
+						// as returned by Backend/FileManager.php
+						this.fireEvent('details', [j, this]);
 
-					if (typeof milkbox !== 'undefined') {
-						milkbox.reloadPageGalleries();
+						// We also want to hold onto the data so we can access it later on,
+						// e.g. when selecting the image.
+
+						// now mix with the previously existing 'file' info (as produced by a 'view' run):
+						file = Object.merge(file, j);
+
+						// remove unwanted JSON elements:
+						delete file.thumbs_deferred;
+						delete file.status;
+						delete file.error;
+						delete file.content;
+
+						if (file.element)
+						{
+							file.element.store('file', file);
+						}
+
+						if (typeof milkbox !== 'undefined')
+						{
+							milkbox.reloadPageGalleries();
+						}
 					}
 				}).bind(this),
 				onError: (function(text, error) {
@@ -2529,18 +2858,14 @@ var FileManager = new Class({
 		});
 
 		$(appearOn).addEvents({
-			mouseenter: (function(){this.set('opacity',opacity[0]);}).bind(icon),
-			mouseleave: (function(){this.set('opacity',opacity[1]);}).bind(icon)
+			mouseenter: (function(){
+							this.set('opacity', opacity[0]);
+						}).bind(icon),
+			mouseleave: (function(){
+							this.set('opacity', opacity[1]);
+						}).bind(icon)
 		});
 		return icon;
-	},
-
-	size: function(size){
-		var tab = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-		for(var i = 0; size > 1024; i++)
-			size = size/1024;
-
-		return [Math.round(size), tab[i]];
 	},
 
 	normalize: function(str){
@@ -2553,7 +2878,10 @@ var FileManager = new Class({
 		els.push(this.menu.getElement('button.filemanager-open'));
 		els.push(this.menu.getElement('button.filemanager-download'));
 		els.each(function(el){
-			if (el) el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
+			if (el)
+			{
+				el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
+			}
 		});
 	},
 
@@ -2563,13 +2891,37 @@ var FileManager = new Class({
 			'class': 'filemanager-' + name,
 			text: this.language[name]
 		}).inject(this.menu, 'top');
-		if (this[name+'_on_click']) el.addEvent('click', this[name+'_on_click'].bind(this));
+
+		if (this[name+'_on_click'])
+		{
+			el.addEvent('click', this[name+'_on_click'].bind(this));
+		}
 		return el;
 	},
 
 	// clear the view chunk timer, erase the JSON store but do NOT reset the pagination to page 0:
 	// we may be reloading and we don't want to destroy the page indicator then!
 	reset_view_fill_store: function(j)
+	{
+		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
+		if (this.view_fill_json)
+		{
+			// make sure the old 'fill' run is aborted ASAP: clear the old files[] array to break
+			// the heaviest loop in fill:
+			this.view_fill_json.files = [];
+			this.view_fill_json.dirs = [];
+		}
+
+		this.reset_fill();
+
+		this.view_fill_json = ((j && j.status) ? j : null);      // clear out the old JSON data and set up possibly new data.
+		// ^^^ the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly
+		//     consulting the server. The server doesn't need to know we're so slow we need pagination now! ;-)
+	},
+
+
+	// clear the view chunk timer only. We are probably redrawing the list view!
+	reset_fill: function()
 	{
 		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
 		this.browser_dragndrop_info.fade(0.5);
@@ -2584,18 +2936,6 @@ var FileManager = new Class({
 		// abort any still running ('antiquated') fill chunks:
 		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
-
-		this.view_fill_startindex = 0;   // offset into the view JSON array: which part of the entire view are we currently watching?
-		if (this.view_fill_json)
-		{
-			// make sure the old 'fill' run is aborted ASAP: clear the old files[] array to break
-			// the heaviest loop in fill:
-			this.view_fill_json.files = [];
-			this.view_fill_json.dirs = [];
-		}
-		this.view_fill_json = ((j && j.status) ? j : null);      // clear out the old JSON data and set up possibly new data.
-		// ^^^ the latest JSON array describing the entire list; used with pagination to hop through huge dirs without repeatedly
-		//     consulting the server. The server doesn't need to know we're so slow we need pagination now! ;-)
 	},
 
 	store_view_fill_startindex: function(idx)
@@ -2680,7 +3020,7 @@ var FileManager = new Class({
 			content: [
 				textOrElement
 			],
-			zIndex: this.options.zIndex + 1000,
+			zIndex: this.options.zIndex + 950,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this)
 		});
@@ -2750,35 +3090,26 @@ FileManager.Request = new Class({
 	options:
 	{
 		secure:          true, // Isn't this true by default anyway in REQUEST.JSON?
-		fmDisplayErrors: true, // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
-		fmErrDefaultMsg: ''
+		fmDisplayErrors: true  // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
 	},
 
 	initialize: function(options, filebrowser){
 		this.parent(options);
 
-		if (filebrowser.options.propagateType === 'GET')
-		{
-			this.options.url += (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(filebrowser.options.propagateData);
-		}
-		else
-		{
-			this.options.data = Object.merge({}, filebrowser.options.propagateData, this.options.data);
-		}
+		this.options.data = Object.merge({}, filebrowser.options.propagateData, this.options.data);
 
 		if (this.options.fmDisplayErrors)
 		{
 			this.addEvents({
 				success: function(j)
 				{
-					var emsg = ('' + this.options.fmErrDefaultMsg).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g);
 					if (!j)
 					{
-						filebrowser.showError(emsg);
+						filebrowser.showError();
 					}
 					else if (!j.status)
 					{
-						filebrowser.showError((emsg ? emsg + ' ' : '') + ('' + j.error).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g));
+						filebrowser.showError(('' + j.error).substitute(filebrowser.language, /\\?\$\{([^{}]+)\}/g));
 					}
 				}.bind(this),
 
@@ -2835,14 +3166,16 @@ Asset.javascript(__MFM_ASSETS_DIR__+'/js/jsGET.js', {
 Element.implement({
 
 	center: function(offsets) {
-		var scroll = document.getScroll(),
-			offset = document.getSize(),
-			size = this.getSize(),
-			values = {x: 'left', y: 'top'};
+		var scroll = document.getScroll();
+		var	offset = document.getSize();
+		var	size = this.getSize();
+		var	values = {x: 'left', y: 'top'};
 
-		if (!offsets) offsets = {};
+		if (!offsets) {
+			offsets = {};
+		}
 
-		for (var z in values){
+		for (var z in values) {
 			var style = scroll[z] + (offset[z] - size[z]) / 2 + (offsets[z] || 0);
 			this.setStyle(values[z], (z === 'y' && style < 30) ? 30 : style);
 		}

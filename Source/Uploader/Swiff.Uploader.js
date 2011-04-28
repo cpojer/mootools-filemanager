@@ -330,8 +330,12 @@ Swiff.Uploader = new Class({
     });
 
     var data = this.options.data || {};
-    if (typeOf(append) == 'string') data[append] = hash;
-    else Object.append(data, hash);
+    if (typeOf(append) === 'string') {
+		data[append] = hash;
+	}
+    else {
+		Object.append(data, hash);
+	}
 
     this.setOptions({data: data});
   },
@@ -477,7 +481,9 @@ Swiff.Uploader.File = new Class({
   setOptions: function(options) {
 	//if (typeof console !== 'undefined' && console.log) console.log('Swiff.Uploader: File::setOptions');
     if (options) {
-      if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
+      if (options.url) {
+		options.url = Swiff.Uploader.qualifyPath(options.url);
+	  }
       this.base.remote('xFileSetOptions', this.id, options);
       this.options = Object.merge(this.base.options, options);
     }

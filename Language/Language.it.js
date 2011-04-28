@@ -47,6 +47,7 @@ FileManager.Language.it = {
 
 	toggle_side_boxes: 'Thumbnail view',
 	toggle_side_list: 'List view',
+	show_dir_thumb_gallery: 'Show thumbnails of the files in the preview pane',
 	drag_n_drop: 'Drag & drop has been enabled for this directory',
 	drag_n_drop_disabled: 'Drag & drop has been temporarily disabled for this directory',
 	goto_page: 'Go to page',
@@ -70,7 +71,7 @@ FileManager.Language.it = {
 	'backend.corrupt_img': 'This file is a not a image or a corrupt file: ', // path
 	'backend.resize_inerr': 'This file could not be resized due to an internal error.',
 	'backend.copy_failed': 'An error occurred while copying the file / directory: ', // oldlocalpath : newlocalpath
-	'backend.delete_thumbnail_failed': 'An error occurred when attempting to delete the image thumbnail',
+	'backend.delete_cache_entries_failed': 'An error occurred when attempting to delete the item cache (thumbnails, metadata)',
 	'backend.mkdir_failed': 'An error occurred when attempting to create the directory: ', // path
 	'backend.move_failed': 'An error occurred while moving / renaming the file / directory: ', // oldlocalpath : newlocalpath
 	'backend.path_tampering': 'Path tampering detected.',

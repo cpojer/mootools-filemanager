@@ -80,7 +80,7 @@ class FileManagerWithAliasSupport extends FileManager
 				$isdir = !is_file($file);
 
 				$p_uri = parent::getParentDir($uri);
-				$a_name = pathinfo($uri, PATHINFO_BASENAME);
+				$a_name = basename($uri);
 
 				// as scandir works with filesystem paths, convert this URI path to a filesystem path:
 				$p_dir = $this->url_path2file_path($p_uri);

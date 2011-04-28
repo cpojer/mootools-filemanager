@@ -18,7 +18,7 @@ if (!defined('SITE_USES_ALIASES')) define('SITE_USES_ALIASES', 0);
 
 
 
-if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 01);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
+if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 0);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
 
 
 
@@ -468,8 +468,10 @@ function mkNewFileManager($options = null)
 			'DetailIsAuthorized_cb' => 'FM_IsAuthorized',
 			'ThumbnailIsAuthorized_cb' => 'FM_IsAuthorized',
 
-			'Aliases' => $Aliases
-		), (is_array($options) ? $options : array()));
+			// FileManagerWithAliasSupport-specific options:
+			'Aliases' => $Aliases,
+			'RequestScriptURI' => strtr($_SERVER['SCRIPT_NAME'], '\\', '/')   // or whatever URL you fancy. As long as the run-time ends up invoking the $browser class instantiated below on each request
+	), (is_array($options) ? $options : array()));
 
 	if (SITE_USES_ALIASES)
 	{
@@ -698,7 +700,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 	if (empty($_SESSION['FileManager']) || $_SESSION['FileManager'] !== 'DemoMagick')
 	{
 		session_write_close();
-		throw new FileManagerException('authorized: The session is illegal, as it does not the mandatory magic value set up by the demo entry pages.');
+		throw new FileManagerException('authorized: The session is illegal, as it does not contain the mandatory magic value set up by the demo entry pages.');
 		return false;
 	}
 
@@ -734,10 +736,6 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		break;
 
 	case 'detail':
-		$rv = true;
-		break;
-
-	case 'thumbnail':
 		/*
 		 * For the demo, we deny generation of thumbnails for images in a certain size range: 500KB - 2MB, jpeg only.
 		 *
@@ -745,7 +743,16 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		 * force the thumbnail to become a thumbnail of the 'nuke':
 		 */
 		$fsize = @filesize($info['file']);
-		if (DEVELOPMENT && $info['mime'] == 'image/jpeg' && $fsize >= 500 * 1024 && $fsize <= 2 * 1024 * 1024)
+		/*
+		 * When the thumbnail request is made, the demo will error on 
+		 *   bison-head-with-horns (Ray Rauch, U.S. Fish and Wildlife Service).jpg
+		 *   fruits-vegetables-milk-and-yogurt (Peggy Greb, U.S. Department of Agriculture).jpg
+		 * intentionally with the next bit of code; just to give you an idea what can be done in here.
+		 *
+		 * you can do a similar thing for any other request and have a good file fail or a bad file recover and succeed,
+		 * simply by patching the $info[] items.
+		 */
+		if (DEVELOPMENT && $info['mime'] == 'image/jpeg' && $fsize >= 180 * 1024 && $fsize <= 200 * 1024)
 		{
 			// force the manager to fetch the 'nuke' icon:
 			$info['filename'] = 'is.default-error';

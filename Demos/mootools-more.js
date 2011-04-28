@@ -29,7 +29,7 @@ provides: [MooTools.More]
 
 MooTools.More = {
 	'version': '1.3.1.2dev',
-	'build': '26583396ac357ea74617a39121bda2ecd4227035'
+	'build': 'e586bcd2496e9b22acfde32e12f84d49ce09e59d'
 };
 
 
@@ -243,10 +243,10 @@ Class.refactor = function(original, refactors){
 
 	Object.each(refactors, function(item, name){
 		var origin = original.prototype[name];
-		if (origin && origin.$origin) origin = origin.$origin;
+		origin = (origin && origin.$origin) || origin || function(){};
 		original.implement(name, (typeof item == 'function') ? function(){
 			var old = this.previous;
-			this.previous = origin || function(){};
+			this.previous = origin;
 			var value = item.apply(this, arguments);
 			this.previous = old;
 			return value;
@@ -283,7 +283,7 @@ provides: [Class.Binds]
 
 Class.Mutators.Binds = function(binds){
 	if (!this.prototype.initialize) this.implement('initialize', function(){});
-	return binds;
+	return Array.from(binds).concat(this.prototype.Binds || []);
 };
 
 Class.Mutators.initialize = function(initialize){
@@ -368,6 +368,7 @@ provides: [Chain.Wait]
 		wait: function(duration){
 			return this.chain(function(){
 				this.callChain.delay(duration == null ? 500 : duration, this);
+				return this;
 			}.bind(this));
 		}
 	};
@@ -1412,7 +1413,7 @@ Date.implement({
 
 	timeDiff: function(to, separator){
 		if (to == null) to = new Date;
-		var delta = ((to - this) / 1000).floor();
+		var delta = ((to - this) / 1000).floor().abs();
 
 		var vals = [],
 			durations = [60, 60, 24, 365, 0],
@@ -1555,22 +1556,13 @@ Locale.define('en-US', 'Number', {
 
 /*
 ---
-
 name: Number.Format
-
 description: Extends the Number Type object to include a number formatting method.
-
 license: MIT-style license
-
-authors:
-  - Arian Stolwijk
-
-requires:
-  - Core/Number
-  - Locale.en-US.Number
-
-provides: [Number.Extras]
-
+authors: [Arian Stolwijk]
+requires: [Core/Number, Locale.en-US.Number]
+# Number.Extras is for compatibility
+provides: [Number.Format, Number.Extras]
 ...
 */
 
@@ -2651,6 +2643,12 @@ var check = function(split, target, event){
 	return Slick.match(target, split.value) && (!condition || condition.call(target, event));
 };
 
+var bubbleUp = function(split, event, fn){
+	for (var target = event.target; target && target != this; target = document.id(target.parentNode)){
+		if (target && check(split, target, event)) return fn.call(target, event, target);
+	}
+};
+
 var formObserver = function(eventName){
 
 	var $delegationKey = '$delegation:';
@@ -2672,16 +2670,20 @@ var formObserver = function(eventName){
 			var event = args[0],
 				forms = this.retrieve($delegationKey + 'forms', []),
 				target = event.target,
-				form = (target.get('tag') == 'form') ? target : event.target.getParent('form'),
-				formEvents = form.retrieve($delegationKey + 'originalFn', []),
-				formListeners = form.retrieve($delegationKey + 'listeners', []);
+				form = (target.get('tag') == 'form') ? target : event.target.getParent('form');
+
+			if (!form) return;
+
+			var formEvents = form.retrieve($delegationKey + 'originalFn', []),
+				formListeners = form.retrieve($delegationKey + 'listeners', []),
+				self = this;
 
 			forms.include(form);
 			this.store($delegationKey + 'forms', forms);
 
 			if (!formEvents.contains(fn)){
 				var formListener = function(event){
-					if (check(split, this, event)) fn.call(this, event);
+					bubbleUp.call(self, split, event, fn);
 				};
 				form.addEvent(eventName, formListener);
 
@@ -2701,9 +2703,9 @@ var inputObserver = function(eventName){
 		listener: function(split, fn, args){
 			var events = {blur: function(){
 				this.removeEvents(events);
-			}};
+			}}, self = this;
 			events[eventName] = function(event){
-				if (check(split, this, event)) fn.call(this, event);
+				bubbleUp.call(self, split, event, fn);
 			};
 			args[0].target.addEvents(events);
 		}
@@ -2734,24 +2736,14 @@ if (!eventListenerSupport) Object.append(eventOptions, {
 	select: inputObserver('select')
 });
 
-
 Event.definePseudo('relay', {
-	listener: function(split, fn, args, monitor, options){
-		var event = args[0];
-
-		for (var target = event.target; target && target != this; target = target.parentNode){
-			var finalTarget = document.id(target);
-			if (check(split, finalTarget, event)){
-				if (finalTarget) fn.call(finalTarget, event, finalTarget);
-				return;
-			}
-		}
+	listener: function(split, fn, args){
+		bubbleUp.call(this, split, args[0], fn);
 	},
 	options: eventOptions
 });
 
 })();
-
 
 
 /*
@@ -3157,7 +3149,7 @@ var local = Element.Position = {
 	},
 
 	getPosition: function(element, options){
-		var position = {position: 'absolute'};
+		var position = {};
 		options = local.getOptions(element, options);
 		var relativeTo = document.id(options.relativeTo) || document.body;
 
@@ -3248,14 +3240,14 @@ var local = Element.Position = {
 			case 'left': edgeOffset.x = 0; break;
 			case 'right': edgeOffset.x = -dimensions.x - dimensions.computedRight - dimensions.computedLeft; break;
 			// center
-			default: edgeOffset.x = -(dimensions.totalWidth / 2); break;
+			default: edgeOffset.x = -(Math.round(dimensions.totalWidth / 2)); break;
 		}
 
 		switch(edge.y){
 			case 'top': edgeOffset.y = 0; break;
 			case 'bottom': edgeOffset.y = -dimensions.y - dimensions.computedTop - dimensions.computedBottom; break;
 			// center
-			default: edgeOffset.y = -(dimensions.totalHeight / 2); break;
+			default: edgeOffset.y = -(Math.round(dimensions.totalHeight / 2)); break;
 		}
 
 		position.x += edgeOffset.x;
@@ -3282,7 +3274,7 @@ Element.implement({
 		if (options && (options.x != null || options.y != null)) {
 			return (original ? original.apply(this, arguments) : this);
 		}
-		var position = this.calculatePosition(options);
+		var position = this.setStyle('position', 'absolute').calculatePosition(options);
 		return (options && options.returnPos) ? position : this.setStyles(position);
 	},
 
@@ -3990,21 +3982,24 @@ if (!window.Form) window.Form = {};
 
 		property: 'form.request',
 
-		initialize: function(form, update, options){
+		initialize: function(form, target, options){
 			this.element = document.id(form);
 			if (this.occlude()) return this.occluded;
-			this.update = document.id(update);
-			this.setOptions(options);
-			this.makeRequest();
-			if (this.options.resetForm){
-				this.request.addEvent('success', function(){
-					Function.attempt(function(){
-						this.element.reset();
-					}.bind(this));
-					if (window.OverText) OverText.update();
-				}.bind(this));
+			this.setOptions(options)
+				.setTarget(target)
+				.attach();
+		},
+
+		setTarget: function(target){
+			this.target = document.id(target);
+			if (!this.request){
+				this.makeRequest();
+			} else {
+				this.request.setOptions({
+					update: this.target
+				});
 			}
-			this.attach();
+			return this;
 		},
 
 		toElement: function(){
@@ -4012,52 +4007,62 @@ if (!window.Form) window.Form = {};
 		},
 
 		makeRequest: function(){
+			var self = this;
 			this.request = new Request.HTML(Object.merge({
-					update: this.update,
+					update: this.target,
 					emulation: false,
 					spinnerTarget: this.element,
 					method: this.element.get('method') || 'post'
 			}, this.options.requestOptions)).addEvents({
 				success: function(tree, elements, html, javascript){
 					['complete', 'success'].each(function(evt){
-						this.fireEvent(evt, [this.update, tree, elements, html, javascript]);
-					}, this);
-				}.bind(this),
+						self.fireEvent(evt, [self.target, tree, elements, html, javascript]);
+					});
+				},
 				failure: function(){
-					this.fireEvent('complete', arguments).fireEvent('failure', arguments);
-				}.bind(this),
+					self.fireEvent('complete', arguments).fireEvent('failure', arguments);
+				},
 				exception: function(){
-					this.fireEvent('failure', arguments);
-				}.bind(this)
+					self.fireEvent('failure', arguments);
+				}
 			});
+			return this.attachReset();
+		},
+
+		attachReset: function(){
+			if (!this.options.resetForm) return this;
+			this.request.addEvent('success', function(){
+				Function.attempt(function(){
+					this.element.reset();
+				}.bind(this));
+				if (window.OverText) OverText.update();
+			}.bind(this));
+			return this;
 		},
 
 		attach: function(attach){
-			if (attach == null) attach = true;
-			var method = attach ? 'addEvent' : 'removeEvent';
-
+			var method = (attach != false) ? 'addEvent' : 'removeEvent';
 			this.element[method]('click:relay(button, input[type=submit])', this.saveClickedButton.bind(this));
 
 			var fv = this.element.retrieve('validator');
 			if (fv) fv[method]('onFormValidate', this.onFormValidate);
 			else this.element[method]('submit', this.onSubmit);
+
+			return this;
 		},
 
 		detach: function(){
-			this.attach(false);
-			return this;
+			return this.attach(false);
 		},
 
 		//public method
 		enable: function(){
-			this.attach();
-			return this;
+			return this.attach();
 		},
 
 		//public method
 		disable: function(){
-			this.detach();
-			return this;
+			return this.detach();
 		},
 
 		onFormValidate: function(valid, form, event){
@@ -4084,10 +4089,11 @@ if (!window.Form) window.Form = {};
 		},
 
 		saveClickedButton: function(event, target){
-			if (!this.options.sendButtonClicked || !target.get('name')) return;
-			this.options.extraData[target.get('name')] = target.get('value') || true;
+			var targetName = target.get('name');
+			if (!targetName || !this.options.sendButtonClicked) return;
+			this.options.extraData[targetName] = target.get('value') || true;
 			this.clickedCleaner = function(){
-				delete this.options.extraData[target.get('name')];
+				delete this.options.extraData[targetName];
 				this.clickedCleaner = function(){};
 			}.bind(this);
 		},
@@ -4112,43 +4118,16 @@ if (!window.Form) window.Form = {};
 
 	});
 
-	Element.Properties.formRequest = {
-
-		set: function(){
-			var opt = Array.link(arguments, {options: Type.isObject, update: Type.isElement, updateId: Type.isString}),
-				update = opt.update || opt.updateId,
-				updater = this.retrieve('form.request');
-			if (update){
-				if (updater) updater.update = document.id(update);
-				this.store('form.request:update', update);
-			}
-			if (opt.options){
-				if (updater) updater.setOptions(opt.options);
-				this.store('form.request:options', opt.options);
-			}
-			return this;
-		},
-
-		get: function(){
-			var opt = Array.link(arguments, {options: Type.isObject, update: Type.isElement, updateId: Type.isString}),
-				update = opt.update || opt.updateId;
-			if (opt.options || update || !this.retrieve('form.request')){
-				if (opt.options || !this.retrieve('form.request:options')) this.set('form.request', opt.options);
-				if (update) this.set('form.request', update);
-				this.store('form.request', new Form.Request(this, this.retrieve('form.request:update'), this.retrieve('form.request:options')));
-			}
-			return this.retrieve('form.request');
+	Element.implement('formUpdate', function(update, options){
+		var fq = this.retrieve('form.request');
+		if (!fq) {
+			fq = new Form.Request(this, update, options);
+		} else {
+			if (update) fq.setTarget(update);
+			if (options) fq.setOptions(options).makeRequest();
 		}
-
-	};
-
-	Element.implement({
-
-		formUpdate: function(update, options){
-			this.get('formRequest', update, options).send();
-			return this;
-		}
-
+		fq.send();
+		return this;
 	});
 
 })();
@@ -4458,11 +4437,11 @@ Form.Request.Append = new Class({
 						}
 					}).adopt(kids);
 				}
-				container.inject(this.update, this.options.inject);
+				container.inject(this.target, this.options.inject);
 				if (this.options.requestOptions.evalScripts) Browser.exec(javascript);
 				this.fireEvent('beforeEffect', container);
 				var finish = function(){
-					this.fireEvent('success', [container, this.update, tree, elements, html, javascript]);
+					this.fireEvent('success', [container, this.target, tree, elements, html, javascript]);
 				}.bind(this);
 				if (this.options.useReveal){
 					container.set('reveal', this.options.revealOptions).get('reveal').chain(finish);
@@ -4475,6 +4454,7 @@ Form.Request.Append = new Class({
 				this.fireEvent('failure', xhr);
 			}.bind(this)
 		});
+		this.attachReset();
 	}
 
 });
@@ -6025,7 +6005,7 @@ Fx.Accordion = new Class({
 			}
 		}.bind(this));
 
-		return useFx ? this.start(obj) : this.set(obj);
+		return useFx ? this.start(obj) : this.set(obj).internalChain.callChain();
 	}
 
 });
@@ -6196,6 +6176,7 @@ Fx.Scroll = new Class({
 		var now = Array.flatten(arguments);
 		if (Browser.firefox) now = [Math.round(now[0]), Math.round(now[1])]; // not needed anymore in newer firefox versions
 		this.element.scrollTo(now[0], now[1]);
+		return this;
 	},
 
 	compute: function(from, to, delta){
@@ -6378,7 +6359,7 @@ Fx.Slide = new Class({
 
 		this.addEvent('complete', function(){
 			this.open = (wrapper['offset' + this.layout.capitalize()] != 0);
-			if (this.open && options.resetHeight) wrapper.setStyle('height', '');
+			if (this.open && this.options.resetHeight) wrapper.setStyle('height', '');
 		}, true);
 	},
 
@@ -6848,12 +6829,6 @@ var Drag = new Class({
 		var limit = options.limit;
 		this.limit = {x: [], y: []};
 
-		var styles = this.element.getStyles('left', 'right', 'top', 'bottom');
-		this._invert = {
-			x: options.modifiers.x == 'left' && styles.left == 'auto' && !isNaN(styles.right.toInt()) && (options.modifiers.x = 'right'),
-			y: options.modifiers.y == 'top' && styles.top == 'auto' && !isNaN(styles.bottom.toInt()) && (options.modifiers.y = 'bottom')
-		};
-
 		var z, coordinates;
 		for (z in options.modifiers){
 			if (!options.modifiers[z]) continue;
@@ -6870,7 +6845,6 @@ var Drag = new Class({
 			else this.value.now[z] = this.element[options.modifiers[z]];
 
 			if (options.invert) this.value.now[z] *= -1;
-			if (this._invert[z]) this.value.now[z] *= -1;
 
 			this.mouse.pos[z] = event.page[z] - this.value.now[z];
 
@@ -6920,7 +6894,6 @@ var Drag = new Class({
 			this.value.now[z] = this.mouse.now[z] - this.mouse.pos[z];
 
 			if (options.invert) this.value.now[z] *= -1;
-			if (this._invert[z]) this.value.now[z] *= -1;
 
 			if (options.limit && this.limit[z]){
 				if ((this.limit[z][1] || this.limit[z][1] === 0) && (this.value.now[z] > this.limit[z][1])){
@@ -7672,8 +7645,7 @@ Request.JSONP = new Class({
 
 	Implements: [Chain, Events, Options],
 
-	options: {
-	/*
+	options: {/*
 		onRequest: function(src, scriptElement){},
 		onComplete: function(data){},
 		onSuccess: function(data){},
@@ -7740,7 +7712,8 @@ Request.JSONP = new Class({
 	},
 
 	getScript: function(src){
-		if (!this.script) this.script = new Element('script[type=text/javascript]', {
+		if (!this.script) this.script = new Element('script', {
+			type: 'text/javascript',
 			async: true,
 			src: src
 		});
@@ -7748,7 +7721,7 @@ Request.JSONP = new Class({
 	},
 
 	success: function(args, index){
-		if (!this.running) return false;
+		if (!this.running) return;
 		this.clear()
 			.fireEvent('complete', args).fireEvent('success', args)
 			.callChain();
@@ -8477,6 +8450,65 @@ Hash.each(Hash.prototype, function(method, name){
 
 /*
 ---
+name: Table
+description: LUA-Style table implementation.
+license: MIT-style license
+authors:
+  - Valerio Proietti
+requires: [Core/Array]
+provides: [Table]
+...
+*/
+
+(function(){
+
+var Table = this.Table = function(){
+
+	this.length = 0;
+	var keys = [],
+	    values = [];
+
+	this.set = function(key, value){
+		var index = keys.indexOf(key);
+		if (index == -1){
+			var length = keys.length;
+			keys[length] = key;
+			values[length] = value;
+			this.length++;
+		} else {
+			values[index] = value;
+		}
+		return this;
+	};
+
+	this.get = function(key){
+		var index = keys.indexOf(key);
+		return (index == -1) ? null : values[index];
+	};
+
+	this.erase = function(key){
+		var index = keys.indexOf(key);
+		if (index != -1){
+			this.length--;
+			keys.splice(index, 1);
+			return values.splice(index, 1)[0];
+		}
+		return null;
+	};
+
+	this.each = this.forEach = function(fn, bind){
+		for (var i = 0, l = this.length; i < l; i++) fn.call(bind, keys[i], values[i], this);
+	};
+
+};
+
+if (this.Type) new Type('Table', Table);
+
+})();
+
+
+/*
+---
 
 script: HtmlTable.js
 
@@ -8803,6 +8835,22 @@ HtmlTable = Class.refactor(HtmlTable, {
 		return this.sort(Array.indexOf(this.head.getElements(this.options.thSelector).flatten(), el) % this.body.rows[0].cells.length);
 	},
 
+	serialize: function() {
+		var previousSerialization = this.previous.apply(this, arguments) || {};
+		if (this.options.sortable) {
+			previousSerialization.sortIndex = this.sorted.index;
+			previousSerialization.sortReverse = this.sorted.reverse;
+		}
+		return previousSerialization;
+	},
+
+	restore: function(tableState) {
+		if(this.options.sortable && tableState.sortIndex) {
+			this.sort(tableState.sortIndex, tableState.sortReverse);
+		}
+		this.previous.apply(this, arguments);
+	},
+
 	setSortedState: function(index, reverse){
 		if (reverse != null) this.sorted.reverse = reverse;
 		else if (this.sorted.index == index) this.sorted.reverse = !this.sorted.reverse;
@@ -8892,7 +8940,7 @@ HtmlTable = Class.refactor(HtmlTable, {
 		this.setRowSort(data, pre);
 
 		if (rel) rel.grab(this.body);
-
+		this.fireEvent('stateChanged');
 		return this.fireEvent('sort', [this.body, this.sorted.index]);
 	},
 
@@ -9417,11 +9465,14 @@ HtmlTable = Class.refactor(HtmlTable, {
 		this.previous.apply(this, arguments);
 		if (this.occluded) return this.occluded;
 
-		this._selectedRows = new Elements();
+		this.selectedRows = new Elements();
 
-		this._bound = {
-			mouseleave: this._mouseleave.bind(this),
-			clickRow: this._clickRow.bind(this)
+		this.bound = {
+			mouseleave: this.mouseleave.bind(this),
+			clickRow: this.clickRow.bind(this),
+			activateKeyboard: function() {
+				if (this.keyboard && this.selectEnabled) this.keyboard.activate();
+			}.bind(this)
 		};
 
 		if (this.options.selectable) this.enableSelect();
@@ -9433,27 +9484,27 @@ HtmlTable = Class.refactor(HtmlTable, {
 	},
 
 	enableSelect: function(){
-		this._selectEnabled = true;
-		this._attachSelects();
+		this.selectEnabled = true;
+		this.attachSelects();
 		this.element.addClass(this.options.classSelectable);
 		return this;
 	},
 
 	disableSelect: function(){
-		this._selectEnabled = false;
-		this._attachSelects(false);
+		this.selectEnabled = false;
+		this.attachSelects(false);
 		this.element.removeClass(this.options.classSelectable);
 		return this;
 	},
 
 	push: function(){
 		var ret = this.previous.apply(this, arguments);
-		this._updateSelects();
+		this.updateSelects();
 		return ret;
 	},
 
 	isSelected: function(row){
-		return this._selectedRows.contains(row);
+		return this.selectedRows.contains(row);
 	},
 
 	toggleRow: function(row){
@@ -9467,24 +9518,48 @@ HtmlTable = Class.refactor(HtmlTable, {
 		if (!this.options.allowMultiSelect) this.selectNone();
 
 		if (!this.isSelected(row)){
-			this._selectedRows.push(row);
+			this.selectedRows.push(row);
 			row.addClass(this.options.classRowSelected);
-			this.fireEvent('rowFocus', [row, this._selectedRows]);
+			this.fireEvent('rowFocus', [row, this.selectedRows]);
+			this.fireEvent('stateChanged');
 		}
 
-		this._focused = row;
+		this.focused = row;
 		document.clearSelection();
 
 		return this;
 	},
 
+	getSelected: function(){
+		return this.selectedRows;
+	},
+
+	serialize: function() {
+		var previousSerialization = this.previous.apply(this, arguments) || {};
+		if (this.options.selectable) {
+			previousSerialization.selectedRows = this.selectedRows.map(function(row) {
+				return Array.indexOf(this.body.rows, row);
+			}.bind(this));
+		}
+		return previousSerialization;
+	},
+
+	restore: function(tableState) {
+		if(this.options.selectable && tableState.selectedRows) {
+			tableState.selectedRows.each(function(index) {
+				this.selectRow(this.body.rows[index]);
+			}.bind(this));
+		}
+		this.previous.apply(this, arguments);
+	},
+
 	deselectRow: function(row, _nocheck){
 		if (!this.isSelected(row) || (!_nocheck && !this.body.getChildren().contains(row))) return;
 
-		this._selectedRows = new Elements(Array.from(this._selectedRows).erase(row));
+		this.selectedRows = new Elements(Array.from(this.selectedRows).erase(row));
 		row.removeClass(this.options.classRowSelected);
-		this.fireEvent('rowUnfocus', [row, this._selectedRows]);
-
+		this.fireEvent('rowUnfocus', [row, this.selectedRows]);
+		this.fireEvent('stateChanged');
 		return this;
 	},
 
@@ -9523,46 +9598,46 @@ HtmlTable = Class.refactor(HtmlTable, {
 	},
 
 	getSelected: function(){
-		return this._selectedRows;
+		return this.selectedRows;
 	},
 
 /*
 	Private methods:
 */
 
-	_enterRow: function(row){
-		if (this._hovered) this._hovered = this._leaveRow(this._hovered);
-		this._hovered = row.addClass(this.options.classRowHovered);
+	enterRow: function(row){
+		if (this.hovered) this.hovered = this.leaveRow(this.hovered);
+		this.hovered = row.addClass(this.options.classRowHovered);
 	},
 
-	_leaveRow: function(row){
+	leaveRow: function(row){
 		row.removeClass(this.options.classRowHovered);
 	},
 
-	_updateSelects: function(){
+	updateSelects: function(){
 		Array.each(this.body.rows, function(row){
 			var binders = row.retrieve('binders');
-			if (!binders && !this._selectEnabled) return;
+			if (!binders && !this.selectEnabled) return;
 			if (!binders){
 				binders = {
-					mouseenter: this._enterRow.pass([row], this),
-					mouseleave: this._leaveRow.pass([row], this)
+					mouseenter: this.enterRow.pass([row], this),
+					mouseleave: this.leaveRow.pass([row], this)
 				};
 				row.store('binders', binders);
 			}
-			if (this._selectEnabled) row.addEvents(binders);
+			if (this.selectEnabled) row.addEvents(binders);
 			else row.removeEvents(binders);
 		}, this);
 	},
 
-	_shiftFocus: function(offset, event){
-		if (!this._focused) return this.selectRow(this.body.rows[0], event);
-		var to = this._getRowByOffset(offset);
-		if (to === null || this._focused == this.body.rows[to]) return this;
+	shiftFocus: function(offset, event){
+		if (!this.focused) return this.selectRow(this.body.rows[0], event);
+		var to = this.getRowByOffset(offset);
+		if (to === null || this.focused == this.body.rows[to]) return this;
 		this.toggleRow(this.body.rows[to], event);
 	},
 
-	_clickRow: function(event, row){
+	clickRow: function(event, row){
 		var selecting = (event.shift || event.meta || event.control) && this.options.shiftForMultiSelect;
 		if (!selecting && !(event.rightClick && this.isSelected(row) && this.options.allowMultiSelect)) this.selectNone();
 
@@ -9570,16 +9645,16 @@ HtmlTable = Class.refactor(HtmlTable, {
 		else this.toggleRow(row);
 
 		if (event.shift){
-			this.selectRange(this._rangeStart || this.body.rows[0], row, this._rangeStart ? !this.isSelected(row) : true);
-			this._focused = row;
+			this.selectRange(this.rangeStart || this.body.rows[0], row, this.rangeStart ? !this.isSelected(row) : true);
+			this.focused = row;
 		}
-		this._rangeStart = row;
+		this.rangeStart = row;
 	},
 
-	_getRowByOffset: function(offset){
-		if (!this._focused) return 0;
+	getRowByOffset: function(offset){
+		if (!this.focused) return 0;
 		var rows = Array.clone(this.body.rows),
-			index = rows.indexOf(this._focused) + offset;
+			index = rows.indexOf(this.focused) + offset;
 
 		if (index < 0) index = null;
 		if (index >= rows.length) index = null;
@@ -9587,21 +9662,24 @@ HtmlTable = Class.refactor(HtmlTable, {
 		return index;
 	},
 
-	_attachSelects: function(attach){
+	attachSelects: function(attach){
 		attach = attach != null ? attach : true;
 
 		var method = attach ? 'addEvents' : 'removeEvents';
 		this.element[method]({
-			mouseleave: this._bound.mouseleave
+			mouseleave: this.bound.mouseleave,
+			click: this.bound.activateKeyboard
 		});
 
 		this.body[method]({
-			'click:relay(tr)': this._bound.clickRow,
-			'contextmenu:relay(tr)': this._bound.clickRow
+			'click:relay(tr)': this.bound.clickRow,
+			'contextmenu:relay(tr)': this.bound.clickRow
 		});
 
 		if (this.options.useKeyboard || this.keyboard){
-			if (!this.keyboard){
+			if (!this.keyboard) this.keyboard = new Keyboard();
+			if (!this.selectKeysDefined) {
+				this.selectKeysDefined = true;
 				var timer, held;
 
 				var move = function(offset){
@@ -9609,15 +9687,15 @@ HtmlTable = Class.refactor(HtmlTable, {
 						clearTimeout(timer);
 						e.preventDefault();
 
-						var to = this.body.rows[this._getRowByOffset(offset)];
+						var to = this.body.rows[this.getRowByOffset(offset)];
 						if (e.shift && to && this.isSelected(to)){
-							this.deselectRow(this._focused);
-							this._focused = to;
+							this.deselectRow(this.focused);
+							this.focused = to;
 						} else {
 							if (to && (!this.options.allowMultiSelect || !e.shift)){
 								this.selectNone();
 							}
-							this._shiftFocus(offset, e);
+							this.shiftFocus(offset, e);
 						}
 
 						if (held){
@@ -9637,16 +9715,13 @@ HtmlTable = Class.refactor(HtmlTable, {
 					held = false;
 				};
 
-				this.keyboard = new Keyboard({
-					events: {
-						'keydown:shift+up': move(-1),
-						'keydown:shift+down': move(1),
-						'keyup:shift+up': clear,
-						'keyup:shift+down': clear,
-						'keyup:up': clear,
-						'keyup:down': clear
-					},
-					active: true
+				this.keyboard.addEvents({
+					'keydown:shift+up': move(-1),
+					'keydown:shift+down': move(1),
+					'keyup:shift+up': clear,
+					'keyup:shift+down': clear,
+					'keyup:up': clear,
+					'keyup:down': clear
 				});
 
 				var shiftHint = '';
@@ -9672,11 +9747,11 @@ HtmlTable = Class.refactor(HtmlTable, {
 			}
 			this.keyboard[attach ? 'activate' : 'deactivate']();
 		}
-		this._updateSelects();
+		this.updateSelects();
 	},
 
-	_mouseleave: function(){
-		if (this._hovered) this._leaveRow(this._hovered);
+	mouseleave: function(){
+		if (this.hovered) this.leaveRow(this.hovered);
 	}
 
 });

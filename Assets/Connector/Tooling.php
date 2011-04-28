@@ -90,8 +90,11 @@ if (!function_exists('safe_glob'))
 					$subsect = safe_glob($filepath . '/' . $mask, $flags | GLOB_NOSORT);
 					if (is_array($subsect))
 					{
-						$dirs = array_merge($dirs, array_prepend($subject['dirs'], ($flags & GLOB_PATH ? '' : $file . '/')));
-						$files = array_merge($files, array_prepend($subject['files'], ($flags & GLOB_PATH ? '' : $file . '/')));
+						if (!($flags & GLOB_PATH))
+						{
+							$dirs = array_merge($dirs, array_prepend($subject['dirs'], $file . '/'));
+							$files = array_merge($files, array_prepend($subject['files'], $file . '/'));
+						}
 					}
 				}
 				// Match file mask

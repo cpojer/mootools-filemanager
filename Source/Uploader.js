@@ -109,12 +109,14 @@ FileManager.implement({
 				self.diag.log('Uploader: setOptions');
 				this.setOptions({
 					//data: Object.merge({}, base.options.data, self.options.uploadAuthData),
-					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (self.options.propagateType == 'GET' ? self.options.propagateData : {}), {
+					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString({
 						event: 'upload',
+					}),
+					data: {
 						directory: self.Directory,
 						filter: self.options.filter,
-						resize: self.options.resizeImages && resizer.hasClass('checkboxChecked') ? 1 : 0
-					}))
+						resize: (self.options.resizeImages && resizer.hasClass('checkboxChecked')) ? 1 : 0
+					}
 				});
 			},
 
@@ -318,7 +320,7 @@ FileManager.implement({
 			appendCookieData: true, // pass along any session cookie data, etc. in the request section (PHP: $_GET[])
 			verbose: this.options.verbose,
 			data: Object.merge({},
-				(self.options.propagateType == 'POST' ? self.options.propagateData : {}),
+				self.options.propagateData,
 				(self.options.uploadAuthData || {})
 			),
 			fileClass: File,
