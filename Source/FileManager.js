@@ -388,34 +388,6 @@ var FileManager = new Class({
 			new Element('h1')
 		]);
 
-		// We need to group the headers and lists together because we will
-		// use some CSS to reorganise a bit.  So we create "infoarea" which
-		// will contain the h2 and list for the "Information", that is
-		// modification date, size, directory etc...
-		this.info_area = new Element('div', {
-			'class': 'filemanager-info-area',
-			styles:
-			{
-				opacity: 0
-			}
-		});
-
-// Partikule. Removed this.info_area header
-// 1. To gain more vertical space for preview
-// 2. Because the user knows this is info about the file
-// 3. Less is more :-)
-		this.info.adopt([this.info_head, this.info_area]);
-// /Partikule
-
-		new Element('dl').adopt([
-			new Element('dt', {text: this.language.modified}),
-			new Element('dd', {'class': 'filemanager-modified'}),
-			new Element('dt', {text: this.language.type}),
-			new Element('dd', {'class': 'filemanager-type'}),
-			new Element('dt', {text: this.language.size}),
-			new Element('dd', {'class': 'filemanager-size'})
-		]).inject(this.info_area);
-
 		this.preview = new Element('div', {'class': 'filemanager-preview'}).addEvent('click:relay(img.preview)', function(){
 			self.fireEvent('preview', [this.get('src'), self, this]);
 		});
@@ -438,7 +410,12 @@ var FileManager = new Class({
 			//new Element('h2', {'class': 'filemanager-headline', text: this.language.more}),
 			this.preview
 		]);
-		this.info.adopt(this.preview_area).inject(this.filemanager);
+
+// Partikule.
+// 1. To gain more vertical space for preview
+// 2. Because the user knows this is info about the file
+// 3. Less is more :-)
+		this.info.adopt([this.info_head, this.preview_area]).inject(this.filemanager);
 // /Partikule
 
 // Partikule
@@ -965,9 +942,6 @@ var FileManager = new Class({
 			this.info_head.fade(0).get('tween').chain(function(){
 				this.element.setStyle('display', 'none');
 			});
-			this.info_area.fade(0).get('tween').chain(function(){
-				this.element.setStyle('display', 'none');
-			});
 			this.preview_area.fade(0).get('tween').chain(function(){
 				this.element.setStyle('display', 'none');
 			});
@@ -975,7 +949,6 @@ var FileManager = new Class({
 		else
 		{
 			this.info_head.setStyle('display', 'block').fade(1);
-			this.info_area.setStyle('display', 'block').fade(1);
 			this.preview_area.setStyle('display', 'block').fade(1);
 		}
 	},
@@ -2002,11 +1975,11 @@ var FileManager = new Class({
 
 			file.dir = j.path;
 
-			this.diag.log('thumbnail: "' + file.thumb48 + '"');
+			this.diag.log('thumbnail: "' + file.icon48 + '"');
 			//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumb48 /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumb48);
 
 			// This is just a raw image
-			el = this.list_row_maker((this.listType === 'thumb' ? (file.thumb48 ? file.thumb48 : file.icon48) : file.icon), file);
+			el = this.list_row_maker((this.listType === 'thumb' ? file.icon48 : file.icon), file);
 
 			this.diag.log('add DIRECTORY click event to ' + file.name);
 			el.addEvent('click', (function(e) {
@@ -2269,10 +2242,6 @@ var FileManager = new Class({
 
 				els[0].push(el);
 				el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
-				//icons = $$(icons.map((function(icon){
-				//  this.showFunctions(icon,icon,0.5,1);
-				//  this.showFunctions(icon,el.getParent('li'),1);
-				//}).bind(this)));
 
 				// ->> LOAD the FILE/IMAGE from history when PAGE gets REFRESHED (only directly after refresh)
 				this.diag.log('fill on PRESELECT: onShow = ' + this.onShow + ', file = ' + file.name + ', fmFile = ' + fmFile + ', preselect = ' + (preselect ? preselect : '???'));
@@ -2712,8 +2681,6 @@ var FileManager = new Class({
 						return;
 					}
 
-					var size = this.size(j.size);
-
 					// speed up DOM tree manipulation: detach .info from document temporarily:
 					this.info.dispose();
 
@@ -2724,11 +2691,6 @@ var FileManager = new Class({
 
 					this.info_head.getElement('h1').set('text', file.name);
 					this.info_head.getElement('h1').set('title', file.name);
-
-					this.info_area.getElement('dd.filemanager-modified').set('text', j.date);
-					this.info_area.getElement('dd.filemanager-type').set('text', j.mime);
-					this.info_area.getElement('dd.filemanager-size').set('text', !size[0] && size[1] === 'Bytes' ? '-' : (size.join(' ') + (size[1] !== 'Bytes' ? ' (' + j.size + ' Bytes)' : '')));
-					//this.info_area.getElement('h2.filemanager-headline').setStyle('display', j.mime === 'text/directory' ? 'none' : 'block');
 
 					// don't wait for the fade to finish to set up the new content
 					var prev = this.preview.removeClass('filemanager-loading').set('html', (j.content ? j.content.substitute(this.language, /\\?\$\{([^{}]+)\}/g) : '')).getElement('img.preview');
@@ -2904,14 +2866,6 @@ var FileManager = new Class({
 						}).bind(icon)
 		});
 		return icon;
-	},
-
-	size: function(size){
-		var tab = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-		for(var i = 0; size > 1024; i++)
-			size = size/1024;
-
-		return [Math.round(size), tab[i]];
 	},
 
 	normalize: function(str){
@@ -3212,14 +3166,16 @@ Asset.javascript(__MFM_ASSETS_DIR__+'/js/jsGET.js', {
 Element.implement({
 
 	center: function(offsets) {
-		var scroll = document.getScroll(),
-			offset = document.getSize(),
-			size = this.getSize(),
-			values = {x: 'left', y: 'top'};
+		var scroll = document.getScroll();
+		var	offset = document.getSize();
+		var	size = this.getSize();
+		var	values = {x: 'left', y: 'top'};
 
-		if (!offsets) offsets = {};
+		if (!offsets) {
+			offsets = {};
+		}
 
-		for (var z in values){
+		for (var z in values) {
 			var style = scroll[z] + (offset[z] - size[z]) / 2 + (offsets[z] || 0);
 			this.setStyle(values[z], (z === 'y' && style < 30) ? 30 : style);
 		}

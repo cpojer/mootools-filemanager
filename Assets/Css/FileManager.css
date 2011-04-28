@@ -176,7 +176,7 @@ div.filemanager-preview div.loader {
 div.filemanager div.filemanager-browserscroll {
   margin: 0;
   padding: 0;
-  height:100%;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden; /* don't show the hor. scrollbar just because a few filenames are very long: just clip them! */
 }
@@ -214,8 +214,8 @@ div.filemanager div.filemanager-browsercontainer {
   min-width: 189px;
   border: 0;
   border-right: 1px solid #bebebe;
-  background:#D7DEE8 url("../Images/filelist.png") repeat-x bottom left;
-  overflow:hidden;
+  background: #D7DEE8 url("../Images/filelist.png") repeat-x bottom left;
+  overflow: hidden;
   
   box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
   -moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px;
@@ -365,7 +365,7 @@ div.filemanager-container span.thumb {
 }
 
 div.filemanager-container span.fi.hover {
-  background:#E2EBF6;
+  background: #E2EBF6;
 }
 
 div.filemanager-container span.fi span, 
@@ -594,6 +594,16 @@ div.filemanager h3 {
   clear: both;
 }
 
+div.filemanager div.filemanager-info-area {
+  border-top: 1px solid #bebebe;
+  padding: 2px 0 0 0;
+  clear: both;
+}
+div.filemanager div.filemanager-preview-content {
+  border-top: 1px solid #bebebe;
+  padding: 2px 0 0 0;
+  clear: both;
+}
 div.filemanager div.filemanager-errors {
   border-top: 1px solid #bebebe;
   padding: 2px 0 0 0;
@@ -995,6 +1005,7 @@ div.filemanager-details {
 }
 div.filemanager-filelist { 
 	padding: 5px;
+	border-top: 1px solid #bebebe;
 }
 div.filemanager-filelist .fi {
     position: relative;

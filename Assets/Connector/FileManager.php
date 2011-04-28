@@ -1666,17 +1666,17 @@ class FileManager
 		$jserr['icon48'] = $icon48_e;
 		$jserr['icon'] = $icon_e;
 
-		$content_classes = "margin preview_err_report";
 		$postdiag_err_HTML = '<p class="err_info">' . $emsg . '</p>';
 		$preview_HTML = '${nopreview}';
-		$content = '<h3>${preview}</h3>
-						<div class="filemanager-preview-content">' . $preview_HTML . '</div>';
-		$content .= '<h3>Diagnostics</h3>
-					 <div class="filemanager-detail-diag">
-						<div class="filemanager-errors">' . $postdiag_err_HTML . '</div>
-					 </div>';
+		$content = '';
+		//$content .= '<h3>${preview}</h3>';
+		$content .= '<div class="filemanager-preview-content">' . $preview_HTML . '</div>';
+		//$content .= '<h3>Diagnostics</h3>';
+		//$content .= '<div class="filemanager-detail-diag">;
+		$content .= '<div class="filemanager-errors">' . $postdiag_err_HTML . '</div>';
+		//$content .= '</div>';
 
-		$json['content'] = self::compressHTML('<div class="' . $content_classes . '">' . $content . '</div>');
+		$json['content'] = self::compressHTML($content);
 
 		$this->sendHttpHeaders('Content-Type: application/json');
 
@@ -2679,8 +2679,18 @@ class FileManager
 	
 
 
-
-
+	// derived from   http://www.php.net/manual/en/function.filesize.php#100097
+	public function format_bytes($bytes) 
+	{
+		if ($bytes < 1024) 
+			return $bytes . ' Bytes';
+		elseif ($bytes < 1048576) 
+			return round($bytes / 1024, 2) . ' KB (' . $bytes . ' Bytes)';
+		elseif ($bytes < 1073741824) 
+			return round($bytes / 1048576, 2) . ' MB (' . $bytes . ' Bytes)';
+		else
+			return round($bytes / 1073741824, 2) . ' GB (' . $bytes . ' Bytes)';
+	}
 
 	/**
 	 * Produce a HTML snippet detailing the given file in the JSON 'content' element; place additional info
@@ -2761,6 +2771,9 @@ class FileManager
 		$thumb250_e = false;
 		$thumb48_e  = false;
 
+		$tstamp_str = date($this->options['dateFormat'], @filemtime($file));
+		$fsize = @filesize($file);
+
 		$json = array_merge(array(
 				//'status' => 1,
 				//'mimetype' => $mime,
@@ -2771,13 +2784,30 @@ class FileManager
 			array(
 				'path' => FileManagerUtility::rawurlencode_path($url),
 				'name' => $filename,
-				'date' => date($this->options['dateFormat'], @filemtime($file)),
+				'date' => $tstamp_str,
 				'mime' => $mime,
-				'size' => @filesize($file)
+				'size' => $fsize
 			));
 
-		$content_classes = "margin" . ($bad_ext ? ' preview_err_report' : '');
-		$content = '';
+		if (empty($fsize))
+		{
+			$fsize_str = '-';
+		}
+		else
+		{
+			// convert to T/G/M/K-bytes:
+			$fsize_str = $this->format_bytes($fsize);
+		}
+		
+		$content = '<dl>
+						<dt>${modified}</dt>
+						<dd class="filemanager-modified">' . $tstamp_str . '</dd>
+						<dt>${type}</dt>
+						<dd class="filemanager-type">' . $mime . '</dd>
+						<dt>${size}</dt>
+						<dd class="filemanager-size">' . $fsize_str . '</dd>';
+		$content_dl_term = false;
+
 		$preview_HTML = null;
 		$postdiag_err_HTML = '';
 		$postdiag_dump_HTML = '';
@@ -2850,10 +2880,11 @@ class FileManager
 				$json['width'] = $width;
 				$json['height'] = $height;
 
-				$content = '<dl>
+				$content .= '
 						<dt>${width}</dt><dd>' . $width . 'px</dd>
 						<dt>${height}</dt><dd>' . $height . 'px</dd>
 					</dl>';
+				$content_dl_term = true;
 					
 				$sw_make = $this->mkSafeUTF8($this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'Software'));
 				$time_make = $this->mkSafeUTF8($this->getID3infoItem($fi, null, 'jpg', 'exif', 'IFD0', 'DateTime'));
@@ -2881,7 +2912,7 @@ class FileManager
 						$dims = $this->predictThumbDimensions($width, $height, 250, 250);
 					
 						$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-									   <img src="' . $this->options['assetBasePath'] . 'Images/transparent.gif" class="preview" alt="preview" style="width: ' . $dims['width'] . 'px; height: ' . $dims['height'] . 'px; border: red solid 1px;" />
+									   <img src="' . $this->options['assetBasePath'] . 'Images/transparent.gif" class="preview" alt="preview" style="width: ' . $dims['width'] . 'px; height: ' . $dims['height'] . 'px;" />
 									 </a>';
 									 
 						$json['thumb250_width'] = $dims['width'];
@@ -2891,7 +2922,7 @@ class FileManager
 					{
 						// when we get here, a failure occurred before, so we only will have the icons. So we use those: 
 						$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
-									   <img src="' . FileManagerUtility::rawurlencode_path($icon48) . '" class="preview" alt="preview" style="border: #f0f solid 1px;" />
+									   <img src="' . FileManagerUtility::rawurlencode_path($icon48) . '" class="preview" alt="preview" />
 									 </a>';
 					}
 				}
@@ -2927,7 +2958,6 @@ class FileManager
 
 					if (!FileManagerUtility::isBinary($filecontent))
 					{
-						$content_classes .= ' textpreview';
 						$preview_HTML = '<pre>' . str_replace(array('$', "\t"), array('&#36;', '&nbsp;&nbsp;'), htmlentities($filecontent, ENT_NOQUOTES, 'UTF-8')) . '</pre>';
 					}
 					else
@@ -2975,11 +3005,12 @@ class FileManager
 						$json['width'] = $width;
 						$json['height'] = $height;
 
-						$content = '<dl>
+						$content .= '
 								<dt>${width}</dt><dd>' . $width . 'px</dd>
 								<dt>${height}</dt><dd>' . $height . 'px</dd>
 								<dt>${length}</dt><dd>' . round($this->getID3infoItem($fi, 0, 'swf', 'header', 'length') / $this->getID3infoItem($fi, 25, 'swf', 'header', 'frame_count')) . 's</dd>
 							</dl>';
+						$content_dl_term = true;
 					}
 					break;
 
@@ -2997,13 +3028,14 @@ class FileManager
 				$artist = $this->mkSafeUTF8($this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'artist', 0), 'tags', 'id3v2', 'artist', 0));
 				$album = $this->mkSafeUTF8($this->getID3infoItem($fi, $this->getID3infoItem($fi, '???', 'tags', 'id3v1', 'album', 0), 'tags', 'id3v2', 'album', 0));
 
-				$content = '<dl>
+				$content .= '
 						<dt>${title}</dt><dd>' . $title . '</dd>
 						<dt>${artist}</dt><dd>' . $artist . '</dd>
 						<dt>${album}</dt><dd>' . $album . '</dd>
 						<dt>${length}</dt><dd>' . $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'playtime_string')) . '</dd>
 						<dt>${bitrate}</dt><dd>' . round($this->getID3infoItem($fi, 0, 'bitrate') / 1000) . 'kbps</dd>
 					</dl>';
+				$content_dl_term = true;
 				break;
 
 			case 'video':
@@ -3030,7 +3062,7 @@ class FileManager
 				$g_bitrate = round($this->getID3infoItem($fi, 0, 'bitrate') / 1000, 1);
 				$g_playtime_str = $this->mkSafeUTF8($this->getID3infoItem($fi, '???', 'playtime_string'));
 
-				$content = '<dl>
+				$content .= '
 						<dt>Audio</dt><dd>';
 				if ($a_fmt === '???' && $a_samplerate == 0 && $a_bitrate == 0 && $a_bitrate_mode === '???' && $a_channels == 0 && empty($a_codec) && $a_streams === '???' && $a_streamcount == 0)
 				{
@@ -3052,6 +3084,7 @@ class FileManager
 						<dt>${length}</dt><dd>' . $g_playtime_str . '</dd>
 						<dt>${bitrate}</dt><dd>' . $g_bitrate . 'kbps</dd>
 					</dl>';
+				$content_dl_term = true;
 				break;
 
 			default:
@@ -3059,6 +3092,11 @@ class FileManager
 				break;
 			}
 			break;
+		}
+		
+		if (!$content_dl_term)
+		{
+			$content .= '</dl>';
 		}
 
 		if (!empty($fi['error']))
@@ -3207,7 +3245,7 @@ class FileManager
 				{
 					$preview_HTML = '<a href="' . FileManagerUtility::rawurlencode_path($url) . '" data-milkbox="single" title="' . htmlentities($filename, ENT_QUOTES, 'UTF-8') . '">
 									   <img src="' . $thumb250_e . '" class="preview" alt="' . (!empty($emsgX) ? $this->mkSafe4HTMLattr($emsgX) : 'preview') . '" 
-											style="width: ' . $tnsize[0] . 'px; height: ' . $tnsize[1] . 'px; border: green solid 1px; " />
+											style="width: ' . $tnsize[0] . 'px; height: ' . $tnsize[1] . 'px;" />
 									 </a>';
 				}
 			}
@@ -3274,11 +3312,13 @@ class FileManager
 
 		if (!empty($preview_HTML))
 		{
-			$content .= '<h3>${preview}</h3><div class="filemanager-preview-content">' . $preview_HTML . '</div>';
+			//$content .= '<h3>${preview}</h3>';
+			$content .= '<div class="filemanager-preview-content">' . $preview_HTML . '</div>';
 		}
 		if (!empty($postdiag_err_HTML) || !empty($postdiag_dump_HTML))
 		{
-			$content .= '<h3>Diagnostics</h3><div class="filemanager-detail-diag">';
+			//$content .= '<h3>Diagnostics</h3>';
+			//$content .= '<div class="filemanager-detail-diag">';
 			if (!empty($postdiag_err_HTML))
 			{
 				$content .= '<div class="filemanager-errors">' . $postdiag_err_HTML . '</div>';
@@ -3287,10 +3327,10 @@ class FileManager
 			{
 				$content .= '<div class="filemanager-diag-dump">' . $postdiag_dump_HTML . '</div>';
 			}
-			$content .= '</div>';
+			//$content .= '</div>';
 		}
 
-		$json['content'] = self::compressHTML('<div class="' . $content_classes . '">' . $content . '</div>');
+		$json['content'] = self::compressHTML($content);
 
 		return array_merge((is_array($json_in) ? $json_in : array()), $json);
 	}
