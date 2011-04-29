@@ -77,7 +77,7 @@ FileManager.implement({
 			form_el.adopt(fileinput);
 		}
 		return form_el;
-	}
+	},
 
 
 	startUpload: function()
@@ -189,7 +189,8 @@ FileManager.implement({
 					catch(e) {}
 				}
 
-				if (!response) {
+				if (!response)
+				{
 					throw "Can't find response.";
 				}
 
@@ -197,13 +198,15 @@ FileManager.implement({
 
 				if (response && !response.status)
 				{
-					this.showError('' + response.error);
+					mfm.showError('' + response.error);
 				}
 				else if (response)
 				{
 					mfm.onShow = true; // why exactly do we need to set this, what purpose does the default of NOT preselecting the thing we asked to preselect have?
 
-					mfm.load(mfm.Directory.replace(/\/$/, ''), response.name ? response.name : null);
+					// Why the Hell a regex replace on Directory???
+					//mfm.load(mfm.Directory.replace(/\/$/, ''), response.name ? response.name : null);
+					mfm.load(mfm.Directory, (response.name ? response.name : null));
 				}
 				else
 				{
@@ -214,7 +217,7 @@ FileManager.implement({
 			{
 				// Maybe this.contentDocument.documentElement.innerText isn't where we need to look?
 				//debugger;
-				//this.diag.log(this);
+				mfm.diag.log('noFlashUpload: document innerText grab FAIL:', e, this);
 				mfm.load(mfm.Directory);
 			}
 

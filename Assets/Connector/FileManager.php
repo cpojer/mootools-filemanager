@@ -2293,7 +2293,7 @@ class FileManager
 			$legal_dir_url = $fileinfo['legal_dir_url'];
 			$dir = $fileinfo['dir'];
 			$file_arg = $fileinfo['raw_filename'];
-			$filename = $fileinfo['name'] . ((isset($fileinfo['extension']) && strlen($fileinfo['extension']) > 0) ? '.' . $fileinfo['extension'] : '');
+			$filename = $fileinfo['filename'];
 			$meta = $fileinfo['meta_data'];
 			$mime = $fileinfo['mime'];
 			$mime_filter = $fileinfo['mime_filter'];
@@ -2386,12 +2386,8 @@ class FileManager
 			 */
 			$jsbogus = array('status' => 1);
 			$jsbogus = $this->extractDetailInfo($jsbogus, $legal_url, $meta, $mime_filter, $mime_filters, 'direct');
-			if (!empty($jserr['thumb' . $reqd_size]))
-			{
-				$thumb_path = $jserr['thumb' . $reqd_size];
-			}
 
-			$this->sendHttpHeaders('Content-Type: ' . $this->getGETparam('reportContentType', 'application/json'));
+			$this->sendHttpHeaders('Content-Type: ' . $this->getPOSTparam('reportContentType', 'application/json'));
 
 			echo json_encode(array(
 					'status' => 1,
@@ -2411,7 +2407,7 @@ class FileManager
 
 		$this->modify_json4exception($jserr, $emsg, 'file = ' . $this->mkSafe4Display($file_arg . ', destination path = ' . $file . ', target directory (URI path) = ' . $legal_dir_url));
 
-		$this->sendHttpHeaders('Content-Type: ' . $this->getGETparam('reportContentType', 'application/json'));
+		$this->sendHttpHeaders('Content-Type: ' . $this->getPOSTparam('reportContentType', 'application/json'));
 
 		// when we fail here, it's pretty darn bad and nothing to it.
 		// just push the error JSON as go.
