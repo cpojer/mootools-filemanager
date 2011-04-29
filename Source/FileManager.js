@@ -30,13 +30,13 @@ var FileManager = new Class({
 		/*
 		 * onComplete: function(           // Fired when the 'Select' button is clicked
 		 *                      path,      // URLencoded absolute URL path to selected file
-		 *                      file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
+		 *                      file,      // the file specs object: .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 		 *                      fmobj      // reference to the FileManager instance which fired the event
 		 *                     )
 		 *
 		 * onModify: function(             // Fired when either the 'Rename' or 'Delete' icons are clicked or when a file is drag&dropped.
 		 *                                 // Fired AFTER the action is executed.
-		 *                    file,        // a CLONE of the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
+		 *                    file,        // a CLONE of the file specs object: .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 		 *                    json,        // The JSON data as sent by the server for this 'destroy/rename/move/copy' request
 		 *                    mode,        // string specifying the action: 'destroy', 'rename', 'move', 'copy'
 		 *                    fmobj        // reference to the FileManager instance which fired the event
@@ -119,12 +119,10 @@ var FileManager = new Class({
 		this.ID = String.uniqueID();
 		this.droppables = [];
 		this.assetBasePath = this.options.assetBasePath.replace(/(\/|\\)*$/, '/');
-		this.Directory = this.options.directory;
 		this.root = null;
 		this.CurrentDir = null;
 		this.listType = 'list';
 		this.dialogOpen = false;
-		//this.usingHistory = false;
 		this.storeHistory = false;
 		this.fmShown = false;
 		this.drop_pending = 0;           // state: 0: no drop pending, 1: copy pending, 2: move pending
@@ -325,13 +323,13 @@ var FileManager = new Class({
 				// no need to request the dirscan again: after all, we only wish to render another view of the same directory.
 				// (This means, however, that we MAY requesting any deferred thumbnails)
 
-				//self.load(self.Directory, true);
+				//self.load(self.options.directory, true);
 				//return self.deselect();   // nothing to return on a click event, anyway. And do NOT loose the selection!
 
 				// the code you need here is identical to clicking on the current directory in the top path bar:
 
 				// show the 'directory' info in the detail pane again (this is a way to get back from previewing single files to previewing the directory as a gallery)
-				this.diag.log('click: fillInfo: current directory!', this.Directory);
+				this.diag.log('show_dir_Thumb_gallery button click: current directory!', this.CurrentDir, ', startdir: ', this.options.directory);
 				this.fillInfo();
 			}.bind(this));
 // /Partikule
@@ -438,7 +436,6 @@ var FileManager = new Class({
 
 		// Thumbs list container (in preview panel)
 		this.dir_filelist = new Element('div', {'class': 'filemanager-filelist'});
-		//this.preview.adopt(this.dir_filelist);
 
 // /Partikule
 
@@ -696,16 +693,17 @@ var FileManager = new Class({
 			this.storeHistory = true;
 
 			var file = el.retrieve('file');
-			this.diag.log('on relayClick file = ', file, this.Directory, '@ el = ', el);
+			this.diag.log('on relayClick file = ', file, ', current directory: ', this.CurrentDir, '@ el = ', el);
 			if (el.retrieve('edit')) {
 				el.eliminate('edit');
 				return;
 			}
-			if (file.mime === 'text/directory') {
+			if (file.mime === 'text/directory')
+			{
 				el.addClass('selected');
 				// reset the paging to page #0 as we clicked to change directory
 				this.store_view_fill_startindex(0);
-				this.load(this.Directory + file.name);
+				this.load(file.path);
 				return;
 			}
 
@@ -736,11 +734,10 @@ var FileManager = new Class({
 	{
 		if (e) e.stop();
 
-		this.diag.log('on relayDblClick file = ', file, this.Directory, ', # clicks: ', clicks);
+		this.diag.log('on relayDblClick file = ', file, ', current dir: ', this.CurrentDir, ', # clicks: ', clicks);
 
 		this.tips.hide();
 
-		//var file = el.retrieve('file'); -- wrong 'el': that 'el' is a <LI> in the directory view!
 		var el_ref = dg_el.retrieve('el_ref');
 
 		if (this.Current)
@@ -785,11 +782,9 @@ var FileManager = new Class({
 			this.listType = 'list';
 			if (typeof jsGET !== 'undefined') jsGET.set('fmListType=list');
 		}
-		this.diag.log('on toggleList dir = ', this.Directory, e);
-		//this.load(this.Directory);
+		this.diag.log('on toggleList dir = ', this.CurrentDir, e);
 
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
-		//this.reset_view_fill_store();
 		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;
 
@@ -819,7 +814,7 @@ var FileManager = new Class({
 			switch (key)
 			{
 			case 'fmPath':
-				if (this.Directory !== value)
+				if (this.CurrentDir && this.CurrentDir.path !== value)
 				{
 					this.load(value);
 				}
@@ -860,27 +855,38 @@ var FileManager = new Class({
 		this.onShow = false;
 
 		if (typeof preselect === 'undefined') preselect = null;
+		if (typeof loaddir === 'undefined') loaddir = null;
 
-		this.diag.log('on show: directory = ', this.Directory);
-		if (typeof loaddir !== 'undefined' && loaddir != null)
-		{
-			this.Directory = loaddir;
-		}
-		else if (typeof jsGET !== 'undefined')
+		if (loaddir == null && typeof jsGET !== 'undefined')
 		{
 			if (jsGET.get('fmPath') != null)
 			{
-				this.Directory = jsGET.get('fmPath');
+				loaddir = jsGET.get('fmPath');
+			}
+		}
+		if (loaddir == null)
+		{
+			if (this.CurrentDir)
+			{
+				loaddir = this.CurrentDir.path;
+			}
+			else
+			{
+				loaddir = this.options.directory;
 			}
 		}
 		if (preselect)
 		{
+			this.diag.log('on show: set onShow on PRESELECT: ', preselect);
 			this.onShow = true;
 		}
 
 		// get and set history
 		if (typeof jsGET !== 'undefined') {
-			if (jsGET.get('fmFile') != null) this.onShow = true;
+			if (jsGET.get('fmFile')) {
+				this.diag.log('on show: set onShow on fmFile: ', jsGET.get('fmFile'));
+				this.onShow = true;
+			}
 			if (jsGET.get('fmListType') != null) {
 				$$('.filemanager-browserheader a.listType').set('opacity',0.5);
 				this.listType = jsGET.get('fmListType');
@@ -889,11 +895,14 @@ var FileManager = new Class({
 				else
 					this.browserMenu_list.store('set',true).set('opacity',1);
 			}
-			jsGET.set({'fmID': this.ID, 'fmPath': this.Directory});
+			jsGET.set({
+				'fmID': this.ID,
+				'fmPath': loaddir
+			});
 			this.hashListenerId = jsGET.addListener(this.hashHistory, false, this);
 		}
 
-		this.load(this.Directory, preselect);
+		this.load(loaddir, preselect);
 		if (!this.options.hideOverlay) {
 			this.overlay.show();
 		}
@@ -908,7 +917,7 @@ var FileManager = new Class({
 			'resize': this.bound.scroll
 		});
 		// add keyboard navigation
-		this.diag.log('add keyboard nav on show file = ', this.Directory);
+		this.diag.log('add keyboard nav on show file = ', loaddir);
 		document.addEvent('keydown', this.bound.keydown);
 		document.addEvent('keyup', this.bound.keyup);
 		if ((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
@@ -990,8 +999,8 @@ var FileManager = new Class({
 
 		var file = this.Current.retrieve('file');
 		this.fireEvent('complete', [
-			file.path, //this.escapeRFC3986(this.normalize('/' + this.root + file.dir + file.name)), // the absolute URL for the selected file, rawURLencoded
-			file,                 // the file specs: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
+			this.escapeRFC3986(this.normalize('/' + this.root + file.path)), // the absolute URL for the selected file, rawURLencoded
+			file,                 // the file specs: .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 			this
 		]);
 
@@ -1043,7 +1052,7 @@ var FileManager = new Class({
 		var tx_cfg = this.options.mkServerRequestURL(this, 'download', Object.merge({},
 						this.options.propagateData,
 						{
-							file: this.normalize(file.dir + file.name),
+							file: file.path,
 							filter: this.options.filter
 						}));
 
@@ -1097,7 +1106,7 @@ var FileManager = new Class({
 
 				var tx_cfg = this.options.mkServerRequestURL(this, 'create', {
 								file: input.get('value'),
-								directory: this.Directory,
+								directory: this.CurrentDir.path,
 								filter: this.options.filter
 							});
 
@@ -1119,7 +1128,6 @@ var FileManager = new Class({
 
 						// the 'view' request may be an initial reload: keep the startindex (= page shown) intact then:
 						this.fill(j, this.get_view_fill_startindex());
-						//this.browserLoader.fade(0);
 					}).bind(this),
 					onComplete: function() {},
 					onError: (function(text, error) {
@@ -1195,7 +1203,6 @@ var FileManager = new Class({
 					preselect = j.preselect_name;
 				}
 				this.fill(j, start_idx, null, null, preselect);
-				//this.browserLoader.fade(0);
 			}).bind(this),
 			onComplete: (function() {
 				this.diag.log("### 'view' request: onComplete invoked");
@@ -1250,7 +1257,7 @@ var FileManager = new Class({
 
 		var tx_cfg = this.options.mkServerRequestURL(this, 'destroy', {
 						file: file.name,
-						directory: this.Directory,
+						directory: this.CurrentDir.path,
 						filter: this.options.filter
 					});
 
@@ -1283,10 +1290,7 @@ var FileManager = new Class({
 					{
 						// similar activity as load(), but without the server communication...
 
-						// if (this.Request) this.Request.cancel();
-
 						// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
-						//this.reset_view_fill_store();
 						clearTimeout(this.view_fill_timer);
 						this.view_fill_timer = null;
 
@@ -1340,7 +1344,7 @@ var FileManager = new Class({
 		var name = file.name;
 		var input = new Element('input', {'class': 'rename', value: name});
 
-		// if (file.mime !== 'text/directory') name = name.replace(/\..*$/, '');     -- unused
+		this.diag.log('### rename: ', Object.clone(file));
 
 		new FileManager.Dialog(this.language.renamefile, {
 			language: {
@@ -1356,24 +1360,26 @@ var FileManager = new Class({
 			onClose: this.onDialogClose.bind(this),
 			onShow: (function() {
 				this.diag.log('add key up on rename dialog:onShow');
-				input.addEvent('keyup', function(e) {
+				input.addEvent('keyup', (function(e) {
 					this.diag.log('rename: KEYBOARD handler: key press: ', e);
 
 					if (e.key === 'enter') {
 						e.stopPropagation();
 						e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 					}
-				});
+				}).bind(this));
 			}).bind(this),
 			onConfirm: (function() {
 				if (this.Request) this.Request.cancel();
 
 				this.browserLoader.fade(1);
 
+				this.diag.log('### rename: going to rename: ', Object.clone(file), ' to ', input.get('value'));
+
 				var tx_cfg = this.options.mkServerRequestURL(this, 'move', {
 								file: file.name,
 								name: input.get('value'),
-								directory: this.Directory,
+								directory: this.CurrentDir.path,
 								filter: this.options.filter
 							});
 
@@ -1386,11 +1392,12 @@ var FileManager = new Class({
 							this.browserLoader.fade(0);
 							return;
 						}
+						this.diag.log('move : onSuccess: file = ', Object.clone(file), ', json: ', j);
 						this.fireEvent('modify', [Object.clone(file), j, 'rename', this]);
 						file.element.getElement('span.filemanager-filename').set('text', j.name).set('title', j.name);
 						file.element.addClass('selected');
 						file.name = j.name;
-						this.diag.log('move : onSuccess: fillInfo: file = ', file);
+						this.diag.log('move : onSuccess going to fillInfo: file = ', Object.clone(file), ', json: ', j);
 						this.fillInfo(file);
 						this.browserLoader.fade(0);
 					}).bind(this),
@@ -1636,11 +1643,8 @@ var FileManager = new Class({
 		}
 
 		this.diag.log('DISABLE keyboard up/down on revert');
-		//document.removeEvent('keydown', this.bound.keydown).removeEvent('keyup', this.bound.keyup);
 		this.drag_is_active = false;
 		this.imageadd.fade(0);
-
-		//this.relayClick.apply(this, [null, el]);
 	},
 
 	// clicked 'first' button in the paged list/thumb view:
@@ -1686,10 +1690,7 @@ var FileManager = new Class({
 		this.deselect(null);
 		this.show_our_info_sections(false);
 
-		// if (this.Request) this.Request.cancel();
-
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
-		//this.reset_view_fill_store();
 		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;
 
@@ -1745,12 +1746,12 @@ var FileManager = new Class({
 			span.removeClass('hover');
 		});
 
+		this.diag.log('# fill: file = ', j, ', onShow: ', this.onShow, ', mgr: ', this);
 		this.root = j.root;
-		this.Directory = j.path;
-		this.CurrentDir = j.dir;
+		this.CurrentDir = j.this_dir;
 		if (!this.onShow) {
-			this.diag.log('fill internal: fillInfo: file = ', j, j.dir);
-			this.fillInfo(j.dir); // XXXX
+			this.diag.log('fill internal: fillInfo: file = ', j, j.this_dir);
+			this.fillInfo(j.this_dir); // XXXX
 		}
 		this.browser.empty();
 
@@ -1762,12 +1763,12 @@ var FileManager = new Class({
 // /Partikule
 
 		// set history
-		if (typeof jsGET !== 'undefined' && this.storeHistory && j.dir.mime === 'text/directory')
+		if (typeof jsGET !== 'undefined' && this.storeHistory && j.this_dir.mime === 'text/directory')
 		{
 			jsGET.set({'fmPath': j.path});
 		}
 
-		this.CurrentPath = this.normalize(this.root + this.Directory);
+		var current_path = this.normalize(this.root + this.CurrentDir.path);
 		var text = [], pre = [];
 		// on error reported by backend, there WON'T be a JSON 'root' element at all times:
 		//
@@ -1779,7 +1780,7 @@ var FileManager = new Class({
 		}
 		var rootPath = j.root.slice(0,-1).split('/');
 		rootPath.pop();
-		this.CurrentPath.split('/').each((function(folderName) {
+		current_path.split('/').each((function(folderName) {
 			if (!folderName) return;
 
 			pre.push(folderName);
@@ -1811,7 +1812,7 @@ var FileManager = new Class({
 			this.diag.log('click: fillInfo: current directory!');
 			this.fillInfo();
 		}).bind(this));
-		this.selectablePath.set('value', '/'+this.CurrentPath);
+		this.selectablePath.set('value', '/' + current_path);
 		this.clickablePath.empty().adopt(new Element('span', {text: '/ '}), text);
 
 		if (!j.dirs || !j.files) {
@@ -1968,7 +1969,7 @@ var FileManager = new Class({
 		var fmFile = (typeof jsGET !== 'undefined' ? jsGET.get('fmFile') : null);
 
 		var duration = new Date().getTime() - starttime;
-		this.diag.log(' + time duration @ fill_chunkwise_1(', startindex, '): ', duration);
+		//this.diag.log(' + time duration @ fill_chunkwise_1(', startindex, '): ', duration);
 
 		/*
 		 * Note that the '< j.dirs.length' / '< j.files.length' checks MUST be kept around: one of the fastest ways to abort/cancel
@@ -1991,7 +1992,7 @@ var FileManager = new Class({
 				// try not to spend more than 100 msecs per (UI blocking!) loop run!
 				loop_duration = new Date().getTime() - loop_starttime;
 				duration = new Date().getTime() - starttime;
-				this.diag.log(' + time taken so far = ', duration, ' / ', loop_duration, ' @ elcnt = ', idx);
+				//this.diag.log(' + time taken so far = ', duration, ' / ', loop_duration, ' @ elcnt = ', idx);
 
 				/*
 				 * Are we running in adaptive pagination mode? yes: calculate estimated new pagesize and adjust average (EMA) when needed.
@@ -2010,23 +2011,18 @@ var FileManager = new Class({
 
 			file.dir = j.path;
 
-			this.diag.log('fill_chunkwise_1: dir = file: ', file, ' at index: ', idx);
-			//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumb48 /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumb48);
+			//this.diag.log('fill_chunkwise_1: dir = file: ', file, ' at index: ', idx);
 
 			// This is just a raw image
 			el = this.list_row_maker((this.listType === 'thumb' ? file.icon48 : file.icon), file);
 
-			this.diag.log('add DIRECTORY click event to ', file);
+			//this.diag.log('add DIRECTORY click event to ', file);
 			el.addEvent('click', (function(e) {
 				self.diag.log('is_dir:CLICK: ', e);
-				//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
-				//var node = el;
 				var node = this;
 				self.relayClick.apply(self, [e, node]);
 			}).bind(el));
 
-			// -> add icons
-			//var icons = [];
 			editButtons = [];
 
 			// rename, delete icon
@@ -2077,7 +2073,7 @@ var FileManager = new Class({
 					// try not to spend more than 100 msecs per (UI blocking!) loop run!
 					loop_duration = new Date().getTime() - loop_starttime;
 					duration = new Date().getTime() - starttime;
-					this.diag.log('time taken so far = ', duration, ' / ', loop_duration, ' @ elcnt = ', idx);
+					//this.diag.log('time taken so far = ', duration, ' / ', loop_duration, ' @ elcnt = ', idx);
 
 					/*
 					 * Are we running in adaptive pagination mode? yes: calculate estimated new pagesize and adjust average (EMA) when needed.
@@ -2096,8 +2092,7 @@ var FileManager = new Class({
 
 				file.dir = j.path;
 
-				this.diag.log('fill_chunkwise_1: files: file: ', file, ' at index: ', idx - dir_count);
-				//var icon = (this.listType === 'thumb') ? new Asset.image(file.thumb48 /* +'?'+uniqueId */, {'class':this.listType}) : new Asset.image(file.thumb48);
+				//this.diag.log('fill_chunkwise_1: files: file: ', file, ' at index: ', idx - dir_count);
 
 				// As we now have two views into the directory, we have to fetch the thumbnails, even when we're in 'list' view: the direcory gallery will need them!
 				// Besides, fetching the thumbs and all right after we render the directory also makes these thumbs + metadata available for drag&drop gallery and
@@ -2126,7 +2121,7 @@ var FileManager = new Class({
 						var list_row = this.list_row_maker((this.listType === 'thumb' ? file.icon48 : file.icon), file);
 
 						var tx_cfg = this.options.mkServerRequestURL(this, 'detail', {
-										directory: file.dir,
+										directory: this.dirname(file.path),
 										file: file.name,
 										filter: this.options.filter,
 										mode: 'direct'
@@ -2152,7 +2147,6 @@ var FileManager = new Class({
 								// update the stored json for this file as well:
 								file = Object.merge(file, j);
 
-								delete file.thumbs_deferred;
 								delete file.error;
 								delete file.status;
 								delete file.content;
@@ -2241,15 +2235,11 @@ var FileManager = new Class({
 					self.diag.log('add FILE click event to ', file);
 					el.addEvent('click', (function(e) {
 						self.diag.log('is_file:CLICK: ', e);
-						//var node = $((event.currentTarget) ? e.event.currentTarget : e.event.srcElement);
-						//var node = el;
 						var node = this;
 						self.relayClick.apply(self, [e, node]);
 					}).bind(el));
 				}
 
-				// -> add icons
-				//var icons = [];
 				editButtons = [];
 				// download icon
 				if (this.options.download) {
@@ -2261,7 +2251,6 @@ var FileManager = new Class({
 				if (this.options.destroy) editButtons.push('destroy');
 
 				editButtons.each(function(v) {
-					//icons.push(
 					new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target) {
 						// this = el, self = FM instance
 						e.preventDefault();
@@ -2271,7 +2260,6 @@ var FileManager = new Class({
 						self.tips.hide();
 						self[v](file);
 					}).bind(el)).inject(el,'top');
-					//);
 				}, this);
 
 				els[0].push(el);
@@ -2341,8 +2329,7 @@ var FileManager = new Class({
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		this.diag.log(' + time taken in array traversal = ', duration);
-		//starttime = new Date().getTime();
+		//this.diag.log(' + time taken in array traversal = ', duration);
 
 		// go to the next stage, right after these messages... ;-)
 		this.view_fill_timer = this.fill_chunkwise_2.delay(1, this, [render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir]);
@@ -2355,12 +2342,11 @@ var FileManager = new Class({
 	fill_chunkwise_2: function(render_count, pagesize, support_DnD_for_this_dir, starttime, els, kbd_dir) {
 
 		var duration = new Date().getTime() - starttime;
-		this.diag.log(' + time duration @ fill_chunkwise_2() begin: ', duration);
+		//this.diag.log(' + time duration @ fill_chunkwise_2() begin: ', duration);
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		this.diag.log(' + time taken in array traversal + revert = ', duration);
-		//starttime = new Date().getTime();
+		//this.diag.log(' + time taken in array traversal + revert = ', duration);
 
 		if (support_DnD_for_this_dir) {
 			// -> make draggable
@@ -2405,16 +2391,11 @@ var FileManager = new Class({
 
 				onStart: (function(el) {
 					this.diag.log('draggable:onStart', el);
-					//this.deselect(el);
 					this.tips.hide();
 
 					el.fade(0.7).addClass('move');
 
 					this.diag.log('ENABLE keyboard up/down on drag start');
-					//document.addEvents({
-					//  keydown: this.bound.keydown,
-					//  keyup: this.bound.keyup
-					//});
 
 					// FIX wrong visual when CONTROL key is kept depressed between drag&drops: the old code discarded the relevant keyboard handler; we simply switch visuals but keep the keyboard handler active.
 					// This state change will be reverted in revert_drag_n_drop().
@@ -2440,7 +2421,7 @@ var FileManager = new Class({
 						el.setStyles({left: 0, top: 0});
 					}
 
-					var dir;
+					var dir = null;
 					if (droppable) {
 						droppable.addClass('selected').removeClass('droppable');
 						(function() {
@@ -2467,15 +2448,15 @@ var FileManager = new Class({
 					this.revert_drag_n_drop(el);       // do not send the 'detail' request in here: this.drop_pending takes care of that!
 
 					var file = el.retrieve('file');
-					this.diag.log('on drop file = ', file, this.Directory, droppable);
+					this.diag.log('on drop file = ', file, ', current dir:', this.CurrentDir, ', droppable: ', droppable);
 
 					if (this.Request) this.Request.cancel();
 
 					var tx_cfg = this.options.mkServerRequestURL(this, 'move', {
 									file: file.name,
 									filter: this.options.filter,
-									directory: this.Directory,
-									newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : this.Directory,
+									directory: this.CurrentDir.path,
+									newDirectory: (dir ? dir.path : this.CurrentDir.path),
 									copy: is_a_move ? 0 : 1
 								});
 
@@ -2511,10 +2492,7 @@ var FileManager = new Class({
 									{
 										// similar activity as load(), but without the server communication...
 
-										// if (this.Request) this.Request.cancel();
-
 										// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
-										//this.reset_view_fill_store();
 										clearTimeout(this.view_fill_timer);
 										this.view_fill_timer = null;
 
@@ -2540,7 +2518,7 @@ var FileManager = new Class({
 								{
 									// copied to the very same directory:
 									rerendering_list = true;
-									this.load(this.Directory);
+									this.load(this.CurrentDir.path);
 								}
 							}
 
@@ -2561,19 +2539,17 @@ var FileManager = new Class({
 
 			this.browser_dragndrop_info.setStyle('background-position', '0px 0px');
 			this.browser_dragndrop_info.set('title', this.language.drag_n_drop);
-			//this.browser_dragndrop_info.setStyle('visibility', 'hidden');
 		}
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		this.diag.log(' + time taken in make draggable = ', duration);
-		//starttime = new Date().getTime();
+		//this.diag.log(' + time taken in make draggable = ', duration);
 
 		$$(els[0].combine(els[1])).setStyles({'left': 0, 'top': 0});
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		this.diag.log(' + time taken in setStyles = ', duration);
+		//this.diag.log(' + time taken in setStyles = ', duration);
 
 		this.adaptive_update_pagination_size(render_count, render_count, render_count, pagesize, duration, 1.0 / 7.0, 1.02, 0.1 / 1000);
 
@@ -2588,14 +2564,14 @@ var FileManager = new Class({
 	fill_chunkwise_3: function(render_count, pagesize, support_DnD_for_this_dir, starttime, kbd_dir) {
 
 		var duration = new Date().getTime() - starttime;
-		this.diag.log(' + time duration @ fill_chunkwise_3() begin:', duration);
+		//this.diag.log(' + time duration @ fill_chunkwise_3() begin:', duration);
 
 		this.tips.attach(this.browser.getElements('img.browser-icon'));
 		this.browser_dragndrop_info.fade(1);
 
 		// check how much we've consumed so far:
 		duration = new Date().getTime() - starttime;
-		this.diag.log(' + time taken in tips.attach = ', duration);
+		//this.diag.log(' + time taken in tips.attach = ', duration);
 
 		// when a render is completed, we have maximum knowledge, i.e. maximum prognosis power: shorter tail on the EMA is our translation of that.
 		this.adaptive_update_pagination_size(render_count, render_count, render_count, pagesize, duration, 1.0 / 5.0, 1.0, 0);
@@ -2653,7 +2629,7 @@ var FileManager = new Class({
 				if (newpsize < 20)
 					newpsize = 20;
 
-				this.diag.log('::auto-tune pagination: new page = ', newpsize, ' @ tail:', tail, ', p_est: ', p_est, ', psize:', pagesize, ', render:', render_count, ', done%:', done_so_far, ', delta index:', currentindex - orig_startindex, ', t_est:', t_est, ', dur:', duration, ', pdelta: ', delta);
+				//this.diag.log('::auto-tune pagination: new page = ', newpsize, ' @ tail:', tail, ', p_est: ', p_est, ', psize:', pagesize, ', render:', render_count, ', done%:', done_so_far, ', delta index:', currentindex - orig_startindex, ', t_est:', t_est, ', dur:', duration, ', pdelta: ', delta);
 				this.options.listPaginationSize = newpsize;
 			}
 		}
@@ -2665,7 +2641,7 @@ var FileManager = new Class({
 		if (!file) return;
 
 		// set file history
-		this.diag.log('fillInfo: ', this.storeHistory, ', file: ', file);
+		this.diag.log('fillInfo: ', this.storeHistory, ', file: ', Object.clone(file));
 		if (typeof jsGET !== 'undefined' && this.storeHistory) {
 			if (file.mime !== 'text/directory')
 				jsGET.set({'fmFile': file.name});
@@ -2689,12 +2665,14 @@ var FileManager = new Class({
 		{
 			if (this.Request) this.Request.cancel();
 
-			var dir = this.Directory;
+			var dir = this.CurrentDir.path;
+
+			this.diag.log('fillInfo: request detail for file: ', Object.clone(file), ', dir: ', dir);
 
 			var tx_cfg = this.options.mkServerRequestURL(this, 'detail', {
-							directory: dir,
-							// fixup for *directory* detail requests:
-							file: (file.mime === 'text/directory' ? '.' : file.name),
+							directory: this.dirname(file.path),
+							// fixup for *directory* detail requests:    (file.mime === 'text/directory'
+							file: (file.mime === 'text/directory' && file.name === '') ? '/' : file.name,
 							filter: this.options.filter,
 							mode: 'auto'                    // provide either direct links to the thumbnails (when available in cache) or PHP event trigger URLs for delayed thumbnail image creation (performance optimization: faster page render)
 						});
@@ -2764,7 +2742,7 @@ var FileManager = new Class({
 						}
 
 						var tx_cfg = this.options.mkServerRequestURL(this, 'detail', {
-										directory: dir,
+										directory: this.dirname(file.path),
 										file: file.name,
 										filter: this.options.filter,
 										mode: 'direct'
@@ -2807,7 +2785,6 @@ var FileManager = new Class({
 								file = Object.merge(file, j);
 
 								// remove unwanted JSON elements:
-								delete file.thumbs_deferred;
 								delete file.status;
 								delete file.error;
 								delete file.content;
@@ -2857,7 +2834,6 @@ var FileManager = new Class({
 						file = Object.merge(file, j);
 
 						// remove unwanted JSON elements:
-						delete file.thumbs_deferred;
 						delete file.status;
 						delete file.error;
 						delete file.content;
@@ -2902,6 +2878,18 @@ var FileManager = new Class({
 
 	normalize: function(str) {
 		return str.replace(/\/+/g, '/');
+	},
+
+	dirname: function(path) {
+		var sects = path.split('/');
+		var topdir = sects.pop();
+		if (topdir === '')
+		{
+			// path has trailing '/'; keep it that way!
+			sects.pop();
+			sects.push('');
+		}
+		return sects.join('/');
 	},
 
 	switchButton4Current: function() {
@@ -2955,7 +2943,6 @@ var FileManager = new Class({
 	// clear the view chunk timer only. We are probably redrawing the list view!
 	reset_fill: function()
 	{
-		//this.browser_dragndrop_info.setStyle('visibility', 'visible');
 		this.browser_dragndrop_info.fade(0.5);
 		this.browser_dragndrop_info.setStyle('background-position', '0px -16px');
 		this.browser_dragndrop_info.set('title', this.language.drag_n_drop_disabled);
@@ -3284,7 +3271,7 @@ FileManager.Dialog = new Class({
 		this.overlay = new Overlay({
 			'class': 'filemanager-overlay filemanager-overlay-dialog',
 			events: {
-				click: this.fireEvent.pass('close',this)
+				click: this.fireEvent.pass('close', this)
 			},
 			//tween: {duration: 'short'},
 			styles:

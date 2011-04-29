@@ -142,7 +142,7 @@ FileManager.implement({
 		var tx_cfg = this.options.mkServerRequestURL(this, 'upload', Object.merge({},
 						this.options.propagateData,
 						(this.options.uploadAuthData || {}), {
-							directory: this.normalize(this.Directory),
+							directory: this.CurrentDir.path,
 							filter: this.options.filter,
 							resize: this.options.resizeImages,     // TODO: must be updated when button is clicked
 							reportContentType: 'text/plain'        // Safer for iframes: the default 'application/json' mime type would cause FF3.X to pop up a save/view dialog!

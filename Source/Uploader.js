@@ -107,7 +107,7 @@ FileManager.implement({
 				this.has_completed = false;
 
 				var tx_cfg = self.options.mkServerRequestURL(self, 'upload', {
-								directory: self.Directory,
+								directory: self.CurrentDir.path,
 								filter: self.options.filter,
 								resize: (self.options.resizeImages && resizer.hasClass('checkboxChecked')) ? 1 : 0
 							});

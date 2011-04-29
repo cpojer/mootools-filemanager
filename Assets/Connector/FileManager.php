@@ -587,6 +587,7 @@ class MTFMCacheItem
 	protected $legal_url;
 	protected $file;
 	protected $dirty;
+	protected $persistent_edits;
 	protected $loaded;
 	protected $fstat;
 
@@ -598,9 +599,15 @@ class MTFMCacheItem
 
 	protected $cache_file;
 
-	public function __construct($fm_obj, $legal_url, $prefetch = false)
+	public function __construct($fm_obj, $legal_url, $prefetch = false, $persistent_edits = true)
+	{
+		$this->init($fm_obj, $legal_url, $prefetch, $persistent_edits);
+	}
+		
+	public function init($fm_obj, $legal_url, $prefetch = false, $persistent_edits)
 	{
 		$this->dirty = false;
+		$this->persistent_edits = $persistent_edits;
 		$this->loaded = false;
 		$this->store = array();
 
@@ -761,7 +768,7 @@ class MTFMCacheItem
 
 	public function __destruct()
 	{
-		if ($this->dirty)
+		if ($this->dirty && $this->persistent_edits)
 		{
 			// store data to persistent storage:
 			if (!$this->mkCacheDir() && !$this->loaded)
@@ -818,7 +825,7 @@ $data = ' . var_export($this->store, true) . ';' . PHP_EOL;
 		{
 			$persistent &= ($this->store[$key] !== $value); // only mark cache as dirty when we actully CHANGE the value stored in here!
 		}
-		$this->dirty |= $persistent;
+		$this->dirty |= ($persistent && $this->persistent_edits);
 		$this->store[$key] = $value;
 	}
 
@@ -955,8 +962,16 @@ class MTFMCache
 		{
 			// do not clutter the cache; all we're probably after this time is the assistance of a MTFMCacheItem:
 			// provide a dummy cache entry, nulled and all; we won't be saving the stored data, if any, anyhow.
-			$this->store['!'] = (!empty($fm_obj) ? new MTFMCacheItem($fm_obj, $key) : null);
+			if (isset($this->store['!']) && !empty($fm_obj))
+			{
+				$this->store['!']->init($fm_obj, $key, false, false);
+			}
+			else
+			{
+				$this->store['!'] = (!empty($fm_obj) ? new MTFMCacheItem($fm_obj, $key, false, false) : null);
+			}
 			$this->store_ts['!'] = 0;
+			$key = '!';
 		}
 
 		return $this->store[$key];
@@ -1246,10 +1261,10 @@ class FileManager
 		{
 			$filename = '..';
 
-			$url = $legal_url . $filename;
+			$l_url = $legal_url . $filename;
 
 			// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
-			$file = $this->legal_url_path2file_path($url);
+			$file = $this->legal_url_path2file_path($l_url);
 
 			$iconspec = 'is.directory_up';
 
@@ -1259,10 +1274,8 @@ class FileManager
 			$icon = $this->getIcon($iconspec, true);
 			$icon_e = FileManagerUtility::rawurlencode_path($icon);
 
-			$url_p = FileManagerUtility::rawurlencode_path($url);
-
 			$out[1][] = array(
-					'path' => $url_p,
+					'path' => $l_url,
 					'name' => $filename,
 					'mime' => $mime,
 					'icon48' => $icon48_e,
@@ -1281,12 +1294,10 @@ class FileManager
 
 		foreach ($coll['dirs'] as $filename)
 		{
-			$url = $legal_url . $filename;
-
-			$url_p = FileManagerUtility::rawurlencode_path($url);
+			$l_url = $legal_url . $filename;
 
 			$out[1][] = array(
-					'path' => $url_p,
+					'path' => $l_url,
 					'name' => $filename,
 					'mime' => $mime,
 					'icon48' => $icon48_de,
@@ -1298,7 +1309,7 @@ class FileManager
 		$idx = 0;
 		foreach ($coll['files'] as $filename)
 		{
-			$url = $legal_url . $filename;
+			$l_url = $legal_url . $filename;
 
 			// Do not allow the getFileInfo()/imageinfo() overhead per file for very large directories; just guess the mimetype from the filename alone.
 			// The real mimetype will show up in the 'details' view anyway as we'll have called getFileInfo() by then!
@@ -1331,10 +1342,8 @@ class FileManager
 			$icon = $this->getIcon($iconspec, true);
 			$icon_e = FileManagerUtility::rawurlencode_path($icon);
 
-			$url_p = FileManagerUtility::rawurlencode_path($url);
-
 			$out[0][] = array(
-					'path' => $url_p,
+					'path' => $l_url,
 					'name' => $filename,
 					'mime' => $mime,
 					// we don't know the thumbnail paths yet --> this will trigger deferred requests: (event=detail, mode=direct)
@@ -1347,9 +1356,8 @@ class FileManager
 
 		return array_merge((is_array($json) ? $json : array()), array(
 				'root' => substr($this->options['directory'], 1),
-				'path' => $legal_url,                                  // is relative to options['directory']
-				'dir' => array(
-					'path' => FileManagerUtility::rawurlencode_path($legal_url),
+				'this_dir' => array(
+					'path' => $legal_url,
 					'name' => basename($legal_url),
 					'date' => date($this->options['dateFormat'], @filemtime($dir)),
 					'mime' => 'text/directory',
@@ -1582,7 +1590,10 @@ class FileManager
 			if (!empty($file_arg))
 			{
 				$filename = basename($file_arg);
-				$legal_url .= $filename;
+				// must normalize the combo as the user CAN legitimally request filename == '.' (directory detail view) for this event!
+				$path = $this->rel2abs_legal_url_path($legal_url . $filename);
+				//echo " path = $path, ($legal_url . $filename);\n";
+				$legal_url = $path;
 				// must transform here so alias/etc. expansions inside legal_url_path2file_path() get a chance:
 				$file = $this->legal_url_path2file_path($legal_url);
 
@@ -2778,7 +2789,7 @@ class FileManager
 				</div>')
 			),
 			array(
-				'path' => FileManagerUtility::rawurlencode_path($url),
+				'path' => $legal_url,
 				'name' => $filename,
 				'date' => $tstamp_str,
 				'mime' => $mime,
@@ -3267,6 +3278,11 @@ class FileManager
 		{
 			$json['thumbs_deferred'] = true;
 		}
+		else
+		{
+			$json['thumbs_deferred'] = false;
+		}
+		
 		if (!empty($icon48))
 		{
 			$icon48_e = FileManagerUtility::rawurlencode_path($icon48);
@@ -4398,6 +4414,8 @@ class FileManager
 		 * 'a/./.././.././.././.././.././.././.././.././../etc/' from succeeding:
 		 */
 		$path = preg_replace('#/(\./)+#', '/', $path);
+		// special fix: now strip trailing '/.' section; MUST replace by '/' (trailing) or path won't be accepted as legal when this is the '.' requested for root '/'
+		$path = preg_replace('#/\.$#', '/', $path);
 
 		// now temporarily strip off the leading part up to the colon to prevent entries like '../d:/dir' to succeed when the site root is 'c:/', for example:
 		$lead = '';
@@ -4804,6 +4822,7 @@ class FileManager
 	{
 		// when hash exists in cache, return that one:
 		$meta = &$this->getid3_cache->pick($legal_url, $this);
+		assert($meta != null);
 		$mime_check = $meta->fetch('mime_type');
 		if (empty($mime_check))
 		{
