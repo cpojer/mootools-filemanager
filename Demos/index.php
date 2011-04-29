@@ -19,19 +19,6 @@ $params = session_get_cookie_params();
 /* the remainder of the code does not need access to the session data. */
 session_write_close();
 
-if (0)
-{
-	// and add a couple other, slightly malicious cookies to check whether Flash will crash on it, or not.
-	setcookie("ASP.NET_SessionId", 'ASP.NET: b0rk b0rk b0rk & ... b0rk!', time() + 600,
-		$params['path'], $params['domain'],
-		$params['secure'], $params['httponly']
-	);
-	setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
-		$params['path'], $params['domain'],
-		$params['secure'], $params['httponly']
-	);
-}
-
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -41,8 +28,8 @@ if (0)
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<link rel="stylesheet" href="demos.css" type="text/css" />
 
-	<script type="text/javascript" src="../../../../../lib/includes/js/mootools-core.js"></script>
-	<script type="text/javascript" src="../../../../../lib/includes/js/mootools-more.js"></script>
+	<script type="text/javascript" src="mootools-core.js"></script>
+	<script type="text/javascript" src="mootools-more.js"></script>
 
 	<script type="text/javascript" src="../Source/FileManager.js"></script>
 	<script type="text/javascript" src="../Source/Gallery.js"></script>
@@ -66,7 +53,10 @@ if (0)
 				hideOnClick: true,
 				assetBasePath: '../Assets',
 				// uploadAuthData is deprecated; use propagateData instead. The session cookie(s) are passed through Flash automatically, these days...
+				//
+				// and a couple of extra user defined parameters sent with EVERY request:
 				propagateData: {
+					origin: 'demo-FM-1',
 					extra_data: 'ExtraData'
 				},
 				upload: true,
@@ -77,33 +67,30 @@ if (0)
 				createFolders: true,
 				// selectable: true,
 				hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
+				verbose: true,            // log a lot of activity to console (when it exists)
 				onComplete: function(path, file, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ' + path + ', ' + debug.dump(file) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ', path, file, mgr);
 				},
 				onModify: function(file, json, mode, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ' + mode + ', ' + debug.dump(file) + ', ' + debug.dump(json) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ', mode, file, json, mgr);
 				},
 				onShow: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ', mgr);
 				},
 				onHide: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ', mgr);
 				},
 				onScroll: function(e, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ' + debug.dump(e) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ', e, mgr);
 				},
 				onPreview: function(src, mgr, el) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onPreview: ' + debug.dump(src) + ', ' + debug.dump(el) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onPreview: ', src, el, mgr);
 				},
 				onDetails: function(json, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ' + debug.dump(json) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ', json, mgr);
 				},
 				onHidePreview: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
-				},
-				// and a couple of extra user defined parameters sent with EVERY request:
-				propagateData: {
-					origin: 'demo-FM-1'
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ', mgr);
 				}
 			});
 			$('example1').addEvent('click', manager1.show.bind(manager1));

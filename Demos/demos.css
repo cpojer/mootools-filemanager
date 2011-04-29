@@ -1,11 +1,11 @@
 
-body 
+body
 {
 	font-size: 11px;
 	font-family: Tahoma, sans-serif;
 }
 
-h1, h2 
+h1, h2
 {
 	margin: 0 0 10px 0;
 	padding: 0;
@@ -19,12 +19,12 @@ h1, h2
 	min-height: 25px;
 }
 
-h2 
+h2
 {
 	margin-top: 3em;
 }
 
-h1 span 
+h1 span
 {
 	font-size: 11px;
 	letter-spacing: 0;
@@ -32,12 +32,12 @@ h1 span
 	text-shadow: none;
 }
 
-.blue 
-{ 
-	color: #1f52b0; 
+.blue
+{
+	color: #1f52b0;
 }
 
-div.content 
+div.content
 {
 	min-height: 200px;
 	margin: 23px 34px;
@@ -49,33 +49,33 @@ div.content
 	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 0 10px;
 }
 
-div.content div.example 
+div.content div.example
 {
 	float: left;
 	clear: both;
 	margin: 10px 0;
 }
 
-div.selected-file div 
+div.selected-file div
 {
 	 padding: 3px;
 
 	 line-height: 1.5em;
 }
 
-div.selected-file div img.preview 
+div.selected-file div img.preview
 {
 	 padding: 3px;
 }
 
-button 
+button
 {
 	margin: 5px 0;
 }
 
 
-/* http://labnol.blogspot.com/2006/10/html-css-trick-for-displaying-code.html */  
-pre 
+/* http://labnol.blogspot.com/2006/10/html-css-trick-for-displaying-code.html */
+pre
 {
 	white-space: pre-wrap; /* css-3 */
 	white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */

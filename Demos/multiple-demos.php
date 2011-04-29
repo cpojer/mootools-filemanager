@@ -59,7 +59,7 @@ if (0)
 	<script type="text/javascript">
 		window.addEvent('domready', function() {
 
-			// 
+			//
 			if (0)
 			{
 				// override mootools global default setting for fade effects:
@@ -74,7 +74,7 @@ if (0)
 				Fx.Durations['normal'] = 5;
 				Fx.Durations['long'] = 5;
 			}
-			
+
 
 			/* Simple Example */
 			var manager1 = new FileManager({
@@ -95,28 +95,28 @@ if (0)
 				// selectable: true,
 				hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
 				onComplete: function(path, file, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ' + path + ', ' + debug.dump(file) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ', path, ', file: ', file, ', mgr: ', mgr);
 				},
 				onModify: function(file, json, mode, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ' + mode + ', ' + debug.dump(file) + ', ' + debug.dump(json) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ', mode, ', file: ', file, ', json: ', json, ', mgr: ', mgr);
 				},
 				onShow: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ', mgr);
 				},
 				onHide: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ', mgr);
 				},
 				onScroll: function(e, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ' + debug.dump(e) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ', e, ', mgr: ', mgr);
 				},
 				onPreview: function(src, mgr, el) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onPreview: ' + debug.dump(src) + ', ' + debug.dump(el) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onPreview: ', src, ', el: ', el, ', mgr: ', mgr);
 				},
 				onDetails: function(json, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ' + debug.dump(json) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ', json, ', mgr: ', mgr);
 				},
 				onHidePreview: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ', mgr);
 				},
 				// and a couple of extra user defined parameters sent with EVERY request:
 				propagateData: {
@@ -265,17 +265,17 @@ if (0)
 					origin: 'demo-Gallery'
 				},
 				onShow: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onShow: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onShow: ', mgr);
 					var obj;
 					Function.attempt(function(){
 						var gallist = example4.get('value');
-						if (typeof console !== 'undefined' && console.log) console.log('GALLERY list: ' + debug.dump(gallist, 0, 1, 60, 'function'));
+						if (typeof console !== 'undefined' && console.log) console.log('GALLERY list: ', gallist);
 						obj = JSON.decode(gallist);
 					});
 					this.populate(obj);
 				},
 				onComplete: function(serialized, files, mgr){
-					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ' + debug.dump(serialized) + ', ' + debug.dump(files) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ' + serialized, ', files: ', files, ', mgr: ', mgr);
 
 					example4.set('value', JSON.encode(serialized));
 				}
@@ -287,7 +287,7 @@ if (0)
 <body>
 <div id="content" class="content">
 	<div class="go_home">
-	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
+		<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
 	</div>
 
 	<h1>FileManager Demo</h1>

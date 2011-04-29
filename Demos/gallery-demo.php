@@ -46,7 +46,7 @@ session_write_close();
 	<script type="text/javascript">
 		window.addEvent('domready', function() {
 
-			// 
+			//
 			if (0)
 			{
 				// override mootools global default setting for fade effects:
@@ -61,7 +61,7 @@ session_write_close();
 				Fx.Durations['normal'] = 5;
 				Fx.Durations['long'] = 5;
 			}
-			
+
 
 			/* Gallery Example */
 			var global = this;
@@ -85,26 +85,50 @@ session_write_close();
 				filter: 'image',
 				hideOnClick: true,
 				// uploadAuthData is deprecated; use propagateData instead. The session cookie(s) are passed through Flash automatically, these days...
-				uploadAuthData: {
-					session: 'MySessionData'
-				},
 				propagateData: {
 					origin: 'demo-Gallery'
 				},
+				upload: true,
+				download: true,
+				destroy: true,
+				rename: true,
+				move_or_copy: true,
+				createFolders: true,
+				// selectable: false,
+				hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
+				verbose: true,            // log a lot of activity to console (when it exists)
 				onShow: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onShow: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onShow: ', mgr);
 					var obj;
 					Function.attempt(function(){
 						var gallist = example4.get('value');
-						if (typeof console !== 'undefined' && console.log) console.log('GALLERY list: ' + debug.dump(gallist, 0, 1, 60, 'function'));
+						if (typeof console !== 'undefined' && console.log) console.log('GALLERY list: ', gallist);
 						obj = JSON.decode(gallist);
 					});
 					this.populate(obj);
 				},
 				onComplete: function(serialized, files, mgr){
-					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ' + debug.dump(serialized) + ', ' + debug.dump(files) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ', serialized, ', files metadata: ', files, ', mgr: ', mgr);
 
 					example4.set('value', JSON.encode(serialized));
+				},
+				onModify: function(file, json, mode, mgr) {
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ', mode, file, json, mgr);
+				},
+				onHide: function(mgr) {
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ', mgr);
+				},
+				onScroll: function(e, mgr) {
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ', e, mgr);
+				},
+				onPreview: function(src, mgr, el) {
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onPreview: ', src, el, mgr);
+				},
+				onDetails: function(json, mgr) {
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ', json, mgr);
+				},
+				onHidePreview: function(mgr) {
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ', mgr);
 				}
 			});
 			$('example4').addEvent('click', manager4.show.bind(manager4));
@@ -114,11 +138,11 @@ session_write_close();
 <body>
 <div id="content" class="content">
 	<div class="go_home">
-	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
+		<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
 	</div>
 
 	<h1>FileManager Demo</h1>
-	
+
 	<div class="example">
 		<button id="example4">Create a Gallery</button>
 		<input name="BrowseExample4" type="text" id="myGallery" value="Gallery output will be stored in here" style="width: 550px;" />
