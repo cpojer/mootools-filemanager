@@ -125,8 +125,13 @@ $json = json_decode($dump);
 var_dump($json);
 
 ?>
+	</pre>
 	<hr />
 
 
+
+</div>
+</body>
+</html>
 
 

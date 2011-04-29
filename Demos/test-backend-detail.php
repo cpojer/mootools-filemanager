@@ -150,5 +150,6 @@ var_dump($json);
 ?>
 	<hr />
 
-
-
+</div>
+</body>
+</html>

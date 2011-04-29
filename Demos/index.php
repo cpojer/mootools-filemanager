@@ -19,19 +19,6 @@ $params = session_get_cookie_params();
 /* the remainder of the code does not need access to the session data. */
 session_write_close();
 
-if (0)
-{
-	// and add a couple other, slightly malicious cookies to check whether Flash will crash on it, or not.
-	setcookie("ASP.NET_SessionId", 'ASP.NET: b0rk b0rk b0rk & ... b0rk!', time() + 600,
-		$params['path'], $params['domain'],
-		$params['secure'], $params['httponly']
-	);
-	setcookie('.1!#$%20X', 'b0rk b0rk b0rk & ... b0rk!', time() + 600,
-		$params['path'], $params['domain'],
-		$params['secure'], $params['httponly']
-	);
-}
-
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -66,7 +53,10 @@ if (0)
 				hideOnClick: true,
 				assetBasePath: '../Assets',
 				// uploadAuthData is deprecated; use propagateData instead. The session cookie(s) are passed through Flash automatically, these days...
+				//
+				// and a couple of extra user defined parameters sent with EVERY request:
 				propagateData: {
+					origin: 'demo-FM-1',
 					extra_data: 'ExtraData'
 				},
 				upload: true,
@@ -101,10 +91,6 @@ if (0)
 				},
 				onHidePreview: function(mgr) {
 					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ', mgr);
-				},
-				// and a couple of extra user defined parameters sent with EVERY request:
-				propagateData: {
-					origin: 'demo-FM-1'
 				}
 			});
 			$('example1').addEvent('click', manager1.show.bind(manager1));

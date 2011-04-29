@@ -39,7 +39,7 @@ session_write_close();
 	<script type="text/javascript" src="../Source/Uploader/Fx.ProgressBar.js"></script>
 	<script type="text/javascript" src="../Source/Uploader/Swiff.Uploader.js"></script>
 	<script type="text/javascript" src="../Source/Uploader.js"></script>
-  <script type="text/javascript" src="../Language/Language.<?= $_GET["langCode"]; ?>.js"></script>
+	<script type="text/javascript" src="../Language/Language.<?php echo $_GET['langCode']; ?>.js"></script>
 	
 	<script type="text/javascript">
 		/* <![CDATA[ */
@@ -55,14 +55,14 @@ session_write_close();
 		
 		function openFilemanager() {
 			var complete = function(path, file) {
-        window.opener.CKEDITOR.tools.callFunction('<?= $_GET["CKEditorFuncNum"]; ?>', path);
+			    window.opener.CKEDITOR.tools.callFunction("<?php echo $_GET['CKEditorFuncNum']; ?>", path);
 			    window.close();
 			};
 		
 			var fileManager = new FileManager({
 			    url: 'manager.php',
 			    assetBasePath: '../Assets',
-          language: '<?= $_GET["langCode"]; ?>',
+			    language: "<?php echo $_GET['langCode']; ?>",
 			    destroy: true,
 			    upload: true,
 			    rename: true,
@@ -99,9 +99,5 @@ session_write_close();
 	</style>
 </head>
 <body>
-	<div class="go_home">
-	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
-	</div>
-
 </body>
 </html>
