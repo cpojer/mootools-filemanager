@@ -7,7 +7,9 @@ authors: Christoph Pojer (@cpojer)
 
 license: MIT-style license.
 
-requires: [Core/*]
+requires: 
+  core/1.3.1: '*'
+  more/1.3.1.1: [Sortables]
 
 provides: FileManager.Gallery
 
@@ -25,6 +27,7 @@ FileManager.Gallery = new Class({
 		this.offsets = {y: -72};
 		this.imgContainerSize = { x: 75, y: 56 };
 		this.captionImgContainerSize = { x: 250, y: 250 };
+		this.isSorting = false;
 
 		// make sure our 'complete' event does NOT clash with the base class event by simply never allowing it: you CANNOT have options.selectable and gallery mode at the same time!
 		// (If you do, the caller will have a hard time detecting /who/ sent the 'complete' event; the only way would be to inspect the argument list and deduce the 'origin' from there.)
@@ -45,8 +48,7 @@ FileManager.Gallery = new Class({
 			hide: function(self) {
 				if (!self.keepGalleryData) {
 					self.gallery.empty();
-					self.metadata = [];
-					self.files = [];
+					self.files = {};
 				}
 				else {
 					self.keepGalleryData = false;
@@ -59,7 +61,7 @@ FileManager.Gallery = new Class({
 				// mode is one of (destroy, rename, move, copy): only when mode=copy, does the file remain where it was before!
 				if (mode !== 'copy')
 				{
-					var name = self.normalize(file.dir + '/' + file.name);
+					var name = self.normalize(file.path);
 					self.erasePicture(name);
 				}
 			}
@@ -78,11 +80,17 @@ FileManager.Gallery = new Class({
 		var timer;
 		var self = this;
 
-		this.input = new Element('input', {name: 'imgCaption'}).addEvent('keyup', function(e){
-			if (e.key == 'enter') {
-				self.removeClone(e, this);
-			}
-		});
+		this.input = new Element('textarea', {name: 'imgCaption'});
+    // stop filemanager window events, when hit enter
+    if ((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
+      this.input.addEvent('keydown', function(e){ if(e.key == 'enter') e.stopPropagation(); });
+    else
+      this.input.addEvent('keypress', function(e){
+        if(e.key == 'enter') e.stopPropagation();
+          // deactivated to allow multiple line caption. \n will later be transformed into <br>
+  				//self.removeClone(e, this);
+  		});
+  		
 		var imgdiv = new Element('div', {'class': 'img'});
 		this.wrapper = new Element('div', {
 			'class': 'filemanager-wrapper',
@@ -91,18 +99,7 @@ FileManager.Gallery = new Class({
 				'z-index': this.options.zIndex + 750
 			},
 			tween: {duration: 'short'},
-			opacity: 0,
-			events: {
-				mouseenter: function(){
-					clearTimeout(timer);
-				},
-				mouseleave: function(e){
-					var target = this;
-					timer = (function(){
-						self.removeClone(e, target);
-					}).delay(500);
-				}
-			}
+			opacity: 0
 		}).adopt(
 			new Element('span', {text: this.language.gallery.text}),
 			this.input,
@@ -124,8 +121,7 @@ FileManager.Gallery = new Class({
 		this.droppables.push(this.gallery);
 
 		this.keepGalleryData = false;
-		this.metadata = [];
-		this.files = [];
+		this.files = {};
 		this.animation = {};
 
 		this.howto = new Element('div', {
@@ -140,6 +136,41 @@ FileManager.Gallery = new Class({
 
 		// invoke the parent method directly
 		this.initialShowBase();
+    
+    // add CAPTION OVERLAY
+    this.captionOverlay = new Overlay({
+			'class': 'filemanager-overlay filemanager-overlay-dialog filemanager-overlay-caption',
+			events: {
+				click: (function() {
+          this.removeClone();
+          this.captionOverlay.hide();
+        }).bind(this)
+			},
+			styles: {'z-index': this.options.zIndex + 11}
+		});
+    
+    
+    // -> create SORTABLE list
+		this.sortable = new Sortables(this.gallery, {
+      clone: false,
+      //revert: true,
+      //opacity: 1,
+      onStart: (function() {
+        this.isSorting = true;
+      }).bind(this),
+      onSort: (function(li) {
+        
+        newOrder = this.sortable.serialize((function(element, index){
+            return this.files[element.retrieve('imageName')];
+        }).bind(this));
+        
+        // create new order of images
+        this.files = {};
+        newOrder.each(function(file) {
+          if(file) this.files[file.name] = file;
+        },this);
+      }).bind(this)
+    });
 	},
 
 	// override the parent's initialShow method: we do not want to jump to the jsGET-stored position again!
@@ -178,7 +209,14 @@ FileManager.Gallery = new Class({
 
 	show_caption_editor: function(img_el, li_wrapper, file)
 	{
-		var name = this.normalize(file.dir + '/' + file.name);
+	  
+	  var self = this;
+	  
+	  // -> add overlay
+	  $$('filemanager-overlay-caption').addEvent('click',self.removeClone(null,li_wrapper));
+		this.captionOverlay.show();
+		
+    var name = this.normalize(file.path);
 
 		var pos = img_el.getCoordinates();
 		var oml = img_el.getStyle('margin-left').toInt();
@@ -249,12 +287,10 @@ FileManager.Gallery = new Class({
 			}
 		};
 
-		var self = this;
 		this.input.removeEvents('blur').addEvent('blur', function(){
-			var index = self.files.indexOf(name);
-			if (index < 0)
+			if (!self.files[name])
 				return;
-			self.metadata[index].caption = (this.get('value') || '');
+			self.files[name].caption = (this.value || '');
 		});
 
 		//li_wrapper.set('opacity', 0);
@@ -267,17 +303,15 @@ FileManager.Gallery = new Class({
 			},
 			events: {
 				click: function(e){
-					var index = self.files.indexOf(name);
-					if (index < 0)
+					if (!self.files[name])
 						return;
-					self.fireEvent('galleryPreview', [file.path, self.metadata[index], li_wrapper, self]);
+					self.fireEvent('galleryPreview', [file.path, self.files[name], li_wrapper, self]);
 				}
 			}
 		}).inject(document.body).morph(this.animation.to).get('morph').chain(function(){
-			var index = self.files.indexOf(name);
-			if (index < 0)
+			if (!self.files[name])
 				return;
-			self.input.set('value', self.metadata[index].caption || '');
+			self.input.set('value', self.files[name].caption || '');
 			self.wrapper.setStyles({
 				opacity: 1,
 				display: 'block',
@@ -338,9 +372,10 @@ FileManager.Gallery = new Class({
 			onLoad: function(){
 				var img_el = this;
 				li_wrapper.setStyle('background', 'none').addEvent('click', function(e){
-					if (e) e.stop();
-
-					self.show_caption_editor(img_el, li_wrapper, file);
+					if(e) e.stop();
+					if(!self.isSorting)
+					 self.show_caption_editor(img_el, li_wrapper, file);
+					self.isSorting = false;
 				});
 			},
 			onError: function() {
@@ -364,7 +399,7 @@ FileManager.Gallery = new Class({
 			caption = '';
 		}
 
-		this.imageadd.fade(0);
+		this.imageadd.fade('out');
 
 		if (this.howto){
 			this.howto.destroy();
@@ -377,10 +412,11 @@ FileManager.Gallery = new Class({
 		var file;
 		if (typeof el === 'string')
 		{
-			var part = el.split('/');
+			//var part = el.split('/');
 			file = {
-				name: part.pop(),
-				dir: part.join('/'),
+				//name: part.pop(),
+				//dir: part.join('/'),
+				path: el,
 				mime: 'unknown/unknown',
 				thumbs_deferred: true
 			};
@@ -390,16 +426,14 @@ FileManager.Gallery = new Class({
 			el.setStyles({left: '', top: ''});
 			file = el.retrieve('file');
 		}
-
-		var name = this.normalize(file.dir + '/' + file.name);
+    
+		var name = this.normalize(file.path);
 
 		// when the item already exists in the gallery, do not add it again:
-		if (this.files.contains(name))
+		if(this.files[name])
 			return true;
 
 		// store & display item in gallery:
-		var index = this.files.push(name)  - 1;
-
 		var self = this;
 		var destroyIcon = new Asset.image(this.assetBasePath + 'Images/destroy.png').set({
 			'class': 'filemanager-remove',
@@ -407,7 +441,6 @@ FileManager.Gallery = new Class({
 			events: {
 				click: function(e) {
 					if (e) e.stop();
-
 					self.erasePicture(name);
 				}
 			}
@@ -419,19 +452,23 @@ FileManager.Gallery = new Class({
 		 * as 'imgcontainer.getSize() won't deliver the dimensions as set in the CSS, we turn it the other way around:
 		 * we set the w/h of the image container here explicitly; the CSS can be used for other bits of styling.
 		 */
-		var imgcontainer = new Element('span', {
+		var imgcontainer = new Element('div', {
 			'class': 'gallery-image',
+			'title': file.name,
 			styles: {
-				width: this.imgContainerSize.x,
-				height: this.imgContainerSize.y
+	
 			}
 		});
-		var li = new Element('li').store('file', file).adopt(
-			destroyIcon,
-			imgcontainer
+		this.tips.attach(imgcontainer);
+		
+		// STORE the IMAGE PATH in the li FOR the SORTABLE
+		var li = new Element('li').store('imageName', name).adopt(
+			imgcontainer,
+			destroyIcon
 		).inject(this.gallery);
-
-		this.metadata[index] = {
+		
+		this.files[name] = {
+		  name: name,
 			caption: caption,
 			file: file,
 			element: li
@@ -463,14 +500,13 @@ FileManager.Gallery = new Class({
 				onRequest: function() {},
 				onSuccess: (function(j)
 				{
-					var index = this.files.indexOf(name);
-					if (index < 0)
+					if (!this.files[name])
 						return;
 
 					if (!j || !j.status) {
 						var msg = ('' + j.error).substitute(this.language, /\\?\$\{([^{}]+)\}/g);
 
-						this.metadata[index].caption = msg;
+						this.files[name].caption = msg;
 						return;
 					}
 
@@ -498,7 +534,7 @@ FileManager.Gallery = new Class({
 					li.store('file', file);
 
 					//this.onDragComplete(li, droppable);
-					this.metadata[index].file = file;
+					this.files[name].file = file;
 
 					this.img_injector(file, imgcontainer, li);
 
@@ -519,14 +555,21 @@ FileManager.Gallery = new Class({
 			// we already have all required information. Go show the image in the gallery pane!
 			this.img_injector(file, imgcontainer, li);
 		}
-
+    
+    // -> add this list item to the SORTABLE
+    this.sortable.addItems(li);
+    
 		return true;
 	},
 
 	removeClone: function(e, target){
 		if (e) e.stop();
-
-		if (!this.clone || (e.relatedTarget && ([this.clone, this.wrapper].contains(e.relatedTarget) || (this.wrapper.contains(e.relatedTarget) && e.relatedTarget != this.wrapper))))
+    
+    // remove the overlay
+    $$('filemanager-overlay-caption').removeEvents('click');
+    this.captionOverlay.hide();
+    
+		if (!this.clone || (e && e.relatedTarget && ([this.clone, this.wrapper].contains(e.relatedTarget) || (e && this.wrapper.contains(e.relatedTarget) && e.relatedTarget != this.wrapper))))
 			return;
 		if (this.clone.get('morph').timer)
 			return;
@@ -535,12 +578,11 @@ FileManager.Gallery = new Class({
 		if (!file)
 			return;
 
-		var name = this.normalize(file.dir + '/' + file.name);
-		var index = this.files.indexOf(name);
-		if (index < 0)
+		var name = this.normalize(file.path);
+		if (!this.files[name])
 			return;
 
-		this.metadata[index].caption = (this.input.get('value') || '');
+		this.files[name].caption = (this.input.value || '');
 
 		this.clone.morph(this.animation.from).get('morph').clearChain().chain((function(){
 			//this.clone.retrieve('parent').set('opacity', 1);
@@ -569,21 +611,17 @@ FileManager.Gallery = new Class({
 	},
 
 	erasePicture: function(name) {
-		var index = this.files.indexOf(name);
-		if (index >= 0)
+		if (this.files[name])
 		{
-			var meta = this.metadata[index];
-
-			this.metadata.splice(index, 1);
-			this.files.splice(index, 1);
-
 			this.tips.hide();
 
 			var self = this;
-			meta.element.set('tween', {duration: 'short'}).removeEvents('click').fade(0).get('tween').chain(function(){
+			this.files[name].element.set('tween', {duration: 'short'}).removeEvents('click').fade(0).get('tween').chain(function(){
 				this.element.destroy();
 				self.switchButton();
+				delete self.files[name];
 			});
+			
 		}
 	},
 
@@ -607,12 +645,12 @@ FileManager.Gallery = new Class({
 		if (e) e.stop();
 
 		var serialized = {};
-		this.files.each(function(v, i){
-			serialized[v] = (this.metadata[i].caption || '');
+		Object.each(this.files,function(file){
+			serialized[file.name] = (file.caption || '');
 		}, this);
 		this.keepGalleryData = true;
 		this.hide(e);
-		this.fireEvent('complete', [serialized, this.metadata, this]);
+		this.fireEvent('complete', [serialized, this.files, this]);
 	}
 });
 

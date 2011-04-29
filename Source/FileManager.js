@@ -1932,9 +1932,7 @@ var FileManager = new Class({
 			new Element('div', {
 				'class': 'dir-gal-thumb-bg',
 				'styles': {
-					'background-image': 'url(' + (thumbnail_url ? thumbnail_url : this.assetBasePath + 'Images/loader.gif') + ')',
-					'width': 48,
-					'height': 48
+					'background-image': 'url(' + (thumbnail_url ? thumbnail_url : this.assetBasePath + 'Images/loader.gif') + ')'
 				}
 			}),
 			new Element('div', {
@@ -2369,7 +2367,7 @@ var FileManager = new Class({
 						'left': e.page.x + 25,
 						'top': e.page.y + 25
 					});
-					//this.imageadd.fade('in');
+					this.imageadd.fade('in');
 				}).bind(this),
 
 				onBeforeStart: (function(el){
