@@ -19,7 +19,9 @@ if (!defined('SITE_USES_ALIASES')) define('SITE_USES_ALIASES', 0);
 
 
 if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 0);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
-
+											       
+// when ON, show the sneaky 'reject on size' filter in the auth callback handler											       
+if (!defined('SHOW_CUSTOM_CALLBACK_WORK')) define('SHOW_CUSTOM_CALLBACK_WORK', DEVELOPMENT && 0);
 
 
 if (!SITE_USES_ALIASES)
@@ -752,7 +754,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		 * you can do a similar thing for any other request and have a good file fail or a bad file recover and succeed,
 		 * simply by patching the $info[] items.
 		 */
-		if (DEVELOPMENT && $info['mime'] == 'image/jpeg' && $fsize >= 180 * 1024 && $fsize <= 200 * 1024)
+		if (SHOW_CUSTOM_CALLBACK_WORK && $info['mime'] == 'image/jpeg' && $fsize >= 180 * 1024 && $fsize <= 200 * 1024)
 		{
 			// force the manager to fetch the 'nuke' icon:
 			$info['filename'] = 'is.default-error';
