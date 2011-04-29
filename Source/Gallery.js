@@ -449,17 +449,17 @@ FileManager.Gallery = new Class({
 
 			// do NOT set this.Request as this is a parallel request; mutiple ones may be fired when onDragComplete is, for instance, invoked from the array-loop inside populate()
 
+			var tx_cfg = this.options.mkServerRequestURL(this, 'detail', {
+							directory: file.dir,
+							// fixup for *directory* detail requests
+							file: (file.mime == 'text/directory' ? '.' : file.name),
+							filter: this.options.filter,
+							mode: 'direct'                          // provide direct links to the thumbnail files
+						});
+
 			var req = new FileManager.Request({
-				url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
-					event: 'detail'
-				})),
-				data: {
-					directory: file.dir,
-					// fixup for *directory* detail requests
-					file: (file.mime == 'text/directory' ? '.' : file.name),
-					filter: this.options.filter,
-					mode: 'direct'                          // provide direct links to the thumbnail files
-				},
+				url: tx_cfg.url,
+				data: tx_cfg.data,
 				onRequest: function() {},
 				onSuccess: (function(j)
 				{

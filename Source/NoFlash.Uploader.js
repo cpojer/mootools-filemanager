@@ -95,37 +95,21 @@ FileManager.implement({
 		}
 
 		var mfm = this;
+
 		var f = (new Element('form'))
-			.set('action', this.options.url + 'event=upload')
+			//.set('action', tx_cfg.url)
 			.set('method', 'post')
 			.set('enctype', 'multipart/form-data')
 			.set('target', 'dummyframe')
-			.setStyles({ 'float': 'left', 'padding-left': '3px', 'display':'block'});
-
-		var data = Object.merge({},
-			(this.options.propagateType == 'POST' ? this.options.propagateData : {}),
-			(this.options.uploadAuthData || {})
-		);
-		Object.each(data, function(v, k){
-			f.adopt((new Element('input')).set({type: 'hidden', name: k, value: v}));
-		});
-
-		mfm.make_file_input(f);
-
-		f.inject(this.menu, 'top');
+			.setStyles({ 'float': 'left', 'padding-left': '3px', 'display': 'block'});
 
 		var uploadButton = this.addMenuButton('upload').addEvents({
 			click:  function(e) {
 				e.stop();
 				mfm.browserLoader.set('opacity', 1);
-				f.action = mfm.options.url
-					+ (mfm.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, (self.options.propagateType == 'GET' ? self.options.propagateData : {}), {
-						event: 'upload',
-						directory: self.normalize(mfm.Directory),
-						filter: mfm.options.filter,
-						resize: ((this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0),
-						reportContentType: 'text/plain'        // Safer for iframes: the default 'application/json' mime type would cause FF3.X to pop up a save/view dialog!
-					}));
+				f.action = tx_cfg.url;
+				// TODO: fixup the resize setting!
+				// resize: ((this.label && this.label.getElement('.checkbox').hasClass('checkboxChecked')) ? 1 : 0)
 
 				f.submit();
 			},
@@ -154,6 +138,23 @@ FileManager.implement({
 				resizer, new Element('span', {text: this.language.resizeImages})
 			).addEvent('click', check).inject(this.menu);
 		}
+
+		var tx_cfg = this.options.mkServerRequestURL(this, 'upload', Object.merge({},
+						this.options.propagateData,
+						(this.options.uploadAuthData || {}), {
+							directory: this.normalize(this.Directory),
+							filter: this.options.filter,
+							resize: this.options.resizeImages,     // TODO: must be updated when button is clicked
+							reportContentType: 'text/plain'        // Safer for iframes: the default 'application/json' mime type would cause FF3.X to pop up a save/view dialog!
+						}));
+
+		Object.each(tx_cfg.data, function(v, k){
+			f.adopt((new Element('input')).set({type: 'hidden', name: k, value: v}));
+		});
+
+		this.make_file_input(f);
+
+		f.inject(this.menu, 'top');
 
 		this._dummyframe = (new IFrame).set({src: 'about:blank', name: 'dummyframe'}).setStyles({display: 'none'});
 		this.menu.adopt(this._dummyframe);
@@ -217,7 +218,7 @@ FileManager.implement({
 			{
 				// Maybe this.contentDocument.documentElement.innerText isn't where we need to look?
 				//debugger;
-				mfm.diag.log('noFlashUpload: document innerText grab FAIL:', e, this);
+				mfm.diag.log('noFlashUpload: document innerText grab FAIL:', e, this, tx_cfg);
 				mfm.load(mfm.Directory);
 			}
 

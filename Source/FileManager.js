@@ -96,7 +96,9 @@ var FileManager = new Class({
 
 		standalone: true,				  // (boolean). Default to true. If set to false, returns the Filemanager without enclosing window / overlay.
 		parentContainer: null,			  // (string). ID of the parent container. If not set, FM will consider its first container parent for fitSizes();
-		hideOnSelect: true				  // (boolean). Default to true. If set to false, it leavers the FM open after a picture select.
+		hideOnSelect: true,				  // (boolean). Default to true. If set to false, it leavers the FM open after a picture select.
+
+		mkServerRequestURL: null          // (function) specify your own alternative URL/POST data constructor when you use a framework/system which requires such.   function([object] fm_obj, [string] request_code, [assoc.array] post_data)
 	},
 
 	/*
@@ -110,6 +112,8 @@ var FileManager = new Class({
 	},
 
 	initialize: function(options) {
+		this.options.mkServerRequestURL = this.mkServerRequestURL;
+
 		this.setOptions(options);
 		this.diag.verbose = this.options.verbose;
 		this.ID = String.uniqueID();
@@ -611,6 +615,28 @@ var FileManager = new Class({
 		return (j.dirs.length + j.files.length <= pagesize * 4);
 	},
 
+	/*
+	 * default method to produce a suitable request URL/POST; as several frameworks out there employ url rewriting, one way or another,
+	 * we now allow users to provide their own construction method to replace this one: simply provide your own method in
+	 *   options.mkServerRequestURL
+	 * Like this one, it MUST return an object, containing two properties:
+	 *
+	 *   url:  (string) contains the URL sent to the server for the given event/request (which is always transmitted as a POST request)
+	 *   data: (assoc. array): extra parameters added to this POST. (Mainly there in case a framework wants to have the 'event' parameter
+	 *         transmitted as a POST data element, rather than having it included in the request URL itself in some form.
+     */
+	mkServerRequestURL:	function(fm_obj, request_code, post_data)
+	{
+		// WARNING: 'this' in here is actually **NOT** pointing at the FM instance; use 'fm_obj' for that!  (In fact, 'this' points at the 'options' object, but consider that an 'undocumented feature' as it may change in the future without notice!)
+
+		return {
+			url: fm_obj.options.url + (fm_obj.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString({
+					event: request_code
+				}),
+			data: post_data
+		};
+	},
+
 	fitSizes: function()
 	{
 // Partikule : Add the standalone check
@@ -1013,20 +1039,20 @@ var FileManager = new Class({
 		this.downloadForm = new Element('form', {target: '_downloadIframe', method: 'post', enctype: 'multipart/form-data'});
 		this.menu.adopt(this.downloadForm);
 
-		Object.each(Object.merge(	{},
-									this.options.propagateData,
-									{
-										file: this.normalize(file.dir + file.name),
-										filter: this.options.filter
-									}),
+		var tx_cfg = this.options.mkServerRequestURL(this, 'download', Object.merge({},
+						this.options.propagateData,
+						{
+							file: this.normalize(file.dir + file.name),
+							filter: this.options.filter
+						}));
+
+		this.downloadForm.action = tx_cfg.url;
+
+		Object.each(tx_cfg.data,
 					function(v, k)
 					{
 						this.downloadForm.adopt((new Element('input')).set({type: 'hidden', name: k, value: v}));
 					}.bind(this));
-
-		this.downloadForm.action = this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString({
-			event: 'download'
-		  });
 
 		return this.downloadForm.submit();
 	},
@@ -1064,15 +1090,15 @@ var FileManager = new Class({
 				// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 				this.reset_view_fill_store();
 
+				var tx_cfg = this.options.mkServerRequestURL(this, 'create', {
+								file: input.get('value'),
+								directory: this.Directory,
+								filter: this.options.filter
+							});
+
 				this.Request = new FileManager.Request({
-					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
-						event: 'create'
-					})),
-					data: {
-						file: input.get('value'),
-						directory: this.Directory,
-						filter: this.options.filter
-					},
+					url: tx_cfg.url,
+					data: tx_cfg.data,
 					onRequest: function(){},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
@@ -1132,16 +1158,17 @@ var FileManager = new Class({
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
 		this.reset_view_fill_store();
 
-		this.diag.log('view URI: ', this.options.url, dir, this.listType, preselect, this.options.propagateData);
+		var tx_cfg = this.options.mkServerRequestURL(this, 'view', {
+						directory: dir,
+						filter: this.options.filter,
+						file_preselect: (preselect || '')
+					});
+
+		this.diag.log('load(): view URI: ', dir, this.listType, tx_cfg);
+
 		this.Request = new FileManager.Request({
-			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
-				event: 'view'
-			})),
-			data: {
-				directory: dir,
-				filter: this.options.filter,
-				file_preselect: (preselect || '')
-			},
+			url: tx_cfg.url,
+			data: tx_cfg.data,
 			onRequest: function(){},
 			onSuccess: (function(j) {
 				this.diag.log("### 'view' request: onSuccess invoked", j);
@@ -1216,15 +1243,15 @@ var FileManager = new Class({
 
 		this.browserLoader.fade(1);
 
+		var tx_cfg = this.options.mkServerRequestURL(this, 'destroy', {
+						file: file.name,
+						directory: this.Directory,
+						filter: this.options.filter
+					});
+
 		this.Request = new FileManager.Request({
-			url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({}, {
-				event: 'destroy'
-			})),
-			data: {
-				file: file.name,
-				directory: this.Directory,
-				filter: this.options.filter
-			},
+			url: tx_cfg.url,
+			data: tx_cfg.data,
 			onRequest: function(){},
 			onSuccess: (function(j) {
 				if (!j || !j.status) {
@@ -1334,16 +1361,16 @@ var FileManager = new Class({
 
 				this.browserLoader.fade(1);
 
+				var tx_cfg = this.options.mkServerRequestURL(this, 'move', {
+								file: file.name,
+								name: input.get('value'),
+								directory: this.Directory,
+								filter: this.options.filter
+							});
+
 				this.Request = new FileManager.Request({
-					url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
-						event: 'move'
-					})),
-					data: {
-						file: file.name,
-						name: input.get('value'),
-						directory: this.Directory,
-						filter: this.options.filter
-					},
+					url: tx_cfg.url,
+					data: tx_cfg.data,
 					onRequest: function(){},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
@@ -2089,19 +2116,18 @@ var FileManager = new Class({
 
 					el = (function(file, dg_el) {           // Closure
 						var iconpath = this.assetBasePath + 'Images/Icons/' + (this.listType === 'thumb' ? 'Large/' : '') + 'default-error.png';
-						var list_row = this.list_row_maker(file.icon48, file);
+						var list_row = this.list_row_maker((this.listType === 'thumb' ? file.icon48 : file.icon), file);
+
+						var tx_cfg = this.options.mkServerRequestURL(this, 'detail', {
+										directory: file.dir,
+										file: file.name,
+										filter: this.options.filter,
+										mode: 'direct'
+									});
 
 						var req = new FileManager.Request({
-							url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
-								//event: 'thumbnail'
-								event: 'detail'
-							})),
-							data: {
-								directory: file.dir,
-								file: file.name,
-								filter: this.options.filter,
-								mode: 'direct'
-							},
+							url: tx_cfg.url,
+							data: tx_cfg.data,
 							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
 							onRequest: function(){},
 							onSuccess: (function(j) {
@@ -2439,17 +2465,17 @@ var FileManager = new Class({
 
 					if (this.Request) this.Request.cancel();
 
+					var tx_cfg = this.options.mkServerRequestURL(this, 'move', {
+									file: file.name,
+									filter: this.options.filter,
+									directory: this.Directory,
+									newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : this.Directory,
+									copy: is_a_move ? 0 : 1
+								});
+
 					this.Request = new FileManager.Request({
-						url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
-							event: 'move'
-						})),
-						data: {
-							file: file.name,
-							filter: this.options.filter,
-							directory: this.Directory,
-							newDirectory: dir ? (dir.dir ? dir.dir + '/' : '') + dir.name : this.Directory,
-							copy: is_a_move ? 0 : 1
-						},
+						url: tx_cfg.url,
+						data: tx_cfg.data,
 						onSuccess: (function(j) {
 							if (!j || !j.status) {
 								this.drop_pending = 0;
@@ -2659,17 +2685,17 @@ var FileManager = new Class({
 
 			var dir = this.Directory;
 
+			var tx_cfg = this.options.mkServerRequestURL(this, 'detail', {
+							directory: dir,
+							// fixup for *directory* detail requests:
+							file: (file.mime === 'text/directory' ? '.' : file.name),
+							filter: this.options.filter,
+							mode: 'auto'                    // provide either direct links to the thumbnails (when available in cache) or PHP event trigger URLs for delayed thumbnail image creation (performance optimization: faster page render)
+						});
+
 			this.Request = new FileManager.Request({
-				url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
-					event: 'detail'
-				})),
-				data: {
-					directory: dir,
-					// fixup for *directory* detail requests:
-					file: (file.mime === 'text/directory' ? '.' : file.name),
-					filter: this.options.filter,
-					mode: 'auto'                    // provide either direct links to the thumbnails (when available in cache) or PHP event trigger URLs for delayed thumbnail image creation (performance optimization: faster page render)
-				},
+				url: tx_cfg.url,
+				data: tx_cfg.data,
 				onRequest: (function() {
 					this.previewLoader.inject(this.preview);
 					this.previewLoader.fade(1);
@@ -2731,17 +2757,16 @@ var FileManager = new Class({
 							});
 						}
 
+						var tx_cfg = this.options.mkServerRequestURL(this, 'detail', {
+										directory: dir,
+										file: file.name,
+										filter: this.options.filter,
+										mode: 'direct'
+									});
+
 						var req = new FileManager.Request({
-							url: this.options.url + (this.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString(Object.merge({},  {
-								//event: 'thumbnail'
-								event: 'detail'
-							})),
-							data: {
-								directory: dir,
-								file: file.name,
-								filter: this.options.filter,
-								mode: 'direct'
-							},
+							url: tx_cfg.url,
+							data: tx_cfg.data,
 							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
 							onRequest: function(){},
 							onSuccess: (function(j) {

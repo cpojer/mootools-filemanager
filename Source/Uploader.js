@@ -106,18 +106,15 @@ FileManager.implement({
 				this.parent(base, data);
 				this.has_completed = false;
 
-				self.diag.log('Uploader: setOptions');
-				this.setOptions({
-					//data: Object.merge({}, base.options.data, self.options.uploadAuthData),
-					url: self.options.url + (self.options.url.indexOf('?') == -1 ? '?' : '&') + Object.toQueryString({
-						event: 'upload',
-					}),
-					data: {
-						directory: self.Directory,
-						filter: self.options.filter,
-						resize: (self.options.resizeImages && resizer.hasClass('checkboxChecked')) ? 1 : 0
-					}
-				});
+				var tx_cfg = self.options.mkServerRequestURL(self, 'upload', {
+								directory: self.Directory,
+								filter: self.options.filter,
+								resize: (self.options.resizeImages && resizer.hasClass('checkboxChecked')) ? 1 : 0
+							});
+
+				self.diag.log('Uploader: setOptions', tx_cfg);
+
+				this.setOptions(tx_cfg);
 			},
 
 			render: function(){
