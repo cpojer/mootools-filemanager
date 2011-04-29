@@ -124,7 +124,8 @@ var FileManager = new Class({
 		this.CurrentDir = null;
 		this.listType = 'list';
 		this.dialogOpen = false;
-		this.usingHistory = false;
+		//this.usingHistory = false;
+		this.storeHistory = false;
 		this.fmShown = false;
 		this.drop_pending = 0;           // state: 0: no drop pending, 1: copy pending, 2: move pending
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
@@ -833,7 +834,7 @@ var FileManager = new Class({
 						current.getParent('span.fi').removeClass('hover');
 						if (current.get('title') == value)
 						{
-							this.deselect();
+							this.deselect(null);
 							this.Current = current.getParent('span.fi');
 							new Fx.Scroll(this.browserScroll,{duration: 'short', offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(this.Current);
 							this.Current.addClass('selected');
@@ -1059,7 +1060,7 @@ var FileManager = new Class({
 
 	create_on_click: function(e) {
 		e.stop();
-		var input = new Element('input', {'class': 'createDirectory', 'autofocus': 'autofocus'});
+		var input = new Element('input', {'class': 'createDirectory'});
 		var click_ok_f = function(e) {
 			if (e.key === 'enter') {
 				e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
@@ -1074,6 +1075,7 @@ var FileManager = new Class({
 			content: [
 				input
 			],
+			autofocus_on: 'input.createDirectory',
 			zIndex: this.options.zIndex + 900,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: (function() {
@@ -1082,7 +1084,7 @@ var FileManager = new Class({
 			}).bind(this),
 			onShow: (function(){
 				this.diag.log('add key up on create dialog:onShow');
-				input.addEvent('keyup', click_ok_f).focus();
+				input.addEvent('keyup', click_ok_f);
 			}).bind(this),
 			onConfirm: (function() {
 				if (this.Request) this.Request.cancel();
@@ -1106,7 +1108,7 @@ var FileManager = new Class({
 							return;
 						}
 
-						this.deselect();
+						this.deselect(null);
 						this.show_our_info_sections(false);
 
 						// make sure we store the JSON list!
@@ -1148,7 +1150,7 @@ var FileManager = new Class({
 
 		if (typeof preselect === 'undefined') preselect = null;
 
-		this.deselect();
+		this.deselect(null);
 		this.show_our_info_sections(false);
 
 		if (this.Request) this.Request.cancel();
@@ -1333,7 +1335,7 @@ var FileManager = new Class({
 
 	rename: function(file) {
 		var name = file.name;
-		var input = new Element('input', {'class': 'rename', value: name, 'autofocus': 'autofocus'});
+		var input = new Element('input', {'class': 'rename', value: name});
 
 		// if (file.mime !== 'text/directory') name = name.replace(/\..*$/, '');     -- unused
 
@@ -1345,6 +1347,7 @@ var FileManager = new Class({
 			content: [
 				input
 			],
+			autofocus_on: 'input.rename',
 			zIndex: this.options.zIndex + 900,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
@@ -1354,7 +1357,7 @@ var FileManager = new Class({
 					if (e.key === 'enter') {
 						e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 					}
-				}).focus();
+				});
 			}).bind(this),
 			onConfirm: (function(){
 				if (this.Request) this.Request.cancel();
@@ -1674,7 +1677,7 @@ var FileManager = new Class({
 	paging_goto_helper: function(startindex, pagesize, kbd_dir)
 	{
 		// similar activity as load(), but without the server communication...
-		this.deselect();
+		this.deselect(null);
 		this.show_our_info_sections(false);
 
 		// if (this.Request) this.Request.cancel();
@@ -2278,7 +2281,7 @@ var FileManager = new Class({
 					{
 						if (preselect === file.name)
 						{
-							this.deselect();
+							this.deselect(null);
 							this.Current = file.element;
 							new Fx.Scroll(this.browserScroll,{duration: 'short', offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
 							file.element.addClass('selected');
@@ -2290,7 +2293,7 @@ var FileManager = new Class({
 					{
 						if (fmFile === file.name)
 						{
-							this.deselect();
+							this.deselect(null);
 							this.Current = file.element;
 							new Fx.Scroll(this.browserScroll,{duration: 'short', offset: {x: 0, y: -(this.browserScroll.getSize().y/4)}}).toElement(file.element);
 							file.element.addClass('selected');
@@ -3225,7 +3228,8 @@ FileManager.Dialog = new Class({
 		request: null,
 		buttons: ['confirm', 'decline'],
 		language: {},
-		zIndex: 2000
+		zIndex: 2000,
+		autofocus_on: null // (string) suitable as a .getElement() argument or NULL for default. Example: 'button.filemanager-dialog-confirm'
 	},
 
 	initialize: function(text, options){
@@ -3313,11 +3317,43 @@ FileManager.Dialog = new Class({
 		this.fireEvent('open');
 		this.el.setStyle('display', 'block').inject(document.body);
 		this.restrictSize();
-		this.el.center().fade(1);
-		var button = (this.el.getElement('button.filemanager-dialog-confirm') || this.el.getElement('button'));
-		if (button) {
-			button.focus();
+		var autofocus_el = (this.options.autofocus_on ? this.el.getElement(this.options.autofocus_on) : (this.el.getElement('button.filemanager-dialog-confirm') || this.el.getElement('button')));
+		if (autofocus_el)
+		{
+			if (('autofocus' in autofocus_el) && !Browser.webkit)
+			{
+				// HTML5 support: see    http://diveintohtml5.org/detect.html
+				//
+				// Unfortunately, it's not really working for me in webkit browsers (Chrome, Safari)  :-((
+				autofocus_el.set('autofocus', 'autofocus');
+				autofocus_el = null;
+			}
+			else
+			{
+				// Safari / Chrome have trouble focussing on things not yet fully rendered!
+			}
 		}
+		this.el.center().fade(1).get('tween').chain((function(){
+				// Safari / Chrome have trouble focussing on things not yet fully rendered!
+				// see   http://stackoverflow.com/questions/2074347/focus-not-working-in-safari-or-chrome
+				// and   http://www.mkyong.com/javascript/focus-is-not-working-in-ie-solution/
+				if (autofocus_el)
+				{
+					if (0)   				// the delay suggested as a fix there is part of the fade()...
+					{
+						(function(el) {
+							el.focus();
+						}).delay(1, this, [autofocus_el]);
+					}
+					else
+					{
+						//autofocus_el.set('tabIndex', 0);   // http://code.google.com/p/chromium/issues/detail?id=27868#c15
+						// ^-- not needed.  When you debug JS in a Webkit browser, you're toast when it comes to getting input field focus, period.   :-(
+						autofocus_el.focus();
+					}
+				}
+			}).bind(this));
+
 		self.fireEvent('show');
 
 		window.FileManager.prototype.diag.log('add key up(ESC)/resize/scroll on show 1500');
