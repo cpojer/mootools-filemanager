@@ -77,29 +77,30 @@ if (0)
 				createFolders: true,
 				// selectable: true,
 				hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
+				verbose: true,			// log a lot of activity to console (when it exists)
 				onComplete: function(path, file, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ' + path + ', ' + debug.dump(file) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ', path, file, mgr);
 				},
 				onModify: function(file, json, mode, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ' + mode + ', ' + debug.dump(file) + ', ' + debug.dump(json) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onModify: ', mode, file, json, mgr);
 				},
 				onShow: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onShow: ', mgr);
 				},
 				onHide: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHide: ', mgr);
 				},
 				onScroll: function(e, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ' + debug.dump(e) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onScroll: ', e, mgr);
 				},
 				onPreview: function(src, mgr, el) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onPreview: ' + debug.dump(src) + ', ' + debug.dump(el) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onPreview: ', src, el, mgr);
 				},
 				onDetails: function(json, mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ' + debug.dump(json) + ', ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onDetails: ', json, mgr);
 				},
 				onHidePreview: function(mgr) {
-					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ' + debug.dump(mgr, 0, 1, 60, 'object,function,string:empty'));
+					if (typeof console !== 'undefined' && console.log) console.log('MFM.onHidePreview: ', mgr);
 				},
 				// and a couple of extra user defined parameters sent with EVERY request:
 				propagateData: {

@@ -596,9 +596,9 @@ FileManager.Gallery = new Class({
 
 	populate: function(data)
 	{
-		this.diag.log('GALLERY.populate: ' + debug.dump(data));
+		this.diag.log('GALLERY.populate: ', data);
 		Object.each(data || {}, function(v, i){
-			this.diag.log('GALLERY.populate: index = ' + i + ', value = ' + v);
+			this.diag.log('GALLERY.populate: index = ', i, ', value = ', v);
 			this.onDragComplete(i, this.gallery, v);
 		}, this);
 	},
