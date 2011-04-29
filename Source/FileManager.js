@@ -534,7 +534,7 @@ var FileManager = new Class({
 					switch (e.key)
 					{
 					case 'tab':
-						e.preventDefault();
+						e.stop();
 						this.toggleList();
 						break;
 
@@ -1062,7 +1062,10 @@ var FileManager = new Class({
 		e.stop();
 		var input = new Element('input', {'class': 'createDirectory'});
 		var click_ok_f = function(e) {
+			this.diag.log('create on click: KEYBOARD handler: key press: ', e);
+
 			if (e.key === 'enter') {
+				e.stopPropagation();
 				e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 			}
 		};
@@ -1354,7 +1357,10 @@ var FileManager = new Class({
 			onShow: (function() {
 				this.diag.log('add key up on rename dialog:onShow');
 				input.addEvent('keyup', function(e) {
+					this.diag.log('rename: KEYBOARD handler: key press: ', e);
+
 					if (e.key === 'enter') {
+						e.stopPropagation();
 						e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 					}
 				});
@@ -2367,7 +2373,6 @@ var FileManager = new Class({
 						'left': e.page.x + 25,
 						'top': e.page.y + 25
 					});
-					this.imageadd.fade('in');
 				}).bind(this),
 
 				onBeforeStart: (function(el) {

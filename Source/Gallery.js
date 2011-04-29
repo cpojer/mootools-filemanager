@@ -22,6 +22,11 @@ FileManager.Gallery = new Class({
 
 	Extends: FileManager,
 
+	options:
+	{
+		closeCaptionEditorOnMouseOut: true  // TRUE: will save & close caption editor popup dialog when you move the mouse out there
+	},
+
 	initialize: function(options)
 	{
 		this.offsets = {y: -72};
@@ -61,7 +66,7 @@ FileManager.Gallery = new Class({
 				// mode is one of (destroy, rename, move, copy): only when mode=copy, does the file remain where it was before!
 				if (mode !== 'copy')
 				{
-					var name = self.normalize(file.path);
+					var name = self.normalize(file.dir + '/' + file.name);
 					self.erasePicture(name);
 				}
 			}
@@ -77,19 +82,10 @@ FileManager.Gallery = new Class({
 		}).inject(this.container);
 		this.gallery = new Element('ul').inject(this.galleryContainer);
 
-		var timer;
+		var timer = null;
 		var self = this;
 
 		this.input = new Element('textarea', {name: 'imgCaption'});
-    // stop filemanager window events, when hit enter
-    if ((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
-      this.input.addEvent('keydown', function(e){ if(e.key == 'enter') e.stopPropagation(); });
-    else
-      this.input.addEvent('keypress', function(e){
-        if(e.key == 'enter') e.stopPropagation();
-          // deactivated to allow multiple line caption. \n will later be transformed into <br>
-  				//self.removeClone(e, this);
-  		});
 
 		var imgdiv = new Element('div', {'class': 'img'});
 		this.wrapper = new Element('div', {
@@ -99,7 +95,25 @@ FileManager.Gallery = new Class({
 				'z-index': this.options.zIndex + 750
 			},
 			tween: {duration: 'short'},
-			opacity: 0
+			opacity: 0,
+			events: {
+				mouseenter: function() {
+					if (self.options.closeCaptionEditorOnMouseOut)
+					{
+						clearTimeout(timer);
+					}
+				},
+				mouseleave: function(e) {
+					var target = this;
+
+					if (self.options.closeCaptionEditorOnMouseOut)
+					{
+						timer = (function() {
+							self.removeClone(e, target);
+						}).delay(500);
+					}
+				}
+			}
 		}).adopt(
 			new Element('span', {text: this.language.gallery.text}),
 			this.input,
@@ -107,7 +121,41 @@ FileManager.Gallery = new Class({
 			new Element('button', {text: this.language.gallery.save}).addEvent('click', function(e) {
 				self.removeClone(e, this);
 			})
-		).inject(document.body);
+		);
+
+		// stop filemanager window events when you hit enter
+		this.gallery_keyboard_handler = (function(e)
+		{
+			this.diag.log('gallery KEYBOARD handler: key press: ', e);
+
+			if (this.dialogOpen) return;
+
+			// don't propagate any keyboard code to the filemanager keyboard handler (e.g. TAB)
+			e.stopPropagation();
+
+			if (e.key == 'enter')
+			{
+				// deactivated to allow multiple line caption. \n will later be transformed into <br>
+				//self.removeClone(e, this);
+			}
+		}).bind(this);
+
+		if ((Browser.Engine && (Browser.Engine.trident || Browser.Engine.webkit)) || (Browser.ie || Browser.chrome || Browser.safari))
+		{
+			this.input.addEvent('keydown', this.gallery_keyboard_handler);
+			// also make sure keyboard navigation actually works in the caption editor pane: catch ENTER on button, etc. from bubbling up to the filemanager handler:
+			this.wrapper.addEvent('keydown', this.gallery_keyboard_handler);
+		}
+		else
+		{
+			this.input.addEvent('keypress', this.gallery_keyboard_handler);
+			// also make sure keyboard navigation actually works in the caption editor pane: catch ENTER on button, etc. from bubbling up to the filemanager handler:
+			this.wrapper.addEvent('keypress', this.gallery_keyboard_handler);
+		}
+		// also make sure keyboard navigation actually works in the caption editor pane: catch ENTER on button, etc. from bubbling up to the filemanager handler:
+		this.wrapper.addEvent('keyup', this.gallery_keyboard_handler);
+
+		this.wrapper.inject(document.body);
 
 		var wrapper_pos = this.wrapper.getCoordinates();
 		var imgdiv_pos = imgdiv.getCoordinates();
@@ -215,10 +263,12 @@ FileManager.Gallery = new Class({
 		var self = this;
 
 		// -> add overlay
-	  $$('filemanager-overlay-caption').addEvent('click',self.removeClone(null,li_wrapper));
+		$$('filemanager-overlay-caption').addEvent('click', function(e) {
+			this.removeClone(null,li_wrapper);
+		}.bind(this));
 		this.captionOverlay.show();
 
-    var name = this.normalize(file.path);
+		var name = this.normalize(file.dir + '/' + file.name);
 
 		var pos = img_el.getCoordinates();
 		var oml = img_el.getStyle('margin-left').toInt();
@@ -402,7 +452,7 @@ FileManager.Gallery = new Class({
 			caption = '';
 		}
 
-		this.imageadd.fade('out');
+		this.imageadd.fade(0);
 
 		if (this.howto) {
 			this.howto.destroy();
@@ -415,11 +465,10 @@ FileManager.Gallery = new Class({
 		var file;
 		if (typeof el === 'string')
 		{
-			//var part = el.split('/');
+			var part = el.split('/');
 			file = {
-				//name: part.pop(),
-				//dir: part.join('/'),
-				path: el,
+				name: part.pop(),
+				dir: part.join('/'),
 				mime: 'unknown/unknown',
 				thumbs_deferred: true
 			};
@@ -430,7 +479,7 @@ FileManager.Gallery = new Class({
 			file = el.retrieve('file');
 		}
 
-		var name = this.normalize(file.path);
+		var name = this.normalize(file.dir + '/' + file.name);
 
 		// when the item already exists in the gallery, do not add it again:
 		if (this.files[name])
@@ -460,7 +509,8 @@ FileManager.Gallery = new Class({
 			'class': 'gallery-image',
 			'title': file.name,
 			styles: {
-
+				width: this.imgContainerSize.x,
+				height: this.imgContainerSize.y
 			}
 		});
 		this.tips.attach(imgcontainer);
@@ -582,7 +632,7 @@ FileManager.Gallery = new Class({
 		if (!file)
 			return;
 
-		var name = this.normalize(file.path);
+		var name = this.normalize(file.dir + '/' + file.name);
 		if (!this.files[name])
 			return;
 

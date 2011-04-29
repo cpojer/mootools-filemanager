@@ -899,7 +899,7 @@ div.filemanager-gallery ul li {
 	background: url("../Images/loader.gif") center center no-repeat;
 }
 
-div.filemanager-gallery ul li span.gallery-image {
+div.filemanager-gallery ul li div.gallery-image {
 	padding: 2px;
 	/*
 	width: 75px;
@@ -910,7 +910,7 @@ div.filemanager-gallery ul li span.gallery-image {
 	cursor: pointer;
 }
 
-div.filemanager-gallery ul li span.gallery-image img {
+div.filemanager-gallery ul li div.gallery-image img {
 	padding: 0;
 	margin: 0;
 	border: 0;
@@ -959,7 +959,8 @@ div.filemanager-wrapper span {
 }
 
 div.filemanager-wrapper textarea {
-  width: 260px;
+	padding: 2px;             /* at least Safari had this by default; looks better than 0px, but width must be corrected for this */
+	width: 256px;             /* 260px - 2 * 2 px */
 	height: 80px;
 	margin: 3px 5px 0;
 
@@ -1019,7 +1020,7 @@ div.filemanager-filelist .fi, div.gallery-image {
 	border-radius: 4px;
 	-moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
-    text-align: center !important;
+	text-align: center;
 	white-space: nowrap;
 	cursor: pointer;
 }
