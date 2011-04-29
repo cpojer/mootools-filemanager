@@ -890,9 +890,10 @@ div.filemanager-gallery ul {
 
 div.filemanager-gallery ul li {
   position: relative;
+  display: inline-block;
   float: left;
-  margin: 0;
-  width: 79px;
+  margin: 0 2px;
+  width: 80px;
   height: 60px;
   list-style: none;  
   background: url("../Images/loader.gif") center center no-repeat;
@@ -917,17 +918,18 @@ div.filemanager-gallery ul li span.gallery-image img {
 
 div.filemanager-gallery ul li img.filemanager-remove {
   position: absolute;
-  right: -2px; /* place the red X inside the li entirely; otherwise the adjacent image may partly obscure it */
+  right: -11px;
   top: -1px;
   width: 16px;
   height: 16px;
+  cursor: pointer;
 }
 
 div.filemanager-wrapper {
   position: absolute;
   /* z-index: 1020; */
   width: 272px;
-  height: 350px;
+  height: 410px;
 
   font-family: Tahoma, sans-serif;
   font-size: 12px;
@@ -956,8 +958,9 @@ div.filemanager-wrapper span {
   font-weight: bold;
 }
 
-div.filemanager-wrapper input {
+div.filemanager-wrapper textarea {
   width: 260px;
+  height: 80px;
   margin: 3px 5px 0;
 
   border: 1px solid #bebebe;
@@ -1007,20 +1010,23 @@ div.filemanager-filelist {
 	padding: 5px;
 	border-top: 1px solid #bebebe;
 }
-div.filemanager-filelist .fi {
+div.filemanager-filelist .fi, div.gallery-image {
     position: relative;
+    display: inline-block;
     float: left;
     margin: 3px;
-    padding: 4px;
-    background-color: #f2f2f2;
+    padding: 5px;
     border-radius: 4px;
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
-    text-align: center;
+    text-align: center !important;
     white-space: nowrap;
     cursor: pointer;
 }
-div.filemanager-filelist .fi:hover { 
+div.gallery-image {
+  float:none;
+}
+div.filemanager-filelist .fi:hover, div.gallery-image:hover { 
 	background-color: #dee6f0; 
 }
 div.filemanager-filelist .fi:hover .name { 
@@ -1029,6 +1035,8 @@ div.filemanager-filelist .fi:hover .name {
 div.filemanager-filelist .fi .dir-gal-thumb-bg {
     background-repeat: no-repeat;
     background-position: center center;
+    width: 100%;
+    height: 48px;
 }
 div.filemanager-filelist .fi .name {
     overflow: hidden;
