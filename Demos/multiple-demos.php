@@ -59,7 +59,7 @@ if (0)
 	<script type="text/javascript">
 		window.addEvent('domready', function() {
 
-			// 
+			//
 			if (0)
 			{
 				// override mootools global default setting for fade effects:
@@ -74,7 +74,7 @@ if (0)
 				Fx.Durations['normal'] = 5;
 				Fx.Durations['long'] = 5;
 			}
-			
+
 
 			/* Simple Example */
 			var manager1 = new FileManager({
@@ -287,7 +287,7 @@ if (0)
 <body>
 <div id="content" class="content">
 	<div class="go_home">
-	<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
+		<a href="index.php" title="Go to the Demo index page"><img src="home_16x16.png"> </a>
 	</div>
 
 	<h1>FileManager Demo</h1>

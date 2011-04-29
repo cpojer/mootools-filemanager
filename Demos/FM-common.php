@@ -19,8 +19,8 @@ if (!defined('SITE_USES_ALIASES')) define('SITE_USES_ALIASES', 0);
 
 
 if (!defined('DEVELOPMENT')) define('DEVELOPMENT', 0);   // set to 01 / 1 / nonzero value to enable logging of each incoming event request.
-											       
-// when ON, show the sneaky 'reject on size' filter in the auth callback handler											       
+
+// when ON, show the sneaky 'reject on size' filter in the auth callback handler
 if (!defined('SHOW_CUSTOM_CALLBACK_WORK')) define('SHOW_CUSTOM_CALLBACK_WORK', DEVELOPMENT && 0);
 
 
@@ -746,7 +746,7 @@ function FM_IsAuthorized($mgr, $action, &$info)
 		 */
 		$fsize = @filesize($info['file']);
 		/*
-		 * When the thumbnail request is made, the demo will error on 
+		 * When the thumbnail request is made, the demo will error on
 		 *   bison-head-with-horns (Ray Rauch, U.S. Fish and Wildlife Service).jpg
 		 *   fruits-vegetables-milk-and-yogurt (Peggy Greb, U.S. Department of Agriculture).jpg
 		 * intentionally with the next bit of code; just to give you an idea what can be done in here.

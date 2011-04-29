@@ -32,7 +32,7 @@ var FileManager = new Class({
 		 *                      path,      // URLencoded absolute URL path to selected file
 		 *                      file,      // the file specs object: .dir, .name, .path, .size, .date, .mime, .icon, .icon48, .thumb48, .thumb250
 		 *                      fmobj      // reference to the FileManager instance which fired the event
-		 *                     ){},
+		 *                     )
 		 *
 		 * onModify: function(             // Fired when either the 'Rename' or 'Delete' icons are clicked or when a file is drag&dropped.
 		 *                                 // Fired AFTER the action is executed.
@@ -94,9 +94,9 @@ var FileManager = new Class({
 		listPaginationAvgWaitTime: 2000,  // adaptive pagination: strive to, on average, not spend more than this on rendering a directory chunk
 		propagateData: {},                // extra query parameters sent with every request to the backend
 
-		standalone: true,				  // (boolean). Default to true. If set to false, returns the Filemanager without enclosing window / overlay.
-		parentContainer: null,			  // (string). ID of the parent container. If not set, FM will consider its first container parent for fitSizes();
-		hideOnSelect: true,				  // (boolean). Default to true. If set to false, it leavers the FM open after a picture select.
+		standalone: true,                 // (boolean). Default to true. If set to false, returns the Filemanager without enclosing window / overlay.
+		parentContainer: null,            // (string). ID of the parent container. If not set, FM will consider its first container parent for fitSizes();
+		hideOnSelect: true,               // (boolean). Default to true. If set to false, it leavers the FM open after a picture select.
 
 		mkServerRequestURL: null          // (function) specify your own alternative URL/POST data constructor when you use a framework/system which requires such.   function([object] fm_obj, [string] request_code, [assoc.array] post_data)
 	},
@@ -143,7 +143,7 @@ var FileManager = new Class({
 
 
 		this.RequestQueue = new Request.Queue({
-			concurrent: 3,				// 3 --> 75% max load on a quad core server
+			concurrent: 3,              // 3 --> 75% max load on a quad core server
 			autoAdvance: true,
 			stopOnFailure: false
 		});
@@ -196,7 +196,7 @@ var FileManager = new Class({
 		// switch the path, from clickable to input text
 		this.clickablePath = new Element('span', {'class': 'filemanager-dir'});
 		this.selectablePath = new Element('input',{'type': 'text', 'class': 'filemanager-dir', 'readonly': 'readonly'});
-		this.pathTitle = new Element('a', {href:'#','class': 'filemanager-dir-title',text: this.language.dir}).addEvent('click',(function(e){
+		this.pathTitle = new Element('a', {href:'#','class': 'filemanager-dir-title',text: this.language.dir}).addEvent('click',(function(e) {
 			this.diag.log('pathTitle-click event: ', e, ' @ ', e.target.outerHTML);
 			e.stop();
 			if (this.header.getElement('span.filemanager-dir') != null) {
@@ -225,7 +225,7 @@ var FileManager = new Class({
 		this.browserheader = new Element('div',{'class': 'filemanager-browserheader'}).inject(this.browsercontainer);
 		this.browserheader.adopt(this.browserLoader);
 		this.browserScroll = new Element('div', {'class': 'filemanager-browserscroll'}).inject(this.browsercontainer).addEvents({
-			'mouseover': (function(e){
+			'mouseover': (function(e) {
 					//this.diag.log('mouseover: ', e);
 
 					// sync mouse and keyboard-driven browsing: the keyboard requires that we keep track of the hovered item,
@@ -240,7 +240,7 @@ var FileManager = new Class({
 							row.addClass('hover');
 						}
 					}
-					this.browser.getElements('span.fi.hover').each(function(span){
+					this.browser.getElements('span.fi.hover').each(function(span) {
 						// prevent screen flicker: only remove the class for /other/ nodes:
 						if (span != row) {
 							span.removeClass('hover');
@@ -274,7 +274,7 @@ var FileManager = new Class({
 				}).bind(this),
 
 			/* 'mouseout' */
-			'mouseleave': (function(e){
+			'mouseleave': (function(e) {
 					//this.diag.log('mouseout: ', e);
 
 					// only bother us when the mouse cursor has just left the browser area; anything inside there is handled
@@ -282,7 +282,7 @@ var FileManager = new Class({
 					//
 					// - do NOT remove the 'hover' marker from the row; it will be used by the keyboard!
 					// - DO fade out the action icons, though!
-					this.browser.getElements('span.fi.hover').each(function(span){
+					this.browser.getElements('span.fi.hover').each(function(span) {
 						var rowicons = span.getElements('img.browser-icon');
 						if (rowicons)
 						{
@@ -311,7 +311,7 @@ var FileManager = new Class({
 			});
 
 // Partikule : Thumbs list in preview panel
-	    this.browserMenu_thumbList = new Element('a',{
+		this.browserMenu_thumbList = new Element('a',{
 				'id': 'show_dir_thumb_gallery',
 				'title': this.language.show_dir_thumb_gallery
 			}).addEvent('click', function()
@@ -320,7 +320,7 @@ var FileManager = new Class({
 				// *NOT* blow away the recall in which directory we are (and what item is currently selected):
 
 				//if (typeof jsGET !== 'undefined')
-				//	jsGET.clear();
+				//  jsGET.clear();
 
 				// no need to request the dirscan again: after all, we only wish to render another view of the same directory.
 				// (This means, however, that we MAY requesting any deferred thumbnails)
@@ -393,7 +393,7 @@ var FileManager = new Class({
 			new Element('h1')
 		]);
 
-		this.preview = new Element('div', {'class': 'filemanager-preview'}).addEvent('click:relay(img.preview)', function(){
+		this.preview = new Element('div', {'class': 'filemanager-preview'}).addEvent('click:relay(img.preview)', function() {
 			self.fireEvent('preview', [this.get('src'), self, this]);
 		});
 
@@ -448,9 +448,9 @@ var FileManager = new Class({
 				opacity: 0.5,
 				title: this.language.close,
 				events: {click: this.hide.bind(this)}
-			}).inject(this.filemanager).addEvent('mouseover',function(){
+			}).inject(this.filemanager).addEvent('mouseover',function() {
 					this.fade(1);
-				}).addEvent('mouseout',function(){
+				}).addEvent('mouseout',function() {
 					this.fade(0.5);
 				});
 		}
@@ -461,11 +461,11 @@ var FileManager = new Class({
 			text: null,
 			showDelay: 50,
 			hideDelay: 50,
-			onShow: function(){
+			onShow: function() {
 				this.tip.setStyle('z-index', self.options.zIndex + 501).set('tween', {duration: 'short'}).setStyle('display', 'block').fade(1);
 			},
-			onHide: function(){
-				this.tip.fade(0).get('tween').chain(function(){
+			onHide: function() {
+				this.tip.fade(0).get('tween').chain(function() {
 					this.element.setStyle('display', 'none');
 				});
 			}
@@ -483,7 +483,7 @@ var FileManager = new Class({
 		}).set('opacity', 0).set('tween', {duration: 'short'}).inject(this.container);
 
 // Partikule : Moved a little bit more on the bottom...
-//		this.container.inject(document.body);
+//      this.container.inject(document.body);
 // /Partikule
 
 		if (!this.options.hideOverlay) {
@@ -574,18 +574,18 @@ var FileManager = new Class({
 // Partikule
 		if (this.options.standalone)
 		{
-	    	this.container.inject(document.body);
+			this.container.inject(document.body);
 
 			// ->> autostart filemanager when set
 			this.initialShow();
-	    }
-	    else
-	    {
+		}
+		else
+		{
 // Partikule : Removed the autostart bacause of the standalone mode.
 // Certainly a better way to do that...
-	    	this.options.hideOverlay = true;
-	    }
-    	return this;
+			this.options.hideOverlay = true;
+		}
+		return this;
 	},
 
 	initialShowBase: function() {
@@ -593,7 +593,7 @@ var FileManager = new Class({
 			this.show();
 		}
 		else {
-			window.addEvent('jsGETloaded',(function(){
+			window.addEvent('jsGETloaded',(function() {
 				if (typeof jsGET !== 'undefined' && jsGET.get('fmID') == this.ID)
 					this.show();
 			}).bind(this));
@@ -625,8 +625,8 @@ var FileManager = new Class({
 	 *   url:  (string) contains the URL sent to the server for the given event/request (which is always transmitted as a POST request)
 	 *   data: (assoc. array): extra parameters added to this POST. (Mainly there in case a framework wants to have the 'event' parameter
 	 *         transmitted as a POST data element, rather than having it included in the request URL itself in some form.
-     */
-	mkServerRequestURL:	function(fm_obj, request_code, post_data)
+	 */
+	mkServerRequestURL: function(fm_obj, request_code, post_data)
 	{
 		// WARNING: 'this' in here is actually **NOT** pointing at the FM instance; use 'fm_obj' for that!  (In fact, 'this' points at the 'options' object, but consider that an 'undocumented feature' as it may change in the future without notice!)
 
@@ -922,14 +922,14 @@ var FileManager = new Class({
 		this.fireHooks('show');
 
 // Partikule : If not standalone, returns the HTML content
-	   	if (!this.options.standalone)
+		if (!this.options.standalone)
 		{
-	    	return this.container;
-	    }
+			return this.container;
+		}
 // /Partikule
 	},
 
-	hide: function(e){
+	hide: function(e) {
 		if (e) e.stop();
 		this.diag.log('on hide', e, this);
 		if (!this.fmShown) {
@@ -968,10 +968,10 @@ var FileManager = new Class({
 	show_our_info_sections: function(state) {
 		if (!state)
 		{
-			this.info_head.fade(0).get('tween').chain(function(){
+			this.info_head.fade(0).get('tween').chain(function() {
 				this.element.setStyle('display', 'none');
 			});
-			this.preview_area.fade(0).get('tween').chain(function(){
+			this.preview_area.fade(0).get('tween').chain(function() {
 				this.element.setStyle('display', 'none');
 			});
 		}
@@ -982,7 +982,7 @@ var FileManager = new Class({
 		}
 	},
 
-	open_on_click: function(e){
+	open_on_click: function(e) {
 		if (e) e.stop();
 
 		if (!this.Current)
@@ -1082,7 +1082,7 @@ var FileManager = new Class({
 				input.removeEvent('keyup', click_ok_f);
 				this.onDialogClose();
 			}).bind(this),
-			onShow: (function(){
+			onShow: (function() {
 				this.diag.log('add key up on create dialog:onShow');
 				input.addEvent('keyup', click_ok_f);
 			}).bind(this),
@@ -1101,7 +1101,7 @@ var FileManager = new Class({
 				this.Request = new FileManager.Request({
 					url: tx_cfg.url,
 					data: tx_cfg.data,
-					onRequest: function(){},
+					onRequest: function() {},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							this.browserLoader.fade(0);
@@ -1118,7 +1118,7 @@ var FileManager = new Class({
 						this.fill(j, this.get_view_fill_startindex());
 						//this.browserLoader.fade(0);
 					}).bind(this),
-					onComplete: function(){},
+					onComplete: function() {},
 					onError: (function(text, error) {
 						this.browserLoader.fade(0);
 					}).bind(this),
@@ -1171,7 +1171,7 @@ var FileManager = new Class({
 		this.Request = new FileManager.Request({
 			url: tx_cfg.url,
 			data: tx_cfg.data,
-			onRequest: function(){},
+			onRequest: function() {},
 			onSuccess: (function(j) {
 				this.diag.log("### 'view' request: onSuccess invoked", j);
 				if (!j || !j.status) {
@@ -1254,7 +1254,7 @@ var FileManager = new Class({
 		this.Request = new FileManager.Request({
 			url: tx_cfg.url,
 			data: tx_cfg.data,
-			onRequest: function(){},
+			onRequest: function() {},
 			onSuccess: (function(j) {
 				if (!j || !j.status) {
 					this.browserLoader.fade(0);
@@ -1296,14 +1296,14 @@ var FileManager = new Class({
 				{
 					var p = file.element.getParent();
 					if (p) {
-						p.fade(0).get('tween').chain(function(){
+						p.fade(0).get('tween').chain(function() {
 							this.element.destroy();
 						});
 					}
 				}
 				this.browserLoader.fade(0);
 			}).bind(this),
-			onComplete: function(){},
+			onComplete: function() {},
 			onError: (function(text, error) {
 				this.browserLoader.fade(0);
 			}).bind(this),
@@ -1313,7 +1313,7 @@ var FileManager = new Class({
 		}, this).send();
 	},
 
-	destroy: function(file){
+	destroy: function(file) {
 		if (this.options.hideQonDelete) {
 			this.destroy_noQasked(file);
 		}
@@ -1351,7 +1351,7 @@ var FileManager = new Class({
 			zIndex: this.options.zIndex + 900,
 			onOpen: this.onDialogOpen.bind(this),
 			onClose: this.onDialogClose.bind(this),
-			onShow: (function(){
+			onShow: (function() {
 				this.diag.log('add key up on rename dialog:onShow');
 				input.addEvent('keyup', function(e) {
 					if (e.key === 'enter') {
@@ -1359,7 +1359,7 @@ var FileManager = new Class({
 					}
 				});
 			}).bind(this),
-			onConfirm: (function(){
+			onConfirm: (function() {
 				if (this.Request) this.Request.cancel();
 
 				this.browserLoader.fade(1);
@@ -1374,7 +1374,7 @@ var FileManager = new Class({
 				this.Request = new FileManager.Request({
 					url: tx_cfg.url,
 					data: tx_cfg.data,
-					onRequest: function(){},
+					onRequest: function() {},
 					onSuccess: (function(j) {
 						if (!j || !j.status) {
 							this.browserLoader.fade(0);
@@ -1388,7 +1388,7 @@ var FileManager = new Class({
 						this.fillInfo(file);
 						this.browserLoader.fade(0);
 					}).bind(this),
-					onComplete: function(){},
+					onComplete: function() {},
 					onError: (function(text, error) {
 						this.browserLoader.fade(0);
 					}).bind(this),
@@ -1443,7 +1443,7 @@ var FileManager = new Class({
 			}
 		}
 
-		this.browser.getElements('span.fi.hover').each(function(span){
+		this.browser.getElements('span.fi.hover').each(function(span) {
 			span.removeClass('hover');
 		});
 
@@ -1735,7 +1735,7 @@ var FileManager = new Class({
 		startindex *= pagesize;
 
 		// keyboard navigation sets the 'hover' class on the 'current' item: remove any of those:
-		this.browser.getElements('span.fi.hover').each(function(span){
+		this.browser.getElements('span.fi.hover').each(function(span) {
 			span.removeClass('hover');
 		});
 
@@ -1773,7 +1773,7 @@ var FileManager = new Class({
 		}
 		var rootPath = j.root.slice(0,-1).split('/');
 		rootPath.pop();
-		this.CurrentPath.split('/').each((function(folderName){
+		this.CurrentPath.split('/').each((function(folderName) {
 			if (!folderName) return;
 
 			pre.push(folderName);
@@ -1788,7 +1788,7 @@ var FileManager = new Class({
 						'class': 'icon',
 						href: '#',
 						text: folderName
-					}).addEvent('click', (function(e){
+					}).addEvent('click', (function(e) {
 						this.diag.log('path section - click event: ', e, path);
 						e.stop();
 						this.load(path);
@@ -2030,9 +2030,9 @@ var FileManager = new Class({
 				if (this.options.destroy) editButtons.push('destroy');
 			}
 
-			editButtons.each(function(v){
+			editButtons.each(function(v) {
 				//icons.push(
-				new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target){
+				new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target) {
 					// this = el, self = FM instance
 					e.preventDefault();
 					this.store('edit', true);
@@ -2047,7 +2047,7 @@ var FileManager = new Class({
 			els[1].push(el);
 			//if (file.name === '..') el.fade(0.7);
 			el.inject(new Element('li',{'class':this.listType}).inject(this.browser)).store('parent', el.getParent());
-			//icons = $$(icons.map((function(icon){
+			//icons = $$(icons.map((function(icon) {
 			//  this.showFunctions(icon,icon,0.5,1);
 			//  this.showFunctions(icon,el.getParent('li'),1);
 			//}).bind(this)));
@@ -2103,7 +2103,7 @@ var FileManager = new Class({
 
 					dg_el = this.dir_gallery_item_maker((file.thumb48 ? file.thumb48 : file.icon48), file);
 				}
-				else	// thumbs_deferred...
+				else    // thumbs_deferred...
 				{
 					// We must AJAX POST our propagateData, so we need to do the post and take the url to the
 					// thumbnail from the post results.
@@ -2130,7 +2130,7 @@ var FileManager = new Class({
 							url: tx_cfg.url,
 							data: tx_cfg.data,
 							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
-							onRequest: function(){},
+							onRequest: function() {},
 							onSuccess: (function(j) {
 								if (!j || !j.status || !j.thumb48)
 								{
@@ -2181,7 +2181,7 @@ var FileManager = new Class({
 				 *          The 'solution' which I found was to rely on the 'self' reference instead and bind to 'el'. If the one wouldn't work, the other shouldn't,
 				 *          but there you have it: this way around it works. FF3.6.14 :-(
 				 *
-				 * EDIT 2011/03/16: the problem started as soon as the old Array.each(function(...){...}) by the chunked code which uses a for loop:
+				 * EDIT 2011/03/16: the problem started as soon as the old Array.each(function(...) {...}) by the chunked code which uses a for loop:
 				 *
 				 *              http://jibbering.com/faq/notes/closures/
 				 *
@@ -2254,9 +2254,9 @@ var FileManager = new Class({
 				if (this.options.rename) editButtons.push('rename');
 				if (this.options.destroy) editButtons.push('destroy');
 
-				editButtons.each(function(v){
+				editButtons.each(function(v) {
 					//icons.push(
-					new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target){
+					new Asset.image(this.assetBasePath + 'Images/' + v + '.png', {title: this.language[v]}).addClass('browser-icon').set('opacity', 0).addEvent('mouseup', (function(e, target) {
 						// this = el, self = FM instance
 						e.preventDefault();
 						this.store('edit', true);
@@ -2362,7 +2362,7 @@ var FileManager = new Class({
 				droppables: $$(this.droppables.combine(els[1])),
 				//stopPropagation: true,
 
-				onDrag: (function(el, e){
+				onDrag: (function(el, e) {
 					this.imageadd.setStyles({
 						'left': e.page.x + 25,
 						'top': e.page.y + 25
@@ -2370,7 +2370,7 @@ var FileManager = new Class({
 					this.imageadd.fade('in');
 				}).bind(this),
 
-				onBeforeStart: (function(el){
+				onBeforeStart: (function(el) {
 					this.diag.log('draggable:onBeforeStart', el);
 					var position = el.getPosition();
 					el.addClass('drag').setStyles({
@@ -2417,15 +2417,15 @@ var FileManager = new Class({
 					this.imageadd.fade(0 + this.ctrl_key_pressed);
 				}).bind(this),
 
-				onEnter: function(el, droppable){
+				onEnter: function(el, droppable) {
 					droppable.addClass('droppable');
 				},
 
-				onLeave: function(el, droppable){
+				onLeave: function(el, droppable) {
 					droppable.removeClass('droppable');
 				},
 
-				onDrop: (function(el, droppable, e){
+				onDrop: (function(el, droppable, e) {
 					this.diag.log('draggable:onDrop', el, droppable, e);
 
 					var is_a_move = !(e.control || e.meta);
@@ -2523,7 +2523,7 @@ var FileManager = new Class({
 								{
 									var p = file.element.getParent();
 									if (p) {
-										p.fade(0).get('tween').chain(function(){
+										p.fade(0).get('tween').chain(function() {
 											this.element.destroy();
 										});
 									}
@@ -2738,7 +2738,7 @@ var FileManager = new Class({
 
 					var els = this.preview.getElements('button');
 					if (els) {
-						els.addEvent('click', function(e){
+						els.addEvent('click', function(e) {
 							e.stop();
 							window.open(this.get('value'));
 						});
@@ -2769,7 +2769,7 @@ var FileManager = new Class({
 							url: tx_cfg.url,
 							data: tx_cfg.data,
 							fmDisplayErrors: false,   // Should we display the error here? No, we just display the general error icon instead
-							onRequest: function(){},
+							onRequest: function() {},
 							onSuccess: (function(j) {
 								var img_url = (j.icon48 ? j.icon48 : iconpath);
 								if (j && j.status && j.thumb250)
@@ -2778,7 +2778,7 @@ var FileManager = new Class({
 								}
 
 								prev.set('src', img_url);
-								prev.addEvent('load', function(){
+								prev.addEvent('load', function() {
 									// when the thumb250 image has loaded, remove the loader animation in the background ...
 									//this.setStyle('background', 'none');
 									// ... AND blow away the encoded 'width' and 'height' styles: after all, the thumb250 generation MAY have failed.
@@ -2885,17 +2885,17 @@ var FileManager = new Class({
 		});
 
 		$(appearOn).addEvents({
-			mouseenter: (function(){
+			mouseenter: (function() {
 							this.set('opacity', opacity[0]);
 						}).bind(icon),
-			mouseleave: (function(){
+			mouseleave: (function() {
 							this.set('opacity', opacity[1]);
 						}).bind(icon)
 		});
 		return icon;
 	},
 
-	normalize: function(str){
+	normalize: function(str) {
 		return str.replace(/\/+/g, '/');
 	},
 
@@ -2904,7 +2904,7 @@ var FileManager = new Class({
 		var els = [];
 		els.push(this.menu.getElement('button.filemanager-open'));
 		els.push(this.menu.getElement('button.filemanager-download'));
-		els.each(function(el){
+		els.each(function(el) {
 			if (el)
 			{
 				el.set('disabled', !chk)[(chk ? 'remove' : 'add') + 'Class']('disabled');
@@ -2987,7 +2987,7 @@ var FileManager = new Class({
 		return parseInt(idx ? idx : 0, 10);
 	},
 
-	fireHooks: function(hook){
+	fireHooks: function(hook) {
 		var args = Array.slice(arguments, 1);
 		for(var key in this.hooks[hook]) {
 			this.hooks[hook][key].apply(this, args);
@@ -3053,32 +3053,32 @@ var FileManager = new Class({
 		});
 	},
 
-	onRequest: function(){
+	onRequest: function() {
 		this.loader.fade(1);
 	},
-	onComplete: function(){
+	onComplete: function() {
 		//this.loader.fade(0);
 	},
-	onSuccess: function(){
+	onSuccess: function() {
 		this.loader.fade(0);
 	},
-	onError: function(){
+	onError: function() {
 		this.loader.fade(0);
 	},
-	onFailure: function(){
+	onFailure: function() {
 		this.loader.fade(0);
 	},
-	onDialogOpen: function(){
+	onDialogOpen: function() {
 		this.dialogOpen = true;
 		this.onDialogOpenWhenUpload.apply(this);
 	},
-	onDialogClose: function(){
+	onDialogClose: function() {
 		this.dialogOpen = false;
 		this.onDialogCloseWhenUpload.apply(this);
 	},
-	onDialogOpenWhenUpload: function(){},
-	onDialogCloseWhenUpload: function(){},
-	onDragComplete: function(){
+	onDialogOpenWhenUpload: function() {},
+	onDialogCloseWhenUpload: function() {},
+	onDragComplete: function() {
 		return false;   // return TRUE when the drop action is unwanted
 	},
 
@@ -3120,7 +3120,7 @@ FileManager.Request = new Class({
 		fmDisplayErrors: true  // Automatically display errors - ** your onSuccess still gets called, just ignore if it's an error **
 	},
 
-	initialize: function(options, filebrowser){
+	initialize: function(options, filebrowser) {
 		this.parent(options);
 
 		this.options.data = Object.merge({}, filebrowser.options.propagateData, this.options.data);
@@ -3165,7 +3165,7 @@ FileManager.Request = new Class({
 
 FileManager.Language = {};
 
-(function(){
+(function() {
 
 // ->> load DEPENDENCIES
 if (typeof __MFM_ASSETS_DIR__ === 'undefined')
@@ -3184,7 +3184,7 @@ Asset.css(__MFM_ASSETS_DIR__+'/Css/FileManager.css');
 Asset.css(__MFM_ASSETS_DIR__+'/Css/Additions.css');
 Asset.javascript(__MFM_ASSETS_DIR__+'/js/jsGET.js', {
 	events: {
-		load: (function(){
+		load: (function() {
 			window.fireEvent('jsGETloaded');
 		}).bind(this)
 	}
@@ -3194,9 +3194,9 @@ Element.implement({
 
 	center: function(offsets) {
 		var scroll = document.getScroll();
-		var	offset = document.getSize();
-		var	size = this.getSize();
-		var	values = {x: 'left', y: 'top'};
+		var offset = document.getSize();
+		var size = this.getSize();
+		var values = {x: 'left', y: 'top'};
 
 		if (!offsets) {
 			offsets = {};
@@ -3217,11 +3217,11 @@ FileManager.Dialog = new Class({
 
 	options: {
 		/*
-		 * onShow: function(){},
-		 * onOpen: function(){},
-		 * onConfirm: function(){},
-		 * onDecline: function(){},
-		 * onClose: function(){},
+		 * onShow: function() {},
+		 * onOpen: function() {},
+		 * onConfirm: function() {},
+		 * onDecline: function() {},
+		 * onClose: function() {},
 		 */
 		request: null,
 		buttons: ['confirm', 'decline'],
@@ -3230,7 +3230,7 @@ FileManager.Dialog = new Class({
 		autofocus_on: null // (string) suitable as a .getElement() argument or NULL for default. Example: 'button.filemanager-dialog-confirm'
 	},
 
-	initialize: function(text, options){
+	initialize: function(text, options) {
 		this.setOptions(options);
 		this.dialogOpen = false;
 
@@ -3251,7 +3251,7 @@ FileManager.Dialog = new Class({
 		}).adopt(this.content_el);
 
 		if (typeof this.options.content !== 'undefined') {
-			this.options.content.each((function(content){
+			this.options.content.each((function(content) {
 				if (content)
 				{
 					if (typeOf(content) !== 'string')
@@ -3266,8 +3266,8 @@ FileManager.Dialog = new Class({
 			}).bind(this));
 		}
 
-		Array.each(this.options.buttons, function(v){
-			new Element('button', {'class': 'filemanager-dialog-' + v, text: this.options.language[v]}).addEvent('click', (function(e){
+		Array.each(this.options.buttons, function(v) {
+			new Element('button', {'class': 'filemanager-dialog-' + v, text: this.options.language[v]}).addEvent('click', (function(e) {
 				if (e) e.stop();
 				this.fireEvent(v).fireEvent('close');
 				//if (!this.options.hideOverlay)
@@ -3289,14 +3289,14 @@ FileManager.Dialog = new Class({
 		});
 
 		this.bound = {
-			scroll: (function(){
+			scroll: (function() {
 				if (!this.el)
 					this.destroy();
 				else
 					this.el.center();
 			}).bind(this),
 
-			keyesc: (function(e){
+			keyesc: (function(e) {
 				window.FileManager.prototype.diag.log('keyEsc: key press: ', e);
 				if (e.key === 'esc') {
 					e.stopPropagation();
@@ -3308,7 +3308,7 @@ FileManager.Dialog = new Class({
 		this.show();
 	},
 
-	show: function(){
+	show: function() {
 		this.overlay.show();
 
 		var self = this;
@@ -3331,13 +3331,13 @@ FileManager.Dialog = new Class({
 				// Safari / Chrome have trouble focussing on things not yet fully rendered!
 			}
 		}
-		this.el.center().fade(1).get('tween').chain((function(){
+		this.el.center().fade(1).get('tween').chain((function() {
 				// Safari / Chrome have trouble focussing on things not yet fully rendered!
 				// see   http://stackoverflow.com/questions/2074347/focus-not-working-in-safari-or-chrome
 				// and   http://www.mkyong.com/javascript/focus-is-not-working-in-ie-solution/
 				if (autofocus_el)
 				{
-					if (0)   				// the delay suggested as a fix there is part of the fade()...
+					if (0)                  // the delay suggested as a fix there is part of the fade()...
 					{
 						(function(el) {
 							el.focus();
@@ -3429,7 +3429,7 @@ FileManager.Dialog = new Class({
 
 	destroy: function() {
 		if (this.el) {
-			this.el.fade(0).get('tween').chain((function(){
+			this.el.fade(0).get('tween').chain((function() {
 				if (!this.options.hideOverlay) {
 					this.overlay.destroy();
 				}
@@ -3444,14 +3444,14 @@ FileManager.Dialog = new Class({
 
 this.Overlay = new Class({
 
-	initialize: function(options){
+	initialize: function(options) {
 		this.el = new Element('div', Object.append({
 			'class': 'filemanager-overlay'
 		}, options)).inject(document.body);
 	},
 
-	show: function(){
-		this.objects = $$('object, select, embed').filter(function(el){
+	show: function() {
+		this.objects = $$('object, select, embed').filter(function(el) {
 			if (el.id === 'SwiffFileManagerUpload' || el.style.visibility === 'hidden') {
 				return false;
 			}
@@ -3473,9 +3473,9 @@ this.Overlay = new Class({
 		return this;
 	},
 
-	hide: function(){
+	hide: function() {
 		if (!Browser.ie) {
-			this.el.fade(0).get('tween').chain((function(){
+			this.el.fade(0).get('tween').chain((function() {
 				this.revertObjects();
 				this.el.setStyle('display', 'none');
 			}).bind(this));
@@ -3489,7 +3489,7 @@ this.Overlay = new Class({
 		return this;
 	},
 
-	resize: function(){
+	resize: function() {
 		if (!this.el) {
 			this.destroy();
 		}
@@ -3501,13 +3501,13 @@ this.Overlay = new Class({
 		}
 	},
 
-	destroy: function(){
+	destroy: function() {
 		this.revertObjects().el.destroy();
 	},
 
-	revertObjects: function(){
+	revertObjects: function() {
 		if (this.objects && this.objects.length) {
-			this.objects.each(function(el){
+			this.objects.each(function(el) {
 				el.style.visibility = 'visible';
 			});
 		}

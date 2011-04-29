@@ -77,7 +77,7 @@ if (0)
 				createFolders: true,
 				// selectable: true,
 				hideQonDelete: false,     // DO ask 'are you sure' when the user hits the 'delete' button
-				verbose: true,			// log a lot of activity to console (when it exists)
+				verbose: true,            // log a lot of activity to console (when it exists)
 				onComplete: function(path, file, mgr) {
 					if (typeof console !== 'undefined' && console.log) console.log('MFM.onComplete: ', path, file, mgr);
 				},
