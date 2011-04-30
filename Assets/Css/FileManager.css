@@ -838,7 +838,7 @@ div.filemanager button.filemanager-serialize {
 div.filemanager-gallery {
 	position: absolute;
 	/* z-index: 1000; */
-	width: 750px;
+	width: 778px;        /* 9 images wide; old 750px value was ~ 8.5 so pretty useless */
 	height: 144px;
 	display: none;
 
@@ -872,7 +872,7 @@ div.filemanager-gallery div.howto {
 }
 
 div.filemanager-gallery ul {
-	height: 121px;
+	height: 122px;     /* 2 rows @ 60px + ul padding */
 
 	margin: 7px 6px;
 	padding: 4px;
@@ -913,7 +913,7 @@ div.filemanager-gallery ul li div.gallery-image img {
 
 div.filemanager-gallery ul li img.filemanager-remove {
 	position: absolute;
-	right: -11px; /* place the red X inside the li entirely; otherwise the adjacent image may partly obscure it */
+	right: -2px; /* place the red X inside the li entirely; otherwise the adjacent image may partly obscure it */
 	top: -1px;
 	width: 16px;
 	height: 16px;
