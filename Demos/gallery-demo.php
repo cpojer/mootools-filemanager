@@ -146,8 +146,16 @@ session_write_close();
 								return (''+str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 							};
 
+							var tnimg = metadata.thumb250;
 							var iw = metadata.thumb250_width;
 							var ih = metadata.thumb250_height;
+							// if thumbnail is not available (can happen for quite a few file types! And for overlarge images too! Plus for other errors!) pcik the icon48 instead:
+							if (!tnimg)
+							{
+								tnimg = metadata.icon48;
+								iw = 48;
+								ih = 48;
+							}
 							var ratio;
 							if (iw > thumb_side_length)
 							{
@@ -181,7 +189,7 @@ session_write_close();
 									}
 								}).adopt(
 									new Element('img', {
-										src: metadata.thumb250,
+										src: tnimg,
 										alt: '',
 										styles: {
 											width: iw,
@@ -253,8 +261,16 @@ session_write_close();
 
 							var metadata = gallery_json_metadata[key];
 
+							var tnimg = metadata.thumb250;
 							var iw = metadata.thumb250_width;
 							var ih = metadata.thumb250_height;
+							// if thumbnail is not available (can happen for quite a few file types! And for overlarge images too! Plus for other errors!) pcik the icon48 instead:
+							if (!tnimg)
+							{
+								tnimg = metadata.icon48;
+								iw = 48;
+								ih = 48;
+							}
 							var ratio;
 							if (iw > thumb_side_length)
 							{
