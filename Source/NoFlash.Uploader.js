@@ -200,18 +200,17 @@ FileManager.implement({
 				if (response && !response.status)
 				{
 					mfm.showError('' + response.error);
+					mfm.load(mfm.CurrentDir.path);
 				}
 				else if (response)
 				{
-					mfm.onShow = true; // why exactly do we need to set this, what purpose does the default of NOT preselecting the thing we asked to preselect have?
-
-					// Why the Hell a regex replace on Directory???
-					//mfm.load(mfm.Directory.replace(/\/$/, ''), response.name ? response.name : null);
-					mfm.load(mfm.Directory, (response.name ? response.name : null));
+					// mfm.onShow = true; // why exactly do we need to set this, what purpose does the default of NOT preselecting the thing we asked to preselect have?
+					mfm.load(mfm.dirname(response.path), response.name);
 				}
 				else
 				{
 					this.showError('bugger! No JSON response!');
+					mfm.load(mfm.CurrentDir.path);
 				}
 			}
 			catch(e)
@@ -219,7 +218,7 @@ FileManager.implement({
 				// Maybe this.contentDocument.documentElement.innerText isn't where we need to look?
 				//debugger;
 				mfm.diag.log('noFlashUpload: document innerText grab FAIL:', e, this, tx_cfg);
-				mfm.load(mfm.Directory);
+				mfm.load(mfm.CurrentDir.path);
 			}
 
 			mfm.make_file_input(f);

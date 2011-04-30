@@ -282,9 +282,6 @@ FileManager.implement({
 				var cnt = self.upload.list.getElements('li').length;
 				var fcnt = self.swf.fileList.length;
 				self.diag.log('upload:onComplete for FILE', file_obj, cnt, fcnt);
-				//self.onShow = true;
-				//self.load(self.Directory, self.lastFileUploaded);
-				//// self.fillInfo();
 			}
 		});
 
@@ -343,7 +340,7 @@ FileManager.implement({
 				// add a 5 second delay when there were upload errors:
 				(function() {
 					this.onShow = true;
-					this.load(this.Directory, this.lastFileUploaded);
+					this.load(this.CurrentDir.path, this.lastFileUploaded);
 					// this.fillInfo();
 				}).bind(this).delay(this.error_count > 0 ? 5500 : 1);
 			}.bind(this),
