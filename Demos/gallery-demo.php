@@ -78,7 +78,7 @@ session_write_close();
 			};
 			var gallery_json_metadata = {};
 			var imgs_root_dir = null;
-			
+
 			example4.set('value', JSON.encode(gallery_json));
 
 			/*
@@ -88,7 +88,7 @@ session_write_close();
 			 * we can go real fancy and rescale the images (thumbnails) shown: simply set a different 'thumb_side_length' value!
 			 */
 			var thumb_side_length = 100;
-			
+
 			var manager4 = new FileManager.Gallery({
 				url: 'selectImage.php?exhibit=A', // 'manager.php', but with a bogus query parameter included: latest FM can cope with such an URI
 				assetBasePath: '../Assets',
@@ -121,31 +121,31 @@ session_write_close();
 					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ', serialized, ', files metadata: ', files, ', legal root: ', legal_root_dir, ', mgr: ', mgr);
 
 					example4.set('value', JSON.encode(serialized));
-					
+
 					gallery_json_metadata = files;
 					imgs_root_dir = legal_root_dir;
-					
-					// To show how to use the metadata and the serialized data, we render a series of thumbnails 
+
+					// To show how to use the metadata and the serialized data, we render a series of thumbnails
 					// in this page and when you click on those, milkbox will kick in showing them as a gallery.
 					var container_el = $('gallery-tn-container');
 					if (container_el)
 					{
 						container_el.empty();
 
-						Object.each(serialized, function(caption, key) 
+						Object.each(serialized, function(caption, key)
 						{
 							var metadata = files[key];
 
 							// make sure the full path starts with a '/' (legal_root_dir does NOT!); also normalize out the trailing/leading slashes in both path section strings
 							var full_path = mgr.normalize('/' + legal_root_dir + key);    // eqv. to: normalize('/' + legal_root_dir + metadata.path) as key === metadata.path
-							
+
 							if (typeof console !== 'undefined' && console.log) console.log('GALLERY.print loop: ', full_path, ', metadata: ', metadata);
-							
-							var input2html = function(str) 
-							{ 
+
+							var input2html = function(str)
+							{
 								return (''+str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 							};
-		
+
 							var iw = metadata.thumb250_width;
 							var ih = metadata.thumb250_height;
 							var ratio;
@@ -163,16 +163,16 @@ session_write_close();
 							}
 							iw = Math.round(iw);
 							ih = Math.round(ih);
-							
+
 							// as HTML/CSS is notoriously bad at centering vertically, we employ the handy image w/h meta info to enforce vertical centered images by tweaking their margin:
 							var mt = Math.round((thumb_side_length - ih) / 2);
 							var mb = thumb_side_length - ih - mt;
 							// CSS can take care of the horizontal centering at ease...
-							
+
 							var el = new Element('div').adopt(
 								new Element('a', {
 									href: full_path,
-									title: input2html(caption),				// encode as HTML, suitable for attribute values
+									title: input2html(caption),             // encode as HTML, suitable for attribute values
 									'data-milkbox': 'gall1',
 									'data-milkbox-size': 'width: ' + metadata.width + ', height: ' + metadata.height,
 									styles: {
@@ -191,13 +191,13 @@ session_write_close();
 										}
 									})
 								));
-								
+
 							// and remember the 'key' so we can travel from <div> back to metadata in the slider onChange handler further below:
 							el.store('key', key);
-							
+
 							el.inject(container_el);
 						});
-						
+
 						// now that we have the HTML generated, kick milkbox into (re)scanning:
 						if (milkbox)
 						{
@@ -225,32 +225,32 @@ session_write_close();
 				}
 			});
 			$('example4').addEvent('click', manager4.show.bind(manager4));
-			
-			
+
+
 
 			var slider = $('slider');
 
 			new Slider(slider, slider.getElement('.knob'), {
-				range: [20, 250.1],			// '250' doesn't deliver 250 but 249   :-(
+				range: [20, 250.1],         // '250' doesn't deliver 250 but 249   :-(
 				initialStep: thumb_side_length,
 				steps: 300 - 16,
 				onChange: function(value)
 				{
 					value = Math.round(value);
-					$('setThumbSize').set('text', value);					
-					
+					$('setThumbSize').set('text', value);
+
 					thumb_side_length = value;
-					
+
 					// adjust the thumbs:
 					var container_el = $('gallery-tn-container');
 					if (container_el)
 					{
 						var thumbs = container_el.getChildren('div');
 
-						thumbs.each(function(el) 
+						thumbs.each(function(el)
 						{
 							var key = el.retrieve('key');
-								
+
 							var metadata = gallery_json_metadata[key];
 
 							var iw = metadata.thumb250_width;
@@ -270,12 +270,12 @@ session_write_close();
 							}
 							iw = Math.round(iw);
 							ih = Math.round(ih);
-							
+
 							// as HTML/CSS is notoriously bad at centering vertically, we employ the handy image w/h meta info to enforce vertical centered images by tweaking their margin:
 							var mt = Math.round((thumb_side_length - ih) / 2);
 							var mb = thumb_side_length - ih - mt;
 							// CSS can take care of the horizontal centering at ease...
-							
+
 							var a = el.getChildren('a')[0];
 							a.setStyles({
 											width: thumb_side_length,
@@ -289,12 +289,12 @@ session_write_close();
 											'margin-bottom': mb
 										  });
 						});
-					}	
+					}
 				}
 			});
 
-			// and set the inital value 
-			$('setThumbSize').set('text', thumb_side_length);					
+			// and set the inital value
+			$('setThumbSize').set('text', thumb_side_length);
 		});
 	</script>
 </head>
@@ -320,7 +320,7 @@ session_write_close();
 		<p>Drag the slider above to change the thumbnails' display size.</p>
 
 		<p>Thumbnail display dimension: <span id="setThumbSize"></span>px</p>
-		
+
 		<div id="gallery-tn-container">
 		</div>
 	</div>

@@ -603,7 +603,7 @@ class MTFMCacheItem
 	{
 		$this->init($fm_obj, $legal_url, $prefetch, $persistent_edits);
 	}
-		
+
 	public function init($fm_obj, $legal_url, $prefetch = false, $persistent_edits)
 	{
 		$this->dirty = false;
@@ -3282,7 +3282,7 @@ class FileManager
 		{
 			$json['thumbs_deferred'] = false;
 		}
-		
+
 		if (!empty($icon48))
 		{
 			$icon48_e = FileManagerUtility::rawurlencode_path($icon48);

@@ -53,18 +53,18 @@ div.filemanager-dialog-engine-trident {
 	background: #000;
 }
 
-div.filemanager-dialog-engine-trident4 { 
-	width: 249px; 
+div.filemanager-dialog-engine-trident4 {
+	width: 249px;
 }
 
-div.filemanager-dialog a { 
-	color: #aaa; 
+div.filemanager-dialog a {
+	color: #aaa;
 }
-div.filemanager-dialog a:hover { 
-	text-decoration: none; 
+div.filemanager-dialog a:hover {
+	text-decoration: none;
 }
-div.filemanager-dialog div { 
-	margin: 10px; 
+div.filemanager-dialog div {
+	margin: 10px;
 }
 
 div.filemanager-dialog input, div.filemanager-dialog select {

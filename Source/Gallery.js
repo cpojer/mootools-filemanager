@@ -705,9 +705,9 @@ FileManager.Gallery = new Class({
 		// WARNING: these items are abs.path encoded and we to convert them to 'legal URL' directory space or the server will reject these on security grounds.
 		//          But we don't know the 'legal URL root' path as that is a server-side setting, so we MUST delay the population of the gallery until our first
 		//          request has arrived with this desperately needed item.
-		//			We wait for the dirscan ('view' request) to complete; actually we wait until the fill() has finished as by that time we'll be sure
-		//			to have a valid this.root (or a grandiose server comm failure!)
-		//			Until that time, we push all items to populate the gallery with on the populate stack.
+		//          We wait for the dirscan ('view' request) to complete; actually we wait until the fill() has finished as by that time we'll be sure
+		//          to have a valid this.root (or a grandiose server comm failure!)
+		//          Until that time, we push all items to populate the gallery with on the populate stack.
 
 		Object.each(data || {}, function(v, i) {
 			this.diag.log('GALLERY.populate push: index = ', i, ', value = ', v, ', enc: ', (1 * path_is_urlencoded));

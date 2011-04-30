@@ -105,10 +105,10 @@ div.go_home
 #gallery-tn-container div
 {
 	float: left;
-	
+
 	/* border: green solid 1px; */
 	margin: 5px;
-	
+
 }
 
 #gallery-tn-container div a
@@ -122,10 +122,10 @@ div.go_home
 	background: #eee2e2;
 	padding: 0;
 	margin: 0;
-	
+
 	text-align: center;
-	margin-left: auto;   
-	margin-right: auto; 
+	margin-left: auto;
+	margin-right: auto;
 }
 
 #gallery-tn-container div a img
@@ -134,31 +134,31 @@ div.go_home
 	margin: 0;
 }
 
-/*   
- *	http://www.smashingmagazine.com/2007/05/01/css-float-theory-things-you-should-know/    
+/*
+ *  http://www.smashingmagazine.com/2007/05/01/css-float-theory-things-you-should-know/
  * -->
  *  http://www.positioniseverything.net/easyclearing.html
  * -->
  *  http://blogs.sitepoint.com/simple-clearing-of-floats/
  */
-#gallery-tn-container 
+#gallery-tn-container
 {
 	overflow: auto;
 }
 
 
 
-/* 
+/*
 http://jsfiddle.net/api/post/mootools/1.3/dependencies/more,art/
 */
 
-.slider 
+.slider
 {
-    background: #CCC;
-    height: 16px;
-    width: 300px;
+	background: #CCC;
+	height: 16px;
+	width: 300px;
 }
-.slider .knob 
+.slider .knob
 {
 	background: #000;
 	width: 16px;

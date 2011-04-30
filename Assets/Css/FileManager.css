@@ -1071,7 +1071,7 @@ div.filemanager div.filemanager-diag-dump li span.key {
 }
 
 div.filemanager div.filemanager-diag-dump li span.key.overlarge {
-	width: auto;	/* prevent key text from overlapping the data; that looks really ugly. */
+	width: auto;    /* prevent key text from overlapping the data; that looks really ugly. */
 }
 
 div.filemanager div.filemanager-diag-dump li {
