@@ -5062,7 +5062,8 @@ class FileManagerUtility
 			$returnstring .= '<ul class="dump_array dump_level_' . sprintf('%02u', $level) . '">';
 			foreach ($variable as $key => &$value)
 			{
-				$returnstring .= '<li><span class="key">' . $key . '</span>';
+				$overlarge_key_class = (strlen($key) >= 20 ? 'overlarge' : ''); // this is a heuristic based on the current frontend CSS; this spares me a long walk over all the <span> nodes using JS to measure and adjust those nodes which truly need it.
+				$returnstring .= '<li><span class="key ' . $overlarge_key_class . '">' . $key . '</span>';
 				$tstring = '';
 				if ($show_types)
 				{

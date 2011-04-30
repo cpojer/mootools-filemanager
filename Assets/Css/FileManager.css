@@ -1070,6 +1070,10 @@ div.filemanager div.filemanager-diag-dump li span.key {
 	font-weight: bold;
 }
 
+div.filemanager div.filemanager-diag-dump li span.key.overlarge {
+	width: auto;	/* prevent key text from overlapping the data; that looks really ugly. */
+}
+
 div.filemanager div.filemanager-diag-dump li {
 	white-space: normal;
 }
