@@ -2498,7 +2498,7 @@ var FileManager = new Class({
 										this.view_fill_timer = null;
 
 										rerendering_list = true;
-										this.fill(null, startindex, this.listPaginationLastSize);
+										this.fill(null, this.get_view_fill_startindex(), this.listPaginationLastSize);
 									}
 								}
 
