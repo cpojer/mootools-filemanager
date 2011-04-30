@@ -248,13 +248,33 @@ FileManager.Gallery = new Class({
 			top: '10%',
 			height: '60%'
 		});
+
 		this.fitSizes();
 
 		var size = this.filemanager.getSize();
 		var pos = this.filemanager.getPosition();
+
+		// determine how many images we can show next to one another:
+		var galWidthComp = 2;    // 2px not accounted for in the Width calculation; without these the width slowly grows instead of 'jump' to fit one more/less image horizontally
+		var imgMarginWidth = 4;  // 4px unaccounted for in the element width
+		var radiiCorr = 20;		 // correction for the radii in the FileManager container: looks better that way
+		var imgWidth = 84;	     // derived from current CSS; bad form to do it this way, but this is a good guess when there's no image in there yet.
+		var imgs = this.galleryContainer.getElements('li');
+		if (imgs && imgs[0])
+		{
+			// when we HAVE images, derive the width from one of those!
+			imgWidth = imgs[0].getWidth() + imgMarginWidth;
+		}
+		var galWidth = this.galleryContainer.getWidth();
+		var g_rem = galWidth % imgWidth;
+		var img_cnt = Math.floor((size.x - g_rem - radiiCorr) / imgWidth);
+		if (img_cnt < 3) img_cnt = 3;
+		var gw = img_cnt * imgWidth + g_rem;
+
 		this.galleryContainer.setStyles({
 			top: pos.y + size.y - 1,
-			left: pos.x + (size.x - this.galleryContainer.getWidth()) / 2,
+			left: pos.x + (size.x - gw) / 2,
+			width: gw - 2,
 			opacity: 1
 		});
 
