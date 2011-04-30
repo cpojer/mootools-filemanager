@@ -514,6 +514,7 @@ var FileManager = new Class({
 					this.ctrl_key_pressed = true;
 				}
 			}).bind(this),
+
 			keyup: (function(e)
 			{
 				this.diag.log('keyup: key press: ', e);
@@ -562,6 +563,7 @@ var FileManager = new Class({
 					break;
 				}
 			}).bind(this),
+
 			scroll: (function(e)
 			{
 				this.fireEvent('scroll', [e, this]);
@@ -1071,14 +1073,14 @@ var FileManager = new Class({
 	create_on_click: function(e) {
 		e.stop();
 		var input = new Element('input', {'class': 'createDirectory'});
-		var click_ok_f = function(e) {
+		var click_ok_f = (function(e) {
 			this.diag.log('create on click: KEYBOARD handler: key press: ', e);
 
 			if (e.key === 'enter') {
 				e.stopPropagation();
 				e.target.getParent('div.filemanager-dialog').getElement('button.filemanager-dialog-confirm').fireEvent('click');
 			}
-		};
+		}).bind(this);
 
 		new FileManager.Dialog(this.language.createdir, {
 			language: {
@@ -2711,7 +2713,12 @@ var FileManager = new Class({
 
 					if (file.mime === 'text/directory')
 					{
-						this.preview.adopt(this.dir_filelist);
+						// only show the image set when this directory is also the current one (other directory detail views can result from a directory rename operation!
+						this.diag.log('? fillInfo for DIR: ', file, ', currentDir: ', this.CurrentDir);
+						if (file.path === this.CurrentDir.path)
+						{
+							this.preview.adopt(this.dir_filelist);
+						}
 					}
 
 					// and plug in the manipulated DOM subtree again:
