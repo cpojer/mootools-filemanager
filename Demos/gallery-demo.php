@@ -115,7 +115,7 @@ session_write_close();
 						if (typeof console !== 'undefined' && console.log) console.log('GALLERY list: ', gallist);
 						obj = JSON.decode(gallist);
 					});
-					this.populate(obj);
+					this.populate(obj, false);			// as we have the data in 'clean vanilla' form in a JSON object, we do NOT want the (default) URL decode process to be performed: no %20 --> ' ', etc. transform!
 				},
 				onComplete: function(serialized, files, legal_root_dir, mgr){
 					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ', serialized, ', files metadata: ', files, ', legal root: ', legal_root_dir, ', mgr: ', mgr);
