@@ -719,7 +719,7 @@ FileManager.Gallery = new Class({
 		if (typeof path_is_urlencoded == 'undefined' || path_is_urlencoded === null)
 			path_is_urlencoded = true;    // set default to TRUE
 		else
-			path_is_urlencoded = !!is_urlencoded;
+			path_is_urlencoded = !!path_is_urlencoded;
 
 		//
 		// WARNING: these items are abs.path encoded and we to convert them to 'legal URL' directory space or the server will reject these on security grounds.
