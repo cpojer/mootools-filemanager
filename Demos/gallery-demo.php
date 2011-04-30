@@ -179,7 +179,7 @@ session_write_close();
 
 							var el = new Element('div').adopt(
 								new Element('a', {
-									href: full_path,
+									href: mgr.escapeRFC3986(full_path),
 									title: input2html(caption),             // encode as HTML, suitable for attribute values
 									'data-milkbox': 'gall1',
 									'data-milkbox-size': 'width: ' + metadata.width + ', height: ' + metadata.height,
