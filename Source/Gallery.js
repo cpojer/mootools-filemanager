@@ -257,8 +257,8 @@ FileManager.Gallery = new Class({
 		// determine how many images we can show next to one another:
 		var galWidthComp = 2;    // 2px not accounted for in the Width calculation; without these the width slowly grows instead of 'jump' to fit one more/less image horizontally
 		var imgMarginWidth = 4;  // 4px unaccounted for in the element width
-		var radiiCorr = 20;		 // correction for the radii in the FileManager container: looks better that way
-		var imgWidth = 84;	     // derived from current CSS; bad form to do it this way, but this is a good guess when there's no image in there yet.
+		var radiiCorr = 20;      // correction for the radii in the FileManager container: looks better that way
+		var imgWidth = 84;       // derived from current CSS; bad form to do it this way, but this is a good guess when there's no image in there yet.
 		var imgs = this.galleryContainer.getElements('li');
 		if (imgs && imgs[0])
 		{

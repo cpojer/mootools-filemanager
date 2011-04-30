@@ -141,17 +141,32 @@ var FileManager = new Class({
 		this.dir_gallery_click_timer = null;
 
 
+		var dbg_cnt = 0;
+
 		this.RequestQueue = new Request.Queue({
 			concurrent: 3,              // 3 --> 75% max load on a quad core server
 			autoAdvance: true,
 			stopOnFailure: false,
 
 			onRequest: (function(){
-				this.diag.log('request queue: onRequest: ', arguments);
+				//this.diag.log('request queue: onRequest: ', arguments);
 			}).bind(this),
 
-			onComplete: (function(){
-				this.diag.log('request queue: onComplete: ', arguments);
+			onComplete: (function(name){
+				//this.diag.log('request queue: onComplete: ', arguments);
+
+				// clean out the item from the queue; doesn't seem to happen automatically :-(
+				var cnt = 0;
+				Object.each(this.RequestQueue.requests, function() {
+					cnt++;
+				});
+				// cut down on the number of reports:
+				if (Math.abs(cnt - dbg_cnt) >= 25)
+				{
+					this.diag.log('request queue: name counts: ', cnt, ', queue length: ', this.RequestQueue.queue.length);
+					dbg_cnt = cnt;
+				}
+
 			}).bind(this),
 
 			onCancel: (function(){
@@ -159,14 +174,14 @@ var FileManager = new Class({
 			}).bind(this),
 
 			onSuccess: (function(){
-				this.diag.log('request queue: onSuccess: ', arguments);
+				//this.diag.log('request queue: onSuccess: ', arguments);
 			}).bind(this),
 
-			onFailure: (function(){
+			onFailure: (function(name){
 				this.diag.log('request queue: onFailure: ', arguments);
 			}).bind(this),
 
-			onException: (function(){
+			onException: (function(name){
 				this.diag.log('request queue: onException: ', arguments);
 			}).bind(this)
 
@@ -184,7 +199,7 @@ var FileManager = new Class({
 					this.cancel(name);
 					this.removeRequest(name);
 
-					this.clear(name);			// eek, a full table scan! yech.
+					this.clear(name);           // eek, a full table scan! yech.
 					delete this.requests[name];
 					delete this.reqBinders[name];
 				}
