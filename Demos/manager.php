@@ -69,3 +69,4 @@ $browser->fireEvent($event_cmd);
 // Do *NOT* add a <?php ?-> close tag here! Any whitespace after that makes PHP output both a Content-Type: test/html header AND the whitespace as content.
 // This BREAKS any operation (such as mootools-filemanager::event=thumbnail) which outputs BINARY DATA (in that particular case, PHP spits out an image)
 // The safest way to prevent ANY PHP file from producing undesirable [whitespace] output is to never add that ?-> close tag.
+

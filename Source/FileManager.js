@@ -108,7 +108,8 @@ var FileManager = new Class({
 	hooks: {
 		show: {},                         // invoked after the 'show' event
 		cleanup: {},                      // invoked before the 'hide' event
-		cleanupPreview: {}                // invoked before the 'hidePreview' event
+		cleanupPreview: {},               // invoked before the 'hidePreview' event
+		fill: {}                          // invoked after the fill operation has completed
 	},
 
 	initialize: function(options) {
@@ -2587,6 +2588,8 @@ var FileManager = new Class({
 		}
 
 		this.browserLoader.fade(0);
+
+		this.fireHooks('fill');
 	},
 
 	adaptive_update_pagination_size: function(currentindex, endindex, render_count, pagesize, duration, EMA_factor, future_fudge_factor, compensation)

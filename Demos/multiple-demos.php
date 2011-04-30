@@ -274,8 +274,8 @@ if (0)
 					});
 					this.populate(obj);
 				},
-				onComplete: function(serialized, files, mgr){
-					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ' + serialized, ', files: ', files, ', mgr: ', mgr);
+				onComplete: function(serialized, files, legal_root_dir, mgr){
+					if (typeof console !== 'undefined' && console.log) console.log('GALLERY.onComplete: ' + serialized, ', files: ', files, ', legal root: ', legal_root_dir, ', mgr: ', mgr);
 
 					example4.set('value', JSON.encode(serialized));
 				}

@@ -27,12 +27,22 @@ FileManager.Gallery = new Class({
 		closeCaptionEditorOnMouseOut: true  // TRUE: will save & close caption editor popup dialog when you move the mouse out there
 	},
 
+	hooks: {
+		fill: {
+			populate: function() {
+				// now we have a valid 'this.root' and we need that to preprocess the paths specified on populate(). So we have a go!
+				this.startPopulatingTheGallery();
+			}
+		}
+	},
+
 	initialize: function(options)
 	{
 		this.offsets = {y: -72};
 		this.imgContainerSize = { x: 75, y: 56 };
 		this.captionImgContainerSize = { x: 250, y: 250 };
 		this.isSorting = false;
+		this.populate_queue = [];
 
 		// make sure our 'complete' event does NOT clash with the base class event by simply never allowing it: you CANNOT have options.selectable and gallery mode at the same time!
 		// (If you do, the caller will have a hard time detecting /who/ sent the 'complete' event; the only way would be to inspect the argument list and deduce the 'origin' from there.)
@@ -66,8 +76,7 @@ FileManager.Gallery = new Class({
 				// mode is one of (destroy, rename, move, copy): only when mode=copy, does the file remain where it was before!
 				if (mode !== 'copy')
 				{
-					var name = self.normalize(file.dir + '/' + file.name);
-					self.erasePicture(name);
+					self.erasePicture(file.path);
 				}
 			}
 		});
@@ -217,7 +226,7 @@ FileManager.Gallery = new Class({
 				this.files = {};
 				newOrder.each(function(file) {
 					if (file) {
-						this.files[file.name] = file;
+						this.files[file.legal_path] = file;
 					}
 				}, this);
 			}).bind(this)
@@ -268,7 +277,7 @@ FileManager.Gallery = new Class({
 		}.bind(this));
 		this.captionOverlay.show();
 
-		var name = this.normalize(file.dir + '/' + file.name);
+		var name = file.path;
 
 		var pos = img_el.getCoordinates();
 		var oml = img_el.getStyle('margin-left').toInt();
@@ -468,7 +477,7 @@ FileManager.Gallery = new Class({
 			var part = el.split('/');
 			file = {
 				name: part.pop(),
-				dir: part.join('/'),
+				path: this.normalize(el),
 				mime: 'unknown/unknown',
 				thumbs_deferred: true
 			};
@@ -479,7 +488,7 @@ FileManager.Gallery = new Class({
 			file = el.retrieve('file');
 		}
 
-		var name = this.normalize(file.dir + '/' + file.name);
+		var name = file.path;
 
 		// when the item already exists in the gallery, do not add it again:
 		if (this.files[name])
@@ -498,8 +507,6 @@ FileManager.Gallery = new Class({
 				}
 			}
 		});
-
-		//var imgpath = this.normalize('/' + this.root + file.dir + '/' + file.name);
 
 		/*
 		 * as 'imgcontainer.getSize() won't deliver the dimensions as set in the CSS, we turn it the other way around:
@@ -522,7 +529,7 @@ FileManager.Gallery = new Class({
 		).inject(this.gallery);
 
 		this.files[name] = {
-			name: name,
+			legal_path: name,
 			caption: caption,
 			file: file,
 			element: li
@@ -631,7 +638,8 @@ FileManager.Gallery = new Class({
 		if (!file)
 			return;
 
-		var name = this.normalize(file.dir + '/' + file.name);
+		var name = file.path;
+
 		if (!this.files[name])
 			return;
 
@@ -684,25 +692,88 @@ FileManager.Gallery = new Class({
 		}
 	},
 
-	populate: function(data)
+	populate: function(data, path_is_urlencoded /* default = TRUE */)
 	{
-		this.diag.log('GALLERY.populate: ', data);
+		this.diag.log('GALLERY.populate: ', data, ', is_urlencoded: ', path_is_urlencoded);
+
+		if (typeof path_is_urlencoded == 'undefined' || path_is_urlencoded === null)
+			path_is_urlencoded = true;    // set default to TRUE
+		else
+			path_is_urlencoded = !!is_urlencoded;
+
+		//
+		// WARNING: these items are abs.path encoded and we to convert them to 'legal URL' directory space or the server will reject these on security grounds.
+		//          But we don't know the 'legal URL root' path as that is a server-side setting, so we MUST delay the population of the gallery until our first
+		//          request has arrived with this desperately needed item.
+		//			We wait for the dirscan ('view' request) to complete; actually we wait until the fill() has finished as by that time we'll be sure
+		//			to have a valid this.root (or a grandiose server comm failure!)
+		//			Until that time, we push all items to populate the gallery with on the populate stack.
+
 		Object.each(data || {}, function(v, i) {
-			this.diag.log('GALLERY.populate: index = ', i, ', value = ', v);
-			this.onDragComplete(i, this.gallery, v);
+			this.diag.log('GALLERY.populate push: index = ', i, ', value = ', v, ', enc: ', (1 * path_is_urlencoded));
+			if (path_is_urlencoded)
+			{
+				i = this.unescapeRFC3986(i);
+			}
+			this.populate_queue.push({
+					path: i,
+					caption: v
+				});
 		}, this);
+	},
+
+	startPopulatingTheGallery: function()
+	{
+		if (!this.root)
+		{
+			this.diag.log('### FATAL error in startPopulatingTheGallery(): no valid .root path!');
+			return;
+		}
+
+		var count = this.populate_queue.length;
+		if (count)
+		{
+			// we've got work to do, folks!
+			var i;
+			for (i = 0; i < count; ++i)
+			{
+				// LIFO queue:
+				var item = this.populate_queue.shift();
+				var path = item.path;
+
+				// coded so that we support 'legal URL space' items and 'absolute URL path' items at the same time:
+				// when paths start with the root directory, we'll strip that off to make them 'legal URL space' compliant filespecs.
+				if (path.indexOf(this.root) === 0)
+				{
+					path = path.substr(this.root.length);
+				}
+				if (path)
+				{
+					this.onDragComplete(path, this.gallery, item.caption);
+				}
+				else
+				{
+					this.diag.log('### gallery populate: invalid input (not in legal URL space): ', item, ', root: ', this.root);
+				}
+			}
+		}
 	},
 
 	serialize_on_click: function(e) {
 		if (e) e.stop();
 
 		var serialized = {};
+		var metas = {};
+		var index = 0;
 		Object.each(this.files,function(file) {
-			serialized[file.name] = (file.caption || '');
+			serialized[file.legal_path] = (file.caption || '');
+			var m = Object.clone(file.file);
+			m['order_no'] = index++;
+			metas[file.legal_path] = m;
 		}, this);
 		this.keepGalleryData = true;
 		this.hide(e);
-		this.fireEvent('complete', [serialized, this.files, this]);
+		this.fireEvent('complete', [serialized, metas, this.root, this]);
 	}
 });
 
