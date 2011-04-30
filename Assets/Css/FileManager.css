@@ -849,15 +849,10 @@ div.filemanager-gallery {
 	border-top: 0;
 	background: #eee;
 
-	border-radius-bottomleft: 5px;
-	-moz-border-radius-bottomleft: 5px;
-	-webkit-border-radius-bottomleft: 5px;
-	-o-border-radius-bottomleft: 5px;
-
-	border-radius-bottomright: 5px;
-	-moz-border-radius-bottomright: 5px;
-	-webkit-border-radius-bottomright: 5px;
-	-webkit-o-radius-bottomright: 5px;
+	border-radius: 0 0 5px 5px;
+	-moz-border-radius: 0 0 5px 5px;
+	-webkit-border-radius: 0 0 5px 5px;
+	-o-border-radius: 0 0 5px 5px;
 
 	box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
 	-moz-box-shadow: rgba(0, 0, 0, 0.3) 0 0 40px;
@@ -1017,9 +1012,12 @@ div.filemanager-filelist .fi, div.gallery-image {
 	float: left;
 	margin: 3px;
 	padding: 5px;
+
 	border-radius: 4px;
 	-moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
+	-o-border-radius: 4px;
+
 	text-align: center;
 	white-space: nowrap;
 	cursor: pointer;
