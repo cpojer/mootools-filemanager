@@ -144,8 +144,56 @@ var FileManager = new Class({
 		this.RequestQueue = new Request.Queue({
 			concurrent: 3,              // 3 --> 75% max load on a quad core server
 			autoAdvance: true,
-			stopOnFailure: false
+			stopOnFailure: false,
+
+			onRequest: (function(){
+				this.diag.log('request queue: onRequest: ', arguments);
+			}).bind(this),
+
+			onComplete: (function(){
+				this.diag.log('request queue: onComplete: ', arguments);
+			}).bind(this),
+
+			onCancel: (function(){
+				this.diag.log('request queue: onCancel: ', arguments);
+			}).bind(this),
+
+			onSuccess: (function(){
+				this.diag.log('request queue: onSuccess: ', arguments);
+			}).bind(this),
+
+			onFailure: (function(){
+				this.diag.log('request queue: onFailure: ', arguments);
+			}).bind(this),
+
+			onException: (function(){
+				this.diag.log('request queue: onException: ', arguments);
+			}).bind(this)
+
 		});
+
+		// add a special custom routine to the queue object: we want to be able to clear PART OF the queue!
+		this.RequestQueue.cancel_bulk = (function(marker)
+		{
+			Object.each(this.requests, function(q, name)
+			{
+				var n = name.split(':');
+				if (n[0] === marker)
+				{
+					// match! revert by removing the request (and cancelling it!)
+					this.cancel(name);
+					this.removeRequest(name);
+
+					this.clear(name);			// eek, a full table scan! yech.
+					delete this.requests[name];
+					delete this.reqBinders[name];
+				}
+			}, this);
+
+			// now that we have cleared out all those requests, some of which may have been running at the time, we need to resume the loading:
+			this.resume();
+
+		}).bind(this.RequestQueue);
 
 		this.language = Object.clone(FileManager.Language.en);
 		if (this.options.language !== 'en') {
@@ -788,6 +836,7 @@ var FileManager = new Class({
 		this.diag.log('on toggleList dir = ', this.CurrentDir, e);
 
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+		this.RequestQueue.cancel_bulk('fill');
 		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;
 
@@ -1294,6 +1343,7 @@ var FileManager = new Class({
 						// similar activity as load(), but without the server communication...
 
 						// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+						this.RequestQueue.cancel_bulk('fill');
 						clearTimeout(this.view_fill_timer);
 						this.view_fill_timer = null;
 
@@ -1694,6 +1744,7 @@ var FileManager = new Class({
 		this.show_our_info_sections(false);
 
 		// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+		this.RequestQueue.cancel_bulk('fill');
 		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;
 
@@ -2169,7 +2220,7 @@ var FileManager = new Class({
 							}).bind(this)
 						}, this);
 
-						this.RequestQueue.addRequest(String.uniqueID(), req);
+						this.RequestQueue.addRequest('fill:' + String.uniqueID(), req);
 						req.send();
 
 						return list_row;
@@ -2496,6 +2547,7 @@ var FileManager = new Class({
 										// similar activity as load(), but without the server communication...
 
 										// abort any still running ('antiquated') fill chunks and reset the store before we set up a new one:
+										this.RequestQueue.cancel_bulk('fill');
 										clearTimeout(this.view_fill_timer);
 										this.view_fill_timer = null;
 
@@ -2580,6 +2632,7 @@ var FileManager = new Class({
 		this.adaptive_update_pagination_size(render_count, render_count, render_count, pagesize, duration, 1.0 / 5.0, 1.0, 0);
 
 		// we're done: erase the timer so it can be garbage collected
+		//this.RequestQueue.cancel_bulk('fill');    -- do NOT do this!
 		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;
 
@@ -2827,7 +2880,7 @@ var FileManager = new Class({
 							}).bind(this)
 						}, this);
 
-						this.RequestQueue.addRequest(String.uniqueID(), req);
+						this.RequestQueue.addRequest('info:' + String.uniqueID(), req);
 						req.send();
 					}
 					else
@@ -2963,6 +3016,7 @@ var FileManager = new Class({
 		this.browser_paging.fade(0);
 
 		// abort any still running ('antiquated') fill chunks:
+		this.RequestQueue.cancel_bulk('fill');
 		clearTimeout(this.view_fill_timer);
 		this.view_fill_timer = null;     // timer reference when fill() is working chunk-by-chunk.
 	},

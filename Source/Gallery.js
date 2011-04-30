@@ -625,7 +625,7 @@ FileManager.Gallery = new Class({
 				}).bind(this)
 			}, this);
 
-			this.RequestQueue.addRequest(String.uniqueID(), req);
+			this.RequestQueue.addRequest('populate:' + String.uniqueID(), req);
 			req.send();
 
 			// while the 'details' request is sent off, keep a 'loader' animation in the spot where the thumbnail/image should end up once we've got that info from the 'details' request
